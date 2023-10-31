@@ -1,0 +1,26 @@
+RELEASED 12 AUGUST 2023
+3RD (of 3) IN THE DEMODULATION PARTY 2023 OLDSKOOL DEMO COMPETITION
+THE CORVETTE PK-8020
+
+Features:
+    - digital speech via the PC speaker (8253)
+    - 8 color sprites on 8 color background
+    - 16 color 512x256 screen
+    - fast flashing text
+    - one channel pc speaker music simulating 2 channels
+    - an optional surprise picture
+
+Links:
+    pouet: https://www.pouet.net/prod.php?which=94860
+    video: https://www.youtube.com/watch?v=jpBQL8wTXlU
+
+Tools required to build the demo from sources:
+    - sed
+    - iconv
+    - gawk
+    - pasmo = https://pasmo.speccy.org/
+    - cpmtools + https://litwr2.github.io/corvette/korvet-def.txt
+    - https://litwr2.github.io/corvette/cfd.c.txt
+    - https://litwr2.github.io/corvette/shell-utilities.txt
+The last three components are only needed to put files on a disk image, and there are other ways to do this work.
+
