@@ -1,0 +1,16 @@
+RELEASED 28 OCTOBER 2023
+9TH (of 10) IN THE FLASH PARTY 2023 ALTERNATIVE INTRO COMPETITION
+COMMODORE 16/116/+4
+
+Features:
+    - curved borders
+    - 32 lines (256 raster lines)
+    - static stripes on the overscan area
+    - a super fast algo that draws a Mandelbrot set
+    - simulates more colors by the color superposition
+
+Links:
+    pouet: https://www.pouet.net/prod.php?which=95383
+    demozoo: https://demozoo.org/productions/332472/
+    video: https://www.twitch.tv/videos/1962604289?t=04h49m56s
+
