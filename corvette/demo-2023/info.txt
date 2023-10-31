@@ -13,6 +13,7 @@ Features:
 Links:
     pouet: https://www.pouet.net/prod.php?which=94860
     video: https://www.youtube.com/watch?v=jpBQL8wTXlU
+    party: https://demodulation.retroscene.org/competition/?competition_id=22
 
 Tools required to build the demo from sources:
     - sed
