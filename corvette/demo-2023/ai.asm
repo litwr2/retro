@@ -1769,28 +1769,28 @@ extra proc
     call vdelayl
 
     ld hl,voice1
-l2  ld b,8
-    ld c,(hl)
-l3  ld a,c
-    ld d,8
-    rrca
-    jp nc,$+5
-    ld d,0
-    ld c,a
-    ld a,d
-    ld (IOBASE+PIC2),a
-    call vdelay
-    dec b
-    jp nz,l5
+l2  ld b,8    ;7
+    ld c,(hl) ;7
+l3  ld a,c  ;5    
+    ld d,8  ;7
+    rrca    ;4
+    jp nc,$+5 ;10
+    ld d,0    ;7
+    ld c,a    ;5
+    ld a,d    ;5
+    ld (IOBASE+PIC2),a ;13   ;average 269 ticks, approx 9300 Hz
+    call vdelay    ;17
+    dec b          ;5
+    jp nz,l5       ;10
 
-    inc hl
-    ld a,low(endvoice1)
-    cp l
-    jp nz,l2
+    inc hl              ;5
+    ld a,low(endvoice1) ;13
+    cp l                ;4
+    jp nz,l2            ;10
 
-    ld a,high(endvoice1)
-    cp h
-    jp nz,l2
+    ld a,high(endvoice1) ;13
+    cp h                 ;4
+    jp nz,l2             ;10
 exit0
     call vdelayl
     call vdelayl
@@ -1798,48 +1798,48 @@ exit0
     ei
     ret
 
-l5  ld a,(0)
-    jp l3
+l5  ld a,(0)      ;13
+    jp l3         ;10
     endp
 
-vdelay proc
+vdelay proc   ;160 ticks, 15625 Hz
       local l1,l2,l3,dd
-      ld e,2
-l3    push af
-      pop af
-      dec e
-      jp nz,l3
+      ld e,2    ;7
+l3    push af   ;11
+      pop af    ;10
+      dec e     ;5
+      jp nz,l3  ;10
 
-      ld a,(dd)
-      inc a
-      ld (dd),a
-      jp nz,l1
+      ld a,(dd) ;13
+      inc a     ;5
+      ld (dd),a ;13
+      jp nz,l1  ;10
 
-vm1    ld a,$43     ;$45
-       ld (RGBASE2+LUT),a
-       xor $80
-       ld (vm1+1),a
-l2    ret
-l1    call l2
-      jp l2
+vm1    ld a,$43     ;$45   ;7
+       ld (RGBASE2+LUT),a  ;13
+       xor $80             ;4
+       ld (vm1+1),a        ;13
+l2    ret                  ;10
+l1    call l2              ;17
+      jp l2                ;10
 dd db 0
       endp
 
-vdelayl proc
+vdelayl proc   ;(53*256 + 40)*10 + 17 = 136097 ticks, .0544388 sec
     local l1,l2
-    ld a,10
-l2  push af
-    xor a
-l1  push af
-    call vdelay
-    pop af
-    dec a
-    jp nz,l1
+    ld a,10     ;7
+l2  push af     ;11
+    xor a       ;4
+l1  push af     ;11
+    call vdelay ;17
+    pop af      ;10
+    dec a       ;5
+    jp nz,l1    ;10
     
-    pop af
-    dec a
-    jp nz,l2
-    ret
+    pop af      ;10
+    dec a       ;5
+    jp nz,l2    ;10
+    ret         ;10
     endp
 
 final proc
