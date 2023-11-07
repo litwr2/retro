@@ -1,0 +1,124 @@
+;for macro-11 assembler, DEC Pro, RT-11
+;it prints PSW (mfps and $fffe), memory top, MMU PDR/PAR registers, MMU SR0 and SR3
+
+    .radix 10
+
+      .MCall .exit, .rsum, .trpset, .print, .ttyout, .ttyin, .settop, .lookup, .readw
+      CONFIG = ^O300
+      TTSPC$ =: ^O10000
+      $JSW =: ^O44
+
+KPAR1 = 62690   ;$f4e2
+UPAR1 = 65442   ;$ffa2
+
+START:   ;bis #TTSPC$,@#$JSW
+         .settop #-2
+         mov r0,r1
+         .print #mtop
+         call bin2hex
+         .print #eol
+         .print #psw
+         mfps r1
+         call bin2hex
+         mov #32,r0
+         .ttyout
+         mov @#65534,r1
+         call bin2hex
+         .print #eol
+         clr r3
+         mov #62656,r2    ;0xf4c0 ;kernel PDR/PAR
+1$:      mov r2,r1
+         call bin2hex
+         mov #32,r0
+         .ttyout         
+         mov @r2,r1
+         call bin2hex
+         mov #32,r0
+         .ttyout
+         mov 32(r2),r1
+         call bin2hex
+
+         .print #twos
+         mov r2,r1
+         add #2752,r1
+         call bin2hex
+         mov #32,r0
+         .ttyout
+         mov 2752(r2),r1
+         call bin2hex
+         mov #32,r0
+         .ttyout
+         mov 2784(r2),r1
+         call bin2hex
+         .print #eol
+         add #2,r2
+         inc r3
+         cmp #8,r3
+         bne 1$
+
+         .print #sr
+         mov @#65402,r1    ;$ff7a = SR0
+         call bin2hex
+         .print #twos
+         movb #48+3,@#sr+2
+         .print #sr
+         mov @#62798,r1    ;$f54e = SR3
+         call bin2hex
+         .print #eol
+         .exit
+
+bin2hex:  mov r0,-(sp)   ;prints r1
+          mov r1,r0
+          swab r0   ;mov dl,ah
+          clc
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0    ;shr dl,4
+          add #'0,r0 ;add dl,'0'
+          cmpb r0,#'9+1 ;cmp dl,'9'+1
+          bcs 1$
+
+          add #7,r0  ;add dl,7
+1$:       .ttyout
+
+          mov r1,r0
+          swab r0   ;mov dl,ah
+          bicb #240,r0 ;and dl,0fh
+          add #'0,r0   ;add dl,'0'
+          cmpb r0,#'9+1 ;cmp dl,'9'+1
+          bcs 2$
+
+          add #7,r0    ;add dl,7
+2$:       .ttyout
+
+          mov r1,r0   ;mov dl,al
+          clc
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0    ;shr dl,4
+          add #'0,r0 ;add dl,'0'
+          cmpb r0,#'9+1 ;cmp dl,'9'+1
+          bcs 3$
+
+          add #7,r0  ;add dl,7
+3$:       .ttyout
+
+          mov r1,r0   ;mov dl,al
+          bicb #240,r0 ;and dl,0fh
+          add #'0,r0   ;add dl,'0'
+          cmpb r0,#'9+1 ;cmp dl,'9'+1
+          bcs 4$
+
+          add #7,r0  ;add dl,7
+4$:       .ttyout
+          mov (sp)+,r0
+          return
+
+mtop:    .ascii "MEMTOP " <128>
+psw:    .ascii "PSW " <128>
+sr:     .ascii "SR0 " <128>
+twos:   .ascii "  " <128>
+eol:    .byte 0
+.End	START
