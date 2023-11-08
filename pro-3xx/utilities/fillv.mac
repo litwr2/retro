@@ -181,7 +181,7 @@ sreg:  mov @#vbas,r1
        mov 8(r1),(r2)+
        mov 14(r1),(r2)+
        mov 16(r1),(r2)
-     mov #^B0000000000000001,4(r1)   ;256 lines
+     mov #^B0000010000000001,4(r1)   ;256 lines, mapped mode
      mov #^B0000000000000010,6(r1)   ;1024 dots, move to screen, no cpu access
      mov #^B0000000000000000,8(r1)  ;disable planes 3 (red) and 2 (green)
        return
