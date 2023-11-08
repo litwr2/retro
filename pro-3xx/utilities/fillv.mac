@@ -17,8 +17,6 @@ SR1 = 65402    ;$ff7a
 SR3 = 62798    ;$f54e
 KPAR1 = 62690  ;$f4e2
 UPAR1 = 65442  ;$ffa2
-KPAR2 = 62692  ;$f4e4
-UPAR2 = 65444  ;$ffa4
 .endc
 
       .MCall .exit, .trpset, .print, .ttyout, .ttyin, .settop, .gval, .gtim
@@ -29,7 +27,7 @@ UPAR2 = 65444  ;$ffa4
 START:   ;bis #TTSPC$,@#$JSW
 .if ne DVIDEO
          .settop #-2
-         cmp r0,#24576-2   ;$6000-2
+         cmp r0,#16384-2   ;$4000-2
          bcc 8$
 
          .print #nomem
@@ -60,12 +58,12 @@ START:   ;bis #TTSPC$,@#$JSW
          mov r1,@#vbas
          call @#sreg
 .if ne DVIDEO
+         mov #^B0000000000100000,6(r1)   ;1024 dots, no-op, cpu access
          mov #VBASE/128,22(r1)    ;VRAM address
          tst @#MPSW
          bmi 14$
 
          mov #KPAR1,@#apar1
-         mov #KPAR2,@#apar2
          mov #16,@#SR3
          mov #1,@#SR1
 14$:     call @#smmu
@@ -75,25 +73,21 @@ START:   ;bis #TTSPC$,@#$JSW
 .if ne DVIDEO
 11$:     mov #apar1,r2
          mov #VBASE*4,@0(r2)
-         mov #VBASE*4+128,@2(r2)
-         
-         mov #8192,r0
-         mov r0,r1
-7$:      mov #21845,(r0)+  ;$5555
+         mov #21845,r3
+         mov #4,r4
+9$:      mov #8192,r0
+         mov #4096,r1
+7$:      mov r3,(r0)+  ;$5555
          sob r1,7$
 
-         mov #VBASE*4+256,@0(r2)
-         mov #VBASE*4+384,@2(r2)
-         mov #8192,r0
-         mov r0,r1
-9$:      mov #21845,(r0)+  ;$5555
-         sob r1,9$
+         add #128,@0(r2)
+         sob r4,9$
 .iff
          mov @#vbas,r1
 11$:     clr r2   ;Y
+         mov #21845,20(r1)  ;$5555
 12$:     clr 14(r1)
          mov r2,16(r1)
-         mov #21845,20(r1)  ;$5555
          mov #1024,18(r1)
          tst 4(r1)   ;transfer done?
          bpl .-4
@@ -188,7 +182,7 @@ sreg:  mov @#vbas,r1
        mov 14(r1),(r2)+
        mov 16(r1),(r2)
      mov #^B0000000000000001,4(r1)   ;256 lines
-     mov #^B0000000000100010,6(r1)   ;1024 dots, move to screen, cpu access
+     mov #^B0000000000000010,6(r1)   ;1024 dots, move to screen, no cpu access
      mov #^B0000000000000000,8(r1)  ;disable planes 3 (red) and 2 (green)
        return
 
