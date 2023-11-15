@@ -33,18 +33,16 @@
 ;data consists of packed words, for instance a word must contain 4 pixels if bpp=4
 ;fields 22-511 are not supported for the current version
 
-    .radix 10
-
 DVIDEO = 0   ;0 means video registers
 
 .if ne DVIDEO
-VBASE = 15360  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
-;VBASE = 12288  ;0x3000*0x100 = 0x300000 = 3 MB
-MPSW = 65534   ;$fffe
-SR1 = 65402    ;$ff7a
-SR3 = 62798    ;$f54e
-KPAR1 = 62690  ;$f4e2
-UPAR1 = 65442  ;$ffa2
+VBASE = 15360.  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
+;VBASE = 12288.  ;0x3000*0x100 = 0x300000 = 3 MB
+MPSW = 65534.   ;$fffe
+SR1 = 65402.    ;$ff7a
+SR3 = 62798.    ;$f54e
+KPAR1 = 62690.  ;$f4e2
+UPAR1 = 65442.  ;$ffa2
 .endc
 
       .MCall .exit, .trpset, .print, .ttyout, .ttyin, .settop, .csigen, .readw
@@ -54,29 +52,29 @@ UPAR1 = 65442  ;$ffa2
 START:   bis #TTSPC$,@#$JSW
 .if ne DVIDEO
          .settop #-2
-         cmp r0,#16384-2   ;$4000-2
+         cmp r0,#16384.-2   ;$4000-2
          bcc 8$
 
          .print #nomem
          .exit
 8$:      .print #msg
 .endc
-         mov #63488,R1    ;$f800
+         mov #63488.,R1    ;$f800
          mov #7,R3
 2$:      .trpset #area,#3$
          mov (r1),r2
          cmpb #2,r2   ;ID for the Pro 325/350
          beq vidok
 
-         cmpb #40,r2  ;$28 (IDR for the Pro 380)
+         cmpb #40.,r2  ;$28 (IDR for the Pro 380)
          beq vidok
 
-         cmpb #16,r2  ;$10 (IDR for the Pro 380+EBO, at $fb00)
+         cmpb #16.,r2  ;$10 (IDR for the Pro 380+EBO, at $fb00)
          beq vidok
 
          cmp -(SP),-(SP)
 3$:      cmp (SP)+,(SP)+
-         add #128,R1    ;$80, upto $fb00
+         add #128.,R1    ;$80, upto $fb00
          sob R3,2$
 
          .print #emsg
@@ -89,7 +87,7 @@ vidok:   .trpset #area,#0
          .exit
 1$:      mov r1,r5
 .if ne DVIDEO
-         mov #VBASE/128,22(r1)    ;VRAM address
+         mov #VBASE/128.,22.(r1)    ;VRAM address
 .endc
          mov sp,r4
          .csigen #dspace,#defext
@@ -134,7 +132,7 @@ vidok:   .trpset #area,#0
          bis r1,r0
          ash #3,r0
          bis #^B0000001000000000,r0
-         mov r0,8(r5) ;plane 2 (green) & 3 (red), the NOP/MOV-op
+         mov r0,8.(r5) ;plane 2 (green) & 3 (red), the NOP/MOV-op
          call drawb
 
          mov @#wpp,@#cwpp
@@ -146,7 +144,7 @@ vidok:   .trpset #area,#0
          bis r1,r0
          ash #3,r0
          bis #^B0000000000000010,r0
-         mov r0,8(r5) ;plane 2 & 3, the MOV/NOP-op
+         mov r0,8.(r5) ;plane 2 & 3, the MOV/NOP-op
          call drawb
 
          mov @#wpp,@#cwpp
@@ -162,19 +160,19 @@ vidok:   .trpset #area,#0
          bis r1,r0
          ash #3,r0
          bis #^B0000000000000000,r0
-         mov r0,8(r5) ;plane 2 & 3, the NOP/NOP-op
+         mov r0,8.(r5) ;plane 2 & 3, the NOP/NOP-op
          call drawb
 .iff
          tst @#MPSW
          bmi 14$
 
          mov #KPAR1,@#apar1
-         mov #16,@#SR3
+         mov #16.,@#SR3
          mov #1,@#SR1
 14$:     call @#smmu
-         mov #apar1,r2
-         mov #VBASE*4,@0(r2)
-         mov #8192,@#yc
+         mov @#apar1,r2
+         mov #VBASE*4,@r2
+         mov #8192.,@#yc
          mov @#bpp,r0
          asr r0
          mov r0,r1
@@ -186,13 +184,13 @@ vidok:   .trpset #area,#0
          bis r1,r0
          ash #3,r0
          bis #^B0010000000000000,r0
-         mov r0,8(r5) ;plane 2 (green) & 3 (red), the NOP/MOV-op
+         mov r0,8.(r5) ;plane 2 (green) & 3 (red), the NOP/MOV-op
          call drawb
 
-         mov #apar1,r2
-         mov #VBASE*4,@0(r2)
+         mov @#apar1,r2
+         mov #VBASE*4,@r2
          mov @#wpp,@#cwpp
-         mov #8192,@#yc
+         mov #8192.,@#yc
          mov @#bpp,r0
          asr r0
          mov r0,r1
@@ -200,25 +198,25 @@ vidok:   .trpset #area,#0
          bis r1,r0
          ash #3,r0
          bis #^B0000000000100000,r0
-         mov r0,8(r5) ;plane 2 & 3, the MOV/NOP-op
+         mov r0,8.(r5) ;plane 2 & 3, the MOV/NOP-op
          call drawb
 
-         mov #apar1,r2
-         mov #VBASE*4,@0(r2)
+         mov @#apar1,r2
+         mov #VBASE*4,@r2
          mov @#wpp,@#cwpp
-         mov #8192,@#yc
+         mov #8192.,@#yc
          mov @#bpp,r0
          asr r0
          mov r0,r1
          ash #3,r0
          bis #^B0000000000100000,r0
-         mov r0,6(r5) ;plane 1, the MOV-op
+         mov r0,6.(r5) ;plane 1, the MOV-op
          mov r1,r0
          swab r0
          bis r1,r0
          ash #3,r0
          bis #^B0000000000000000,r0
-         mov r0,8(r5) ;plane 2 & 3, the NOP/NOP-op
+         mov r0,8.(r5) ;plane 2 & 3, the NOP/NOP-op
          call drawb
 
          call @#rmmu
@@ -230,6 +228,7 @@ vidok:   .trpset #area,#0
 .endc
          .ttyin
          call @#rreg
+         .print #cls
          .exit
 
 drawb:    inc @#blk
@@ -242,53 +241,53 @@ drawb:    inc @#blk
 3$:       mov @#buff,r0
           mov #4,r2
 .if eq DVIDEO
-2$:       mov #64,r1
-          mov @#yc,16(r5)
-          mov #0,14(r5)
-1$:       mov (r0)+,20(r5)
-          mov #16,18(r5)
+2$:       mov #64.,r1
+          mov @#yc,16.(r5)
+          mov #0,14.(r5)
+1$:       mov (r0)+,20.(r5)
+          mov #16.,18.(r5)
           tst 4(r5)   ;transfer done?
           bpl .-4
 
-          add #16,14(r5)
+          add #16.,14.(r5)
           sob r1,1$
 
           inc @#yc
           sob r2,2$
 .iff
           mov @#yc,r2
-          mov #256,r1
+          mov #256.,r1
 1$:       mov (r0)+,(r2)+
           sob r1,1$
 
-          cmp #16384,r2
+          cmp #16384.,r2
           bne 2$
 
-          mov #apar1,r1
-          add #128,@0(r1)          
+          mov @#apar1,r1
+          add #128.,@r1          
           asr r2
 2$:       mov r2,@#yc
 .endc
-          sub #256,@#cwpp
+          sub #256.,@#cwpp
           bhi drawb
           return
 
 rreg:  mov #save4,r2
        mov (r2)+,4(r5)
        mov (r2)+,6(r5)
-       mov (r2)+,8(r5)
-       mov (r2)+,14(r5)
-       mov (r2),16(r5)
+       mov (r2)+,8.(r5)
+       mov (r2)+,14.(r5)
+       mov (r2),16.(r5)
        return
 
 sreg:  mov #save4,r2
        mov 4(r5),(r2)+
        mov 6(r5),(r2)+
-       mov 8(r5),(r2)+
-       mov 14(r5),(r2)+
-       mov 16(r5),(r2)
+       mov 8.(r5),(r2)+
+       mov 14.(r5),(r2)+
+       mov 16.(r5),(r2)
        clr r2
-       cmp #256,@#vs
+       cmp #256.,@#vs
        adc r2
        asl r2
        asl r2
@@ -297,69 +296,18 @@ sreg:  mov #save4,r2
        return
 
 .if ne DVIDEO
-smmu:  mov #savem,r2
-       mov #apar1,r1
-       mov @0(r1),(r2)
+smmu:  mov @#apar1,r1
+       mov @r1,@#savem
        return
 
-rmmu:  mov #savem,r2
-       mov #apar1,r1
-       mov (r2),@0(r1)
+rmmu:  mov @#apar1,r1
+       mov @#savem,@r1
        return
 
 savem:   .blkw 1
 apar1:   .word UPAR1
 .endc
-.if eq 0
-bin2hex:  mov r0,-(sp)   ;prints r1
-          mov r1,r0
-          swab r0   ;mov dl,ah
-          clc
-          rorb r0
-          asrb r0
-          asrb r0
-          asrb r0    ;shr dl,4
-          add #'0,r0 ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 1$
 
-          add #7,r0  ;add dl,7
-1$:       .ttyout
-
-          mov r1,r0
-          swab r0   ;mov dl,ah
-          bicb #240,r0 ;and dl,0fh
-          add #'0,r0   ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 2$
-
-          add #7,r0    ;add dl,7
-2$:       .ttyout
-
-          mov r1,r0   ;mov dl,al
-          clc
-          rorb r0
-          asrb r0
-          asrb r0
-          asrb r0    ;shr dl,4
-          add #'0,r0 ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 3$
-
-          add #7,r0  ;add dl,7
-3$:       .ttyout
-
-          mov r1,r0   ;mov dl,al
-          bicb #240,r0 ;and dl,0fh
-          add #'0,r0   ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 4$
-
-          add #7,r0  ;add dl,7
-4$:       .ttyout
-          mov (sp)+,r0
-          return
-.endc
 hs:      .word 0
 vs:      .word 0
 yc:      .word 0
@@ -372,8 +320,8 @@ defext:  .rad50 "PPI"
 area:    .word 0
 blk:     .word 0
 buff:    .word 0
-         .word 256,0
-msg:     .asciz "Picture Viewer v1 for the Pro"
+         .word 256.,0
+msg:     .asciz "Picture Viewer v2 for the Pro"
 .if ne DVIDEO
 nomem:   .asciz "not enough memory"
 .endc
@@ -381,5 +329,6 @@ emsg:    .asciz "cannot find the graphic system"
 e2msg:    .asciz "cannot find the EBO"
 e4msg:    .asciz "read error"
 e5msg:    .asciz "wrong format"
+cls:     .asciz <27.> "[2J"
 dspace:
 .End	START

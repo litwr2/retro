@@ -2,21 +2,18 @@
 ;it fills the 1024x256 screen ITER times via: 1) video registers; 2) direct VRAM acccess
 ;it also shows timings 
 
-    .radix 10
-
-DVIDEO = 1   ;0 means video registers
-ITER = 40
+DVIDEO = 0   ;0 means video registers
+ITER = 40.
 
 .if ne DVIDEO
-VBASE = 15360  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
-;VBASE = 12288  ;0x3000*0x100 = 0x300000 = 3 MB
-;VBASE = 4096  ;0x1000*0x100 = 0x100000 = 1 MB
+VBASE = 15360.  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
+;VBASE = 12288.  ;0x3000*0x100 = 0x300000 = 3 MB
 
-MPSW = 65534   ;$fffe
-SR1 = 65402    ;$ff7a
-SR3 = 62798    ;$f54e
-KPAR1 = 62690  ;$f4e2
-UPAR1 = 65442  ;$ffa2
+MPSW = 65534.   ;$fffe
+SR1 = 65402.    ;$ff7a
+SR3 = 62798.    ;$f54e
+KPAR1 = 62690.  ;$f4e2
+UPAR1 = 65442.  ;$ffa2
 .endc
 
       .MCall .exit, .trpset, .print, .ttyout, .ttyin, .settop, .gval, .gtim
@@ -27,29 +24,29 @@ UPAR1 = 65442  ;$ffa2
 START:   bis #TTSPC$,@#$JSW
 .if ne DVIDEO
          .settop #-2
-         cmp r0,#16384-2   ;$4000-2
+         cmp r0,#16384.-2   ;$4000-2
          bcc 8$
 
          .print #nomem
          .exit
 8$:
 .endc
-         mov #63488,R1    ;$f800
+         mov #63488.,R1    ;$f800
          mov #7,R3
 2$:      .trpset #area,#3$
          mov (r1),r2
          cmpb #2,r2  ;ID for the Pro 325/350
          beq 1$
 
-         cmpb #16,r2  ;ID for the Pro 380+EBO
+         cmpb #16.,r2  ;ID for the Pro 380+EBO
          beq 1$
 
-         cmpb #40,r2  ;ID for the Pro 380
+         cmpb #40.,r2  ;ID for the Pro 380
          beq 1$
 
          cmp -(SP),-(SP)
 3$:      cmp (SP)+,(SP)+
-         add #128,R1    ;$80, upto $fb00
+         add #128.,R1    ;$80, upto $fb00
          sob R3,2$
 
          .print #emsg
@@ -59,36 +56,36 @@ START:   bis #TTSPC$,@#$JSW
          call @#sreg
 .if ne DVIDEO
          mov #^B0000000000100000,6(r1)   ;1024 dots, no-op, cpu access
-         mov #VBASE/128,22(r1)    ;VRAM address
+         mov #VBASE/128.,22.(r1)    ;VRAM address
          tst @#MPSW
          bmi 14$
 
          mov #KPAR1,@#apar1
-         mov #16,@#SR3
+         mov #16.,@#SR3
          mov #1,@#SR1
 14$:     call @#smmu
 .endc
          .gtim #area,#time
          mov #ITER,r5
-         mov #21845,r3    ;$5555
+         mov #21845.,r3    ;$5555
 .if ne DVIDEO
-11$:     mov #apar1,r2
-         mov #VBASE*4,@0(r2)
+11$:     mov @#apar1,r2
+         mov #VBASE*4,@r2
          mov #4,r4
-9$:      mov #8192,r0
-         mov #4096,r1
+9$:      mov #8192.,r0
+         mov #4096.,r1
 7$:      mov r3,(r0)+
          sob r1,7$
 
-         add #128,@0(r2)
+         add #128.,@r2
          sob r4,9$
 .iff
          mov @#vbas,r1
 11$:     clr r2   ;Y
-         mov r3,20(r1)
-12$:     clr 14(r1)
-         mov r2,16(r1)
-         mov #1024,18(r1)
+         mov r3,20.(r1)
+12$:     clr 14.(r1)
+         mov r2,16.(r1)
+         mov #1024.,18.(r1)
          tst 4(r1)   ;transfer done?
          bpl .-4
 
@@ -119,7 +116,7 @@ START:   bis #TTSPC$,@#$JSW
          mov r0,r4
          mov r3,r1
          mov r2,r0
-         bit #32,r4    ;50 or 60 Hz?
+         bit #32.,r4    ;50 or 60 Hz?
          bne 10$
 
          asl r1     ;*5
@@ -164,21 +161,21 @@ rreg:  mov @#vbas,r1
        mov #save4,r2
        mov (r2)+,4(r1)
        mov (r2)+,6(r1)
-       mov (r2)+,8(r1)
-       mov (r2)+,14(r1)
-       mov (r2),16(r1)
+       mov (r2)+,8.(r1)
+       mov (r2)+,14.(r1)
+       mov (r2),16.(r1)
        return
 
 sreg:  mov @#vbas,r1
        mov #save4,r2
        mov 4(r1),(r2)+
        mov 6(r1),(r2)+
-       mov 8(r1),(r2)+
-       mov 14(r1),(r2)+
-       mov 16(r1),(r2)
+       mov 8.(r1),(r2)+
+       mov 14.(r1),(r2)+
+       mov 16.(r1),(r2)
      mov #^B0000010000000001,4(r1)   ;256 lines, mapped mode
      mov #^B0000000000000010,6(r1)   ;1024 dots, move to screen, no cpu access
-     mov #^B0000000000000000,8(r1)  ;disable planes 3 (red) and 2 (green)
+     mov #^B0000000000000000,8.(r1)  ;disable planes 3 (red) and 2 (green)
        return
 
 save4:   .blkw 5
@@ -188,22 +185,22 @@ printsec:  ;prints R0:R1/100
         mov r0,r1
         clr r4
         mov #1,r5
-        mov #34464,r3  ;100000-65536
+        mov #34464.,r3  ;100000-65536
         call @#pr0
         clr r5
-        mov #10000,r3
+        mov #10000.,r3
         call @#pr0
-        mov #1000,r3
+        mov #1000.,r3
         call @#pr0
         inc r4
-        mov #100,r3
+        mov #100.,r3
         call @#pr0
         movb #'.,r0
         .ttyout
-        mov #10,r3
+        mov #10.,r3
         call @#pr0
 pr1:    mov r2,r0
-pr02:   add #48,r0
+pr02:   add #48.,r0
         .ttyout
         inc r4
 pr05:     return
@@ -217,7 +214,7 @@ pr07:     tst r4
         inc r4
         br pr02
 
-pr0:     mov #65535,r0
+pr0:     mov #65535.,r0
 4$:	    inc r0
         cmp r1,r5
         bcs pr07
@@ -230,57 +227,6 @@ pr0:     mov #65535,r0
         sbc r1
         sub r5,r1
 	br 4$
-
-.if eq 0
-bin2hex:  mov r0,-(sp)   ;prints r1
-          mov r1,r0
-          swab r0   ;mov dl,ah
-          clc
-          rorb r0
-          asrb r0
-          asrb r0
-          asrb r0    ;shr dl,4
-          add #'0,r0 ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 1$
-
-          add #7,r0  ;add dl,7
-1$:       .ttyout
-
-          mov r1,r0
-          swab r0   ;mov dl,ah
-          bicb #240,r0 ;and dl,0fh
-          add #'0,r0   ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 2$
-
-          add #7,r0    ;add dl,7
-2$:       .ttyout
-
-          mov r1,r0   ;mov dl,al
-          clc
-          rorb r0
-          asrb r0
-          asrb r0
-          asrb r0    ;shr dl,4
-          add #'0,r0 ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 3$
-
-          add #7,r0  ;add dl,7
-3$:       .ttyout
-
-          mov r1,r0   ;mov dl,al
-          bicb #240,r0 ;and dl,0fh
-          add #'0,r0   ;add dl,'0'
-          cmpb r0,#'9+1 ;cmp dl,'9'+1
-          bcs 4$
-
-          add #7,r0  ;add dl,7
-4$:       .ttyout
-          mov (sp)+,r0
-          return
-.endc
 
 time:    .word 0,0
 time2:   .word 0,0
