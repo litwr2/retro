@@ -25,6 +25,7 @@ START:   ;bis #TTSPC$,@#$JSW
          mov @#65534,r1
          call bin2hex
          .print #eol
+         .print #mmu
          clr r3
          mov #62656,r2    ;0xf4c0 ;kernel PDR/PAR
 1$:      mov r2,r1
@@ -116,6 +117,7 @@ bin2hex:  mov r0,-(sp)   ;prints r1
           mov (sp)+,r0
           return
 
+mmu:    .asciz "Kernel/User PDR/PAR"
 mtop:    .ascii "MEMTOP " <128>
 psw:    .ascii "PSW " <128>
 sr:     .ascii "SR0 " <128>

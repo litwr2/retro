@@ -1,3 +1,5 @@
 #kcp disk from to parameter
 #parameter may be -t
+#e.g., kcp t.kdi file.txt 0:file.txt -t
+#  0 means the area for user 0
 cpmcp -f `cfd $1` $4 $1 $2 $3
