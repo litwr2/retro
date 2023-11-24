@@ -1,0 +1,52 @@
+#for an emu of the Corvette
+# works: <>!#$%-[]{};./\?()"+=*'`&,|:^0123456789 
+# not work: _
+A=`wmctrl -l|awk '/Emu80/{print $1}'`
+awk 'BEGIN {
+   T = 200
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
+       t[sprintf("%c", i + 97)] = "shift+" sprintf("%c", i + 65)
+   }
+#   t["_"] = "shift+minus"
+   t["^"] = "apostrophe"
+   t[":"] = "equal"
+   t[" "] = "space"
+   t["!"] = "shift+1"
+   t["\""] = "at"
+   t["#"] = "shift+3"
+   t["$"] = "shift+4"
+   t["%"] = "shift+5"
+   t["&"] = "shift+6"
+   t[sprintf("%c", 39)] = "ampersand"
+   t["("] = "shift+8"
+   t[")"] = "shift+9"
+   t["*"] = "shift+equal"
+   t["+"] = "colon"
+   t[","] = "comma"
+   t["-"] = "minus"
+   t["."] = "period"
+   t["/"] = "slash"
+   t[";"] = "semicolon"
+   t["<"] = "shift+comma"
+   t["="] = "underscore"
+   t[">"] = "shift+period"
+   t["?"] = "shift+slash"
+   t["@"] = "shift+2"
+   t["["] = "bracketleft"
+   t["\\"] = "backslash"
+   t["]"] = "bracketright"
+   t["`"] = "shift+grave"
+   t["{"] = "shift+bracketleft"
+   t["|"] = "shift+backslash"
+   t["}"] = "shift+bracketright"
+   t["~"] = "shift+apostrophe"
+   print "mssleep",T
+}
+{
+  printf "xdotool windowactivate --sync '$A'  key --delay %d",T
+  for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
+  print " Return"
+  print "mssleep",T
+}' $1

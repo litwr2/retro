@@ -1,0 +1,11 @@
+;turns autowrapping on
+  .MCALL  QIOW$S, EXIT$S
+  .PSECT  CODE,I,RW
+START:
+  QIOW$S  #IO.WLB, #5, #5,,,,<#msg3, #msg4-msg3, #40>
+  EXIT$S
+
+msg3:  .ascii <27.> "[?7h"
+msg4:
+  .END  START
+

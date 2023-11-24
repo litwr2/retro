@@ -2,7 +2,7 @@
 ;it fills the 1024x256 screen ITER times via: 1) video registers; 2) direct VRAM acccess
 ;it also shows timings 
 
-DVIDEO = 0   ;0 means video registers
+DVIDEO = 1   ;0 means video registers
 ITER = 40.
 
 .if ne DVIDEO

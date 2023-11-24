@@ -1,0 +1,46 @@
+#for bk-terak emu, send keys to the emu
+A=`wmctrl -l|awk '/BK-001/{print $1}'`
+awk 'BEGIN {
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 65)
+   }
+   t[" "] = "space"
+   t["!"] = "Shift+1"
+   t["\""] = "Shift+apostrophe"
+   t["#"] = "Shift+3"
+   t["$"] = "Shift+4"
+   t["%"] = "Shift+5"
+   t["&"] = "Shift+7"
+   t[sprintf("%c", 39)] = "apostrophe"
+   t["("] = "Shift+9"
+   t[")"] = "Shift+0"
+   t["*"] = "Shift+8"
+   t["+"] = "Shift+plus"
+   t[","] = "comma"
+   t["-"] = "minus"
+   t["."] = "period"
+   t["/"] = "slash"
+   t[":"] = "Shift+colon"
+   t[";"] = "semicolon"
+   t["<"] = "less"
+   t["="] = "equal"
+   t[">"] = "Shift+greater"
+   t["?"] = "Shift+question"
+   t["@"] = "Shift+2"
+   t["["] = "bracketleft"
+   t["\\"] = "backslash"
+   t["]"] = "bracketright"
+   t["`"] = "grave"
+   t["_"] = "underscore"
+   t["^"] = "comma"
+   t["{"] = "Shift+bracketleft"
+   t["|"] = "Shift+backslash"
+   t["}"] = "Shift+bracketright"
+   t["~"] = "Shift+grave"
+}
+{
+  for (i = 1; i <= length($0); i++) printf "xsendkey -window '$A' %s;mssleep 90\n", t[substr($0, i, 1)]
+  print "xsendkey -window '$A' Return;mssleep 90"
+}' $1
