@@ -6,6 +6,7 @@ awk 'BEGIN {
        t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
        t[sprintf("%c", i + 97)] = sprintf("%c", i + 65)
    }
+   t[sprintf("%c", 9)] = "space"
    t[" "] = "space"
    t["!"] = "Shift+1"
    t["\""] = "Shift+apostrophe"
