@@ -3,11 +3,15 @@
 
 BYTE = 0  ;0 means print a word
 
+.macro out1
+       .ttyout
+       ;movb r0,(r5)+
+       .endm out1
+       
 bin2hex:  mov r0,-(sp)   ;prints r1
 .if eq BYTE
           mov r1,r0
-          swab r0
-          clc
+          swab r0   ;sets C=0
           rorb r0
           asrb r0
           asrb r0
@@ -17,7 +21,7 @@ bin2hex:  mov r0,-(sp)   ;prints r1
           bcs 1$
 
           add #7,r0
-1$:       .ttyout
+1$:       out1
 
           mov r1,r0
           swab r0
@@ -27,7 +31,7 @@ bin2hex:  mov r0,-(sp)   ;prints r1
           bcs 2$
 
           add #7,r0
-2$:       .ttyout
+2$:       out1
 .endc
           mov r1,r0
           clc
@@ -40,7 +44,7 @@ bin2hex:  mov r0,-(sp)   ;prints r1
           bcs 3$
 
           add #7,r0
-3$:       .ttyout
+3$:       out1
 
           mov r1,r0
           bicb #240.,r0
@@ -49,7 +53,7 @@ bin2hex:  mov r0,-(sp)   ;prints r1
           bcs 4$
 
           add #7,r0
-4$:       .ttyout
+4$:       out1
           mov (sp)+,r0
           return
 
