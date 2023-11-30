@@ -1,4 +1,4 @@
-;turns autowrapping on
+;turns autowrapping on, for P/OS or RSX-11
   .MCALL  QIOW$S, EXIT$S
   .PSECT  CODE,I,RW
 START:

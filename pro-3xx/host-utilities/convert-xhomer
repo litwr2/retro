@@ -1,10 +1,12 @@
 #for xhomer, send keys to the emu
 A=`wmctrl -l|awk '/XHOMER/{print $1}'`
 awk 'BEGIN {
+   delay = 30
+   for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
-       t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
-       t[sprintf("%c", i + 97)] = sprintf("%c", i + 65)
+       t[sprintf("%c", i + 65)] = sprintf("%c", i + 65)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
    }
    t[sprintf("%c", 9)] = "space"
    t[" "] = "space"
@@ -42,6 +44,12 @@ awk 'BEGIN {
    t["~"] = "Shift+grave"
 }
 {
-  for (i = 1; i < length($0); i++) printf "xsendkey -window '$A' %s;mssleep 30\n", t[substr($0, i, 1)]
-  print "xsendkey -window '$A' Return;mssleep 30"
+  for (i = 1; i <= length($0); i++) {
+    z = substr($0, i, 1)
+    if (!(z in t))
+       print v[z], "is not defined" > "/dev/stderr"
+    else
+       printf "xsendkey -window '$A' %s;mssleep %d\n", t[z], delay
+  }
+  print "xsendkey -window '$A' Return;mssleep", delay
 }' $1

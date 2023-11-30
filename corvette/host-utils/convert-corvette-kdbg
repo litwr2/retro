@@ -1,14 +1,16 @@
-#for an emu of the Corvette
-# works: <>!#$%-[]{};./\?()"+=*'`&,|:^0123456789 
-# not work: _
+#for the kdbg emulator of the Corvette, gawk code
+#disable alternative layouts!!!
+# works: <>!#$%-[]{};./\?()"+=*'`&,|:^0123456789 _
 A=`wmctrl -l|awk '/kdbg$/{print $1}'`
 awk 'BEGIN {
    T = 200
+   for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
        t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
        t[sprintf("%c", i + 97)] = "shift+" sprintf("%c", i + 65)
    }
+   t[sprintf("%c", 9)] = "Tab"
    t["_"] = "equal"
    t["^"] = "End"
    t[":"] = "semicolon"
@@ -42,11 +44,17 @@ awk 'BEGIN {
    t["|"] = "shift+backslash"
    t["}"] = "shift+bracketright"
    t["~"] = "shift+End"
-   print "mssleep",T
+   print "mssleep", T
 }
 {
-  printf "xdotool windowactivate --sync '$A'  key --delay %d",T
-  for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
+  printf "xdotool windowactivate --sync '$A'  key --delay %d", T
+  for (i = 1; i <= length($0); i++) {
+     z = substr($0, i, 1)
+     if (!(z in t))
+        print v[z], "is not defined" > "/dev/stderr"
+     else
+        printf " %s", t[z]
+  }
   print " Return"
-  print "mssleep",T
+  print "mssleep", T
 }' $1
