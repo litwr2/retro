@@ -3,13 +3,9 @@
 
       .radix 10
 
-       .MCall .exit, .rsum, .trpset, .print, .ttyout, .ttyin
-      $JSW =: ^O44
-      TTSPC$ =: ^O10000
+       .MCall .exit, .trpset, .print, .ttyout
 
-START:   bis #TTSPC$,@#$JSW
-         ;.rsum
-         mov #63488,R1    ;$f800
+START:   mov #63488,R1    ;$f800
          mov #7,R3
 vidsk:   .trpset #area,#trprou
          mov (r1),r2

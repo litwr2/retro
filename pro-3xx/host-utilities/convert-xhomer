@@ -5,7 +5,7 @@ awk 'BEGIN {
    for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
-       t[sprintf("%c", i + 65)] = sprintf("%c", i + 65)
+       t[sprintf("%c", i + 65)] = "Shift+" sprintf("%c", i + 65)
        t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
    }
    t[sprintf("%c", 9)] = "space"
@@ -37,7 +37,7 @@ awk 'BEGIN {
    t["]"] = "bracketright"
    t["`"] = "grave"
    t["_"] = "underscore"
-   t["^"] = "comma"
+   t["^"] = "Shift+asciicircum"
    t["{"] = "Shift+bracketleft"
    t["|"] = "Shift+backslash"
    t["}"] = "Shift+bracketright"
@@ -47,9 +47,13 @@ awk 'BEGIN {
   for (i = 1; i <= length($0); i++) {
     z = substr($0, i, 1)
     if (!(z in t))
-       print v[z], "is not defined" > "/dev/stderr"
+       er[v[z]]++
     else
        printf "xsendkey -window '$A' %s;mssleep %d\n", t[z], delay
   }
   print "xsendkey -window '$A' Return;mssleep", delay
+}
+END {
+  for (i in er)
+     print "#" i, "is not defined (used", er[i], "times)" >"/dev/stderr"
 }' $1
