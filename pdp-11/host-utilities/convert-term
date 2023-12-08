@@ -1,0 +1,63 @@
+#send keycodes to your terminal emulator, gawk code
+#disable alternative layouts!!!
+A=`wmctrl -l|awk '/Terminal/{print $1}'`
+awk 'BEGIN {
+   T = 50
+   for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = "shift+" sprintf("%c", i + 65)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
+   }
+   t[sprintf("%c", 9)] = "Tab"
+   t["_"] = "underscore"
+   t["^"] = "shift+6"
+   t[":"] = "colon"
+   t[" "] = "space"
+   t["!"] = "shift+1"
+   t["\""] = "shift+apostrophe"
+   t["#"] = "shift+3"
+   t["$"] = "shift+4"
+   t["%"] = "shift+5"
+   t["&"] = "shift+7"
+   t[sprintf("%c", 39)] = "apostrophe"
+   t["("] = "shift+9"
+   t[")"] = "shift+0"
+   t["*"] = "shift+8"
+   t["+"] = "plus"
+   t[","] = "comma"
+   t["-"] = "minus"
+   t["."] = "period"
+   t["/"] = "slash"
+   t[";"] = "semicolon"
+   t["<"] = "shift+comma"
+   t["="] = "equal"
+   t[">"] = "shift+period"
+   t["?"] = "shift+slash"
+   t["@"] = "at"
+   t["["] = "bracketleft"
+   t["\\"] = "backslash"
+   t["]"] = "bracketright"
+   t["`"] = "grave"
+   t["{"] = "shift+bracketleft"
+   t["|"] = "shift+backslash"
+   t["}"] = "shift+bracketright"
+   t["~"] = "asciitilde"
+   print "mssleep", T
+}
+{
+  printf "xdotool windowactivate --sync '$A'  key --delay %d", T
+  for (i = 1; i <= length($0); i++) {
+     z = substr($0, i, 1)
+    if (!(z in t))
+       er[v[z]]++
+     else
+        printf " %s", t[z]
+  }
+  print " Return"
+  print "mssleep", T
+}
+END {
+  for (i in er)
+     print "#" i, "is not defined (used", er[i], "times)" >"/dev/stderr"
+}' $1

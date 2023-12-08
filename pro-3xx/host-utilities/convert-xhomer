@@ -1,4 +1,4 @@
-#for xhomer, send keys to the emu
+#for xhomer, send keys to the emu, gawk code
 A=`wmctrl -l|awk '/XHOMER/{print $1}'`
 awk 'BEGIN {
    delay = 30

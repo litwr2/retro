@@ -1,0 +1,93 @@
+;for macro-11 assembler, DEC Pro, P/OS
+;it shows slot IDs
+;link it with the /pr option
+
+      .radix 10
+
+.MCALL QIOW$S, EXIT$S, SVTK$S
+
+  .PSECT CODE,I,RW
+START:   SVTK$S #VT,#5
+         
+         mov #63488,R0    ;$f800
+         mov #7,R3
+vidsk:   mov @r1,r2
+         cmp -(SP),-(SP)
+trprou:  cmp (SP)+,(SP)+
+         call pslot
+         add #128,R0    ;$80, upto $fb00
+         sob R3,vidsk
+
+         SVTK$S
+         exit$s
+
+pslot:   mov r0,r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #5>
+         mov r2,r1
+         mov #bufe,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufe, #6>
+         return
+
+BYTE = 0  ;0 means print a word
+
+.macro out1
+       movb r0,(r5)+
+       .endm out1
+       
+bin2hex:  mov r0,-(sp)   ;prints r1 to buffer in r5
+.if eq BYTE
+          mov r1,r0
+          swab r0   ;sets C=0
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 1$
+
+          add #7,r0
+1$:       out1
+
+          mov r1,r0
+          swab r0
+          bicb #240.,r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 2$
+
+          add #7,r0
+2$:       out1
+.endc
+          mov r1,r0
+          clc
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 3$
+
+          add #7,r0
+3$:       out1
+
+          mov r1,r0
+          bicb #240.,r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 4$
+
+          add #7,r0
+4$:       out1
+          mov (sp)+,r0
+          return
+
+VT:  .word trprou,trprou,0,0,trprou
+bufs:    .ascii "0000 "
+bufe:    .ascii "0000" <13> <10>
+.End	START
+
