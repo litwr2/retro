@@ -11,7 +11,7 @@ START:   SVTK$S #VT,#5
          
          mov #63488,R0    ;$f800
          mov #7,R3
-vidsk:   mov @r1,r2
+vidsk:   mov @r0,r2
          cmp -(SP),-(SP)
 trprou:  cmp (SP)+,(SP)+
          call pslot
