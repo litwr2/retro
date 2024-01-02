@@ -14,7 +14,6 @@ USAGE:
 #include<set>
 #include<list>
 #include<deque>
-#include<tuple>
 #include<climits>
 #define BSZ 512
 #define msqr(a) ((a)*(a))
@@ -116,12 +115,6 @@ E1:     fprintf(stderr, "incorrect format\n");
         b[0] = b[0]/16;
         b[1] = b[1]/16;
         b[2] = b[2]/16;
-        //if (b[0] == 7) b[0]++;
-        //if (b[2] == 7) b[2]++;
-        //if (b[1] == 7) b[1]++;
-        //if (b[0] != 15) b[0]++;
-        //if (b[2] != 15) b[2]++;
-        //if (b[1] != 15) b[1]++;
         t = 65536*b[0] + 256*b[1] + b[2];
         data.push_back(t);
         if (clist.find(t) == clist.end()) {
