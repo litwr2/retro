@@ -6,6 +6,7 @@ it calculates color distances using RGB coordinates
 USAGE:
    archiecconv <input.ppm >output.ppm 2>color-tranlation-information.log
 */
+#define MASS_DOTS 0
 #include<iostream>
 #include<iomanip>
 #include<cstring>
@@ -27,12 +28,27 @@ inline int getG(int c) {
 inline int getB(int c) {
    return c&255;
 }
+#if MASS_DOTS==0
 int find_max(const deque<list<map<int, int>::iterator>> &p) {
     int m = 0, x;
     for (auto i = p.begin(); i != p.end(); i++)
         if (m < i->size()) m = i->size(), x = i - p.begin();
     return x;
 }
+#else
+int z(const list<map<int, int>::iterator> &l) {
+    int s = 0;
+    for (auto i = l.begin(); i != l.end(); i++)
+       s += (*i)->second;
+    return s;
+}
+int find_max(const deque<list<map<int, int>::iterator>> &p) {
+    int m = 0, x;
+    for (auto i = p.begin(); i != p.end(); i++)
+        if (m < z(*i)) m = z(*i), x = i - p.begin();
+    return x;
+}
+#endif
 void split(deque<list<map<int, int>::iterator>> &p, int k) {
    int minR = INT_MAX, maxR = 0;
    int minG = INT_MAX, maxG = 0;
