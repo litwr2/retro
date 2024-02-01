@@ -2,4 +2,46 @@
 #parameter may be -t
 #e.g., kcp t.kdi file.txt 0:file.txt -t
 #  0 means the area for user 0
-cpmcp -f `cfd $1` $4 $1 $2 $3
+if [ $# -gt 0 -a ! -r "$1" ]; then
+    echo "$1" 'CANNOT BE USED'
+    exit
+fi
+if [ "${2/[0-9][0-9]:*/:}" = : -o "${2/[0-9]:*/:}" = : ]; then
+	DI=FROM
+fi
+if [ _$DI = _FROM ]; then
+	if [ $# = 2 ]; then
+	    cpmcp -f `cfd "$1"` "$1" "$2" "${2##*:}"
+	elif [ $# = 3 -a $3 = -t ]; then
+	    cpmcp -f `cfd "$1"` "$1" "$2" "${2##*:}" "$3"
+	elif [ $# = 3 ]; then
+	    cpmcp -f `cfd "$1"` "$1" "$2" "$3"
+	elif [ $# = 4 -a "$4" = -t ]; then
+	    cpmcp -f `cfd "$1"` "$1" "$4" "$2" "$3"
+	else
+	    E=1
+	fi
+elif [ "{3/[0-9][0-9]:*/:}" = : -o "${3/[0-9]:*/:}" = : ]; then
+	if [ $# = 4 -a "$4" = -t ]; then
+	    T="$3"
+	    if [ "{T/*:}"_ = _ ];then T="$3$2"; fi
+	    cpmrm -f `cfd "$1"` "$1" "$2"
+	    cpmcp -f `cfd "$1"` $4 "$1" "$2" "$T"
+	elif [ $# = 3 ]; then
+	    T="$3"
+	    if [ "{T/*:}"_ = _ ];then T="$3$2"; fi
+	    cpmrm -f `cfd "$1"` "$1" "$2"
+ 	    cpmcp -f `cfd "$1"` "$1" "$2" "$T"
+	fi
+else
+	E=1
+fi
+if [ _$E = _1 ]; then
+    echo 'USAGE: kcp DISK-IMAGE SOURCE DESTINATION [-t]'
+    echo '  e.g. kcp d.dsk f.txt 0: -t'
+    echo '       kcp d.kdi long-filename.com 0:f.com'
+    echo '       kcp image.kdi f.dat 1:'
+    echo '       kcp image.kdi 0:f.dat long-filename.dat'
+    echo '       kcp image.kdi 2:f.txt -t'
+    echo '       kcp image.kdi 1:f.com'
+fi
