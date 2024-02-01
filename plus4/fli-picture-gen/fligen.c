@@ -1,15 +1,7 @@
-#include<cstdio>
-#include<map>
-using namespace std;
-#include "p4colors.h"
+#include<stdio.h>
 int abase1[4] = {0x2800, 0x3000, 0x3800, 0x9000};
 int abase2[4] = {0x6800, 0x7000, 0x8000, 0x8800};
-map<int, int> colscn;
 unsigned char prg[65536];
-void init() {
-    for (int i = 0; i < 121; i++)
-        colscn[p4palette[i][1]] = p4palette[i][0];
-}
 void setbm(int x, int y, int cs) {
     int bm = 0x4000,
         p = 312*(y >> 3) + ((x&0xfc) << 1) + y,
