@@ -13,7 +13,8 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-NTSC = 1  ;1 makes images compatible with both PAL and NTSC
+VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
+             ;this value must be the multiple of 8 and in range 208-256
 
         org $1001
    byte $b,$10,$a,0,$9e
@@ -126,11 +127,7 @@ irq2:
      sty $ff16
      lda #$18   ;$b0, bitmap at $6000
      sta $ff12  ;$b4
-  if NTSC = 0
-     lda #140   ;$bc
-  else
-     lda #172
-  endif
+     lda #396-VSIZE   ;$bc
      sta $ff1d  ;$c0, it sets the value at $c6
      lda #$26   ;$c8
      sta $ff15  ;$96
@@ -138,7 +135,7 @@ irq2:
      sta $ff16
      zline $70,$80,$88,$68
 
-  rept (1-NTSC)*4+2
+  rept VSIZE/8-26
      iline $70,$80,$88,$68
   endr
      iline $70,$80,$88,$28
@@ -154,14 +151,14 @@ irq2:
 
 irq205:
      pha
-  if NTSC = 0
-     lda #235
+  if VSIZE > 224
+     lda #VSIZE-21
   else
-     lda #225
+     lda #VSIZE+1
   endif
      sta $ff1d
 
-  if NTSC = 0
+  if VSIZE > 224
      lda #$a3
      sta $ff0a
      lda #<284
@@ -170,18 +167,18 @@ irq205:
   endif
      sta $ff0b
 
-     lda #<irq284
+     lda #<irq284  ;245
      sta $fffe
-     lda #>irq284
+     lda #>irq284  ;245
      sta $ffff
 
      pla
      inc $ff09
      rti
 
-irq284:
+irq284:   ;245
      pha
-  if NTSC = 0
+  if VSIZE > 224
      lda #<310
   else
      lda #249
@@ -206,7 +203,7 @@ irq284:
      rept $3c0
      byte 0
      endr   ;$2bc0
-;$40
+;$40-9
 init:
      lda $ff07
      ora #$10

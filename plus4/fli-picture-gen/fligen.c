@@ -1,4 +1,4 @@
-#define NTSC 1
+#define YMAX 256
 #include<stdio.h>
 int abase1[4] = {0x2800, 0x3000, 0x3800, 0x9000};
 int abase2[4] = {0x6800, 0x7000, 0x8000, 0x8800};
@@ -62,10 +62,11 @@ int main() {
     FILE *fi = fopen("out.prg", "r");
     int co = fread(prg + 0xfff, 1, 50000, fi);
     fclose(fi);
-    for (int x = 0; x < 160; x++)
-        for (int y = 0; y < 256 - NTSC*32; y++)
-            setbmc(x, y, 5, 1);
+    /* the start of graphics */
     prg[0x100e] = 5; //border color
+    for (int x = 0; x < 160; x++)
+        for (int y = 0; y < YMAX; y++)
+            setbmc(x, y, 5, 1);
     for(int x = 0; x < 160; x++) {
        setbmc(x, x, 0x77, 2);
        setbmc(x, x + 2, 0x52, 0);
@@ -73,17 +74,17 @@ int main() {
        setbmc(159 - x, x, 0x4c, 3);
        setbmc(159 - x, x + 2, 0x52, 0);
        setbmc(159 - x, x + 3, 0x77, 2);
-       setbmc(x, x + 96 - NTSC*32, 0x77, 2);
-       setbmc(x, x + 94 - NTSC*32, 0x52, 0);
-       setbmc(x, x + 93 - NTSC*32, 0x4c, 3);
-       setbmc(159 - x, x + 96 - NTSC*32, 0x4c, 3);
-       setbmc(159 - x, x + 94 - NTSC*32, 0x52, 0);
-       setbmc(159 - x, x + 93 - NTSC*32, 0x77, 2);
+       setbmc(x, x + YMAX - 160, 0x77, 2);
+       setbmc(x, x + YMAX - 162, 0x52, 0);
+       setbmc(x, x + YMAX - 163, 0x4c, 3);
+       setbmc(159 - x, x + YMAX - 160, 0x4c, 3);
+       setbmc(159 - x, x + YMAX - 162, 0x52, 0);
+       setbmc(159 - x, x + YMAX - 163, 0x77, 2);
     }
     for(int y = 1; y < 0x7f; y++)
         for (int x = 0; x < 160; x++)
-            setbmc(x, y + 20 - NTSC*10, y, 0);
-    for (int y = 0; y < 256 - NTSC*32; y++) {
+            setbmc(x, y + 16, y, 0);
+    for (int y = 0; y < YMAX; y++) {
         setbmc(80, y, 0x77, 2);
         setbmc(81, y, 0x52, 1);
         setbmc(82, y, 0x4c, 3);
@@ -91,6 +92,7 @@ int main() {
         setbmc(85, y, 0x66, 2);
         setbmc(87, y, 0x66, 2);
     }
+    /* the finish of graphics */
     fi = fopen("out1.prg", "w");
     fwrite(prg + 0xfff, 1, 0x8800, fi);
     fclose(fi);
