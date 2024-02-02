@@ -13,7 +13,7 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
+VSIZE = 280  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 208-280
 
         org $1001
