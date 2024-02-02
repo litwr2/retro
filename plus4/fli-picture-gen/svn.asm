@@ -14,7 +14,7 @@
 ;line 284 gets +26 = 310 interrupt
 
 VSIZE = 280  ;value less than 225 makes images compatible with both PAL and NTSC
-             ;this value must be a multiple of 8 and in the range 208-264
+             ;this value must be a multiple of 8 and in the range 208-280
 
         org $1001
    byte $b,$10,$a,0,$9e
