@@ -1,4 +1,3 @@
-#define YMAX 264
 #include<stdio.h>
 int abase1[4] = {0x2800, 0x3000, 0x3800, 0x9000};
 int abase2[4] = {0x9800, 0x7000, 0x8000, 0x8800};
@@ -64,6 +63,7 @@ int main() {
     fclose(fi);
     /* the start of graphics */
     prg[0x100e] = 5; //border color
+#define YMAX 280
     for (int x = 0; x < 160; x++)
         for (int y = 0; y < YMAX; y++)
             setbmc(x, y, 5, 1);
