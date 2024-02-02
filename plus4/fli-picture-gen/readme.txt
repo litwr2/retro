@@ -1,4 +1,4 @@
-Just make your picture in the p4prg source using the setbmc function that
+Just make your picture in the fligen.c source using the setbmc function that
 sets a pixel on the FLI screen that has 160x224 size, 2 free colors
 in each 4x2 matrix, and additional 2 free colors for each raster line
 
