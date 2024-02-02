@@ -1,7 +1,3 @@
-echo @@ make your picture in the p4prg source using the setbmc function that
-echo @@ sets a pixel on the FLI screen that has 160x256 size, 2 free colors
-echo @@ in each 4x2 matrix, and additional 2 free colors for each raster line
-echo @@ this is for the PAL system only
 vasm6502_oldstyle svn.asm -Fbin -cbm-prg -o out.prg -L out.lst
 g++ fligen.c
 a.out

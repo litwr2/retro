@@ -13,6 +13,8 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
+NTSC = 1  ;1 makes images compatible with both PAL and NTSC
+
         org $1001
    byte $b,$10,$a,0,$9e
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
@@ -70,8 +72,9 @@
 start:
      lda #0
      sta $ff19   ;border color
-     lda #$18
-     sta $ff07   ;multicolor
+     nop
+     nop
+     jsr init
 
      sei
      sta $ff3f
@@ -123,7 +126,11 @@ irq2:
      sty $ff16
      lda #$18   ;$b0, bitmap at $6000
      sta $ff12  ;$b4
+  if NTSC = 0
      lda #140   ;$bc
+  else
+     lda #172
+  endif
      sta $ff1d  ;$c0, it sets the value at $c6
      lda #$26   ;$c8
      sta $ff15  ;$96
@@ -131,29 +138,37 @@ irq2:
      sta $ff16
      zline $70,$80,$88,$68
 
-  rept 6
+  rept (1-NTSC)*4+2
      iline $70,$80,$88,$68
   endr
      iline $70,$80,$88,$28
 
-     lda #206
+     lda #205
      sta $ff0b
-     lda #<irq206
+     lda #<irq205
      sta $fffe
-     lda #>irq206
+     lda #>irq205
      sta $ffff
      inc $ff09
      rti
 
-irq206:
+irq205:
      pha
-     lda #236
+  if NTSC = 0
+     lda #235
+  else
+     lda #225
+  endif
      sta $ff1d
 
-     lda #<284
-     sta $ff0b
+  if NTSC = 0
      lda #$a3
      sta $ff0a
+     lda #<284
+  else
+     lda #245
+  endif
+     sta $ff0b
 
      lda #<irq284
      sta $fffe
@@ -166,7 +181,11 @@ irq206:
 
 irq284:
      pha
+  if NTSC = 0
      lda #<310
+  else
+     lda #249
+  endif
      sta $ff1d
 
      lda #2
@@ -188,6 +207,12 @@ irq284:
      byte 0
      endr   ;$2bc0
 ;$40
+init:
+     lda $ff07
+     ora #$10
+     sta $ff07   ;multicolor mode
+     rts
+
      org $2c00    ;clrs 0-1: 0-23
      rept $3c0
      byte 0
