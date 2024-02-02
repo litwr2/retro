@@ -4,5 +4,5 @@ in each 4x2 matrix, and additional 2 free colors for each raster line
 
 If you have the out.prg file you don't need to compile svn.asm
 
-On the PAL you can use 160x256 screen size
+On the PAL systems you may use up to 160x264 screen sizes
 

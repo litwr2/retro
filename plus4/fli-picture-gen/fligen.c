@@ -1,7 +1,7 @@
-#define YMAX 256
+#define YMAX 264
 #include<stdio.h>
 int abase1[4] = {0x2800, 0x3000, 0x3800, 0x9000};
-int abase2[4] = {0x6800, 0x7000, 0x8000, 0x8800};
+int abase2[4] = {0x9800, 0x7000, 0x8000, 0x8800};
 unsigned char prg[65536];
 void setbm(int x, int y, int cs) {
     int bm = 0x4000,
@@ -94,6 +94,6 @@ int main() {
     }
     /* the finish of graphics */
     fi = fopen("out1.prg", "w");
-    fwrite(prg + 0xfff, 1, 0x8800, fi);
+    fwrite(prg + 0xfff, 1, co, fi);
     fclose(fi);
 }

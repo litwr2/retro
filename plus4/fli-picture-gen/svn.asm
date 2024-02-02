@@ -13,8 +13,8 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
-             ;this value must be the multiple of 8 and in range 208-256
+VSIZE = 264  ;value less than 225 makes images compatible with both PAL and NTSC
+             ;this value must be a multiple of 8 and in the range 208-264
 
         org $1001
    byte $b,$10,$a,0,$9e
@@ -121,7 +121,7 @@ irq2:
   rept 23          ;starts at 3:$96
      iline $30,$38,$90,$28
   endr
-     iline $30,$38,$90,$68
+     iline $30,$38,$90,$98
 
      stx $ff15
      sty $ff16
@@ -133,10 +133,10 @@ irq2:
      sta $ff15  ;$96
      lda #$27   ;$a6
      sta $ff16
-     zline $70,$80,$88,$68
+     zline $70,$80,$88,$98
 
   rept VSIZE/8-26
-     iline $70,$80,$88,$68
+     iline $70,$80,$88,$98
   endr
      iline $70,$80,$88,$28
 
@@ -240,46 +240,26 @@ init:
      byte $55
      endr   ;$5e00
 ;$200
-     org $6000    ;bm 200-207 (24-39), 208-255
-     rept $800
+     org $6000    ;bm 200-207 (24-39), 208-263
+     rept $940
      byte $55
-     endr   ;$6800
-;0
-     org $6800    ;attr 0-1: 25 (24-39), 26-31
-     rept $100
+     endr   ;$6940
+;$6c0     
+     org $7000    ;attr 2-3: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$6900
-;$2c0
-     org $6bc0    ;attr 0-1: 24, 25 (0-23)
-     rept $40
-     byte 0
-     endr   ;$6c00
-;0
-     org $6c00    ;clrs 0-1: 25 (24-39), 26-31
-     rept $100
-     byte 0
-     endr   ;$6d00
-;$2c0
-     org $6fc0    ;clrs 0-1: 24, 25 (0-23)
-     rept $40
-     byte 0
-     endr   ;$7000
-;0     
-     org $7000    ;attr 2-3: 25 (24-39), 26-31
-     rept $100
-     byte 0
-     endr   ;$7100
-;$2c0
-     org $73c0    ;attr 2-3: 25 (24-39), 26-31
+     endr   ;$7128
+;$298
+     org $73c0    ;attr 2-3: 24, 25 (0-23)
      rept $40
      byte 0
      endr   ;$7400
 ;0
-     org $7400    ;clrs 2-3: 25 (24-39), 26-31
-     rept $100
+     org $7400    ;clrs 2-3: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$7500
-;$2c0
+     endr   ;$7528
+;$298
      org $77c0    ;clrs 2-3: 24, 25 (0-23)
      rept $40
      byte 0
@@ -290,41 +270,41 @@ init:
      byte $55
      endr   ;$8000
 ;0
-     org $8000    ;attr 4-5: 25 (24-39), 26-31
-     rept $100
+     org $8000    ;attr 4-5: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$8100
-;$2c0
+     endr   ;$8128
+;$298
      org $83c0    ;attr 4-5: 24, 25 (0-23)
      rept $40
      byte 0
      endr   ;$8400
 ;0
-     org $8400    ;clrs 4-5: 25 (24-39), 26-31
-     rept $100
+     org $8400    ;clrs 4-5: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$8500
-;$2c0
+     endr   ;$8528
+;$298
      org $87c0    ;clrs 4-5: 24, 25 (0-23)
      rept $40
      byte 0
      endr   ;$8800
 ;0
-     org $8800     ;attr 6-7: 25 (24-39), 26-31
-     rept $100
+     org $8800     ;attr 6-7: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$8900
-;$2c0
+     endr   ;$8928
+;$298
      org $8bc0    ;attr 6-7: 24, 25 (0-23)
      rept $40
      byte 0
      endr   ;$8c00
 ;0
-     org $8c00   ;clrs 6-7: 25 (24-39), 26-31
-     rept $100
+     org $8c00   ;clrs 6-7: 25 (24-39), 26-32
+     rept $128
      byte 0
-     endr   ;$8d00
-;$2c0
+     endr   ;$8d28
+;$298
      org $8fc0    ;clrs 6-7: 24, 25 (0-23)
      rept $40
      byte 0
@@ -339,4 +319,24 @@ init:
      rept $3c0
      byte 0
      endr   ;$97c0
+;$40
+     org $9800    ;attr 0-1: 25 (24-39), 26-32
+     rept $128
+     byte 0
+     endr   ;$9928
+;$298
+     org $9bc0    ;attr 0-1: 24, 25 (0-23)
+     rept $40
+     byte 0
+     endr   ;$9c00
+;0
+     org $9c00    ;clrs 0-1: 25 (24-39), 26-32
+     rept $128
+     byte 0
+     endr   ;$9d28
+;$298
+     org $9fc0    ;clrs 0-1: 24, 25 (0-23)
+     rept $40
+     byte 0
+     endr   ;$9000
 
