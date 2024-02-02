@@ -3,17 +3,17 @@
 ; 0: $4000-413f    $2800-2827  $3000  $3800  $9000
 ; 1: $4140-427f    $2828-284f
 ;23: $5cc0-5dff    $2b98-2bbf
-;24: $7e00-7f3f    $6bc0-6be7  $7000  $8000  $8800
-;25: $7f40-7fff    $6be8-6bff
-;    $6000-607f    $6800-680f
-;26: $6080-61c0    $6810-6837
-;28: $6300-643f    $6860-6887
-;31: $66c0-67ff    $68d8-68ff
+;24: $7e00-7f3f    $9bc0-9be7  $7000  $8000  $8800
+;25: $7f40-7fff    $9be8-9bff
+;    $6000-607f    $9800-980f
+;26: $6080-61c0    $9810-9837
+;28: $6300-643f    $9860-9887
+;31: $66c0-67ff    $98d8-98ff
 ;line 202 gets -56 = 146
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-VSIZE = 280  ;value less than 225 makes images compatible with both PAL and NTSC
+VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 208-280
 
         org $1001

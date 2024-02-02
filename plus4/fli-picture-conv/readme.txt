@@ -8,12 +8,12 @@ This program doesn't do any preprocessing: scaling, dithering, color substitutio
 
 First you need to scale your image.  Then do some optional pre-processing, such as increasing the luminance and saturation of the image.  This step is often useful because the C+4 palette tends to be light rather than dark.  Then you need to apply the standard C+4 palette to your image.  The GIMP editor can do this very easily.  The last step is to save the image in PPM (binary) format.  The saved file may be converted by the program.
 
-There is a special case for image preprocessing.  The C+4 hardware allows us to use all colors freely if we use the large pixels, which are a 2x2 matrix of the normal pixels.  This allows us to have up to 80x140 pixel images where each pixel can have any color.  To get such an image you need to scale your image to the right size, then make the image 2 times bigger without any interpolation.  Then apply the palette and save the result.
+There is a special case for image preprocessing.  The C+4 hardware allows us to use all colors freely if we use the large pixels, which are a 2x2 matrix of the normal pixels.  This allows us to have up to 80x140 pixel images where each pixel can have any color.  To get such an image you need to scale your image to the right size, then make the image 2 times bigger without any interpolation.  Then apply the palette.  Now you can optionally superimpose two arbitrary colors on each line.  The final step is to save the result.
 
-This program has some useful features:
+This program has several useful features:
 1) the generated images don't flicker on the C+4 screen;
 2) the generated images can have the maximum size allowed by the C+4 hardware;
-3) it is an open source software that suggests code modification by the end users.
+3) it is easy to compile open source software that suggests code modification by the end users.
 
 Just compile mc-pic-cnv.cpp and call it with two parameters.  The first parameter is the name of the input file, the second is the name of the output file.  You also need to have the file out.prg in the current directory.  This file is the result of compiling the svn.asm file.  The resulting file for the C+4 has name out1.prg.
 
