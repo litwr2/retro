@@ -68,6 +68,8 @@
      endm
 
 start:
+     lda #0
+     sta $ff19   ;border color
      lda #$18
      sta $ff07   ;multicolor
 

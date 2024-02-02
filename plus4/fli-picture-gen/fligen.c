@@ -9,7 +9,7 @@ void setbm(int x, int y, int cs) {
     if (y >= 192 && (y < 200 || y < 208 && x < 96)) bm = 0x6000;
     prg[bm + p] = prg[bm + p] & ~(3 << px) | cs << px;
 }
-#define BA 0x105e  //4190
+#define BA 0x1063  //4195
 void setbmc(int x, int y, int c, int cs) {
 //cs: 0 - multicolor 1, 1 - background, 2 - foreground, 3 - multicolor 2
     int z = cs == 3;
@@ -80,7 +80,11 @@ int main() {
             setbmc(x, y + 20, y, 0);
     for (int y = 0; y < 256; y++) {
         setbmc(80, y, 0x77, 2);
-        setbmc(82, y, 0x77, 2);
+        setbmc(81, y, 0x52, 1);
+        setbmc(82, y, 0x4c, 3);
+        setbmc(83, y, 0x52, 1);
+        setbmc(85, y, 0x66, 2);
+        setbmc(87, y, 0x66, 2);
     }
     fi = fopen("out1.prg", "w");
     fwrite(prg + 0xfff, 1, 0x8800, fi);
