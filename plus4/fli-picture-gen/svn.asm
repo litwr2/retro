@@ -207,6 +207,8 @@ irq276:   ;245
      rti
 
 main:
+     lda #0
+     sta $d8
      lda #$9f
      sta $e0
 .l1: ldx $e0
@@ -216,13 +218,23 @@ main:
      dec $e0
      bne .l1
 
+     ldx #0
+     ldy #<279
+     lda #>279
+     sta $d8
+     lda #3
+     jsr setbm
+
      lda #$9f
      sta $e0
 .l2: ldx $e0
-     lda $e0
+     txa
      clc
-     adc #96
+     adc #96+24
      tay
+     lda #0
+     rol
+     sta $d8
      lda #3
      jsr setbm
      dec $e0
@@ -270,12 +282,19 @@ init:
      byte $55
      endr   ;$5e00
 ;$200-$99
-setbm: ;y - y, x - x, cs - a; uses: $d0-d1, $d6-d7  //y < 256
+setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      sta $d7
      lda #$40
      sta $d1
+  if VSIZE > 255
+     lda $d8
+     lsr
+     tya
+     ror
+  else
      tya
      lsr
+  endif
      lsr
      lsr
      sta $d0
@@ -294,11 +313,11 @@ setbm: ;y - y, x - x, cs - a; uses: $d0-d1, $d6-d7  //y < 256
      lda #$60
      sta $d1
 .l1: lda #0
-     sta $d6  ;>y
+     sta $d6  ;>y/8
      lda $d0
      asl
-     asl      ;<y/8*4
-     adc $d0  ;<y/8*5
+     asl      ;y/8*4
+     adc $d0  ;y/8*5
      asl
      rol $d6  ;y/8*10
      asl
@@ -321,7 +340,11 @@ setbm: ;y - y, x - x, cs - a; uses: $d0-d1, $d6-d7  //y < 256
      adc $d0
      sta $d0
      lda $d6
+  if VSIZE>255
+     adc $d8
+  else
      adc #0
+  endif
      sta $d6  ;y/8*312+y
      txa
      and #$fc
