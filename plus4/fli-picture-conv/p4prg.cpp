@@ -35,7 +35,7 @@ void setattr(void) {
             prg[ba + p + 0x400] = c2 & 15 | (c1 & 15) << 4;
         }
 }
-#define BA 0x1063  //4195
+#define BA 0x1066  //4198
 void setmc(void) {
     for (int y = 0; y < vs; y++) {
         int c[2] = {colscn[mc2[y]], colscn[mc1[y]]};

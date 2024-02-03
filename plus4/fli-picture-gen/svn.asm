@@ -88,9 +88,10 @@ start:
      lda #>irq2
      sta $ffff
      cli
-     jmp *
+     jmp main
 
 irq2:
+     pha
      LDA  $FF1E
      AND  #$3E
      lsr
@@ -106,17 +107,18 @@ irq2:
      LDA  #$A9
      LDA  $EA
 
-   rept 6
      nop
-   endr
+     nop
+     stx .savex+1
+     sty .savey+1
      lda #$10     ;bitmap at $4000
      sta $ff12
 
-     lda $ea  ;2:$ba
-     nop  ;2:$be
-     nop  ;2:$c2
-     ldx #$24  ;3:$c6
-     ldy #$25  ;3:$ca
+     lda $ea
+     nop
+     nop
+     ldx #$24
+     ldy #$25
 
   rept 23          ;starts at 3:$96
      iline $30,$38,$90,$28
@@ -146,6 +148,11 @@ irq2:
      sta $fffe
      lda #>irq205
      sta $ffff
+.savex:
+     ldx #0
+.savey:
+     ldy #0     
+     pla
      inc $ff09
      rti
 
@@ -199,6 +206,29 @@ irq276:   ;245
      inc $ff09
      rti
 
+main:
+     lda #$9f
+     sta $e0
+.l1: ldx $e0
+     ldy $e0
+     lda #0
+     jsr setbm
+     dec $e0
+     bne .l1
+
+     lda #$9f
+     sta $e0
+.l2: ldx $e0
+     lda $e0
+     clc
+     adc #96
+     tay
+     lda #3
+     jsr setbm
+     dec $e0
+     bne .l2
+     jmp *
+
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
@@ -239,7 +269,105 @@ init:
      rept $1e00
      byte $55
      endr   ;$5e00
-;$200
+;$200-$99
+setbm: ;y - y, x - x, cs - a; uses: $d0-d1, $d6-d7  //y < 256
+     sta $d7
+     lda #$40
+     sta $d1
+     tya
+     lsr
+     lsr
+     lsr
+     sta $d0
+     cmp #192/8
+     bcc .l1  ;branch if a < 192/8
+
+     cmp #200/8
+     bcc .l2  ;branch if a < 200/8
+     
+     cpx #96
+     bcs .l1  ;branch if x >= 96
+     
+     cmp #208/8
+     bcs .l1
+.l2:
+     lda #$60
+     sta $d1
+.l1: lda #0
+     sta $d6  ;>y
+     lda $d0
+     asl
+     asl      ;<y/8*4
+     adc $d0  ;<y/8*5
+     asl
+     rol $d6  ;y/8*10
+     asl
+     rol $d6  ;y/8*20
+     asl
+     rol $d6  ;y/8*40
+     sec
+     sbc $d0
+     sta $d0
+     lda $d6
+     sbc #0   ;y/8*39
+     asl $d0
+     rol      ;y/8*78
+     asl $d0
+     rol      ;y/8*156
+     asl $d0
+     rol
+     sta $d6  ;y/8*312
+     tya
+     adc $d0
+     sta $d0
+     lda $d6
+     adc #0
+     sta $d6  ;y/8*312+y
+     txa
+     and #$fc
+     asl
+     tay    ;x&0xfc << 1
+     lda #0
+     adc $d6
+     sta $d6
+     tya
+     adc $d0
+     sta $d0
+     lda $d6
+     adc #0
+     adc $d1  ;ba + y/8*312+y+(x&0xfc)*2
+     sta $d1
+     txa
+     and #3
+     asl
+     sta $d6
+     lda #6
+     sec
+     sbc $d6
+     tax     ;6 - ((x&3) << 1)
+     tay
+     beq .l3
+
+     lda #3
+     asl
+     dey
+     bne *-2
+     eor #$ff
+     and ($d0),y
+     sta $d6
+     lda $d7
+     asl
+     dex
+     bne *-2
+     ora $d6
+.l4: sta ($d0),y
+     rts
+
+.l3: lda #$fc
+     and ($d0),y
+     ora $d7
+     jmp .l4
+
      org $6000    ;bm 200-207 (24-39), 208-279
      rept $bc0
      byte $55

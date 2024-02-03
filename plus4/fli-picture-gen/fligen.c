@@ -9,7 +9,7 @@ void setbm(int x, int y, int cs) {
     if (y >= 192 && (y < 200 || y < 208 && x < 96)) bm = 0x6000;
     prg[bm + p] = prg[bm + p] & ~(3 << px) | cs << px;
 }
-#define BA 0x1063  //4195
+#define BA 0x1066  //4198
 void setbmc(int x, int y, int c, int cs) {
 //cs: 0 - multicolor 1, 1 - background, 2 - foreground, 3 - multicolor 2
     int z = cs == 3;
