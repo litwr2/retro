@@ -220,17 +220,24 @@ main:
      dex
      ldy $e0
      dey
-     lda #0
+     lda #2
      jsr setbm
      dec $e0
      bne .l1
 
+     ldy #<(VSIZE-2)
+     lda #1
+     sta $d8
+     ldx #159
+     lda #2
+     jsr setbm
+     
      lda #$9f
      sta $e0
 .l2: ldx $e0
      txa
      clc
-     adc #96+24-24
+     adc #96+24
      tay
      lda #0
      rol
@@ -245,25 +252,39 @@ main:
      cmp $a5
      bne *-2
 
-     lda #<(VSIZE-1)
-     sta $e0
-     lda #>(VSIZE-1)
-     sta $e1
+      lda #0
+      sta $d8
+     ;lda #8  ;<(VSIZE-1)
+     ;sta $e0
+     ;lda #>(VSIZE-1)
+     ;sta $e1
 .l3: lda #$77
      sta $d9
-     ldy $e1
-     sty $d8
-     ldy $e0
-     lda #3
+     ;ldy $e1
+     ;sty $d8
+     lda #1
+     sta $d8
+     ldy #<(VSIZE-1)
+     ldx #159
+     lda #2
      jsr seta
-     ldy $e0
-     bne *+4
-     dec $e1
-     dey
-     sty $e0
-     tya
-     ora $e1
-     bne .l3
+     lda #0
+     sta $d8
+     ldy #0
+     ldx #0
+     lda #2
+     jsr seta
+     ;dec $e0
+     ;dec $e0
+     ;bne .l3
+     ;ldy $e0
+     ;bne *+4
+     ;dec $e1
+     ;dey
+     ;sty $e0
+     ;tya
+     ;ora $e1
+     ;bne .l3
      jmp *
      ;jmp tobasic
 
@@ -385,25 +406,23 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      tya
      adc $d0
      sta $d0
-     lda $d6
   if VSIZE>256
+     lda $d6
      adc $d8
+     sta $d6
   else
-     adc #0
-  endif
-     sta $d6  ;y/8*312+y
+     bcc *+4
+     inc $d6
+  endif       ;y/8*312+y
      txa
      and #$fc
-     asl
-     tay    ;x&0xfc << 1
-     lda #0
-     adc $d6
-     sta $d6
-     tya
+     asl    ;x&0xfc << 1
+     bcc *+4
+     inc $d6
+     clc
      adc $d0
      sta $d0
      lda $d6
-     adc #0
      adc $d1  ;ba + y/8*312+y+(x&0xfc)*2
      sta $d1
      txa
@@ -451,7 +470,7 @@ abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
         ;if cs == 0 or 3 then x is ignored
-        ;uses: $d0-d1, $d6-d7
+        ;uses: $d0-d3, $d6-d7
      cmp #1
      bne *+5
      jmp .l2
@@ -535,7 +554,7 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      lda $d9
      sta ($d0),y
      rts
-    
+
 .l3: cmp #192/2
      lda #1
      bcs .l6
@@ -578,8 +597,112 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      lda $d9
      sta ($d0),y
      rts
-.l2:
+
+.l2: lsr
+     sta .m1+1  ;cs
+     sty $d6  ;y
+     tya
+     lsr
+     and #3
+     sta $d7  ;y/2%4
+     tay
+     lda abase2,y
+     sec
+     sbc #4
+  if VSIZE>256
+     ldy $d8
+     bne .l7
+  endif
+     ldy $d6
+     cpy #192
+     bcs .l8  ;y>=192
+
+     ldy $d7
+     lda abase1,y
+     jmp .l7
+
+.l8: cpy #200
+     bcs .l7
+
+     cpx #96
+     bcs .l7
+
+     ldy $d7
+     lda abase2,y
+.l7: sta $d1  ;ba
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d7
+     lda $d6
+     and #$f8  ;y&0xf8 = (y/8)*8
+     sta $d0
+     asl
+     rol $d7
+     asl
+     rol $d7  ;y/8*8*4
+     adc $d0
+     sta $d0
+  if VSIZE>256
+     lda $d7
+     adc $d8
+     sta $d7
+  else
+     bcc *+4
+     inc $d7
+  endif  ;y/8*40
+     txa
+     lsr
+     lsr
+     clc
+     adc $d0
+     sta $d0
+     sta $d2
+     lda $d7
+     adc $d1
+     sta $d1  ;y/8*40+x/4
+     adc #4
+     sta $d3
+     ldy #0
+     lda ($d0),y
+     sta $d7   ;cl
+     lda ($d2),y
+     sta $d6   ;cc
+.m1: lda #0    ;cs/2
+     beq .l9
+
+     and #$f0
+     sta $d6
+     lda $d9
+     and #$f
+     ora $d6
+     sta ($d2),y
+     lda $d7
+     and #$f
+     sta $d7
+     lda $d9
+     and #$f0
+     ora $d7
+     sta ($d0),y
      rts
+
+.l9: and #$f
+     sta $d6
+     lda $d9
+     and #$f0
+     ora $d6
+     sta ($d2),y
+     lda $d7
+     and #$f0
+     sta $d7
+     lda $d9
+     and #$f
+     ora $d7
+     sta ($d0),y
+     rts
+
      org $73c0    ;attr 2-3: 24, 25 (0-23)
      rept $40
      byte 0

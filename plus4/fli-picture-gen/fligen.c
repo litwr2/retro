@@ -37,7 +37,6 @@ void setbmc(int x, int y, int c, int cs) {
     case 2:
         int ba = abase2[y/2%4] - 0x400;
         int p = (y >> 3)*40 + (x >> 2);
-        y &= 0xffe;
         if (y < 192) ba = abase1[y/2%4];
         else if (y < 200 || y < 208 && x < 96) ba = abase2[y/2%4];
         int cc = prg[ba + p + 0x400];
