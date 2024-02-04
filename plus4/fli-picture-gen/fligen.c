@@ -13,26 +13,24 @@ void setbm(int x, int y, int cs) {
 void setbmc(int x, int y, int c, int cs) {
 //cs: 0 - multicolor 1, 1 - background, 2 - foreground, 3 - multicolor 2
     int z = cs == 3;
+    int p = BA + y*17 + 5*z;
     setbm(x, y, cs);
     switch (cs) {
     case 0:
     case 3:
         if (y%2 == 0) {
             if (y < 192)
-		        prg[BA + y*17 + 5*z] = c;
+		        prg[p] = c;
 		    else if (y == 192)
 		        prg[BA - 4 + 2*z] = c;
 		    else
-		        prg[BA + 2 + y*17 + 5*z] = c;
+		        prg[p + 2] = c;
 		}
         else {
-            y -= 1;
-		    if (y < 192)
-		        prg[BA + 14 + y*17 + 5*z] = c;
-		    else if (y == 192)
-		        prg[BA + 3280 + 5*z] = c;
+		    if (y < 193)
+		        prg[p - 3] = c;
 		    else
-		        prg[BA + 16 + y*17 + 5*z] = c;
+		        prg[p - 1] = c;
 		}
 		return;
     case 1:

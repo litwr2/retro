@@ -119,7 +119,7 @@ irq2:
      nop
      ldx #$24
      ldy #$25
-
+BA = *+1
   rept 23          ;starts at 3:$96
      iline $30,$38,$90,$28
   endr
@@ -214,28 +214,23 @@ irq205:
 main:
      lda #0
      sta $d8
-     lda #$9f
+     lda #$a0
      sta $e0
 .l1: ldx $e0
+     dex
      ldy $e0
+     dey
      lda #0
      jsr setbm
      dec $e0
      bne .l1
-
-     ldx #0
-     ldy #<279
-     lda #>279
-     sta $d8
-     lda #3
-     jsr setbm
 
      lda #$9f
      sta $e0
 .l2: ldx $e0
      txa
      clc
-     adc #96+24
+     adc #96+24-24
      tay
      lda #0
      rol
@@ -245,26 +240,33 @@ main:
      dec $e0
      bne .l2
 
-     ;jmp *
+     lda $a5
+     adc #50
+     cmp $a5
+     bne *-2
 
-     sei
-     lda #8
-     sta $ff14
-     lda #$1b
-     sta $ff06
-     lda $ff07
-     and #$ef
-     sta $ff07
-     lda #$c4
-     sta $ff12
-     sta $ff3e
-     lda #$ee
-     sta $ff19
-     lda #$f1
-     sta $ff15
-     cli
-     rts
-     
+     lda #<(VSIZE-1)
+     sta $e0
+     lda #>(VSIZE-1)
+     sta $e1
+.l3: lda #$77
+     sta $d9
+     ldy $e1
+     sty $d8
+     ldy $e0
+     lda #3
+     jsr seta
+     ldy $e0
+     bne *+4
+     dec $e1
+     dey
+     sty $e0
+     tya
+     ora $e1
+     bne .l3
+     jmp *
+     ;jmp tobasic
+
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
@@ -298,6 +300,7 @@ tobasic:
      lda #$f1
      sta $ff15
      cli
+     ;a place to some code, for instance to print something via $ffd2 or wait a keypress
      rts 
 
      org $3000    ;attr 2-3: 0-23
@@ -329,7 +332,7 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      sta $d7
      lda #$40
      sta $d1
-  if VSIZE > 255
+  if VSIZE > 256
      lda $d8
      lsr
      tya
@@ -383,7 +386,7 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      adc $d0
      sta $d0
      lda $d6
-  if VSIZE>255
+  if VSIZE>256
      adc $d8
   else
      adc #0
@@ -438,12 +441,145 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      rept $bc0
      byte $55
      endr   ;$6bc0
-;$440     
+;$440
      org $7000    ;attr 2-3: 25 (24-39), 26-34
      rept $178
      byte 0
      endr   ;$7178
 ;$248
+abase1:  byte $28, $30, $38, $90
+abase2:  byte $98, $70, $80, $88
+seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
+        ;if cs == 0 or 3 then x is ignored
+        ;uses: $d0-d1, $d6-d7
+     cmp #1
+     bne *+5
+     jmp .l2
+
+     cmp #2
+     bne *+5
+     jmp .l2
+
+     cmp #3
+     beq .l1
+
+     lda #3   ;C=1
+.l1: sbc #2
+     sta $d6   ;z
+     asl
+     sta $d7   ;2z
+     asl
+     adc $d6
+     sta $d6   ;5z
+  if VSIZE>256
+     lda $d8
+     lsr
+     tya
+     ror
+  else
+     tya
+     lsr
+  endif 
+     bcs .l3
+
+     cmp #192/2
+     bne .l4
+
+     lda #<(BA-4)  ;C=0
+     sta $d0
+     lda #>(BA-4)
+     sta $d1
+     ldy $d7  ;2z
+     lda $d9
+     sta ($d0),y
+     rts
+
+.l4: lda #1
+     bcs .l5
+
+     lda #0     ;y<192
+.l5: adc $d6    ;y>192
+     sta $d6    ;5z+off
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d1
+     tya
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1   ;y*16
+     sty $d0
+     adc $d0
+     tay
+     lda $d1
+  if VSIZE>256
+     adc $d8
+  else
+     adc #0
+  endif
+     tax   ;y*17
+     tya
+     adc #<BA
+     sta $d0
+     txa
+     adc #>BA
+     sta $d1   ;y*17+BA
+     ldy $d6   ;5z+off
+     lda $d9
+     sta ($d0),y
+     rts
+    
+.l3: cmp #192/2
+     lda #1
+     bcs .l6
+
+     lda #0     ;y<192
+.l6: adc $d6    ;y>192
+     sta $d6    ;5z+off
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d1
+     tya
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1   ;y*16
+     sty $d0
+     adc $d0
+     tay
+     lda $d1
+  if VSIZE>256
+     adc $d8
+  else
+     adc #0
+  endif
+     tax   ;y*17
+     tya
+     adc #<(BA-3)
+     sta $d0
+     txa
+     adc #>(BA-3)
+     sta $d1   ;y*17
+     ldy $d6   ;5z+off
+     lda $d9
+     sta ($d0),y
+     rts
+.l2:
+     rts
      org $73c0    ;attr 2-3: 24, 25 (0-23)
      rept $40
      byte 0
