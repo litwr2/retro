@@ -156,6 +156,33 @@ irq2:
      inc $ff09
      rti
 
+irq276:   ;245
+     pha
+  if VSIZE > 224
+     lda #<302+VSIZE/264*8
+  else
+     lda #249
+  endif
+     sta $ff1d
+
+     lda #2
+     sta $ff0b
+     lda #$a2
+     sta $ff0a
+
+     inc $a5    ;2-byte timer, 50/60 Hz for PAL/NTSC
+     bne *+4
+     inc $a4
+     
+     lda #<irq2
+     sta $fffe
+     lda #>irq2
+     sta $ffff
+
+     pla
+     inc $ff09
+     rti
+
 irq205:
      pha
   if VSIZE > 224
@@ -174,34 +201,12 @@ irq205:
   endif
      sta $ff0b
 
-     lda #<irq276  ;245
-     sta $fffe
+  if >irq276 != >irq205
      lda #>irq276  ;245
      sta $ffff
-
-     pla
-     inc $ff09
-     rti
-
-irq276:   ;245
-     pha
-  if VSIZE > 224
-     lda #<302+VSIZE/264*8
-  else
-     lda #249
   endif
-     sta $ff1d
-
-     lda #2
-     sta $ff0b
-     lda #$a2
-     sta $ff0a
-
-     lda #<irq2
+     lda #<irq276  ;245
      sta $fffe
-     lda #>irq2
-     sta $ffff
-
      pla
      inc $ff09
      rti
@@ -239,24 +244,62 @@ main:
      jsr setbm
      dec $e0
      bne .l2
-     jmp *
 
+     ;jmp *
+
+     sei
+     lda #8
+     sta $ff14
+     lda #$1b
+     sta $ff06
+     lda $ff07
+     and #$ef
+     sta $ff07
+     lda #$c4
+     sta $ff12
+     sta $ff3e
+     lda #$ee
+     sta $ff19
+     lda #$f1
+     sta $ff15
+     cli
+     rts
+     
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
      endr   ;$2bc0
-;$40-9
+;$40-9=55
 init:
      lda $ff07
      ora #$10
      sta $ff07   ;multicolor mode
      rts
-
+    
      org $2c00    ;clrs 0-1: 0-23
      rept $3c0
      byte 0
      endr   ;$2fc0
-;$40
+;$40-38=26
+tobasic:
+     sei
+     lda #8
+     sta $ff14
+     lda #$1b
+     sta $ff06
+     lda $ff07
+     and #$ef
+     sta $ff07
+     lda #$c4
+     sta $ff12
+     sta $ff3e
+     lda #$ee
+     sta $ff19
+     lda #$f1
+     sta $ff15
+     cli
+     rts 
+
      org $3000    ;attr 2-3: 0-23
      rept $3c0
      byte 0
@@ -367,10 +410,10 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
      lda #6
      sec
      sbc $d6
-     tax     ;6 - ((x&3) << 1)
-     tay
+     tay     ;6 - ((x&3) << 1)
      beq .l3
 
+     tax
      lda #3
      asl
      dey
@@ -389,7 +432,7 @@ setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
 .l3: lda #$fc
      and ($d0),y
      ora $d7
-     jmp .l4
+     jmp .l4   ;bcs .l3
 
      org $6000    ;bm 200-207 (24-39), 208-279
      rept $bc0
