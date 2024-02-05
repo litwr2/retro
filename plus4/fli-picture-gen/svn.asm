@@ -9,6 +9,9 @@
 ;26: $6080-61c0    $9810-9837
 ;28: $6300-643f    $9860-9887
 ;31: $66c0-67ff    $98d8-98ff
+;32: $6800-693f    $9900-9927
+;33: $6940-6a7f    $9928-994f
+;34: $6a80-6bbf    $9950-9977
 ;line 202 gets -56 = 146
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
@@ -297,7 +300,7 @@ tobasic:
      rept $1e00
      byte $55
      endr   ;$5e00
-;$200-$99
+;$200-$92
 setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      sta $d7
      lda #$40
@@ -406,15 +409,19 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      jmp .l4   ;bcs .l3
 
      org $6000    ;bm 200-207 (24-39), 208-279
-     rept $bc0
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*320+128
      byte $55
-     endr   ;$6bc0
-;$440
+     endr
+  endif
+;$440+
      org $7000    ;attr 2-3: 24 (24-39), 25-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$7178
-;$248
+     endr
+  endif
+;$248+ -$152
 abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
@@ -656,65 +663,75 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      rts
 
      org $73c0    ;attr 2-3: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$7400
-;0
+     endr
+;+
      org $7400    ;clrs 2-3: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$7578
-;$248
+     endr
+  endif
+;$248+
      org $77c0    ;clrs 2-3: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$7800
-;$600
+     endr
+;$600+
      org $7e00    ;bm 192-199, 200-207 (0-23)
-     rept $200
+     rept (VSIZE/8/26)*192+320
      byte $55
-     endr   ;$8000
-;0
+     endr
+;0+
      org $8000    ;attr 4-5: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$8178
-;$248
+     endr
+  endif
+;$248+
      org $83c0    ;attr 4-5: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$8400
-;0
+     endr
+;0+
      org $8400    ;clrs 4-5: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$8578
-;$248
+     endr
+  endif
+;$248+
      org $87c0    ;clrs 4-5: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$8800
-;0
+     endr
+;+
      org $8800     ;attr 6-7: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$8978
-;$248
+     endr
+  endif
+;$248+
      org $8bc0    ;attr 6-7: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$8c00
-;0
+     endr
+;0+
      org $8c00   ;clrs 6-7: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$8d78
-;$248
+     endr
+  endif
+;$248+
      org $8fc0    ;clrs 6-7: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$9000
-;0
+     endr
+;0+
      org $9000    ;attr 6-7, 0-23
      rept $3c0
      byte 0
@@ -726,22 +743,26 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      endr   ;$97c0
 ;$40
      org $9800    ;attr 0-1: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$9978
-;$248
+     endr
+  endif
+;$248+
      org $9bc0    ;attr 0-1: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$9c00
-;0
+     endr
+;0+
      org $9c00    ;clrs 0-1: 25 (24-39), 26-34
-     rept $178
+  if VSIZE/8 > 25
+     rept (VSIZE/8-26)*40+16
      byte 0
-     endr   ;$9d78
-;$248
+     endr
+  endif
+;$248+
      org $9fc0    ;clrs 0-1: 24, 25 (0-23)
-     rept $40
+     rept (VSIZE/8/26)*24+40
      byte 0
-     endr   ;$9000
+     endr
 

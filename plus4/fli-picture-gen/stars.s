@@ -1,41 +1,17 @@
      lda #0
      sta $d4
-     lda #1
+     lda #1   ;v. scrolling step
      sta $e4
-     lda #35
+     lda #120  ;y of the sprite
      sta $e6
 
-     ldx #1
-     ldy $e6
-     dey
-     lda #0
-     jsr setp
-     ldx #0
-     ldy $e6
-     dey
-     lda #3
-     jsr setp
-     ldx #1
-     ldy $e6
-     lda #3
-     jsr setp
-     ldx #0
-     ldy $e6
-     txa
-     jsr setp
-     ldx #1
-     ldy $e6
-     iny
-     lda #0
-     jsr setp
-     ldx #0
-     ldy $e6
-     iny
-     lda #3
-     jsr setp
+     jsr inisprite
 stars0:
-     lda #7
+     lda #7   ;v-offset size in steps
      sta $e5
+stars1:
+     lda #64  ;delay
+     sta $e0
 stars:
      lda $ff1e
      adc $ff1d
@@ -109,82 +85,25 @@ stars:
      ldy $e2
      lda $e3
      jsr seta
-     inc $e0
+     dec $e0
      beq *+5
 .l4: jmp stars
 
      ;lda $d4
      ;bne *
 
-     ldx #1
-     ldy $e6
-     dey
-     lda #1
-     jsr setp
-     ldx #0
-     ldy $e6
-     dey
-     lda #1
-     jsr setp
-     ldx #1
-     ldy $e6
-     lda #1
-     jsr setp
-     ldx #0
-     ldy $e6
-     lda #1
-     jsr setp
-     ldx #1
-     ldy $e6
-     iny
-     lda #1
-     jsr setp
-     ldx #0
-     ldy $e6
-     iny
-     lda #1
-     jsr setp
-
+     jsr clrsprite
      lda $e4
      sta $d4
      bmi .l5
 
-     dec $e6
+     jsr spritedown
      jmp .l6
 
-.l5: inc $e6
-.l6: ldx #1
-     ldy $e6
-     dey
-     lda #3
-     jsr setp
-     ldx #0
-     ldy $e6
-     dey
-     lda #0
-     jsr setp
-     ldx #1
-     ldy $e6
-     lda #3
-     jsr setp
-     ldx #0
-     ldy $e6
-     txa
-     jsr setp
-     ldx #1
-     ldy $e6
-     iny
-     lda #0
-     jsr setp
-     ldx #0
-     ldy $e6
-     iny
-     lda #3
-     jsr setp
-
-     dec $e5
+.l5: jsr spriteup
+.l6: dec $e5
      bmi *+5
-     jmp stars
+     jmp stars1
 
      lda $e4
      tax
@@ -194,3 +113,144 @@ stars:
      sta $e4
      jmp stars0
 
+inisprite:
+     ldx #80
+     ldy $e6
+     dey
+     lda #0
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     dey
+     lda #3
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     lda #3
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     ldx #0
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     iny
+     lda #0
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     iny
+     lda #3
+     jmp setp
+
+clrsprite:
+     ldx #80
+     ldy $e6
+     dey
+     lda #1
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     dey
+     lda #1
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     lda #1
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     lda #1
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     iny
+     lda #1
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     iny
+     lda #1
+     jmp setp
+
+spriteup:
+     inc $e6
+     ldx #80
+     ldy $e6
+     dey
+     lda #3
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     dey
+     lda #0
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     lda #3
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     lda #0
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     iny
+     lda #0
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     iny
+     lda #3
+     jmp setp
+
+spritedown:
+     dec $e6
+     ldx #80
+     ldy $e6
+     dey
+     lda #3
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     dey
+     lda #0
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     lda #3
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     lda #0
+     jsr setp
+
+     ldx #80
+     ldy $e6
+     iny
+     lda #0
+     jsr setp
+
+     ldx #79
+     ldy $e6
+     iny
+     lda #3
+     jmp setp
