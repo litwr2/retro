@@ -13,6 +13,8 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
+;the library uses zp locations $d0-d7, $d5 is actually not used but reserved
+
 VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 200-280
 
@@ -148,6 +150,22 @@ BA = *+1
 
      lda #205
      sta $ff0b
+     lda $d4
+     beq .nosc
+
+     clc
+     adc irq205.sc+1
+     sta irq205.sc+1
+     ldx $d4
+     dex
+     txa
+     eor #$ff
+     clc
+     adc irq276.sc+1
+     sta irq276.sc+1
+     lda #0
+     sta $d4
+.nosc:   
      lda #<irq205
      sta $fffe
      lda #>irq205
@@ -162,6 +180,7 @@ BA = *+1
 
 irq276:   ;245
      pha
+.sc:
   if VSIZE > 224
      lda #<302+VSIZE/264*8
   else
@@ -189,6 +208,7 @@ irq276:   ;245
 
 irq205:
      pha
+.sc:
   if VSIZE > 224
      lda #VSIZE-21-VSIZE/264*8
   else
@@ -390,7 +410,7 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      byte $55
      endr   ;$6bc0
 ;$440
-     org $7000    ;attr 2-3: 25 (24-39), 26-34
+     org $7000    ;attr 2-3: 24 (24-39), 25-34
      rept $178
      byte 0
      endr   ;$7178
