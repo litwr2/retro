@@ -13,7 +13,7 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-VSIZE = 280  ;value less than 225 makes images compatible with both PAL and NTSC
+VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 208-280
 
         org $1001
@@ -135,12 +135,16 @@ BA = *+1
      sta $ff15  ;$96
      lda #$27   ;$a6
      sta $ff16
+  if VSIZE > 200
      zline $70,$80,$88,$98
 
   rept VSIZE/8-26
      iline $70,$80,$88,$98
   endr
      iline $70,$80,$88,$28
+  else
+     zline $70,$80,$88,$28
+  endif
 
      lda #205
      sta $ff0b
@@ -212,7 +216,7 @@ irq205:
      rti
 
 main:
-     include "test1.s"
+     include "stars.s"
     
      org $2800    ;attr 0-1: 0-23
      rept $3c0

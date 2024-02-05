@@ -60,7 +60,7 @@ int main() {
     fclose(fi);
     /* the start of graphics */
     prg[0x100e] = 5; //border color
-#define YMAX 280
+#define YMAX 256
     for (int x = 0; x < 160; x++)
         for (int y = 0; y < YMAX; y++)
             setbmc(x, y, 5, 1);
