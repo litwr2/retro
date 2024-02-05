@@ -212,82 +212,8 @@ irq205:
      rti
 
 main:
-     lda #0
-     sta $d8
-     lda #$a0
-     sta $e0
-.l1: ldx $e0
-     dex
-     ldy $e0
-     dey
-     lda #2
-     jsr setbm
-     dec $e0
-     bne .l1
-
-     ldy #<(VSIZE-2)
-     lda #1
-     sta $d8
-     ldx #159
-     lda #2
-     jsr setbm
-     
-     lda #$9f
-     sta $e0
-.l2: ldx $e0
-     txa
-     clc
-     adc #96+24
-     tay
-     lda #0
-     rol
-     sta $d8
-     lda #3
-     jsr setbm
-     dec $e0
-     bne .l2
-
-     lda $a5
-     adc #50
-     cmp $a5
-     bne *-2
-
-      lda #0
-      sta $d8
-     ;lda #8  ;<(VSIZE-1)
-     ;sta $e0
-     ;lda #>(VSIZE-1)
-     ;sta $e1
-.l3: lda #$77
-     sta $d9
-     ;ldy $e1
-     ;sty $d8
-     lda #1
-     sta $d8
-     ldy #<(VSIZE-1)
-     ldx #159
-     lda #2
-     jsr seta
-     lda #0
-     sta $d8
-     ldy #0
-     ldx #0
-     lda #2
-     jsr seta
-     ;dec $e0
-     ;dec $e0
-     ;bne .l3
-     ;ldy $e0
-     ;bne *+4
-     ;dec $e1
-     ;dey
-     ;sty $e0
-     ;tya
-     ;ora $e1
-     ;bne .l3
-     jmp *
-     ;jmp tobasic
-
+     include "test1.s"
+    
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
@@ -321,7 +247,6 @@ tobasic:
      lda #$f1
      sta $ff15
      cli
-     ;a place to some code, for instance to print something via $ffd2 or wait a keypress
      rts 
 
      org $3000    ;attr 2-3: 0-23
@@ -349,7 +274,7 @@ tobasic:
      byte $55
      endr   ;$5e00
 ;$200-$99
-setbm: ;y - ($d8) y , x - x, cs - a; uses: $d0-d1, $d6-d7
+setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      sta $d7
      lda #$40
      sta $d1
@@ -470,7 +395,7 @@ abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
         ;if cs == 0 or 3 then x is ignored
-        ;uses: $d0-d3, $d6-d7
+        ;changes: $d0-d3, $d6-d7
      cmp #1
      bne *+5
      jmp .l2
@@ -622,12 +547,15 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      jmp .l7
 
 .l8: cpy #200
+     bcc .l10
+
+     cpy #208
      bcs .l7
 
      cpx #96
      bcs .l7
 
-     ldy $d7
+.l10:ldy $d7
      lda abase2,y
 .l7: sta $d1  ;ba
   if VSIZE>256
@@ -670,7 +598,7 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      sta $d7   ;cl
      lda ($d2),y
      sta $d6   ;cc
-.m1: lda #0    ;cs/2
+.m1: ldx #0    ;cs/2
      beq .l9
 
      and #$f0
