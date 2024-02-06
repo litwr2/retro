@@ -12,7 +12,7 @@
      jsr inibsprite1
      jsr inibsprite2
 stars0:
-     lda #7   ;v-offset size in steps
+     lda #8   ;v-offset size in steps
      sta $e5
 stars1:
      lda #64  ;delay
@@ -161,12 +161,11 @@ spriteup:
 
    macro msetpb
      ldx #\1
-     ldy $e7
+     lda $e7
+     clc
+     adc #\3
+     tay
      lda #\2
-     \3
-     \4
-     \5
-     \6
      jsr setpbyte
    endm
 
@@ -174,23 +173,23 @@ spritebdown1:
      dec $e7
 
 inibsprite1:
-     msetpb 88,$4d,dey,dey,dey
-     msetpb 88,$33,dey,dey
-     msetpb 88,$cc,dey
-     msetpb 88,$33
-     msetpb 88,$cc,iny
-     msetpb 88,$33,iny,iny
-     msetpb 88,$4d,iny,iny,iny
+     msetpb 88,$4d,-3
+     msetpb 88,$33,-2
+     msetpb 88,$cc,-1
+     msetpb 88,$33,0
+     msetpb 88,$cc,1
+     msetpb 88,$33,2
+     msetpb 88,$4d,3
      rts
 
 clrbsprite1:
-     msetpb 88,$55,dey,dey,dey
-     msetpb 88,$55,dey,dey
-     msetpb 88,$55,dey
-     msetpb 88,$55
-     msetpb 88,$55,iny
-     msetpb 88,$55,iny,iny
-     msetpb 88,$55,iny,iny,iny
+     msetpb 88,$55,-3
+     msetpb 88,$55,-2
+     msetpb 88,$55,-1
+     msetpb 88,$55,0
+     msetpb 88,$55,1
+     msetpb 88,$55,2
+     msetpb 88,$55,3
      rts
 
 spritebup1:
@@ -201,45 +200,45 @@ spritebdown2:
      ;dec $e7
 
 inibsprite2:
-     msetpb 48,$73,dey,dey,dey,dey
-     msetpb 52,$31,dey,dey,dey,dey
-     msetpb 48,$cc,dey,dey,dey
-     msetpb 52,$cc,dey,dey,dey
-     msetpb 48,$33,dey,dey
-     msetpb 52,$33,dey,dey
-     msetpb 48,$cc,dey
-     msetpb 52,$cc,dey
-     msetpb 48,$33
-     msetpb 52,$33
-     msetpb 48,$cc,iny
-     msetpb 52,$cc,iny
-     msetpb 48,$33,iny,iny
-     msetpb 52,$33,iny,iny
-     msetpb 48,$cc,iny,iny,iny
-     msetpb 52,$cc,iny,iny,iny
-     msetpb 48,$43,iny,iny,iny,iny
-     msetpb 52,$31,iny,iny,iny,iny
+     msetpb 48,$53,-4+14
+     msetpb 52,$35,-4+14
+     msetpb 48,$4c,-3+14
+     msetpb 52,$cd,-3+14
+     msetpb 48,$33,-2+14
+     msetpb 52,$33,-2+14
+     msetpb 48,$cc,-1+14
+     msetpb 52,$cc,-1+14
+     msetpb 48,$31,0+14
+     msetpb 52,$73,0+14
+     msetpb 48,$cc,1+14
+     msetpb 52,$cc,1+14
+     msetpb 48,$33,2+14
+     msetpb 52,$33,2+14
+     msetpb 48,$4c,3+14
+     msetpb 52,$cd,3+14
+     msetpb 48,$53,4+14
+     msetpb 52,$35,4+14
      rts
 
 clrbsprite2:
-     msetpb 48,$55,dey,dey,dey,dey
-     msetpb 52,$55,dey,dey,dey,dey
-     msetpb 48,$55,dey,dey,dey
-     msetpb 52,$55,dey,dey,dey
-     msetpb 48,$55,dey,dey
-     msetpb 52,$55,dey,dey
-     msetpb 48,$55,dey
-     msetpb 52,$55,dey
-     msetpb 48,$55
-     msetpb 52,$55
-     msetpb 48,$55,iny
-     msetpb 52,$55,iny
-     msetpb 48,$55,iny,iny
-     msetpb 52,$55,iny,iny
-     msetpb 48,$55,iny,iny,iny
-     msetpb 52,$55,iny,iny,iny
-     msetpb 48,$55,iny,iny,iny,iny
-     msetpb 52,$55,iny,iny,iny,iny
+     msetpb 48,$55,-4+14
+     msetpb 52,$55,-4+14
+     msetpb 48,$55,-3+14
+     msetpb 52,$55,-3+14
+     msetpb 48,$55,-2+14
+     msetpb 52,$55,-2+14
+     msetpb 48,$55,-1+14
+     msetpb 52,$55,-1+14
+     msetpb 48,$55,0+14
+     msetpb 52,$55,0+14
+     msetpb 48,$55,1+14
+     msetpb 52,$55,1+14
+     msetpb 48,$55,2+14
+     msetpb 52,$55,2+14
+     msetpb 48,$55,3+14
+     msetpb 52,$55,3+14
+     msetpb 48,$55,4+14
+     msetpb 52,$55,4+14
      rts
 
 spritebup2:
