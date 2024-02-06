@@ -16,7 +16,7 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-;the library uses zp locations $d0-d7
+;the library uses zp locations $d0-d7, $d5 is just reserved
 
 VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 200-280
@@ -246,13 +246,11 @@ main:
      rept $3c0
      byte 0
      endr   ;$2bc0
-;$40-13=51
+;$40-9=55
 init:
      lda $ff07
      ora #$10
      sta $ff07   ;multicolor mode
-     lda #6
-     sta $d5
      rts
     
      org $2c00    ;clrs 0-1: 0-23
@@ -521,22 +519,21 @@ getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6
      byte 0
      endr
   endif
-;$248+ -$231
+;$248+ -$227
 abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
         ;if cs == 0 or 3 then x is ignored
         ;changes: $d0-d3, $d6-d7
-     bit $d5
-     beq *+5
-     jmp .l2
+     ;ora #0
+     beq .l0
 
      cmp #3
      beq .l1
+     jmp .l2
 
-     lda #3   ;C=1
-.l1: sbc #2
-     sta $d6   ;z
+.l1: lsr
+.l0: sta $d6   ;z
      asl
      sta $d7   ;2z
      asl
@@ -761,16 +758,15 @@ getabyte:   ;y - ($d8) y , x - x, cs - a
         ;changes: $d0-d3, $d6-d7
         ;returns at ($d0),y multicolor 1 if cs==0, multicolor 2 if cs==3, luminance byte if cs==1 or 2
         ;returns at ($d2),y color byte if cs==1 or 2
-     bit $d5
-     beq *+5
-     jmp .l2
+     ;ora #0
+     beq .l0
 
      cmp #3
      beq .l1
+     jmp .l2
 
-     lda #3   ;C=1
-.l1: sbc #2
-     sta $d6   ;z
+.l1: lsr
+.l0: sta $d6   ;z
      asl
      sta $d7   ;2z
      asl
