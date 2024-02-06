@@ -4,8 +4,13 @@
      sta $e4
      lda #120  ;y of the sprite
      sta $e6
+     
+     lda #140
+     sta $e7   ;y of big sprite 1
 
      jsr inisprite
+     jsr inibsprite1
+     jsr inibsprite2
 stars0:
      lda #7   ;v-offset size in steps
      sta $e5
@@ -93,14 +98,20 @@ stars:
      ;bne *
 
      jsr clrsprite
+     jsr clrbsprite1
+     jsr clrbsprite2
      lda $e4
      sta $d4
      bmi .l5
 
      jsr spritedown
+     jsr spritebdown1
+     jsr spritebdown2
      jmp .l6
 
 .l5: jsr spriteup
+     jsr spritebup1
+     jsr spritebup2
 .l6: dec $e5
      bmi *+5
      jmp stars1
@@ -113,144 +124,125 @@ stars:
      sta $e4
      jmp stars0
 
-inisprite:
-     ldx #80
+   macro msetp
+     ldx #\1
      ldy $e6
-     dey
-     lda #0
+     lda #\2
+     \3
      jsr setp
-
-     ldx #79
-     ldy $e6
-     dey
-     lda #3
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     lda #3
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     ldx #0
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     iny
-     lda #0
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     iny
-     lda #3
-     jmp setp
-
-clrsprite:
-     ldx #80
-     ldy $e6
-     dey
-     lda #1
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     dey
-     lda #1
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     lda #1
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     lda #1
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     iny
-     lda #1
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     iny
-     lda #1
-     jmp setp
-
-spriteup:
-     inc $e6
-     ldx #80
-     ldy $e6
-     dey
-     lda #3
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     dey
-     lda #0
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     lda #3
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     lda #0
-     jsr setp
-
-     ldx #80
-     ldy $e6
-     iny
-     lda #0
-     jsr setp
-
-     ldx #79
-     ldy $e6
-     iny
-     lda #3
-     jmp setp
+   endm
 
 spritedown:
      dec $e6
-     ldx #80
-     ldy $e6
-     dey
-     lda #3
-     jsr setp
+     
+inisprite:
+     msetp 81,3,dey
+     msetp 79,3,dey
+     msetp 80,3
+     msetp 81,3,iny
+     msetp 79,3,iny
+     rts
 
-     ldx #79
-     ldy $e6
-     dey
-     lda #0
-     jsr setp
+clrsprite:
+     msetp 81,1,dey
+     msetp 80,1,dey
+     msetp 79,1,dey
+     msetp 81,1
+     msetp 80,1
+     msetp 79,1
+     msetp 81,1,iny
+     msetp 80,1,iny
+     msetp 79,1,iny
+     rts
 
-     ldx #80
-     ldy $e6
-     lda #3
-     jsr setp
+spriteup:
+     inc $e6
+     jmp inisprite
 
-     ldx #79
-     ldy $e6
-     lda #0
-     jsr setp
+   macro msetpb
+     ldx #\1
+     ldy $e7
+     lda #\2
+     \3
+     \4
+     \5
+     \6
+     jsr setpbyte
+   endm
 
-     ldx #80
-     ldy $e6
-     iny
-     lda #0
-     jsr setp
+spritebdown1:
+     dec $e7
 
-     ldx #79
-     ldy $e6
-     iny
-     lda #3
-     jmp setp
+inibsprite1:
+     msetpb 88,$4d,dey,dey,dey
+     msetpb 88,$33,dey,dey
+     msetpb 88,$cc,dey
+     msetpb 88,$33
+     msetpb 88,$cc,iny
+     msetpb 88,$33,iny,iny
+     msetpb 88,$4d,iny,iny,iny
+     rts
+
+clrbsprite1:
+     msetpb 88,$55,dey,dey,dey
+     msetpb 88,$55,dey,dey
+     msetpb 88,$55,dey
+     msetpb 88,$55
+     msetpb 88,$55,iny
+     msetpb 88,$55,iny,iny
+     msetpb 88,$55,iny,iny,iny
+     rts
+
+spritebup1:
+     inc $e7
+     jmp inibsprite1
+
+spritebdown2:
+     ;dec $e7
+
+inibsprite2:
+     msetpb 48,$73,dey,dey,dey,dey
+     msetpb 52,$31,dey,dey,dey,dey
+     msetpb 48,$cc,dey,dey,dey
+     msetpb 52,$cc,dey,dey,dey
+     msetpb 48,$33,dey,dey
+     msetpb 52,$33,dey,dey
+     msetpb 48,$cc,dey
+     msetpb 52,$cc,dey
+     msetpb 48,$33
+     msetpb 52,$33
+     msetpb 48,$cc,iny
+     msetpb 52,$cc,iny
+     msetpb 48,$33,iny,iny
+     msetpb 52,$33,iny,iny
+     msetpb 48,$cc,iny,iny,iny
+     msetpb 52,$cc,iny,iny,iny
+     msetpb 48,$43,iny,iny,iny,iny
+     msetpb 52,$31,iny,iny,iny,iny
+     rts
+
+clrbsprite2:
+     msetpb 48,$55,dey,dey,dey,dey
+     msetpb 52,$55,dey,dey,dey,dey
+     msetpb 48,$55,dey,dey,dey
+     msetpb 52,$55,dey,dey,dey
+     msetpb 48,$55,dey,dey
+     msetpb 52,$55,dey,dey
+     msetpb 48,$55,dey
+     msetpb 52,$55,dey
+     msetpb 48,$55
+     msetpb 52,$55
+     msetpb 48,$55,iny
+     msetpb 52,$55,iny
+     msetpb 48,$55,iny,iny
+     msetpb 52,$55,iny,iny
+     msetpb 48,$55,iny,iny,iny
+     msetpb 52,$55,iny,iny,iny
+     msetpb 48,$55,iny,iny,iny,iny
+     msetpb 52,$55,iny,iny,iny,iny
+     rts
+
+spritebup2:
+     ;inc $e7
+     jmp inibsprite2
+

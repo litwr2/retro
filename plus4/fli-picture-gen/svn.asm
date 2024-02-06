@@ -239,8 +239,8 @@ irq205:
      rti
 
 main:
-     ;include "stars.s"
-     include "test1.s"
+     include "stars.s"
+     ;include "test1.s"
      
      org $2800    ;attr 0-1: 0-23
      rept $3c0
