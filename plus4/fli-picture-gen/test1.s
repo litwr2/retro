@@ -48,10 +48,8 @@
      dec $e0
      bne .l2
 
-     lda $a5
-     adc #25
-     cmp $a5
-     bne *-2
+     lda #25
+     jsr delay
 
      lda #$a0
      sta $e0
@@ -88,12 +86,79 @@
      dec $e0
      bne .l3
 
-     lda #0
-     sta $d8
-     ldx #80
-     ldy #200
-     lda #1
-     ;jsr seta
-     jmp *
-     ;jmp tobasic
+     lda #25
+     jsr delay
+     jsr scroll
 
+     lda #$33
+     sta $e3
+     jsr fill
+
+     lda #1
+     sta $d4
+     lda $d4
+     bne *-2
+     lda #-1
+     sta $d4
+     
+     lda #$cc
+     sta $e3
+     jsr fill
+
+     jsr scroll
+
+     jsr tobasic
+     jsr $ff4f
+     byte "HELLO!",0
+     rts
+     ;jmp *
+
+delay: adc $a5
+     cmp $a5
+     bne *-2
+     rts
+
+scroll:
+     lda #32
+     sta $e0
+.l4: lda #1
+     sta $d4
+     lda #5
+     jsr delay
+     lda #-1
+     sta $d4
+     lda #5
+     jsr delay
+     dec $e0
+     bne .l4
+     rts
+
+fill:lda #0
+     sta $e1
+     sta $e2
+.l5: sta $e0
+.l4: ldx $e0
+     ldy $e1
+     lda $e2
+     sta $d8
+     lda $e3
+     jsr setpbyte
+     clc
+     lda $e0
+     adc #4
+     sta $e0
+     cmp #160
+     bne .l4
+
+     inc $e1
+     bne *+4
+     inc $e2
+     lda #0
+     ldy $e2
+     cpy #>VSIZE
+     bcc .l5
+
+     ldy $e1
+     cpy #<VSIZE
+     bcc .l5
+     rts

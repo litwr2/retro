@@ -239,8 +239,9 @@ irq205:
      rti
 
 main:
-     include "stars.s"
-    
+     ;include "stars.s"
+     include "test1.s"
+     
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
@@ -300,11 +301,14 @@ tobasic:
      rept $1e00
      byte $55
      endr   ;$5e00
-;$200-$92
-setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
+;$200-$155
+lo312:  byte $0, $38, $70, $a8, $e0, $18, $50, $88, $c0, $f8, $30, $68, $a0, $d8, $10, $48, $80, $b8, $f0, $28, $60, $98, $d0, $8, $40, $78, $b0, $e8, $20, $58, $90, $c8, $0, $38, $70, $a8
+hi312:  byte $0, $1, $2, $3, $4, $6, $7, $8, $9, $a, $c, $d, $e, $f, $11, $12, $13, $14, $15, $17, $18, $19, $1a, $1c, $1d, $1e, $1f, $20, $22, $23, $24, $25, $27, $28, $29, $2a
+setp: ;y - ($d8) y, x - x, cs - a; changes: $d0-d1, $d6-d7
      sta $d7
      lda #$40
      sta $d1
+     sty $d0
   if VSIZE > 256
      lda $d8
      lsr
@@ -316,7 +320,7 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
   endif
      lsr
      lsr
-     sta $d0
+     tay   ;y/8
      cmp #192/8
      bcc .l1  ;branch if a < 192/8
 
@@ -328,34 +332,13 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      
      cmp #208/8
      bcs .l1
-.l2:
-     lda #$60
+
+.l2: lda #$60
      sta $d1
-.l1: lda #0
-     sta $d6  ;>y/8
-     lda $d0
-     asl
-     asl      ;y/8*4
-     adc $d0  ;y/8*5
-     asl
-     rol $d6  ;y/8*10
-     asl
-     rol $d6  ;y/8*20
-     asl
-     rol $d6  ;y/8*40
-     sec
-     sbc $d0
-     sta $d0
-     lda $d6
-     sbc #0   ;y/8*39
-     asl $d0
-     rol      ;y/8*78
-     asl $d0
-     rol      ;y/8*156
-     asl $d0
-     rol
-     sta $d6  ;y/8*312
-     tya
+.l1: lda hi312,y   ;y/8*312
+     sta $d6
+     lda lo312,y
+     clc
      adc $d0
      sta $d0
   if VSIZE>256
@@ -384,7 +367,7 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      lda #6
      sec
      sbc $d6
-     tay     ;6 - ((x&3) << 1)
+     tay     ;6 - ((x&3) << 1) = px
      beq .l3
 
      tax
@@ -392,7 +375,7 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      asl
      dey
      bne *-2
-     eor #$ff
+     eor #$ff   ;~(3 << px)
      and ($d0),y
      sta $d6
      lda $d7
@@ -406,7 +389,121 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
 .l3: lda #$fc
      and ($d0),y
      ora $d7
-     jmp .l4   ;bcs .l3
+     jmp .l4   ;bcs .l4
+
+setpbyte: ;y - ($d8) y (0 - 279), x - x (0-159), byte - a; changes: $d0-d1, $d6-d7
+     sta $d7
+     lda #$40
+     sta $d1
+     sty $d0
+  if VSIZE > 256
+     lda $d8
+     lsr
+     tya
+     ror
+  else
+     tya
+     lsr
+  endif
+     lsr
+     lsr
+     tay
+     cmp #192/8
+     bcc .l1  ;branch if a < 192/8
+
+     cmp #200/8
+     bcc .l2  ;branch if a < 200/8
+     
+     cpx #96
+     bcs .l1  ;branch if x >= 96
+     
+     cmp #208/8
+     bcs .l1
+.l2: lda #$60
+     sta $d1
+.l1: lda hi312,y   ;y/8*312
+     sta $d6
+     lda lo312,y
+     clc
+     adc $d0
+     sta $d0
+  if VSIZE>256
+     lda $d6
+     adc $d8
+     sta $d6
+  else
+     bcc *+4
+     inc $d6
+  endif       ;y/8*312+y
+     txa
+     and #$fc
+     asl    ;x&0xfc << 1
+     bcc *+4
+     inc $d6
+     clc
+     tay
+     lda $d6
+     adc $d1  ;ba + y/8*312+y+(x&0xfc)*2
+     sta $d1
+     lda $d7
+     sta ($d0),y
+     rts
+
+getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6-d7
+     lda #$40
+     sta $d1
+     sty $d0
+  if VSIZE > 256
+     lda $d8
+     lsr
+     tya
+     ror
+  else
+     tya
+     lsr
+  endif
+     lsr
+     lsr
+     tay
+     cmp #192/8
+     bcc .l1  ;branch if a < 192/8
+
+     cmp #200/8
+     bcc .l2  ;branch if a < 200/8
+     
+     cpx #96
+     bcs .l1  ;branch if x >= 96
+     
+     cmp #208/8
+     bcs .l1
+.l2: lda #$60
+     sta $d1
+.l1: lda hi312,y   ;y/8*312
+     sta $d6
+     lda lo312,y
+     clc
+     adc $d0
+     sta $d0
+  if VSIZE>256
+     lda $d6
+     adc $d8
+     sta $d6
+  else
+     bcc *+4
+     inc $d6
+  endif       ;y/8*312+y
+     txa
+     and #$fc
+     asl    ;x&0xfc << 1
+     bcc *+4
+     inc $d6
+     clc
+     tay
+     lda $d6
+     adc $d1  ;ba + y/8*312+y+(x&0xfc)*2
+     sta $d1
+     lda ($d0),y
+     rts
 
      org $6000    ;bm 200-207 (24-39), 208-279
   if VSIZE/8 > 25
@@ -414,6 +511,7 @@ setp: ;y - ($d8) y , x - x, cs - a; changes: $d0-d1, $d6-d7
      byte $55
      endr
   endif
+
 ;$440+
      org $7000    ;attr 2-3: 24 (24-39), 25-34
   if VSIZE/8 > 25
