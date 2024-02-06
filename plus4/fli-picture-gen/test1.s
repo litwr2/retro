@@ -101,7 +101,7 @@
      lda #-1
      sta $d4
      
-     lda #$cc
+     lda #$e1
      sta $e3
      jsr fill
 
@@ -119,7 +119,7 @@ delay: adc $a5
      rts
 
 scroll:
-     lda #32
+     lda #16
      sta $e0
 .l4: lda #1
      sta $d4

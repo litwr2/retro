@@ -16,7 +16,7 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-;the library uses zp locations $d0-d7, $d5 is actually not used but reserved
+;the library uses zp locations $d0-d7
 
 VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 200-280
@@ -239,18 +239,20 @@ irq205:
      rti
 
 main:
-     include "stars.s"
-     ;include "test1.s"
+     ;include "stars.s"
+     include "test1.s"
      
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0
      endr   ;$2bc0
-;$40-9=55
+;$40-13=51
 init:
      lda $ff07
      ora #$10
      sta $ff07   ;multicolor mode
+     lda #6
+     sta $d5
      rts
     
      org $2c00    ;clrs 0-1: 0-23
@@ -519,18 +521,14 @@ getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6
      byte 0
      endr
   endif
-;$248+ -$152
+;$248+ -$231
 abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
         ;if cs == 0 or 3 then x is ignored
         ;changes: $d0-d3, $d6-d7
-     cmp #1
-     bne *+5
-     jmp .l2
-
-     cmp #2
-     bne *+5
+     bit $d5
+     beq *+5
      jmp .l2
 
      cmp #3
@@ -702,6 +700,7 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      rol $d7  ;y/8*8*4
      adc $d0
      sta $d0
+     sta $d2
   if VSIZE>256
      lda $d7
      adc $d8
@@ -713,16 +712,13 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      txa
      lsr
      lsr
+     tay
      clc
-     adc $d0
-     sta $d0
-     sta $d2
      lda $d7
      adc $d1
      sta $d1  ;y/8*40+x/4
      adc #4
      sta $d3
-     ldy #0
      lda ($d0),y
      sta $d7   ;cl
      lda ($d2),y
@@ -758,6 +754,197 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
      and #$f
      ora $d7
      sta ($d0),y
+     rts
+
+getabyte:   ;y - ($d8) y , x - x, cs - a
+        ;if cs == 0 or 3 then x is ignored
+        ;changes: $d0-d3, $d6-d7
+        ;returns at ($d0),y multicolor 1 if cs==0, multicolor 2 if cs==3, luminance byte if cs==1 or 2
+        ;returns at ($d2),y color byte if cs==1 or 2
+     bit $d5
+     beq *+5
+     jmp .l2
+
+     cmp #3
+     beq .l1
+
+     lda #3   ;C=1
+.l1: sbc #2
+     sta $d6   ;z
+     asl
+     sta $d7   ;2z
+     asl
+     adc $d6
+     sta $d6   ;5z
+  if VSIZE>256
+     lda $d8
+     lsr
+     tya
+     ror
+  else
+     tya
+     lsr
+  endif 
+     bcs .l3
+
+     cmp #192/2
+     bne .l4
+
+     lda #<(BA-4)  ;C=0
+     sta $d0
+     lda #>(BA-4)
+     sta $d1
+     ldy $d7  ;2z
+     rts
+
+.l4: lda #1
+     bcs .l5
+
+     lda #0     ;y<192
+.l5: adc $d6    ;y>192
+     sta $d6    ;5z+off
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d1
+     tya
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1   ;y*16
+     sty $d0
+     adc $d0
+     tay
+     lda $d1
+  if VSIZE>256
+     adc $d8
+  else
+     adc #0
+  endif
+     tax   ;y*17
+     tya
+     adc #<BA
+     sta $d0
+     txa
+     adc #>BA
+     sta $d1   ;y*17+BA
+     ldy $d6   ;5z+off
+     rts
+
+.l3: cmp #192/2
+     lda #1
+     bcs .l6
+
+     lda #0     ;y<192
+.l6: adc $d6    ;y>192
+     sta $d6    ;5z+off
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d1
+     tya
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1   ;y*16
+     sty $d0
+     adc $d0
+     tay
+     lda $d1
+  if VSIZE>256
+     adc $d8
+  else
+     adc #0
+  endif
+     tax   ;y*17
+     tya
+     adc #<(BA-3)
+     sta $d0
+     txa
+     adc #>(BA-3)
+     sta $d1   ;y*17
+     ldy $d6   ;5z+off
+     rts
+
+.l2: sty $d6  ;y
+     tya
+     lsr
+     and #3
+     sta $d7  ;y/2%4
+     tay
+     lda abase2,y
+     sec
+     sbc #4
+  if VSIZE>256
+     ldy $d8
+     bne .l7
+  endif
+     ldy $d6
+     cpy #192
+     bcs .l8  ;y>=192
+
+     ldy $d7
+     lda abase1,y
+     jmp .l7
+
+.l8: cpy #200
+     bcc .l10
+
+     cpy #208
+     bcs .l7
+
+     cpx #96
+     bcs .l7
+
+.l10:ldy $d7
+     lda abase2,y
+.l7: sta $d1  ;ba
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d7
+     lda $d6
+     and #$f8  ;y&0xf8 = (y/8)*8
+     sta $d0
+     asl
+     rol $d7
+     asl
+     rol $d7  ;y/8*8*4
+     adc $d0
+     sta $d0
+     sta $d2
+  if VSIZE>256
+     lda $d7
+     adc $d8
+     sta $d7
+  else
+     bcc *+4
+     inc $d7
+  endif  ;y/8*40
+     txa
+     lsr
+     lsr
+     tay
+     clc
+     lda $d7
+     adc $d1
+     sta $d1  ;y/8*40+x/4
+     adc #4
+     sta $d3
      rts
 
      org $73c0    ;attr 2-3: 24, 25 (0-23)
