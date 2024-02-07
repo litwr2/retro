@@ -1,0 +1,2 @@
+vasm6502_oldstyle svn.asm -Fbin -cbm-prg -o out.prg -L out.lst
+awk '/VSIZE *=/{split($0, a, "[^0-9]*");print "#define VSIZE", a[2]}' svn.asm >svn.h

@@ -246,13 +246,20 @@ main:
      rept $3c0
      byte 0
      endr   ;$2bc0
-;$40-9=55
+;$40-17=47
 init:
      lda $ff07
      ora #$10
      sta $ff07   ;multicolor mode
      rts
-    
+
+delay:    ;delay A frame ticks (50/60 Hz for PAL/NTSC), the actual accuracy is about 1/2 of frame tick
+     clc
+     adc $a5
+     cmp $a5
+     bne *-2
+     rts
+
      org $2c00    ;clrs 0-1: 0-23
      rept $3c0
      byte 0

@@ -196,11 +196,6 @@
      rts
      ;jmp *
 
-delay: adc $a5
-     cmp $a5
-     bne *-2
-     rts
-
 scroll:
      lda #10
      sta $e0

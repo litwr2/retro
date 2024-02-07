@@ -1,4 +1,3 @@
-vasm6502_oldstyle svn.asm -Fbin -cbm-prg -o out.prg -L out.lst
-g++ fligen.c
+gcc $1
 a.out
 rm a.out
