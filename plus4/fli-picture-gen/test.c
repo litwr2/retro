@@ -8,7 +8,7 @@ int main() {
     fclose(fi);
     /* the start of graphics */
     prg[0x100e] = 5; //border color
-    prg[START + 1] = START&0xff, prg[START + 2] = START >> 8; //no further assembly code
+    //prg[START + 1] = START&0xff, prg[START + 2] = START >> 8; //no further assembly code
     for (int x = 0; x < 160; x++)
         for (int y = 0; y < VSIZE; y++)
             setpa(x, y, 5, 1);

@@ -240,8 +240,10 @@ irq205:
 
 main:
      ;include "stars.s"
-     include "test1.s"
-     
+     ;include "supercolors.s"
+     ;include "test1.s"
+     jmp *
+
      org $2800    ;attr 0-1: 0-23
      rept $3c0
      byte 0

@@ -1,5 +1,6 @@
 //generates a mosaic that contans all the C+4 colors
 #include<stdio.h>
+#include"svn.h"
 #include"flilib.c"
 #define START 0x1030
 void settile(int x, int y, int c1, int c2, int *mc) {
@@ -41,10 +42,10 @@ int main() {
     FILE *fi = fopen("out.prg", "r");
     int co = fread(prg + 0xfff, 1, 65535, fi);
     fclose(fi);
-    prg[START + 1] = START&0xff, prg[START+2] = START >> 8; //no further assembly code
+//    prg[START + 1] = START&0xff, prg[START+2] = START >> 8; //no further assembly code
     /* the start of graphics */
     //prg[0x100e] = 5; //border color
-    for (int y = 0; y < YMAX/2; y++)
+    for (int y = 0; y < VSIZE/2; y++)
         setline(y);
     /* the finish of graphics */
     fi = fopen("out1.prg", "w");

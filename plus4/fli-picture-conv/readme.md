@@ -1,6 +1,6 @@
 This program converts an image in the PPM (type P6) format into the PRG-file for the C+4 and the PPM-file containing the equivalent of the image generated on the C+4 screen.
 
-The program can be used to convert images that have sizes up to 160x280.  The height must be a multiple of 8 in the range from 208 to 280.  For the NTSC systems the maximum height is 224.  Some PAL monitors cannot display more than 256 lines.  The width must be a multiple of 4.
+The program can be used to convert images that have sizes up to 160x280.  The height must be a multiple of 8 in the range from 200 to 280.  For the NTSC systems the maximum height is 224.  Some PAL monitors cannot display more than 256 lines.  The width must be a multiple of 4.
 
 The C+4 hardware allows us to have only 2 free colors in the 4x2 matrix and 2 additional free colors per raster line.  So in a 160 pixel line we can have up to 82 different colors but the next line is limited to the 80 colors from the previous line and 2 arbitrary colors.  This limitation actually only applies to the even line and the next odd line.  The even line following the odd line is completely free to use any set of 82 colors.
 
@@ -17,7 +17,7 @@ This program has several useful features:
 3. it generates the preview image;
 4. it is easy to compile open source software that encourages code modification by the end users.
 
-Just compile **mc-pic-cnv.cpp** and call it with two parameters.  The first parameter is the name of the input file, the second is the name of the output preview file.  You also need to have the file **out.prg** in the current directory.  This file is the result of compiling the **svn.asm** file.  The resulting file for the C+4 has name **out1.prg**.
+Just compile **mc-pic-cnv.cpp** and call it with two parameters.  The first parameter is the name of the input file, the second is the name of the output preview file.  The second parameter may be equal to the first.  You also need to have the file **out.prg** in the current directory.  This file is the result of compiling the **svn.asm** file.  The resulting file for the C+4 has name **out1.prg**.  The program generates five images, choose the best one.  These images differ only in the horizontal offset, which is set between -2 and 2.
 
 To convert images to/from the PPM format many tools can be used, such as Image Magick **convert** or GIMP.
 
