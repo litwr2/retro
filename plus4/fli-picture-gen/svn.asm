@@ -168,7 +168,7 @@ BA = *+1
      sta irq276.sc+1
      lda #0
      sta $d4
-.nosc:   
+.nosc:
      lda #<irq205
      sta $fffe
      lda #>irq205
@@ -176,7 +176,7 @@ BA = *+1
 .savex:
      ldx #0
 .savey:
-     ldy #0     
+     ldy #0
      pla
      inc $ff09
      rti
@@ -199,7 +199,7 @@ irq276:   ;245
      inc $a5    ;2-byte timer, 50/60 Hz for PAL/NTSC
      bne *+4
      inc $a4
-     
+
      lda #<irq2
      sta $fffe
      lda #>irq2
