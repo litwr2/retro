@@ -14,10 +14,10 @@ This program has several useful features:
 
 1. the generated images don't flicker on the C+4 screen;
 2. the generated images can have the maximum size allowed by the C+4 hardware;
-3. it generates the preview image;
+3. it generates the preview images;
 4. it is easy to compile open source software that encourages code modification by the end users.
 
-Just compile **mc-pic-cnv.cpp** and call it with two parameters.  The first parameter is the name of the input file, the second is the name of the output preview file.  The second parameter may be equal to the first.  You also need to have the file **out.prg** in the current directory.  This file is the result of compiling the **svn.asm** file.  The resulting file for the C+4 has name **out1.prg**.  The program generates five images, choose the best one.  These images differ only in the horizontal offset, which is set between -2 and 2.
+Just compile **flic.cpp** and call it with two parameters.  The first parameter is the name of the input file, the second is the name of the output preview file.  The second parameter may be equal to the first.  You also need to have the file **out.prg** in the current directory.  This file is the result of compiling the **svn.asm** file.  The resulting files for the C+4 have names **out-2.prg**, **out-1.prg**, **out+0.prg**, **out+1.prg**, and **out+2.prg**.  So the program generates five images, choose the best one.  These images differ only in the horizontal offset, which is set between -2 and 2.
 
-To convert images to/from the PPM format many tools can be used, such as Image Magick **convert** or GIMP.
+To convert images to/from the PPM format many tools can be used, such as the Image Magick **convert** or GIMP.
 

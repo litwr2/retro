@@ -1,4 +1,4 @@
-//simple fli converter
+//simple plus4 fli converter
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -28,7 +28,7 @@ int q(int x, int y, int c) {
    int n = 0;
    for (int ix = 0; ix < 4; ix++)
        for (int iy = 0; iy < 2; iy++)
-           if (c != mc1[y + iy] && c != mc2[y + iy] && c == pic[x + ix][y + iy])
+           if (c == pic[x + ix][y + iy])
                n++;
    return n;
 }
@@ -36,29 +36,29 @@ int eq(int x, int y, int c) {
    int n = 0;
    if (x > 0) {
        for (int iy = 0; iy < 2; iy++) 
-           if (c != mc1[y + iy] && c != mc2[y + iy] && c == pic[x - 1][y + iy])
+           if (c == pic[x - 1][y + iy])
                n++;
-       if (y > 0 && c != mc1[y - 1] && c != mc2[y - 1] && c == pic[x - 1][y - 1])
+       if (y > 0 && c == pic[x - 1][y - 1])
            n++;
-       if (y < VS - 2 && c != mc1[y + 2] && c != mc2[y + 2] && c == pic[x - 1][y + 2])
+       if (y < VS - 2 && c == pic[x - 1][y + 2])
            n++;
    }
    if (x < hs - 4) {
        for (int iy = 0; iy < 2; iy++) 
-           if (c != mc1[y + iy] && c != mc2[y + iy] && c == pic[x + 4][y + iy])
+           if (c == pic[x + 4][y + iy])
                n++;
-       if (y > 0 && c != mc1[y - 1] && c != mc2[y - 1] && c == pic[x + 4][y - 1])
+       if (y > 0 && c == pic[x + 4][y - 1])
            n++;
-       if (y < VS - 2 && c != mc1[y + 2] && c != mc2[y + 2] && c == pic[x + 4][y + 2])
+       if (y < VS - 2 && c == pic[x + 4][y + 2])
            n++;
    }
    if (y > 0)
        for (int ix = 0; ix < 4; ix++) 
-           if (c != mc1[y - 1] && c != mc2[y - 1] && c == pic[x + ix][y - 1])
+           if (c == pic[x + ix][y - 1])
               n++;
    if (y < VS - 2)
        for (int ix = 0; ix < 4; ix++) 
-           if (c != mc1[y + 2] && c != mc2[y + 2] && c == pic[x + ix][y + 2])
+           if (c == pic[x + ix][y + 2])
               n++;
    return n;
 }
@@ -91,6 +91,10 @@ int main(int argc, char **argv) {
         return 3;
     }
     FILE *fi = fopen(argv[1], "r"), *fo;
+    if (fi == 0) {
+        fprintf(stderr, "%s not found\n", argv[1]);
+        return 4;
+    }
     p = strchr(argv[2], '.');
     if (p == 0)
         strcpy(fn, argv[2]), eno[0] = 0;
@@ -108,7 +112,7 @@ E1:     fprintf(stderr, "incorrect format\n");
        strcat(fbuf + strlen(fbuf), (char*)b);
     }
     t = sscanf((char*)b, "%d %d", &hs, &vs);
-    if (t != 2 || hs%8 != 0 || vs%2 !=0) goto E1;
+    if (t != 2 || hs%8 != 0 || vs%2 !=0 || hs > HS || vs > VS) goto E1;
     sprintf(fbuf + strlen(fbuf), "%d %d\n", hs*2, vs);
     fgets((char*)b, BSZ, fi);
     strcat(fbuf + strlen(fbuf), (char*)b);
@@ -121,6 +125,9 @@ E1:     fprintf(stderr, "incorrect format\n");
 			}
 	fclose(fi);
     for (int off = -2; off < 3; off++) {
+    //for (int off = 2; off >= -2; off--) {
+    //for (int off = 1; off >= -1; off--) {
+    //for (int off = 0; off < 1; off++) {
         for (int y = 0; y < vs; y++) {
             for (int x = 0; x < hs; x++)
                 if (x + off >= 0 && x + off < hs)
@@ -148,7 +155,7 @@ E1:     fprintf(stderr, "incorrect format\n");
 		                if (tq > m || tq == m && eq(x, y, c) + tq > eq(x, y, c1) + m)
 		                    m = tq, c1 = c;
 		            }
-		        if (m) cell[x/4][y/2].c1 = c1, m = 0; else cell[x/4][y/2].c1 = -1;
+		        cell[x/4][y/2].c1 = c1, m = 0;
 		        for (int ix = 0; ix < 4; ix++)
 		            for (int iy = 0; iy < 2; iy++) {
 		                int c = pic[x + ix][y + iy];
@@ -164,15 +171,15 @@ E1:     fprintf(stderr, "incorrect format\n");
 		    map<int, int> tc;
 		    mc1[y] = mc2[y] = -1;
 		    for (int x = 0; x < hs; x++) {
-		       int c = pic[x][y], a = (c != cell[x/4][y/2].c1) && (c != cell[x/4][y/2].c2);
-		       if (tc.find(c) == tc.end())
-		          tc[c] = a;
-		       else
-		          tc[c] += a;
+		        int c = pic[x][y], a = c != cell[x/4][y/2].c1 && c != cell[x/4][y/2].c2;
+		        if (tc.find(c) == tc.end())
+		            tc[c] = a;
+		        else
+		            tc[c] += a;
 		    }
-		    int m1 = 0, m2 = 0, c1, c2;
+		    int m1 = 0, m2 = 0, c1 = -1, c2 = -1;
 		    for (auto i = tc.begin(); i != tc.end(); i++)
-		        if (m1 < i->second) m2 = m1, c2 =c1, m1 = i->second, c1 = i->first;
+		        if (m1 < i->second) m2 = m1, c2 = c1, m1 = i->second, c1 = i->first;
 		        else if (m2 < i->second) m2 = i->second, c2 = i->first;
 		    mc1[y] = c1, mc2[y] = c2;    
 		}
@@ -203,7 +210,7 @@ E1:     fprintf(stderr, "incorrect format\n");
 					fwrite(b, 1, 3, fo);
 				};
 		fclose(fo);
-		fprintf(stdout, "%2d %.4f\n", off, 100.*t/hs/vs);
+		fprintf(stdout, "%+d %.4f\n", off, 100.*t/hs/vs);
 #if 0
         fprintf(stderr, "offset = %d\n", off);
 		for (int i = 0; i < vs; i++)
@@ -213,6 +220,10 @@ E1:     fprintf(stderr, "incorrect format\n");
 		        fprintf(stderr, "%d %d %06x %06x\n", x, y, cell[x/4][y/2].c1, cell[x/4][y/2].c2);
 #endif
 		fi = fopen("out.prg", "r");
+		if (fi == 0) {
+		    fprintf(stderr, "out.prg not found\n");
+            return 5;
+		}
 		int co = fread(prg + 0xfff, 1, 65536, fi);
 		fclose(fi);
 		prginit();

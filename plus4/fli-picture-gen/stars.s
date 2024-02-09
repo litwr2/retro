@@ -4,7 +4,7 @@
      sta $e4
      lda #120  ;y of the sprite
      sta $e6
-     
+
      lda #140
      sta $e7   ;y of big sprite 1
 
@@ -94,12 +94,10 @@ stars:
      beq *+5
 .l4: jmp stars
 
-     ;lda $d4
-     ;bne *
-
      jsr clrsprite
      jsr clrbsprite1
      jsr clrbsprite2
+
      lda $e4
      sta $d4
      bmi .l5
