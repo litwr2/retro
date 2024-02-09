@@ -1,4 +1,4 @@
-Just create your picture in the C code using the *setpa* function which sets a pixel on the FLI screen that has 160xVSIZE size, 2 free colors in each 4x2 matrix, and additional 2 free colors for each raster line.  VSIZE can be changed in the **svn.asm** file.  It can be in the range of 200-280.  On the NTSC system it is possible to use up to 224 lines, on the PAL system - 280.  However only 256 raster lines are visible on the old PAL monitors.  Your code must include the **fligen.c** file in your code.
+Just create your picture in the C code using the *setpa* function which sets a pixel on the DFLI screen that has 160xVSIZE size, 2 free colors in each 4x2 matrix, and additional 2 free colors for each raster line.  VSIZE can be changed in the **svn.asm** file.  It can be in the range of 200-280.  On the NTSC system it is possible to use up to 224 lines, on the PAL system - 280.  However only 256 raster lines are visible on the old PAL monitors.  Your code must include the **fligen.c** file in your code.
 
 The **build-asm** script generates the **out.prg** binary file and the **svn.h** include file that contains the definition of VSIZE for the C code.
 
