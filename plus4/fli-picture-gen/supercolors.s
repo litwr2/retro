@@ -8,7 +8,7 @@ super:
     jsr subr
     jsr subr
     jsr subr
-    lda #-$20
+    lda #-$10
     sta $e2
     jsr subr
     jsr subr
