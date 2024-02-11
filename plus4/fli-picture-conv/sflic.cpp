@@ -112,7 +112,7 @@ E1:     fprintf(stderr, "incorrect format\n");
        strcat(fbuf + strlen(fbuf), (char*)b);
     }
     t = sscanf((char*)b, "%d %d", &hs, &vs);
-    if (t != 2 || hs%8 != 0 || vs%2 !=0 || hs > HS || vs > VS) goto E1;
+    if (t != 2 || hs%4 != 0 || vs%2 !=0 || hs > HS || vs > VS) goto E1;
     sprintf(fbuf + strlen(fbuf), "%d %d\n", hs*2, vs);
     fgets((char*)b, BSZ, fi);
     strcat(fbuf + strlen(fbuf), (char*)b);
@@ -134,10 +134,10 @@ E1:     fprintf(stderr, "incorrect format\n");
                     pic[x + off][y] = picc[x][y];
             if (off < 0)
                 for (int x = off; x < 0; x++)
-                    pic[hs + x][y] = picc[hs + off - 1][y];
+                    pic[hs + x - 1][y] = picc[hs - 1][y];
             if (off > 0)
-                for (int x = 0; x < off; x++)
-                    pic[x][y] = picc[off][y];
+                for (int x = 1; x <= off; x++)
+                    pic[x][y] = picc[0][y];
         }
         if (eno[0] == 0)
             sprintf(fno, "%s%+d.ppm", fn, off);
@@ -173,9 +173,9 @@ E1:     fprintf(stderr, "incorrect format\n");
 		    for (int x = 0; x < hs; x++) {
 		        int c = pic[x][y], a = c != cell[x/4][y/2].c1 && c != cell[x/4][y/2].c2;
 		        if (tc.find(c) == tc.end())
-		            tc[c] = a;
+		            tc[c] = a*msqr(hs/2 - mabs(hs/2 - x));
 		        else
-		            tc[c] += a;
+		            tc[c] += a*msqr(hs/2 - mabs(hs/2 - x));
 		    }
 		    int m1 = 0, m2 = 0, c1 = -1, c2 = -1;
 		    for (auto i = tc.begin(); i != tc.end(); i++)
