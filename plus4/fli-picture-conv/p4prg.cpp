@@ -4,7 +4,7 @@ int abase2[4] = {0x9800, 0x7000, 0x8000, 0x8800};
 map<int, int> colscn;
 unsigned char prg[65536];
 void prginit() {
-    for (int i = 0; i < 121; i++) 
+    for (int i = 0; i < 128; i++)
         colscn[p4palette[i][1]] = p4palette[i][0];
     colscn[-1] = 0;
 }
