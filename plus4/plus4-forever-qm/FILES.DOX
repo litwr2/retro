@@ -1,10 +1,8 @@
   The Emulator Package
-plus4.exe       - main program
-plus4.dox       - documentation
+plus4.exe       - main program (packed by DIET)
 files.dox       - this quick files reference
 colscn.prg      - 121 colours palette
-testape.ctf     - datasette's casette image
+testape.ctf     - test datasette's casette image
+seqreade.p00    - SEQ files reader
+ascii.s00       - all visible ASCII symbols for +4
 
-  Extras
-1warrior.prg    - Demo
-boulder.prg     - Boulder Dash game
