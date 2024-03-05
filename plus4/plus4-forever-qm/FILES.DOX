@@ -1,0 +1,9 @@
+  The Emulator Package
+plus4.exe       - main program
+plus4.dox       - documentation
+files.dox       - this quick files reference
+colscn.prg      - 121 colours palette
+testape.ctf     - datasette's casette image
+
+  Extras
+boulder.prg     - Boulder Dash game
