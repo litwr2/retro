@@ -1,0 +1,74 @@
+FIRST
+ - no sound at channel 2 after noise generator!
+ - problem with TAP-attachment from cmd-line, see Tablets of Hippocrats
+ - VIDEO_DATA limit to 375!
+ - cmd line help, ####brk, run, ###spd
+ - ted & cpu 100% synchronization - no 2 cycles for cpu
+ - Godzilla!!!
+ - 42 chars at 5 magics!
+ - timing demo from ninja
+ - second bad line conditions!
+ - time for TAP
+ - ??? $0,S,R  $0:A*=P,P,R
+ - status line for 400x300,640x480,640x400
+ - FF0A WRITE BUG!!!!
+ - frame skipping & debugger conflict
+ - block menus during disk i/o (on IBM FS only?)
+ - reset & menus (!) break disk io!!!
+ - add automatic name generation for export from ctf/d64
+ - debugger add 0 to 1/3 byte operand for A command
+ - last line attribute (like bubis demo)
+ - improve timer sound?
+ - SEQ-viewer???
+ - F5 doesn't function in the debugger!
+ - CSB
+ - load new PRG, P00, ... after forced reset
+ - debugger & menus conflict?
+ - dynamic memory distribution? (256k RAM)
+ - pause key?
+ - total ticks reset & synchronization
+ - safe interrupts (out 21h???)
+ - drive letters via DOS Fn 52H
+ - improving of sort (p00, PRG)
+
+TAPE
+ - TEST TAPE FORMAT VERSION
+ - REAL TAPE (.WAV???)
+ - DATASETTE NOISE TO PC SPEAKER ALWAYS!!!???...
+
+REAL PLUS/4???
+ - $ff10 bits 2-7?
+ - PROPER COLORS!!!
+ - test freeze bit
+ - test pal/ntsc bit
+ - test video dependences
+ - TED access to IO area test
+ - TED COLLISION RAM & HI_IO ($FDxx-$FFxx)?
+
+GENERAL:
+ - c+4 kbd picture (?on F8 key...)
+ - NTSC bit
+ - WRITE TO TED & SIMULTANEOUSLY WRITE TO RAM???
+ - FULL PIO PORT EMULATION (e.g. CASETTE SENSE)!
+ - TEST FREEZE FORMAT VERSION
+ - FULL CPU IO LOGIC...
+ - (ALL) IORESULT CHECK?!!! AFTER INT 21H...
+ - USE nn BYTES at code segment (DAC_T(384B), dosmsg(112B), ROMFN(104B), ...)
+
+MENUS:
+ - OUTPUT SUMMARY INFORMATION IN MENUS2
+ - output start address for .p00 and .prg files (rec. size for .r00???)
+ - FFLPD -> uni FLPD
+ - print screen... ()
+
+EXTRAS
+ - fill partial record after last record ???
+ - remove SI from RL+SI in the relative files subroutines
+ - copy64 rel files
+ - copy pc(d64?) - COMBINE REL FILES WITH DIFF REC SIZE!
+ - d64flush x00..x09 limit
+ - OPEN8,8,8,"$,S,W" (?)
+ - OPEN8,8,8,"fn,S,M" as ",S,R" (?)
+ - free channel after error (?)
+ - B-R, B-W, B-P (PC), %S, # (PC)
+
