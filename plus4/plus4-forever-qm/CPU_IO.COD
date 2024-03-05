@@ -1,0 +1,19 @@
+CPU_IO_WR:      TEST    [CPU1_XOR],4AH  ;bit 6 not finished
+                JNZ     CDS_IO_WR
+                TEST    [CPU1_XOR],0C7H ;bits 1 and 6 intersect with DATASETTE
+                JNZ     CSB_IO_WR
+                RETN
+
+CPU_IO_RD:      CALL    CDS_IO_RD
+                CALL    CSB_IO_RD
+                MOV     DH,[CPU_1]
+;                push    ax      ;datasette tape sound
+;                mov     ah,dh
+;                and     ah,010h
+;                in      al,61h
+;                and     al,0fch
+;                shr     ah,3
+;                or      al,ah
+;                out     61h,al
+;                pop     ax
+                RETN

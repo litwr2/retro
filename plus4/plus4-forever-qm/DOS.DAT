@@ -1,0 +1,13 @@
+AMSG            DB      'Commodore Plus/4 Emulator v1.19 VII-2003, by Lidovski V.'
+                DB      0DH,0AH,'$'
+ERROR1          DB      'This program requires MS-DOS version 3.30 or higher'
+                DB      0AH,0Dh,'$'
+FMSG            DB      'Emulation''s finished, '
+                DB      'average frame rate -- 000.0Hz.',0DH,0AH,'$'
+
+SAVE23LO        DW      0
+SAVE23HI        DW      0
+SAVE24LO        DW      0
+SAVE24HI        DW      0
+BREAK_FLAG      DB      0
+

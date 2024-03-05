@@ -1,0 +1,68 @@
+SCR1_TOP_X      EQU     7
+SCR1_TOP_Y      EQU     0
+SCR1_LEN        EQU     53
+HELP1_TOP_X     EQU     2
+HELP1_TOP_Y     EQU     3
+HELP1_LEN       EQU     59
+                         ;12-123456789012-1234567890-123456789012345678901234
+SCR1_1          DB      'ษออัออออออออออออัออออออออออัออออออออออออออออออออออออป'
+SCR1_2          DB      'บD#ณ  FileName  ณ   Size   ณ    CBM Information     บ'
+SCR1_3          DB      'ศออฯออออออออออออฯออออออออออฯออออออออออออออออออออออออผ'
+BMENU1_T        DB      '1Help   2SaveBs 3Joys   4Freeze 5New    6       '
+                DB      '7Assoc. 8Delete 9CBM 1  10Quit  '
+LABEL           BMENU_A BYTE
+TIMES   9       DB      7,70H,70H,70H,70H,70H,70H,7
+                DB      7,7,70H,70H,70H,70H,70H,70H
+                ;         1         2         3         4         5
+                ;12345678901234567890123456789012345678901234567890123456789
+MHELP1  DB      '"F1" invokes this text.                                    '
+        DB      '"F2" ("Save Basic") saves a standard program (it starts at '
+        DB      '     at the pointer at $2B and ends at the pointer at $2D) '
+        DB      '     in a PRG file.                                        '
+        DB      '"F3" sets joysticks                                        '
+        DB      '"F4" freezes the current machine state in a C2F file.      '
+        DB      '"F5" creates a new media: cassette or disk.                '
+        DB      '"F7" associates the selected image file(s) (e.g. D64) with '
+        DB      '     a CBM i/o device.                                     '
+        DB      '"F8", "Del" deletes a file                                 '
+        DB      '"F9" toggles between CBM Characters Set #1 and #2.         '
+        DB      '"F10", "Esc" or right mouse button returns control to the  '
+        DB      '     emulator.                                             '
+        DB      '"Enter" shows an image or loads a program.                 '
+        DB      'Left mouse button activates menu item.                     '
+CP_IN_WIN1      DB      0
+CP_MAX_WIN1     DB      21
+DIRECTION       DB      0       ;0-IN, 1-OUT
+WIN_POS1        DW      0
+LIST_CAP1       DW      0
+START_POS1      EQU     LIST_CAP2
+FPATH_LEN       DB      0
+FPATH           RB      67
+DEV1            RB      12
+DEV8            RB      12
+DEV9            RB      12      
+TEST_DRV        DB      'A:'
+IBM_MASK        DB      '*.???',0
+IBM_EXTS_CAP    EQU     9
+IBM_EXTS        DD      'C2F','CTF','D64','PRG','D0?','P0?','R0?','S0?','U0?'
+EXTS_DET        DB      0,0,0,0,1,1,1,1,1
+IBM_FLIST_CAP   EQU     512
+LABEL           IBM_FN_LIST BYTE
+TIMES   8*IBM_FLIST_CAP DB ' '
+LABEL           IBM_EX_LIST BYTE
+TIMES   3*IBM_FLIST_CAP DB ' '
+LABEL           IBM_DV_LIST BYTE
+TIMES   2*IBM_FLIST_CAP DB '*'
+LABEL           IBM_CI_LIST BYTE
+TIMES   24*IBM_FLIST_CAP DB ' '
+LABEL           IBM_SZ_LIST DWORD
+TIMES   IBM_FLIST_CAP   DD 0
+TT2             DW      ENT_C2F,ENT_CTF,ENT_D64
+                DW      ENT_PRG,MENU_DISP1,ENT_P00
+                DW      MENU_DISP1,MENU_DISP1,MENU_DISP1
+TT4             DW      FC_XX,FC_XX,FC_D64,FC_XX
+                DW      FC_X00,FC_X00,FC_X00
+                DW      FC_X00,FC_X00
+RSPEED          DB      'SPEED   000.0%'
+SPEEDL          DB      'LIMIT < 100.6%>'
+

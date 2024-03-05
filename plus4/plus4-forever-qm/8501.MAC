@@ -1,0 +1,476 @@
+ZEF             EQU     2
+CAF             EQU     1
+SIF             EQU     80H
+OVF             EQU     40H
+
+FREEZE_LEN      EQU     LED-FREEZE_VER+1
+
+MACRO           GET_BYTE XB
+{
+                MOV     BX,SI
+                INC     BX
+                CALL    MREAD_DH
+                XOR     BH,BH
+                IF XB EQ
+                 MOV     BL,DH
+                END IF
+}
+
+MACRO           GET_WORD XB
+{
+                MOV     BX,SI
+                INC     BX
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BX
+                CALL    MREAD_DH
+                IF XB EQ
+                 MOV     BX,DX
+                END IF
+}
+
+MACRO           ADDR_ZP ICLOCK,XB
+{
+                GET_BYTE
+                ADD     SI,2
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_IZP_Y ICLOCK,XB
+{
+                LOCAL   CIN
+                GET_BYTE
+                ADD     SI,2
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BL
+                CALL    MREAD_DH
+                MOV     BX,DX
+                MOV     DX,DI
+                ADD     BL,DL
+                MOV     DL,ICLOCK
+                JNC     CIN#_3
+                INC     BH
+                INC     DL
+CIN#_3:         IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_IZP_X ICLOCK,XB
+{
+                GET_BYTE
+                ADD     SI,2
+                ADD     BL,CL
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BL
+                CALL    MREAD_DH
+                MOV     BX,DX
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ABS ICLOCK,XB
+{
+                GET_WORD
+                ADD     SI,3
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ZP_X ICLOCK,XB
+{
+                GET_BYTE
+                ADD     SI,2
+                ADD     BL,CL
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ZP_Y ICLOCK,XB
+{
+                GET_BYTE
+                ADD     SI,2
+                ADD     BX,DI
+                XOR     BH,BH
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ABS_Y ICLOCK,XB
+{
+                LOCAL   CIN
+                GET_WORD
+                ADD     SI,3
+                MOV     DX,DI
+                ADD     BL,DL
+                MOV     DL,ICLOCK
+                JNC     CIN#_3
+                INC     DL
+                INC     BH
+CIN#_3:         IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ABS_X ICLOCK,XB
+{
+                LOCAL   CIN
+                GET_WORD
+                ADD     SI,3
+                MOV     DL,ICLOCK
+                ADD     BL,CL
+                JNC     CIN#_3
+                INC     DL
+                INC     BH
+CIN#_3:         IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_ABS_X1 ICLOCK,XB
+{
+                GET_WORD
+                ADD     SI,3
+                ADD     BX,CX
+                MOV     DL,ICLOCK
+                IF XB EQ
+                 CALL    MREAD_DH
+                END IF
+}
+
+MACRO           ADDR_MISS ICLOCK
+{
+                INC     SI
+                MOV     DL,ICLOCK
+}
+
+MACRO           ADDR_IM ICLOCK
+{
+                GET_BYTE NB
+                ADD     SI,2
+                MOV     DL,ICLOCK
+}
+
+MACRO           LOGIC_OPER OPER
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OPER    AH,DH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_2
+                OR      AL,SIF
+CIN#_2:         RETN
+}
+
+MACRO           BRANCH1 COND
+{
+                LOCAL   CIN
+                INC     SI
+                MOV     BX,SI
+                CALL    MREAD_DH
+                INC     SI
+                INC     BX
+
+                MOV     DL,2
+                OR      AL,AL
+                COND    CIN#_4
+
+                INC     DL
+                OR      DH,DH
+                JNS     CIN#_1
+                NEG     DH
+                SUB     BL,DH
+                JNC     CIN#_3
+                DEC     BH
+                INC     DL
+CIN#_3:         MOV     SI,BX
+                RETN
+
+CIN#_1:         ADD     BL,DH
+                JNC     CIN#_2
+                INC     BH
+                INC     DL
+CIN#_2:         MOV     SI,BX
+CIN#_4:         RETN
+}
+
+MACRO           BRANCH2 COND,FLAG
+{
+                LOCAL   CIN
+                INC     SI
+                MOV     BX,SI
+                CALL    MREAD_DH
+                INC     SI
+                INC     BX
+
+                MOV     DL,2
+                TEST    AL,FLAG
+                COND    CIN#_4
+
+                INC     DL
+                OR      DH,DH
+                JNS     CIN#_1
+                NEG     DH
+                SUB     BL,DH
+                JNC     CIN#_3
+                DEC     BH
+                INC     DL
+CIN#_3:         MOV     SI,BX
+                RETN
+
+CIN#_1:         ADD     BL,DH
+                JNC     CIN#_2
+                INC     BH
+                INC     DL
+CIN#_2:         MOV     SI,BX
+CIN#_4:         RETN
+}
+
+MACRO           CLRF    FLAG
+{
+                INC     SI
+                MOV     DL,2
+                AND     AL,NOT FLAG
+                RETN
+}
+
+MACRO           SETF    FLAG
+{
+                INC     SI
+                MOV     DL,2
+                OR      AL,FLAG
+                RETN
+}
+
+MACRO           ADDITION
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR OVF)
+                TEST    AL,8    ; ?DECIMAL MODE
+                BTR     AX,0
+                JNZ     CIN#_3
+                ADC     AH,DH
+
+                JNO     CIN#_4
+                ADC     AL,CH
+                OR      AL,OVF
+CIN#_4:         ADC     AL,CH
+                OR      AH,AH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_8
+                OR      AL,SIF
+CIN#_8:         RETN
+
+CIN#_3:         XCHG    AL,AH
+                ADC     AL,DH
+                DAA
+                XCHG    AL,AH
+                ADC     AL,CH
+                OR      AH,AH
+                JNZ     CIN#_7
+                OR      AL,ZEF
+CIN#_7:         JNS     CIN#_8
+                OR      AL,SIF
+                RETN
+}
+
+MACRO           SUBTRACTION
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR OVF)
+                TEST    AL,8    ; ?DECIMAL MODE
+                BTR     AX,0
+                CMC
+                JNZ     CIN#_3
+                SBB     AH,DH
+                CMC
+
+                JNO     CIN#_4
+                ADC     AL,CH
+                OR      AL,OVF
+CIN#_4:         ADC     AL,CH
+                OR      AH,AH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_8
+                OR      AL,SIF
+CIN#_8:         RETN
+
+CIN#_3:         XCHG    AL,AH
+                SBB     AL,DH
+                DAS
+                XCHG    AL,AH
+                JC      CIN#_6
+                INC     AX
+CIN#_6:         OR      AH,AH
+                JNZ     CIN#_7
+                OR      AL,ZEF
+CIN#_7:         JNS     CIN#_8
+                OR      AL,SIF
+                RETN
+}
+
+MACRO           ROTATE_MEM OPER
+{
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                BTR     AX,0
+                OPER    DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     MSTORE_DH
+                OR      AL,SIF
+                JMP     MSTORE_DH
+}
+
+MACRO           ROTATE_AC OPER
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                BTR     AX,0
+                OPER    AH,1
+                ADC     AL,CH
+                OR      AH,AH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_2
+                OR      AL,SIF
+CIN#_2:         RETN
+}
+
+MACRO           SHIFT_MEM_L
+{
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                SHL     DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     MSTORE_DH
+                OR      AL,SIF
+                JMP     MSTORE_DH
+}
+
+MACRO           SHIFT_MEM_R
+{
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                SHR     DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     MSTORE_DH
+                OR      AL,ZEF
+                JMP     MSTORE_DH
+}
+
+MACRO           SETF_L_AC
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OR      AH,AH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_2
+                OR      AL,SIF
+CIN#_2:         RETN
+}
+
+MACRO           SETF_L_XR
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OR      CL,CL
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_2
+                OR      AL,SIF
+CIN#_2:         RETN
+}
+
+MACRO           SETF_L_YR
+{
+                LOCAL   CIN
+                MOV     DI,BX
+                AND     AL,NOT (ZEF OR SIF)
+                OR      BL,BL
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     CIN#_2
+                OR      AL,SIF
+CIN#_2:         RETN
+}
+
+MACRO           COMPARE OPRND
+{
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                CMP     OPRND,DH
+                JC      CIN#_1
+                BTS     AX,0
+CIN#_1:         JNZ     CIN#_2
+                OR      AL,ZEF
+CIN#_2:         JNS     CIN#_3
+                OR      AL,SIF
+CIN#_3:         RETN
+}
+
+MACRO           DECREMENT
+{
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                DEC     DH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     MSTORE_DH
+                OR      AL,SIF
+                JMP     MSTORE_DH
+}
+
+MACRO           INCREMENT
+{
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                INC     DH
+                JNZ     CIN#_1
+                OR      AL,ZEF
+CIN#_1:         JNS     MSTORE_DH
+                OR      AL,SIF
+                JMP     MSTORE_DH
+}
+
+MACRO           STORE_MEM OPRND
+{
+                MOV     DH,OPRND
+                JMP     MSTORE_DH
+}
+
+MACRO           XNOP    ICLOCK
+{
+                INC     SI
+                MOV     DL,ICLOCK
+                RETN
+}
+

@@ -1,0 +1,6 @@
+MACRO		IRP	[VAL]
+{
+                MOV     AX,VAL
+                CALL    OUT_ADLIB
+}
+

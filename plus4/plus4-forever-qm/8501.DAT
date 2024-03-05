@@ -1,0 +1,71 @@
+                ALIGN   4
+TOTALTICKS      DD      0
+
+FREEZE_VER      DW      1
+TICKS           DB      0
+PC              DW      0       ;SI
+SPR             DW      1FFH    ;BP
+XR              DW      4       ;CX
+YR              DW      7       ;DI
+SR              DB      30H     ;AL
+AC              DB      0       ;AH
+CPU_0           DB      0FH             ;$0-$1
+CPU_1           DB      0C8H
+ROMMAP          DB      0
+                DB      0       ;former kernel_ws
+TIMER1_RELOAD   DW      8000H
+LED             DB      ?       ;4 - Scroll Lock, 5 - Num Lock, 6 - Caps Lock
+
+                ALIGN   2
+RESET_SP        DW      ?
+SA_ROM_LO       DW      ?       ;ACTIVE ROM BANKS
+SA_ROM_HI       DW      ?
+TSA_ROM         DW      SEG SEG_ROM -800H, SEG SEG_ROM
+                DW      SEG SEG_CART-800H, SEG SEG_CART
+
+LABEL           OPP     BYTE
+                IRPC2   O,0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F
+
+                ;TIMER1
+TED_0           DB      0FFH    ; $FF00
+TED_1           DB      0FFH    ; $FF01
+                ;TIMER2
+TED_2           DB      0FFH    ; $FF02
+TED_3           DB      0FFH    ; $FF03
+                ;TIMER3
+TED_4           DB      0FFH    ; $FF04
+TED_5           DB      0FFH    ; $FF05
+TED_6           DB      1BH     ; $FF06
+TED_7           DB      8       ; $FF07
+TED_8           DB      0FFH    ; $FF08
+TED_9           DB      0       ; $FF09 =???
+                ;RASTER_LINE
+TED_A           DB      0A2H    ; $FF0A
+TED_B           DB      0CCH    ; $FF0B
+                ;CUR_POS
+TED_C           DB      0       ; $FF0C
+TED_D           DB      0       ; $FF0D
+TED_E           DB      0       ; $FF0E
+TED_F           DB      0       ; $FF0F
+TED_10          DB      07CH    ; $FF10
+TED_11          DB      00100001B       ; $FF11
+TED_12          DB      0CCH    ; $FF12
+TED_13          DB      0D1H    ; $FF13
+TED_14          DB      0FH     ; $FF14
+TED_15          DB      071H    ; $FF15
+TED_16          DB      05BH    ; $FF16
+TED_17          DB      075H    ; $FF17
+TED_18          DB      077H    ; $FF18
+TED_19          DB      06EH    ; $FF19
+                ;CHAR_RELOAD_POS
+TED_1A          DB      0       ; $FF1A
+TED_1B          DB      0       ; $FF1B
+                ;VER_POS
+TED_1C          DB      0       ; $FF1C \
+TED_1D          DB      0       ; $FF1D -- VER. POS.
+                ;HOR_POS
+TED_1E          DB      0       ; $FF1E -- HOR. POS.
+TED_1F          DB      080H    ; $FF1F
+
+;TED_3E          DB      ?       ; $FF3E
+;TED_3F          DB      ?       ; $FF3F

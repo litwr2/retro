@@ -1,0 +1,18 @@
+                ALIGN   4
+SYNCHRO_TICKS   DD      0
+DELAYCONST      DD      ?
+INTR8COUNT      DW      0
+SND1POS         DW      0
+POS1SND1        DW      0
+POS2SND1        DW      702
+SND2POS         DW      0
+POS1SND2        DW      0
+POS2SND2        DW      702
+NOISE_OFFSET    DW      1
+SPEED_LIMIT     DW      24      ;APPROX 889200/INTR8_FREQ, 23.85
+TICKS2TED       DW      0
+TIMER_ST        DB      0
+VOL             DB      0
+TIMER_SOUND     DB      0
+SYNCHRO_SKIP    DB      0
+
