@@ -26,16 +26,34 @@ WIN_POS2        DW      0
 LIST_CAP2       DW      ?
 DEV             DB      '--'
 CBM_FLIST_CAP   EQU     144
-LABEL           CBM_FN_LIST BYTE
-TIMES   16*CBM_FLIST_CAP DB ' '
-LABEL           CBM_TY_LIST BYTE
-TIMES   4*CBM_FLIST_CAP DB ' '
+CBM_FN_LIST     RB      16*CBM_FLIST_CAP
+CBM_TY_LIST     RB      4*CBM_FLIST_CAP
 CBM_SZ_LIST     RW      CBM_FLIST_CAP
 CBM_FP_LIST     RW      CBM_FLIST_CAP
+CBM_DE_LIST     RW      CBM_FLIST_CAP   ;DIR ENTRIES POINTERS (#, SECTOR)
 CBM_RL_LIST     RB      CBM_FLIST_CAP
 CBM_FH          DW      ?
 IBM_FH          DW      ?
 D64_POS         DW      ?
 CBM_FTYPE       DW      ?
-CBM00ID         DB      'C64File',0
+CBM_MENUPOS     DW      ?
+DETEMP          DB      ?
+CBM00ID         DB      'C64File',0     ;compatibility!
 MENU2_TEMP      DB      ?
+
+DSM_SBUF        DB      ?
+DSM_LBC         DB      ?
+DSM_LBQ         DB      ?
+DSM_TIMER       DD      ?
+DSM_MSUM        DD      ?
+DSM_TEMP        DW      ?
+DSM_BUF_PTR     DW      ?
+DSM_FVER        DW      0               ;CURRENT FORMAT VERSION
+DSM_HPOSN       DW      ?               ;CURRENT TAPE HEAD POSITION NUMBER
+DSM_QENTR       DW      ?               ;QUANTITY OF CURRENT TAPE ENTRIES +1
+DSM_RPOSP       DD      ?               ;BUFFER START POS
+DSM_RPOSC       DD      ?               ;BUFFER END POS
+DSM_RPOSE       DD      ?               ;END OF BLOCK
+DSM_NPOS        DD      ?               ;NEXT POSITION
+DSM_MVAL        DW      ?
+

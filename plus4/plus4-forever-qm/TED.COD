@@ -1,358 +1,481 @@
-TED:            CMP     [TICKS2TED],0
+TEDEXTRA:       ADD     EAX,[TOTALTICKS]
+                MOV     DI,[VD_PTR_BEAM]        ;EXTRA
+                MOV     [DI],EAX
+                MOV     [DI+4],EAX
+                RETN
+
+TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 JZ      TED
 
                 DEC     [TICKS2TED]
                 INC     [TOTALTICKS]
+                CMP     [TED_1E],36H            ;DMA FETCH START
+                JNE     .L2
 
-                INC     [TICKS]
-                CMP     [VIS],3
-                JNZ     .SINGLE
+                CMP     [ISDMANOW],1
+                JB      .L2
 
-                JMP     [TED_IDJ]
-.L22Z:          CMP     [TED_1E],SHRA
-                JB      .L22
-                CMP     [TED_1E],EHRA
-                JA      .L22
+                JA      .L12
 
-                MOV     AX,DS
-                MOV     ES,AX
-                MOV     SI,[CRP]
-                SUB     SI,WORD [TED_1A]
-
-                CMP     [BADLICOND],0
-                JNE     .L12
-
-                MOV     AX,WORD [TED_1C]
-                XOR     AL,[SST]
-                AND     AX,7
-                CMP     AX,[Y_OFFSET]
-                JNZ     .L2
-
-                MOV     [VSA],AH
-                AND     [VMODE],0BFH
-                INC     [BADLICOND]
-
-.L12:           MOV     BX,[CRP]
+                MOV     BX,[DMA_BASE]
                 ADD     BH,[VM_BASE]
-                MOV     AH,[FS:BX]
-                MOV     AL,[FS:BX+400H]
-                MOV     [VID_BUF+ESI*2],AX
-                DEC     [TICKS]
+                MOV     CX,10
+                XOR     SI,SI
+.ATTR:          MOV     EAX,[FS:BX]
+                MOV     DWORD [VID_BUF1+SI],EAX
+                ADD     SI,4
+                ADD     BX,4
+                AND     BH,0FBH
+                LOOP    .ATTR
+                JMP     .L2
 
-.L2:            LGS     BX,[MDATA_ADDR]
-                MOV     DX,[VID_BUF+ESI*2]       ;DH-ATTR, DL-CHAR
+.L12:           MOV     BX,[DMA_BASE]
+                XOR     SI,SI
+                MOV     CX,10
+                ADD     BH,[VM_BASE]
+.CHAR:          MOV     EAX,[FS:BX+400H]
+                MOV     DWORD [VID_BUF2+SI],EAX
+                MOV     EAX,DWORD [VID_BUF1+SI]
+                MOV     DWORD [VID_BUF3+SI],EAX
+                ADD     SI,4
+                ADD     BX,4
+                AND     BH,0FBH
+                LOOP    .CHAR
+
+.L2:            MOV     AL,[BEAMX]
+                CMP     AL,[SHVA]
+                JAE     .L9
+
+                CMP     AL,[EHVA]
+                JA      .COUNTERS
+
+.L9:            CMP     [ISDMA],1               ;DMA?
+                JB      .BORDER
+
+                JA      .L2A
+
+                CALL    TEDEXTRA
+                JMP     .L2B
+
+.L2A:           CMP     [TED_1E],38
+                JBE     .L2C
+
+                CMP     [TED_1E],56
+                JNZ     .BORDER
+
+                CALL    TEDEXTRA
+.L2C:           MOV     SI,[CP_CURRENT]
+                SUB     SI,WORD [TED_1A]
+                LGS     BX,[MDATA_ADDR]
+                MOV     DL,[VID_BUF2+SI]        ;DH-ATTR, DL-CHAR
+                MOV     DH,[VID_BUF3+SI]
                 MOV     SI,[VMODE]
                 MOV     DI,[VD_PTR_FILL]
                 CALL    [VMJT+SI]
-                MOV     [VD_PTR_FILL],DI
+                INC     [CP_CURRENT]
 
-                INC     [CRP]
-                LES     DI,[BEAM_ADDR]
-                MOV     AX,WORD [TED_1C]
-                ADD     [BEAM_POS],8
-                CMP     AX,[EVSA]
-                JA      .L5
-                CMP     AX,[SVSA]
-                JB      .L5
-                MOV     AL,[TED_1E]
+.L2B:           MOV     AL,[TED_1E]
                 CMP     AL,[EHSA]
-                JA      .L5
-                CMP     AL,[SHSA]
-                JB      .L5
-                CMP     [SST2],0
-                JNZ     .L5
-                MOV     SI,[VD_PTR_BEAM]
-                MOVSD
-                MOVSD
-                MOV     [VD_PTR_BEAM],SI
-                JMP     .L7
-.L5:            MOV     EAX,[BORDER_COLOR]
-                STOSD
-                STOSD
-                ADD     [VD_PTR_BEAM],8
-                JMP     .L7
+                JNZ     .L2E
 
-.L22:           LES     DI,[BEAM_ADDR]
-                MOV     AX,WORD [TED_1C]
-                ADD     [BEAM_POS],8
-                CMP     AX,[EVSA]
-                JA      .L5A
-                CMP     AX,[SVSA]
-                JB      .L5A
-                MOV     AL,[TED_1E]
-                CMP     AL,[EHSA]
-                JA      .L5A
-                CMP     AL,[SHSA]
-                JB      .L5A
-                CMP     [SST2],0
-                JNZ     .L5A
-                STOSD
-                STOSD
-                JMP     .L7
-.L5A:           MOV     EAX,[BORDER_COLOR]
-                STOSD
-                STOSD
+                OR      [ISBORDER],2
+                JMP     .BORDER
 
-.SINGLE:        TEST    [TED_13],2  ;SINGLE CLOCK? (1-ON)
-                JNZ     .L7
-                INC     [TICKS]
+.L2E:           CMP     AL,[SHSA]
+                JNZ     .L2D
 
-.L7:            CMP     [XZN],2
-                JA      .L9
-                JZ      .L8A
-                DEC     [XZ1C]
-                JNZ     .L9
+                AND     [ISBORDER],1
+.L2D:           CMP     [ISBORDER],0
+                JE      .SHOW8
 
-                MOV     DX,.L22
-                CMP     WORD [TED_1C],EVRA
-                JA      .L22X
-                MOV     AX,[Y_OFFSET]
-                MOV     BX,WORD [TED_1C]
-                XOR     BL,[SST]
-                CMP     AH,[SST]
-                JZ      .L22B
-                CMP     AH,[SST2]
-                JZ      .L22A
-                AND     BL,7
-.L22B:          CMP     AX,BX
-                JA      .L22X
-.L22A:          MOV     DX,.L22Z
-.L22X:          MOV     [TED_IDJ],DX
+.BORDER:        MOV     EAX,[BORDER_COLOR]
+                MOV     DI,[VD_PTR_BEAM]
+                MOV     [DI],EAX
+                MOV     [DI+4],EAX
+.SHOW8:         CMP     [VISIBLE],0
+                JE      .COUNTERS
+
+        ;cmp [BEAMY],294
+        ;jnz .ll1
+        ;
+        ;mov eax,[TOTALTICKS]
+        ;MOV     [DI],EAX
+        ;MOV     [DI+4],EAX
+;.ll1:
+                ADD     DWORD [VD_PTR_BEAM],80008H
+.COUNTERS:      CMP     [ISDMA],2
+                JNE     .L14
+
+                CMP     [TED_1E],37H
+                JNE     .L8
+
+                MOV     AX,[X_OFFSET]
+                ADD     AX,[VD_PTR_BEAM]
+                MOV     [VD_PTR_FILL],AX
+                JMP     .L23
+
+.L8:            CMP     [TED_1E],34H
+                JNE     .L7
+
+                INC     [VSA]
+                AND     [VSA],7
+                JMP     .L23
+
+.L7:            CMP     [TED_1E],35H
+                JNE     .L6
 
                 MOV     AX,WORD [TED_1A]
-                MOV     [CRP],AX
-                INC     [XZN]
-                INC     [VIS]
-                JMP     .L9
-.L8A:           DEC     [XZ2C]
-                JNZ     .L9
-                INC     [XZN]
-                AND     [VIS],0FEH
+                MOV     [CP_CURRENT],AX
+                JMP     .L23
 
-.L9:            TEST    [TED_7],20H               ;FREEZE (1-ON)
-                JNZ     .L11
-                INC     [TED_1E]
-                CMP     [TED_1E],MAX_HOR+1        ;H-SYNC
-                JB      .L12A
-                MOV     [TED_1E],0
+.L6:            CMP     [TED_1E],28H
+                JNE     .L5
 
-                CMP     [BEAM_POS],BEAM_CH_POS
-                JB      .L34
-                SUB     [BEAM_POS],BEAM_CH_POS
-                ADD     [BEAM_POS+2],BEAM_CH_POS/16
-.L34:           XOR     AX,AX
-                XCHG    AX,[BEAM_POSX]
-                ADD     [BEAM_POS],AX
+                CMP     [VSA],6
+                JNE     .L23
 
-                MOV     AX,VIDEO_DATA
-                MOV     [VD_PTR_BEAM],AX
-                ADD     AX,[X_OFFSET]
-                MOV     [VD_PTR_FILL],AX
+                ADD     [DMA_BASE],40
+                AND     BYTE [DMA_BASE+1],3
+                JMP     .L23
 
-                MOV     [XZN],1
-                MOV     [XZ1C],XZ1L
-                MOV     [XZ2C],XZ2L
+.L5:            CMP     [TED_1E],26H
+                JNE     .L14
 
-                CMP     [YZN],2
-                JA      .L14
-.L15:           DEC     [YZ2C]
-                JNZ     .L14
-                INC     [YZN]
-                AND     [VIS],0FDH
+                CMP     [VSA],7
+                JNE     .L23
 
-.L14:           MOV     AX,WORD [TED_1C]
-                INC     AX
-                CMP     AX,MAX_VER+1            ;V-SYNC
-                JB      .L17
+                MOV     AX,[CP_CURRENT]
+                AND     AH,3
+                MOV     WORD [TED_1A],AX
+                JMP     .L23
 
+.L14:           CMP     [TED_1E],29H    ;2F-30?
+                JNE     .L25
+
+                CMP     [ISDMANOW],0
+                JE      .L23
+
+                MOV     AL,[TED_1C]
+                AND     AL,7
+                CMP     AL,BYTE [Y_OFFSET]
+                JNE     .L23
+
+                MOV     [ISDMANOW],1
+                JMP     .L23
+
+.L25:           CMP     [TED_1E],33H
+                JNE     .L19
+
+                MOV     [CLADDR],LBLAF
+                MOV     AX,WORD [TED_1C]
+                TEST    [TED_13],2      ;SINGLE CLOCK MODE?
+                JZ      .L3
+
+                MOV     [CLADDR],LBLAS
+.L3:            CMP     AX,203
+                JE      .L22
+
+                JB      .L4
+
+                CMP     AX,204
+                JA      .L4
+
+                MOV     [ISDMA],0
+                MOV     [ISDMANOW],0
+                JMP     .L23
+
+.L22:           MOV     [ISDMANOW],0
+                CMP     [ISDMA],0
+                JE      .L23
+
+                MOV     [CLADDR],LNORMF
+                TEST    [TED_13],2      ;SINGLE CLOCK MODE?
+                JZ      .L23
+
+                MOV     [CLADDR],LNORMS
+                JMP     .L23
+
+.L4:            CMP     [ISDMA],0
+                JE      .L23
+
+                MOV     [CLADDR],LNORMF
+                TEST    [TED_13],2      ;SINGLE CLOCK MODE?
+                JZ      .L1
+
+                MOV     [CLADDR],LNORMS
+.L1:            AND     AL,7
+                CMP     AL,BYTE [Y_OFFSET]
+                JNE     .L12H
+
+                MOV     [ISDMANOW],1
+                JMP     .L10
+
+.L12H:          CMP     [ISDMANOW],1
+                JB      .L23
+
+                MOV     [ISDMANOW],0
+                JA      .L23
+
+                MOV     [ISDMANOW],2
+                MOV     [ISDMA],2
+.L10:           MOV     [CLADDR],LDMAF
+                TEST    [TED_13],2      ;SINGLE CLOCK MODE?
+                JZ      .L23
+
+                MOV     [CLADDR],LDMAS
+                JMP     .L23
+
+.L19:           CMP     [TED_1E],31H
+                JNE     .L23
+
+                CMP     [VD_PTR_BEAM],VIDEO_DATA
+                JE      .L30
+
+        push es
+        mov ax,0b800h
+        mov es,ax
+        mov byte [es:0],'@'
+        pop es
+                CALL    [VIDCJMP]
+.L30:           MOV     [VD_PTR_BEAM],VIDEO_DATA
+                INC     WORD [TED_1C]
+                AND     [TED_1D],1
+                INC     [BEAMY]
+                MOV     [RIRQ],0
+                MOV     AX,WORD [TED_1C]
+                CMP     AX,268                  ;V-SYNC
+                JNZ     .L17
+
+                MOV     [BEAM_POS],0
+                MOV     [BEAMY],0
+                MOV     [VISIBLE],0
                 INC     [RETRACE_COUNT]
+                CMP     [MAINJUMP],MAINLOOP     ;DEBUGGER?
+                JNZ     .L29
 
+                MOVZX   AX,BYTE [RETRACE_COUNT] ;FRAMES SKIP
+                DIV     [FRAMESKIP]
+                MOVZX   SI,[VIDMODE]
+                OR      AH,AH
+                MOV     AX,[VIDJUMP+SI]
+                JE      .L28
+
+                MOV     AX,T00xxx
+.L28:           MOV     [VIDCJMP],AX
+.L29:           CALL    [VIDVRETRACE]
+                CALL    CDS_LED
                 CALL    GET_JOYS
-                CALL    SYS_KEYS
+                CMP     [TOTALTICKS],0FF000000H
+                JBE     .L17A
 
-                CMP     [TOTALTICKS],4000000000
-                JBE     .L24
-                CALL    ADJUST_TICKS
+                CALL    SEG_CODEX:ADJUST_TICKS_F
+.L17A:          MOV     AX,WORD [TED_1C]
+.L17:           CMP     AX,[SVSA]
+                JNZ     .L31
 
-.L24:           INC     [BLINK_COUNT]
+                AND     [ISBORDER],2
+.L31:           CMP     AX,[EVSA]
+                JNZ     .L24
+
+                OR      [ISBORDER],1
+.L24:           MOV     AX,[BEAMY]
+                MOV     [VISIBLE],0
+                CMP     AX,[EVVA]
+                JA      .L32
+
+                CMP     AX,[SVVA]
+                JB      .L32
+
+                INC     [VISIBLE]
+.L32:           CMP     WORD [TED_1C],MAX_VER+1
+                JNE     .L23
+
+                INC     [BLINK_COUNT]
                 JNZ     .L18
+
                 MOV     [BLINK_COUNT],0F0H
                 XOR     [VMODE],20H
-.L18:           XOR     AX,AX
-                MOV     [BEAM_ADDR],VIDEO_SEG*10000H
+.L18:           XOR     EAX,EAX
+                MOV     [VSA],7
+                MOV     WORD [ISDMANOW],AX
+                MOV     DWORD [CP_CURRENT],EAX
+                MOV     DWORD [TED_1A],EAX
+                CALL    SEG_CODEX:NPARAM
+                CALL    SYS_KEYS
+                TEST    [TED_6],10H             ;SCREEN BLANK?
+                JZ      .L23
 
-                MOV     [YZN],2
-                MOV     [YZ2C],YZ2L
-                MOV     [CRP],AX
-                MOV     WORD [TED_1A],AX
-                OR      [VIS],2
-                MOV     BYTE [Y_OFFSET+1],40
-                MOV     BYTE [SVSA+1],40
-                TEST    [TED_6],10H       ;SCREEN BLANK?
-                JZ      .L4
-                MOV     BYTE [Y_OFFSET+1],AL
-                MOV     BYTE [SVSA+1],AL
+                INC     [ISDMA]
+.L23:           MOV     AX,[FASTTEDB]
+                CMP     AX,WORD [TED_1C]        ;RASTER INTERRUPT?
+                JNZ     .L27
 
-.L4:            CMP     AL,[SST]
-                JZ      .L17D
-                MOV     WORD [TED_1C],4
-                INC     [SST2]
-                JMP     .L17A
+                CMP     [RIRQ],0
+                JNE     .L27
 
-.L17:           CMP     AX,11
-                JNZ     .L17D
-                CMP     AH,[SST2]
-                JZ      .L17D
-                MOV     AL,3
-                DEC     [SST2]
-.L17D:          MOV     WORD [TED_1C],AX
-.L17A:          MOV     BX, WORD [TED_A]
-                XCHG    BL,BH
-                AND     BH,1
-                CMP     [SST2],0
-                JZ      .L12D
-                SUB     AL,8
-                JB      .L12C
-.L12D:          CMP     AX,BX           ;RASTER INTERRUPT?
-                JNZ     .L12C
-                OR      [TED_9],82H
-
-.L12C:          MOV     [BADLICOND],0
-                CMP     [VSA],7
-                JNZ     .L23
-                OR      [VMODE],40H
-                MOV     AX,[CRP]
-                MOV     WORD [TED_1A],AX
-;                ADD     WORD [TED_1A],40
-                JMP     .L12A
-
-.L23:           INC     [VSA]
-                AND     [VSA],7
-
-.L12A:          DEC     WORD [TED_0]  ;TIMERS INTERRUPT?
+                INC     [RIRQ]
+                OR      [TED_9],2
+.L27:           DEC     WORD [TED_0]            ;TIMERS INTERRUPT?
                 JNZ     .L20
+
                 MOV     AX,[TIMER1_RELOAD]
                 MOV     WORD [TED_0],AX
-                OR      [TED_9],88H
+                OR      [TED_9],8
 .L20:           DEC     WORD [TED_2]
                 JNZ     .L21
 
-                OR      [TED_9],90H
+                OR      [TED_9],10H
 .L21:           DEC     WORD [TED_4]
-                JNZ     .L11
+                JNZ     .L26
 
-                OR      [TED_9],0C0H
-.L11:           CMP     [TICKS],5         ;3
-                JL      TED
-                RETN
+                OR      [TED_9],40H
+.L26:           MOV     AL,[TED_9]
+                AND     AL,[TED_A]
+                AND     AL,5AH          ;???
+                JZ      .L11
 
-T00xxx:         ADD     DI,8
-                RETN
+                BTS     WORD [TED_9],7
+                JC      .L11
 
-T01xxx:         XOR     EAX,EAX
-                STOSD
-                STOSD
-                RETN
+                MOV     AX,[CPUOP]
+                MOV     [IRQOP],AX
+.L11:           MOVZX   BX,[TED_1E]
+                MOV     SI,[CLADDR]
+                MOV     AL,[BX+SI]
+                MOV     [TICKS],AL
+                INC     [BEAMX]
+                INC     [TED_1E]
+                CMP     [TED_1E],38H
+                JBE     .L15
+
+                MOV     [TED_1E],0
+                MOV     [BEAMX],0
+.L15:           OR      AL,AL
+                JE      TED
+
+T00xxx:         RETN
 
 T00100:         MOV     SI,DX           ;*** MCM+
                 AND     SI,7FH
                 BTR     DX,11
                 JC      T01100.L1
+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 OR      DL,DL
                 JNS     T00000.L0A
+
                 JMP     T00000.L0B
 
 T01100:         BTR     DX,11           ;*** MCM+ HRV+
                 JNC     T01000
+
                 MOVZX   SI,DL
-.L1:            MOVZX   SI,[GS:EBX+ESI*8]       ;MATRIX LINE
-                MOV     CX,[COLOR0]             ;CX-0, AX-1, BX-2, DX-3
-                MOV     AX,[COLOR1]
+.L1:            MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                MOV     AX,[COLOR1]             ;SI-0, AX-1, BX-2, DX-3
                 MOV     BX,[COLOR2]
                 MOV     DL,DH
-                JMP     [V2PP+ESI*2]
+                JMP     T00101.L0
 
 T01000:         MOVZX   SI,DL           ;*** HRV+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                MOV     SI,[CP_CURRENT]
+                CMP     SI,WORD [TED_C]
+                JNZ     T00000.L0A
+
+                MOVZX   SI,DL
+                MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                NOT     CH
                 JMP     T00000.L0A
 
 T00000:         MOV     SI,DX           ;***
                 AND     SI,7FH
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                OR      DL,DL
+                MOV     SI,[CP_CURRENT]
+                CMP     SI,WORD [TED_C]
+                JNZ     .L9
+
+                NOT     CH
+.L9:            OR      DL,DL
                 JNS     .L0A
+
 .L0B:           NOT     CH
 .L0A:           MOV     CL,[TED_15]
 .L0:            TEST    CH,16
                 MOV     AL,CL
                 JZ      .L1
+
                 MOV     AL,DH
 .L1:            TEST    CH,32
                 MOV     AH,CL
                 JZ      .L2
+
                 MOV     AH,DH
 .L2:            BSWAP   EAX
                 TEST    CH,64
                 MOV     AH,CL
                 JZ      .L3
+
                 MOV     AH,DH
 .L3:            TEST    CH,128
                 MOV     AL,CL
                 JZ      .L4
+
                 MOV     AL,DH
-.L4:            STOSD
+.L4:            MOV     [DI],EAX
                 TEST    CH,1
                 MOV     AL,CL
                 JZ      .L5
+
                 MOV     AL,DH
 .L5:            TEST    CH,2
                 MOV     AH,CL
                 JZ      .L6
+
                 MOV     AH,DH
 .L6:            BSWAP   EAX
                 TEST    CH,4
                 MOV     AH,CL
                 JZ      .L7
+
                 MOV     AH,DH
 .L7:            TEST    CH,8
                 MOV     AL,CL
                 JZ      .L8
+
                 MOV     AL,DH
-.L8:            STOSD
+.L8:            MOV     [DI+4],EAX
                 RETN
 
 T11000:         OR      DH,DH                   ;*** HRV+ FLASH+
                 JS      V1_00
-                MOV     SI,[CRP]
-                CMP     SI,WORD [TED_C]
-                JNZ     T01000
+
                 MOVZX   SI,DL
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                NOT     CH
                 JMP     T00000.L0A
 
-V1_00:          MOV     AL,[TED_15]
-                MOV     AH,AL
-                MOV     CX,AX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
+V1_00:          MOV     EAX,[COLOR0]
+                MOV     [DI],EAX
+                MOV     [DI+4],EAX
                 RETN
 
 T10000:         OR      DH,DH                   ;*** FLASH+
-                JS      V1_00
+                JS      .L2
+
                 MOV     SI,DX
                 AND     SI,7FH
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                MOV     SI,[CRP]
-                CMP     SI,WORD [TED_C]
-                JNZ     .L1
-                NOT     CH
-.L1:            OR      DL,DL
-                JS      T00000.L0B
-                JMP     T00000.L0A
+                JMP     T00000.L9
+
+.L2:            OR      DL,DL
+                JNS     V1_00
+
+                MOV     DL,DH
+                MOV     AX,DX
+                BSWAP   EAX
+                MOV     AX,DX
+                MOV     [DI],EAX
+                MOV     [DI+4],EAX
+                RETN
 
 T00010:         MOV     SI,DX                   ;*** ECM+
                 AND     SI,3FH
@@ -362,7 +485,7 @@ T00010:         MOV     SI,DX                   ;*** ECM+
                 MOV     CL,[TED_15+BX]          ;BACKGROUND
                 JMP     T00000.L0
 
-T00001:         MOV     SI,[CRP]                ;*** BMM+
+T00001:         MOV     SI,[CP_CURRENT]         ;*** BMM+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 MOV     AL,DH
                 MOV     DH,DL
@@ -374,10 +497,10 @@ T00001:         MOV     SI,[CRP]                ;*** BMM+
                 ROL     AL,4            ;FOREGROUND
                 XCHG    AL,DH
                 MOV     CL,AL
-                JMP     T00000.L0       ;V1PP[ESI*2]
+                JMP     T00000.L0
 
-T00101:         MOV     SI,[CRP]        ;*** BMM+ MCM+
-                MOVZX   SI,[GS:EBX+ESI*8]       ;MATRIX LINE
+T00101:         MOV     SI,[CP_CURRENT]         ;*** BMM+ MCM+
+                MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 MOV     AL,DH
                 MOV     DH,DL
                 MOV     AH,AL
@@ -388,1995 +511,32 @@ T00101:         MOV     SI,[CRP]        ;*** BMM+ MCM+
                 ROL     AL,4            ;COLOR #1
                 MOV     AH,AL
                 MOV     DL,DH
-                MOV     BX,[COLOR1]     ;CX-0, AX-1, BX-2, DX-3
-                MOV     CX,[COLOR0]
+                MOV     BX,[COLOR1]     ;SI-0, AX-1, BX-2, DX-3
                 XCHG    BX,DX
-                JMP     [V2PP+ESI*2]
 
-V2_00:          MOV     AX,CX   ;CX-0, AX-1, BX-2, DX-3
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
-                RETN
+.L0:            MOV     SI,WORD [COLOR0]
+                MOV     CL,4
+.L1:            SHL     CH,1
+                JNC     .L0X
 
-V2_01:          MOV     BX,AX
-V2_02:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
+                SHL     CH,1
+                JNC     .L10
 
-V2_03:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
+                MOV     [DI],DX         ;11
+                JMP     .LE
 
-V2_04:          MOV     DX,AX
-V2_0C:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
+.L0X:           SHL     CH,1
+                JNC     .L00
 
-V2_05:          MOV     DX,AX
-V2_0F:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
+                MOV     [DI],AX         ;01
+                JMP     .LE
 
-V2_06:          MOV     DX,AX
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
+.L10:           MOV     [DI],BX         ;10
+                JMP     .LE
 
-V2_07:          MOV     BX,AX
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
+.L00:           MOV     [DI],SI         ;00
+.LE:            ADD     DI,2
 
-V2_08:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_09:          MOV     DX,AX
-V2_0B:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_0A:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_0D:          MOV     BX,CX
-V2_0E:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_10:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_12:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_13:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_14:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_15:          MOV     DX,AX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_18:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_1C:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_20:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_21:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_22:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
-                RETN
-
-V2_23:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_24:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_25:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_26:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_27:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_28:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_29:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_2A:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_2B:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_2C:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_2D:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_2E:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_2F:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_30:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_31:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_32:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_33:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
-                RETN
-
-V2_34:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_35:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_36:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_37:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_38:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_39:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_3A:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_3B:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_3C:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_3D:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_3E:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_3F:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_40:          MOV     BX,CX
-V2_48:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_41:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_42:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_43:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_44:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
-                RETN
-
-V2_45:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_46:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_47:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_49:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_4A:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_4B:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_4C:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_4D:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_4E:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_4F:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_50:          MOV     DX,AX
-V2_D0:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_51:          MOV     BX,AX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_52:          MOV     DX,AX
-V2_D2:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_53:          MOV     BX,AX
-V2_93:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_54:          MOV     DX,AX
-V2_D4:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_55:          MOV     CX,AX
-V2_11:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                STOSD
-                RETN
-
-V2_56:          MOV     CX,AX
-V2_16:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_57:          MOV     CX,AX
-V2_17:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_58:          MOV     DX,AX
-V2_D8:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_59:          MOV     CX,AX
-V2_19:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_5A:          MOV     CX,AX
-V2_1A:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_5B:          MOV     CX,AX
-V2_1B:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_5C:          MOV     BX,AX
-V2_9C:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_5D:          MOV     CX,AX
-V2_1D:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_5E:          MOV     CX,AX
-V2_1E:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_5F:          MOV     CX,AX
-V2_1F:          BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_60:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_61:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_63:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_64:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_65:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_66:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                STOSD
-                RETN
-
-V2_67:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_68:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_69:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_6A:          MOV     CX,BX
-V2_62:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_6B:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_6C:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_6D:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_6E:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_6F:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_70:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_71:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_72:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_73:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_74:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_75:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_76:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_77:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                STOSD
-                RETN
-
-V2_78:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_79:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_7A:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_7B:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_7C:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_7D:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_7E:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_7F:          BSWAP   EAX
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_80:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_81:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_82:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_83:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_84:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_85:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_86:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_87:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_88:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                STOSD
-                RETN
-
-V2_89:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_8A:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_8B:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_8C:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_8D:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_8E:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_8F:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_90:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_92:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_94:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_95:          MOV     CX,AX
-V2_91:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_96:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_97:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_98:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_99:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                STOSD
-                RETN
-
-V2_9A:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_9B:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_9D:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_9E:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_9F:          BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_A1:          MOV     DX,AX
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_A4:          MOV     DX,AX
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_A5:          MOV     CX,AX
-V2_A0:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_A6:          MOV     CX,AX
-V2_A2:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_A7:          MOV     CX,AX
-V2_A3:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_A9:          MOV     CX,AX
-V2_A8:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_AA:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                STOSD
-                RETN
-
-V2_AB:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_AD:          MOV     CX,AX
-V2_AC:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_AE:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_AF:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_B0:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_B1:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_B2:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_B3:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_B4:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_B5:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_B6:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_B7:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_B9:          MOV     CX,AX
-V2_B8:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_BA:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_BB:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                STOSD
-                RETN
-
-V2_BC:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_BD:          XCHG    AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_BE:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_BF:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_C0:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_C1:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_C2:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_C3:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_C4:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_C5:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_C6:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_C7:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_C8:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_C9:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_CA:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_CB:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_CC:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                STOSD
-                RETN
-
-V2_CD:          XCHG    AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_CE:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_CF:          MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_D3:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_D5:          MOV     CX,AX
-V2_D1:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_D6:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_D7:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_D9:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_DA:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_DB:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_DC:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_DD:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                STOSD
-                RETN
-
-V2_DE:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_DF:          BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_E0:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_E1:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_E2:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_E4:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_E5:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_E6:          XCHG    AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_E7:          MOV     CX,AX
-V2_E3:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_E9:          MOV     CX,AX
-V2_E8:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_EA:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_EB:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_ED:          MOV     CX,AX
-V2_EC:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_EE:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                STOSD
-                RETN
-
-V2_EF:          MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                RETN
-
-V2_F0:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F1:          MOV     BX,AX
-V2_F2:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F3:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F4:          MOV     BX,AX
-V2_F8:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_F5:          MOV     CX,AX
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F6:          MOV     CX,AX
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F7:          MOV     CX,AX
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                STOSD
-                RETN
-
-V2_F9:          MOV     CX,AX
-                MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_FA:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_FB:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                STOSD
-                RETN
-
-V2_FD:          MOV     CX,AX
-V2_FC:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,CX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_FE:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                MOV     AX,BX
-                BSWAP   EAX
-                STOSD
-                RETN
-
-V2_FF:          MOV     AX,DX
-                BSWAP   EAX
-                MOV     AX,DX
-                STOSD
-                STOSD
+                LOOP    .L1
                 RETN
 

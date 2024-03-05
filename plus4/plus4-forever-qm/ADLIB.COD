@@ -1,6 +1,6 @@
-RESET_ADLIB:    IRP     1,8,20H,23H,31H,34H,1040H,43H,1051H,54H,0F060H,0F063H
-                IRP     0F071H,0F074H,1F80H,1F83H,1F91H,1F94H,0B0H,0B7H
-                IRP     0BDH,0C0H,0C7H
+RESET_ADLIB:    IRPA    1,8,20H,23H,31H,34H,1040H,43H,1051H,54H,0F060H,0F063H
+                IRPA    0F071H,0F074H,1F80H,1F83H,1F91H,1F94H,0B0H,0B7H
+                IRPA    0BDH,0C0H,0C7H
                 RETN
 
 ADLIB_0E:       PUSH    DX
@@ -94,6 +94,7 @@ ADLIB_11:       PUSH    DX
                 MOV     AH,[ADLIB_VOL+BX]
                 TEST    DH,80H
                 JZ      .L1
+
                 MOV     AH,3FH          ;63
 .L1:            MOV     BH,AH
                 XCHG    BL,DH
@@ -169,15 +170,17 @@ OUT_ADLIB:      MOV     DX,388H         ;AL-INDEX,AH-VALUE
 .L1:            IN      AL,DX
                 DEC     AH
                 JNZ     .L1
+
                 POP     AX
                 MOV     AL,AH
                 INC     DX
                 OUT     DX,AL
-                MOV     AH,6     ;36
+                MOV     AH,8     ;36
                 DEC     DX
 .L2:            IN      AL,DX
                 DEC     AH
                 JNZ     .L2
+
                 STI
                 RETN
 
@@ -223,3 +226,4 @@ ADLIB_SFREQ:;    INC     DX
 .L5:            SHL     DH,2
                 OR      AH,DH
                 RETN                    ; AX-FNUM&BLOCK, DL-MULTIPLIER
+
