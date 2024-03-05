@@ -2,7 +2,6 @@
 plus4.exe       - main program (packed by DIET)
 files.dox       - this quick files reference
 colscn.prg      - 121 colours palette
-testape.ctf     - test datasette's casette image
-seqreade.p00    - SEQ files reader
-ascii.s00       - all visible ASCII symbols for +4
+31_lines.prg    - SVS 31 lines demo
+
 
