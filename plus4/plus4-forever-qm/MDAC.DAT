@@ -1,143 +1,137 @@
-;                LUM=0
-DAC_T           DB      0,0,0                   ; BLACK         -0
-                DB      27,27,27                ; WHITE         -1  H=0,S=0
-                DB      30,0,0                  ; RED           -2  H=0,S=1
-                DB      0,30,30                 ; CYAN          -3  H=180,S=1
-                DB      30,0,30                 ; VIOLET/MAGENTA-4  H=300,S=1
-                DB      0,30,0                  ; GREEN         -5  H=120,S=1
-                DB      0,0,30                  ; BLUE          -6  H=240,S=1
-                DB      30,30,0                 ; YELLOW        -7  H=60,S=1
-                DB      30,15,0                 ; ORANGE        -8  H=30,S=1
-                DB      30,20,10                ; BROWN         -9  H=30,S=0.5
-                DB      24,30,0                 ; YELLOW-GREEN  -10 H=72,S=1
-                DB      30,0,15                 ; ROSE/PINK     -11 H=330,S=1
-                DB      0,30,15                 ; BLUE-GREEN    -12 H=150,S=1
-                DB      0,15,30                 ; LIGHT BLUE    -13 H=210,S=1
-                DB      9,9,24                  ; DARK BLUE     -14 H=240,S=0.5
-                DB      15,30,0                 ; LIGHT GREEN   -15 H=90,S=1
+;       LUM=0
+DAC_T   DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 11,11,11     ;1 WHITE H=-1000 S=0
+        DB 24,5,5       ;2 RED H=359 S=79
+        DB 0,16,16      ;3 CYAN H=179 S=100
+        DB 22,2,25      ;4 VIOLET/MAGENTA H=290 S=90
+        DB 0,19,0       ;5 GREEN H=120 S=100
+        DB 7,7,35       ;6 BLUE H=240 S=78
+        DB 14,14,0      ;7 YELLOW H=60 S=100
+        DB 21,8,0       ;8 ORANGE H=23 S=100
+        DB 18,11,0      ;9 BROWN H=36 S=100
+        DB 7,17,0       ;10 YELLOW-GREEN H=94 S=100
+        DB 24,3,14      ;11 ROSE/PINK H=330 S=87
+        DB 0,18,8       ;12 BLUE-GREEN H=148 S=100
+        DB 2,11,30      ;13 LIGHT BLUE H=221 S=92
+        DB 11,5,35      ;14 DARK BLUE H=252 S=84
+        DB 3,18,0       ;15 LIGHT GREEN H=108 S=100
+;       LUM=1
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 14,14,14     ;1 WHITE H=-1000 S=0
+        DB 28,9,9       ;2 RED H=359 S=68
+        DB 1,20,20      ;3 CYAN H=179 S=94
+        DB 25,6,29      ;4 VIOLET/MAGENTA H=290 S=79
+        DB 2,23,2       ;5 GREEN H=119 S=89
+        DB 11,11,38     ;6 BLUE H=239 S=70
+        DB 17,17,0      ;7 YELLOW H=60 S=100
+        DB 25,12,0      ;8 ORANGE H=29 S=100
+        DB 22,15,0      ;9 BROWN H=40 S=100
+        DB 11,21,0      ;10 YELLOW-GREEN H=88 S=100
+        DB 28,7,17      ;11 ROSE/PINK H=330 S=75
+        DB 1,22,12      ;12 BLUE-GREEN H=152 S=96
+        DB 6,15,34      ;13 LIGHT BLUE H=221 S=81
+        DB 15,9,39      ;14 DARK BLUE H=252 S=76
+        DB 7,22,0       ;15 LIGHT GREEN H=100 S=100
+;       LUM=2
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 16,16,16     ;1 WHITE H=-1000 S=0
+        DB 30,11,11     ;2 RED H=359 S=64
+        DB 3,22,22      ;3 CYAN H=179 S=86
+        DB 27,8,31      ;4 VIOLET/MAGENTA H=289 S=74
+        DB 4,25,4       ;5 GREEN H=119 S=82
+        DB 13,13,40     ;6 BLUE H=240 S=66
+        DB 20,20,0      ;7 YELLOW H=60 S=100
+        DB 27,14,1      ;8 ORANGE H=30 S=96
+        DB 24,17,0      ;9 BROWN H=42 S=100
+        DB 13,23,0      ;10 YELLOW-GREEN H=85 S=100
+        DB 30,9,19      ;11 ROSE/PINK H=330 S=70
+        DB 3,24,14      ;12 BLUE-GREEN H=153 S=88
+        DB 8,17,36      ;13 LIGHT BLUE H=221 S=77
+        DB 17,11,41     ;14 DARK BLUE H=251 S=72
+        DB 9,24,0       ;15 LIGHT GREEN H=97 S=100
+;       LUM=3
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 21,21,21     ;1 WHITE H=-1000 S=0
+        DB 34,15,15     ;2 RED H=359 S=56
+        DB 7,26,26      ;3 CYAN H=179 S=72
+        DB 32,12,35     ;4 VIOLET/MAGENTA H=290 S=65
+        DB 9,29,8       ;5 GREEN H=119 S=70
+        DB 18,18,45     ;6 BLUE H=240 S=60
+        DB 24,24,0      ;7 YELLOW H=60 S=100
+        DB 31,18,5      ;8 ORANGE H=30 S=83
+        DB 28,21,0      ;9 BROWN H=45 S=99
+        DB 17,27,0      ;10 YELLOW-GREEN H=81 S=100
+        DB 34,13,24     ;11 ROSE/PINK H=330 S=61
+        DB 7,28,18      ;12 BLUE-GREEN H=152 S=75
+        DB 12,21,40     ;13 LIGHT BLUE H=221 S=69
+        DB 21,15,45     ;14 DARK BLUE H=252 S=65
+        DB 13,28,0      ;15 LIGHT GREEN H=92 S=99
+;       LUM=4
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 30,30,30     ;1 WHITE H=-1000 S=0
+        DB 44,24,25     ;2 RED H=359 S=44
+        DB 17,36,36     ;3 CYAN H=179 S=53
+        DB 41,22,45     ;4 VIOLET/MAGENTA H=290 S=51
+        DB 18,39,18     ;5 GREEN H=119 S=53
+        DB 27,27,54     ;6 BLUE H=239 S=50
+        DB 33,33,6      ;7 YELLOW H=60 S=81
+        DB 41,28,14     ;8 ORANGE H=30 S=64
+        DB 37,30,9      ;9 BROWN H=45 S=75
+        DB 27,37,6      ;10 YELLOW-GREEN H=79 S=82
+        DB 44,23,33     ;11 ROSE/PINK H=330 S=48
+        DB 16,38,28     ;12 BLUE-GREEN H=152 S=56
+        DB 22,31,50     ;13 LIGHT BLUE H=221 S=56
+        DB 31,25,55     ;14 DARK BLUE H=252 S=54
+        DB 23,38,9      ;15 LIGHT GREEN H=92 S=75
+;       LUM=5
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 39,39,39     ;1 WHITE H=-1000 S=0
+        DB 52,33,33     ;2 RED H=359 S=37
+        DB 25,44,44     ;3 CYAN H=179 S=43
+        DB 50,30,53     ;4 VIOLET/MAGENTA H=290 S=43
+        DB 27,47,26     ;5 GREEN H=118 S=44
+        DB 35,35,62     ;6 BLUE H=240 S=43
+        DB 42,42,15     ;7 YELLOW H=60 S=64
+        DB 49,36,23     ;8 ORANGE H=30 S=54
+        DB 46,39,18     ;9 BROWN H=45 S=61
+        DB 35,45,15     ;10 YELLOW-GREEN H=79 S=67
+        DB 52,31,42     ;11 ROSE/PINK H=329 S=40
+        DB 25,46,36     ;12 BLUE-GREEN H=153 S=46
+        DB 30,39,58     ;13 LIGHT BLUE H=221 S=48
+        DB 39,33,63     ;14 DARK BLUE H=251 S=47
+        DB 31,46,18     ;15 LIGHT GREEN H=92 S=61
+;       LUM=6
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 46,46,46     ;1 WHITE H=-1000 S=0
+        DB 59,40,40     ;2 RED H=359 S=32
+        DB 32,52,51     ;3 CYAN H=179 S=37
+        DB 57,37,61     ;4 VIOLET/MAGENTA H=290 S=38
+        DB 34,54,34     ;5 GREEN H=119 S=38
+        DB 43,43,63     ;6 BLUE H=240 S=32
+        DB 49,49,22     ;7 YELLOW H=60 S=55
+        DB 56,44,30     ;8 ORANGE H=30 S=46
+        DB 53,46,25     ;9 BROWN H=45 S=53
+        DB 42,52,22     ;10 YELLOW-GREEN H=79 S=57
+        DB 60,38,49     ;11 ROSE/PINK H=330 S=35
+        DB 32,53,44     ;12 BLUE-GREEN H=152 S=40
+        DB 38,46,63     ;13 LIGHT BLUE H=219 S=40
+        DB 47,41,63     ;14 DARK BLUE H=255 S=36
+        DB 38,54,25     ;15 LIGHT GREEN H=92 S=53
+;       LUM=7
+        DB 2,2,2        ;0 BLACK H=-1000 S=0
+        DB 61,61,61     ;1 WHITE H=-1000 S=0
+        DB 63,55,55     ;2 RED H=358 S=13
+        DB 47,63,63     ;3 CYAN H=180 S=25
+        DB 63,52,63     ;4 VIOLET/MAGENTA H=300 S=18
+        DB 49,63,48     ;5 GREEN H=119 S=24
+        DB 57,57,63     ;6 BLUE H=240 S=9
+        DB 63,63,37     ;7 YELLOW H=60 S=42
+        DB 63,58,45     ;8 ORANGE H=44 S=29
+        DB 63,61,40     ;9 BROWN H=53 S=37
+        DB 57,63,37     ;10 YELLOW-GREEN H=74 S=42
+        DB 63,53,63     ;11 ROSE/PINK H=300 S=16
+        DB 47,63,58     ;12 BLUE-GREEN H=161 S=26
+        DB 52,61,63     ;13 LIGHT BLUE H=193 S=17
+        DB 61,55,63     ;14 DARK BLUE H=285 S=13
+        DB 53,63,40     ;15 LIGHT GREEN H=86 S=37
 
-;                LUM=1
-                DB      0,0,0                   ; BLACK         -0  
-                DB      30,30,30                ; WHITE         -1
-                DB      53,0,0                  ; RED           -2
-                DB      0,50,50                 ; CYAN          -3
-                DB      50,0,50                 ; VIOLET        -4
-                DB      0,37,0                  ; GREEN         -5
-                DB      0,0,50                  ; BLUE          -6
-                DB      44,44,0                 ; YELLOW        -7
-                DB      53,26,0                 ; ORANGE        -8
-                DB      38,26,13                ; BROWN         -9
-                DB      40,52,0                 ; YELLOW-GREEN  -10
-                DB      52,0,26                 ; ROSE          -11
-                DB      0,53,26                 ; BLUE-GREEN    -12
-                DB      0,26,52                 ; LIGHT BLUE    -13
-                DB      14,14,40                ; DARK BLUE     -14
-                DB      26,52,0                 ; LIGHT GREEN   -15
-
-;                LUM=2
-                DB      0,0,0                   ; BLACK         -0  
-                DB      33,33,33                ; WHITE         -1
-                DB      59,0,0                  ; RED           -2
-                DB      0,57,57                 ; CYAN          -3
-                DB      57,0,57                 ; VIOLET        -4
-                DB      0,43,0                  ; GREEN         -5
-                DB      0,0,57                  ; BLUE          -6
-                DB      49,49,0                 ; YELLOW        -7
-                DB      60,30,0                 ; ORANGE        -8
-                DB      43,29,15                ; BROWN         -9
-                DB      45,57,0                 ; YELLOW-GREEN  -10
-                DB      58,0,29                 ; ROSE          -11
-                DB      0,59,30                 ; BLUE-GREEN    -12
-                DB      0,30,59                 ; LIGHT BLUE    -13
-                DB      16,16,46                ; DARK BLUE     -14
-                DB      28,57,0                 ; LIGHT GREEN   -15
-
-                LUM=3
-                DB      0,0,0                   ; BLACK         -0  
-                DB      37,37,37                ; WHITE         -1
-                DB      63,4,4                  ; RED           -2
-                DB      0,60,60                 ; CYAN          -3
-                DB      60,0,60                 ; VIOLET        -4
-                DB      0,53,0                  ; GREEN         -5
-                DB      13,13,63                ; BLUE          -6
-                DB      54,54,0                 ; YELLOW        -7
-                DB      63,35,8                 ; ORANGE        -8
-                DB      47,33,18                ; BROWN         -9
-                DB      41,62,0                 ; YELLOW-GREEN  -10
-                DB      63,1,32                 ; ROSE          -11
-                DB      3,63,33                 ; BLUE-GREEN    -12
-                DB      5,34,63                 ; LIGHT BLUE    -13
-                DB      23,23,49                ; DARK BLUE     -14
-                DB      33,63,3                 ; LIGHT GREEN   -15
-
- ;               LUM=4
-                DB      0,0,0                   ; BLACK         -0  
-                DB      42,42,42                ; WHITE         -1
-                DB      63,28,28                ; RED           -2
-                DB      8,63,63                 ; CYAN          -3
-                DB      63,18,63                ; VIOLET        -4
-                DB      0,59,0                  ; GREEN         -5
-                DB      30,30,63                ; BLUE          -6
-                DB      59,59,0                 ; YELLOW        -7
-                DB      63,42,20                ; ORANGE        -8
-                DB      50,38,26                ; BROWN         -9
-                DB      52,63,10                ; YELLOW-GREEN  -10
-                DB      63,15,39                ; ROSE          -11
-                DB      18,63,40                ; BLUE-GREEN    -12
-                DB      19,41,63                ; LIGHT BLUE    -13
-                DB      32,32,52                ; DARK BLUE     -14
-                DB      38,63,13                ; LIGHT GREEN   -15
-
-;                LUM=5
-                DB      0,0,0                   ; BLACK         -0  
-                DB      47,47,47                ; WHITE         -1
-                DB      63,37,37                ; RED           -2
-                DB      30,63,63                ; CYAN          -3
-                DB      63,35,63                ; VIOLET        -4
-                DB      7,63,7                  ; GREEN         -5
-                DB      38,38,63                ; BLUE          -6
-                DB      63,63,2                 ; YELLOW        -7
-                DB      63,48,33                ; ORANGE        -8
-                DB      55,47,39                ; BROWN         -9
-                DB      56,63,33                ; YELLOW-GREEN  -10
-                DB      63,30,47                ; ROSE          -11
-                DB      33,63,48                ; BLUE-GREEN    -12
-                DB      33,48,63                ; LIGHT BLUE    -13
-                DB      40,40,55                ; DARK BLUE     -14
-                DB      47,63,30                ; LIGHT GREEN   -15
-
-                LUM=6
-                DB      0,0,0                   ; BLACK         -0  
-                DB      55,55,55                ; WHITE         -1
-                DB      63,45,45                ; RED           -2
-                DB      45,63,63                ; CYAN          -3
-                DB      63,45,63                ; VIOLET        -4
-                DB      35,63,35                ; GREEN         -5
-                DB      45,45,63                ; BLUE          -6
-                DB      63,63,34                ; YELLOW        -7
-                DB      63,54,45                ; ORANGE        -8
-                DB      59,54,50                ; BROWN         -9
-                DB      60,63,45                ; YELLOW-GREEN  -10
-                DB      63,45,54                ; ROSE          -11
-                DB      45,63,54                ; BLUE-GREEN    -12
-                DB      45,54,63                ; LIGHT BLUE    -13
-                DB      48,48,57                ; DARK BLUE     -14
-                DB      54,63,45                ; LIGHT GREEN   -15
-
- ;               LUM=7
-                DB      0,0,0                   ; BLACK         -0  
-                DB      60,60,60                ; WHITE         -1
-                DB      63,53,53                ; RED           -2
-                DB      53,63,63                ; CYAN          -3
-                DB      63,53,63                ; VIOLET        -4
-                DB      52,63,52                ; GREEN         -5
-                DB      53,53,63                ; BLUE          -6
-                DB      63,63,52                ; YELLOW        -7
-                DB      63,58,53                ; ORANGE        -8
-                DB      60,58,56                ; BROWN         -9
-                DB      61,63,53                ; YELLOW-GREEN  -10
-                DB      63,53,58                ; ROSE          -11
-                DB      53,63,58                ; BLUE-GREEN    -12
-                DB      53,58,63                ; LIGHT BLUE    -13
-                DB      56,56,60                ; DARK BLUE     -14
-                DB      58,63,53                ; LIGHT GREEN   -15
