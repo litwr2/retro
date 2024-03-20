@@ -1686,7 +1686,6 @@ MD1_CONFIG:     CALL    MAIN_SCR8
 
                 CMP     [CP_IN_WIN8],1
                 JA      .L1
-
                 JZ      .L2
 
                 CALL    MAIN_SCR9       ;VIDEO
@@ -1700,7 +1699,8 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 JZ      MD1_ENTER.L8A
 
                 MOV     [VIDMODE],AL
-                JMP     MD1_ENTER.L8A
+                ;JMP     MD1_ENTER.L8A
+                JMP     MD1_CONFIG
 
 .L2:            CALL    MAIN_SCR11      ;FRAMES SKIP
                 OR      SI,SI
@@ -1710,7 +1710,8 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 SHL     AL,1
                 INC     AX
                 MOV     [FRAMESKIP],AL
-                JMP     MD1_ENTER.L8A
+                ;JMP     MD1_ENTER.L8A
+                JMP     MD1_CONFIG
 
 .L1:            CMP     [CP_IN_WIN8],3
                 JA      .L3
@@ -1726,9 +1727,13 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 CALL    SEG_CODE:RESET_SND_E_F
                 CALL    SEG_CODE:RELOAD_SND_F
                 CALL    SEG_CODE:SILENCE_F
-                JMP     MD1_ENTER.L8A
+                ;JMP     MD1_ENTER.L8A
+                JMP     MD1_CONFIG
 
-.L3:            MOV     AL,[VIDMODE]    ;SAVE
+.L3:            CMP     [CP_IN_WIN8],3
+                JA      MD1_ENTER.L8A
+
+                MOV     AL,[VIDMODE]    ;SAVE
                 MOV     AH,[FRAMESKIP]
                 MOV     WORD [KBD_BUF],AX
                 MOV     AL,[SJCFG]

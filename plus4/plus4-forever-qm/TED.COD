@@ -354,18 +354,20 @@ T00100:         MOV     SI,DX           ;*** MCM+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 OR      DL,DL
                 JNS     T00000.L0A
-
                 JMP     T00000.L0B
 
-T01100:         BTR     DX,11           ;*** MCM+ HRV+
-                JNC     T01000
+T01100:         MOVZX   SI,DL           ;*** MCM+ HRV+
+                BTR     DX,11
+                JNC     .L2
 
-                MOVZX   SI,DL
 .L1:            MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 MOV     AX,[COLOR1]             ;SI-0, AX-1, BX-2, DX-3
                 MOV     BX,[COLOR2]
                 MOV     DL,DH
                 JMP     T00101.L0
+
+.L2:            MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                JMP     T00000.L0A
 
 T01000:         MOVZX   SI,DL           ;*** HRV+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE

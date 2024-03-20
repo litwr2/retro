@@ -594,7 +594,7 @@ TOGG_CUR8:      MOVZX   SI,[CP_IN_WIN8]
 MAIN_SCR8:      MOV     DI,160*5+54     ;VIDEO, FRAME SKIPS, SOUND, SAVE
                 MOV     SI,M3_MSG15
                 MOV     CX,10
-                MOV     BX,5
+                MOV     BX,6
                 CALL    OUT_MSG
                 CALL    TOGG_CUR8
 
@@ -646,7 +646,7 @@ MD8_UP:         CALL    TOGG_CUR8
                 JMP     MENU_DISP8
 
 MD8_DOWN:       CALL    TOGG_CUR8
-                CMP     [CP_IN_WIN8],4
+                CMP     [CP_IN_WIN8],5
                 JZ      .L1
 
                 INC     [CP_IN_WIN8]
@@ -663,7 +663,7 @@ MOUSE_DISP8:    CALL    HIDEM
                 SUB     AL,6
                 JS      MENU_DISP8
 
-                CMP     AL,5
+                CMP     AL,6
                 JAE     MENU_DISP8
 
                 SUB     CL,28
