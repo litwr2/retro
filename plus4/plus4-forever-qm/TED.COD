@@ -22,7 +22,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 XOR     SI,SI
 .ATTR:          MOV     EAX,[FS:BX]
                 MOV     DWORD [VID_BUF1+SI],EAX
-                ;MOV     DWORD [VID_BUF3+SI],EAX
                 ADD     SI,4
                 ADD     BX,4
                 AND     BH,0FBH
@@ -99,13 +98,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 .SHOW8:         CMP     [VISIBLE],0
                 JE      .COUNTERS
 
-        ;cmp [BEAMY],294
-        ;jnz .ll1
-        ;
-        ;mov eax,[TOTALTICKS]
-        ;MOV     [DI],EAX
-        ;MOV     [DI+4],EAX
-;.ll1:
                 ADD     DWORD [VD_PTR_BEAM],80008H
 .COUNTERS:      CMP     [ISDMA],2
                 JNE     .L14
@@ -235,11 +227,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CMP     [VD_PTR_BEAM],VIDEO_DATA
                 JE      .L30
 
-        ;push es
-        ;mov ax,0b800h
-        ;mov es,ax
-        ;mov byte [es:0],'@'
-        ;pop es
                 CALL    [VIDCJMP]
 .L30:           MOV     [VD_PTR_BEAM],VIDEO_DATA
                 INC     WORD [TED_1C]

@@ -71,7 +71,8 @@ NOTDOSCHARS     DB      '"+,./:;<=>[\]|',0
 SECERRDECODE    DB      0,2,3,4,5,6,7,8,9,10,11,0,0,0,29
 IECTEMP         DB      ?
 LABEL           INITBAM BYTE
-                FILE    'EBAM.BIN'
+;                FILE    'EBAM.BIN'
+                INCLUDE 'EBAM.DAT'
 
 IF IECDEBUG > 0
 XXXFN           DB      'IECDEBUG.BIN',0
