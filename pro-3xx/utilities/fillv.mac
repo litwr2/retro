@@ -70,14 +70,15 @@ START:   bis #TTSPC$,@#$JSW
          mov #21845.,r3    ;$5555
 .if ne DVIDEO
 11$:     mov @#apar1,r2
-         mov #VBASE*4,@r2
+         mov #VBASE*4,@#spar1c
          mov #4,r4
-9$:      mov #8192.,r0
+9$:      call disintr
+         mov #8192.,r0
          mov #4096.,r1
 7$:      mov r3,(r0)+
          sob r1,7$
-
          add #128.,@r2
+         call enintr
          sob r4,9$
 .iff
          mov @#vbas,r1
@@ -153,8 +154,29 @@ rmmu:  mov @#apar1,r1
        mov @#savem,(r1)
        return
 
+disintr:   
+    mov @#MPSW,@#sip
+    bis #^B0000000011100000,@#MPSW
+    mov @r2,@#spar1o
+    mov @#spar1c,@r2
+    return
+
+enintr:
+    mov @r2,@#spar1c
+    mov @#spar1o,@r2
+    mov @#sip,r0
+    bic #^B1111111100011111,r0
+    mov @#MPSW,r1
+    bic #^B0000000011100000,r1
+    bis r0,r1
+    mov r1,@#MPSW
+    return
+
 savem:   .blkw 1
 apar1:   .word UPAR1
+sip:     .blkw 1
+spar1o:   .blkw 1
+spar1c:   .blkw 1
 .endc
 
 rreg:  mov @#vbas,r1
