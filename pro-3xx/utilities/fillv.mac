@@ -1,4 +1,5 @@
 ;for macro-11 assembler, DEC Pro, RT-11
+;v4
 ;it fills the 1024x256 screen ITER times via: 1) video registers; 2) direct VRAM acccess
 ;it also shows timings 
 
@@ -74,9 +75,15 @@ START:   bis #TTSPC$,@#$JSW
          mov #4,r4
 9$:      call disintr
          mov #8192.,r0
-         mov #4096.,r1
+         mov #2048.,r1
 7$:      mov r3,(r0)+
          sob r1,7$
+         call enintr
+         call disintr
+         mov #2048.,r1
+         mov #8192.+4096.,r0
+17$:     mov r3,(r0)+
+         sob r1,17$
          add #128.,@r2
          call enintr
          sob r4,9$
