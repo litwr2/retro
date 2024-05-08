@@ -7,7 +7,7 @@ BYTE = 0  ;0 means print a word
        .ttyout
        ;movb r0,(r5)+
        .endm out1
-       
+
 bin2hex:  mov r0,-(sp)   ;prints r1
 .if eq BYTE
           mov r1,r0
