@@ -33,7 +33,7 @@
 ;data consists of packed words, for instance a word must contain 4 pixels if bpp=4
 ;fields 22-511 are not supported for the current version
 
-DVIDEO = 0   ;0 means video registers, it is faster for the 350
+DVIDEO = 0   ;0 means video registers, it is faster for the 380
 
 .if ne DVIDEO
 VBASE = 15360.  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
