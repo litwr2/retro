@@ -1,0 +1,128 @@
+;for macro-11 assembler, RSX-11 or P/OS, the DEC Pro is the primarily target
+;it prints PSW (at $fffe), MMU PDR/PAR registers, MMU SR0 and SR3
+;link it with the /pr option
+
+    .radix 10
+
+.MCALL QIOW$S, EXIT$S
+
+MPSW = 65534   ;$fffe
+SR0 = 65402    ;$ff7a
+SR3 = 62798    ;$f54e
+
+START:   QIOW$S  #IO.WLB, #5, #5,,,,<#psw, #6>
+         mov #bufe,r5
+         mov @#MPSW,r1
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufe, #6>
+         QIOW$S  #IO.WLB, #5, #5,,,,<#mmu, #21>
+         clr r3
+         mov #62656,r2    ;0xf4c0 ;kernel PDR/PAR
+1$:      mov r2,r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #5>
+         mov @r2,r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #5>
+         mov 32(r2),r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #6>
+         mov r2,r1
+         add #2752,r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #5>
+         mov 2752(r2),r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #5>
+         mov 2784(r2),r1
+         mov #bufe,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufe, #6>
+         add #2,r2
+         inc r3
+         cmp #8,r3
+         beq .+6
+         jmp @#1$
+
+         QIOW$S  #IO.WLB, #5, #5,,,,<#sr, #4>
+         mov #bufs,r5
+         mov @#SR0,r1
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufs, #6>
+         movb #48+3,@#sr+2
+         QIOW$S  #IO.WLB, #5, #5,,,,<#sr, #4>
+         mov @#SR3,r1
+         mov #bufs,r5
+         call bin2hex
+         QIOW$S  #IO.WLB, #5, #5,,,,<#bufe, #6>
+         exit$s
+
+BYTE = 0  ;0 means print a word
+
+.macro out1
+       movb r0,(r5)+
+       .endm out1
+       
+bin2hex:  mov r0,-(sp)   ;prints r1 to buffer in r5
+.if eq BYTE
+          mov r1,r0
+          swab r0   ;sets C=0
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 1$
+
+          add #7,r0
+1$:       out1
+
+          mov r1,r0
+          swab r0
+          bicb #240.,r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 2$
+
+          add #7,r0
+2$:       out1
+.endc
+          mov r1,r0
+          clc
+          rorb r0
+          asrb r0
+          asrb r0
+          asrb r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 3$
+
+          add #7,r0
+3$:       out1
+
+          mov r1,r0
+          bicb #240.,r0
+          add #'0,r0
+          cmpb r0,#'9+1
+          bcs 4$
+
+          add #7,r0
+4$:       out1
+          mov (sp)+,r0
+          return
+
+mmu:    .ascii "Kernel/User PDR/PAR" <13> <10>
+psw:    .ascii <13> <10> "PSW="
+sr:     .ascii "SR0="
+eol:    .ascii <13> <10>
+spc:    .ascii " "
+bufs:    .ascii "0000  "
+bufe:    .ascii "0000" <13> <10>
+.End	START
+
