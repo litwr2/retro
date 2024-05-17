@@ -68,7 +68,7 @@ START:   bis #TTSPC$,@#$JSW
 .endc
          .gtim #area,#time
          mov #ITER,r5
-         mov #21845.,r3    ;$5555
+         mov #21845.,r3    ;$5555, a texture pattern
 .if ne DVIDEO
 11$:     mov @#apar1,r2
          mov #VBASE*4,@#spar1c

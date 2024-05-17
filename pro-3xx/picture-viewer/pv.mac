@@ -1,5 +1,5 @@
 ;for macro-11 assembler
-;picture viewer, v1, (c) 2023 litwr
+;picture viewer, (c) 2023-24 litwr
 ;it can now show 3 bpp, 6 bpp, and 12 bpp pictures
 ;horizontal sizes must be 1024, 512, and 256, respectively.
 
@@ -33,7 +33,7 @@
 ;data consists of packed words, for instance a word must contain 4 pixels if bpp=4
 ;fields 22-511 are not supported for the current version
 
-DVIDEO = 0   ;0 means video registers
+DVIDEO = 0   ;0 means video registers, it is faster for the 350
 
 .if ne DVIDEO
 VBASE = 15360.  ;0x3c00*0x100 = 0x3c0000 = 3.75 MB
@@ -170,8 +170,7 @@ vidok:   .trpset #area,#0
          mov #16.,@#SR3
          mov #1,@#SR1
 14$:     call @#smmu
-         mov @#apar1,r2
-         mov #VBASE*4,@r2
+         mov #VBASE*4,@#spar1c
          mov #8192.,@#yc
          mov @#bpp,r0
          asr r0
@@ -187,8 +186,7 @@ vidok:   .trpset #area,#0
          mov r0,8.(r5) ;plane 2 (green) & 3 (red), the NOP/MOV-op
          call drawb
 
-         mov @#apar1,r2
-         mov #VBASE*4,@r2
+         mov #VBASE*4,@#spar1c
          mov @#wpp,@#cwpp
          mov #8192.,@#yc
          mov @#bpp,r0
@@ -201,8 +199,7 @@ vidok:   .trpset #area,#0
          mov r0,8.(r5) ;plane 2 & 3, the MOV/NOP-op
          call drawb
 
-         mov @#apar1,r2
-         mov #VBASE*4,@r2
+         mov #VBASE*4,@#spar1c
          mov @#wpp,@#cwpp
          mov #8192.,@#yc
          mov @#bpp,r0
@@ -256,15 +253,16 @@ drawb:    inc @#blk
           sob r2,2$
 .iff
           mov @#yc,r2
+          call disintr
           mov #256.,r1
 1$:       mov (r0)+,(r2)+
           sob r1,1$
 
+          call enintr
           cmp #16384.,r2
           bne 2$
 
-          mov @#apar1,r1
-          add #128.,@r1          
+          add #128.,@#spar1c
           asr r2
 2$:       mov r2,@#yc
 .endc
@@ -306,6 +304,31 @@ rmmu:  mov @#apar1,r1
 
 savem:   .blkw 1
 apar1:   .word UPAR1
+sip:     .blkw 1
+spar1o:   .blkw 1
+spar1c:   .blkw 1
+
+disintr:   
+    mov @#MPSW,@#sip
+    bis #^B0000000011100000,@#MPSW
+    mov @#apar1,r1
+    mov @r1,@#spar1o
+    mov @#spar1c,@r1
+    return
+
+enintr:
+    mov r0,-(sp)
+    mov @#apar1,r1
+    mov @r1,@#spar1c
+    mov @#spar1o,@r1
+    mov @#sip,r0
+    bic #^B1111111100011111,r0
+    mov @#MPSW,r1
+    bic #^B0000000011100000,r1
+    bis r0,r1
+    mov r1,@#MPSW
+    mov (sp)+,r0
+    return
 .endc
 
 hs:      .word 0
@@ -321,7 +344,7 @@ area:    .word 0
 blk:     .word 0
 buff:    .word 0
          .word 256.,0
-msg:     .asciz "Picture Viewer v2 for the Pro"
+msg:     .asciz "Picture Viewer v3 for the Pro"
 .if ne DVIDEO
 nomem:   .asciz "not enough memory"
 .endc
