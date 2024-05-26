@@ -1,0 +1,16 @@
+CP_IN_WIN3      DB      0
+CP_IN_WIN4      DB      0
+M3_MSG1         DB      '       '
+M3_MSG2         DB      ' *   8   9  '
+M3_MSG3         DB      'ENTER FILENAME '
+M3_MSG4         DB      'SELECT CBM DEVICE '
+M3_MSG5         DB      'DISK TAPE '
+M3_MSG6         DB      'SELECT MEDIA TYPE '
+
+CHR_TRT1        DB      0,0,'1234567890-=',8,0,'QWERTYUIOP',0,0
+                DB      13,0,'ASDFGHJKL:',0,0,0,'\ZXCVBNM,.?'
+                DB      0,0,0,' ',22 DUP(0)
+CHR_TRT2        DB      0,0,'!@#$%^&8()-+',8,0,'QWERTYUIOP',0,0
+                DB      13,0,'ASDFGHJKL:',0,0,0,'\ZXCVBNM,.?'
+                DB      0,0,0,' ',22 DUP(0)
+

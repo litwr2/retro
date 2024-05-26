@@ -1,0 +1,124 @@
+INIT_JOY:       MOV     DX,201H         ; INIT JOYSTICKS!
+                OUT     DX,AL
+                MOV     CX,4
+                MOV     JOY_ST,CH
+                MOV     AH,0FH
+IJ_L2B:         IN      AL,DX
+                AND     AL,AH
+                INC     CX
+                JS      SHORT IJ_L2A
+                XOR     AL,AH
+                JZ      SHORT IJ_L2B
+                MOV     BX,CX
+                MOV     SI,CX
+                SHR     BX,1
+                ADD     SI,BX
+                TEST    AL,1
+                JZ      SHORT IJ_L2C
+                MOV     JOY1X_LB,BX
+                MOV     JOY1X_RB,SI
+                OR      JOY_ST,1
+                AND     AH,0EH
+IJ_L2C:         TEST    AL,2
+                JZ      SHORT IJ_L2D
+                MOV     JOY1Y_LB,BX
+                MOV     JOY1Y_RB,SI
+                OR      JOY_ST,2
+                AND     AH,0DH
+IJ_L2D:         TEST    AL,4
+                JZ      SHORT IJ_L2E
+                MOV     JOY2X_LB,BX
+                MOV     JOY2X_RB,SI
+                OR      JOY_ST,4
+                AND     AH,0BH
+IJ_L2E:         TEST    AL,8
+                JZ      SHORT IJ_L2F
+                MOV     JOY2Y_LB,BX
+                MOV     JOY2Y_RB,SI
+                OR      JOY_ST,8
+                AND     AH,07H
+IJ_L2F:         ADD     CX,12
+                OR      AH,AH
+                JNZ     SHORT IJ_L2B
+IJ_L2A:         RETN
+
+GET_JOYS:       MOV     DX,201H         ;JOYSTICKS!
+                OUT     DX,AL
+                MOV     BX,0FFFFH
+                IN      AL,DX
+                MOV     CL,AL
+                AND     AL,30H
+                CMP     AL,30H          ;FIRE AT JOY1
+                JZ      SHORT GJS_L16
+                AND     BL,0BFH
+GJS_L16:        MOV     AL,CL
+                AND     AL,0C0H
+                CMP     AL,0C0H         ;FIRE AT JOY2
+                JZ      SHORT GJS_L17
+                AND     BH,7FH
+GJS_L17:        XOR     CX,CX
+
+                XOR     AH,AH
+                OR      AH,JOY_ST
+                JZ      SHORT GJS_L15
+
+GJS_L9:         IN      AL,DX
+                AND     AL,AH
+                INC     CX
+                JS      SHORT GJS_L15
+
+                XOR     AL,AH
+                JZ      SHORT GJS_L9
+
+                TEST    AL,1
+                JZ      SHORT GJS_L10
+                CMP     CX,JOY1X_LB
+                JA      SHORT GJS_L1
+                AND     BL,0FBH         ;LEFT
+                JMP     SHORT GJS_L2
+GJS_L1:         CMP     CX,JOY1X_RB
+                JB      SHORT GJS_L2
+                AND     BL,0F7H         ;RIGHT
+GJS_L2:         AND     AH,0EH
+
+GJS_L10:        TEST    AL,2
+                JZ      SHORT GJS_L11
+                CMP     CX,JOY1Y_LB
+                JA      SHORT GJS_L3
+                AND     BL,0FEH         ;UP
+                JMP     SHORT GJS_L4
+GJS_L3:         CMP     CX,JOY1Y_RB
+                JB      SHORT GJS_L4
+                AND     BL,0FDH         ;DOWN
+GJS_L4:         AND     AH,0DH
+
+GJS_L11:        TEST    AL,4
+                JZ      SHORT GJS_L12
+                CMP     CX,JOY2X_LB
+                JA      SHORT GJS_L5
+                AND     BH,0FBH         ;LEFT
+                JMP     SHORT GJS_L6
+GJS_L5:         CMP     CX,JOY2X_RB
+                JB      SHORT GJS_L6
+                AND     BH,0F7H         ;RIGHT
+GJS_L6:         AND     AH,0BH
+
+GJS_L12:        TEST    AL,8
+                JZ      SHORT GJS_L14
+                CMP     CX,JOY2Y_LB
+                JA      SHORT GJS_L7
+                AND     BH,0FEH         ;UP
+                JMP     SHORT GJS_L8
+GJS_L7:         CMP     CX,JOY2Y_RB
+                JB      SHORT GJS_L8
+                AND     BH,0FDH         ;DOWN
+GJS_L8:         AND     AH,07H
+
+GJS_L14:        ADD     CX,12
+                OR      AH,AH
+                JNZ     SHORT GJS_L9
+
+GJS_L15:        NOP                     ;XCHG BL,BH
+                NOP
+                MOV     JOY_MASK,BX
+                RETN

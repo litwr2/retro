@@ -1,0 +1,4 @@
+CSB_IO_WR:      RETN
+
+CSB_IO_RD:      OR      CPU_1,0C0H
+                RETN

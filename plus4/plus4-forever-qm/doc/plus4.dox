@@ -1,8 +1,8 @@
-  Commodore Plus/4 Emulator v1.00 information
+  Commodore Plus/4 Emulator v1.12 information
 
 
 
-   CONTENTS
+   CONTENTS        
 
 +  Preview
 +  Commodore +4 main specifications
@@ -21,27 +21,15 @@
 +  CTF Format
 +  C2F Format
 +  (C) Copyright
++  Changes List
 
 
 
   Preview
 
-  At the February of 1987 I've become owner of my first personal computer -
-Commodore plus/4. I used only b/w monitor, C-1531 datasette and two joysticks
-as its peripheral devices, much later I added an Epson LX compatible ink
-centronics printer connected via user port (I was able to work with build-in
-text editor with datasette and this printer). Several times I can possibility
-to work with Commodore MPS-801 printer and C1551/1541C disk drives. Only
-during one week I could see bad, unproper colors on color SEKAM TV with
-unappropriate PAL decoder. In the March of 1991 I had to sell my plus/4 and
-printer combination. But after several years some kind of strange nostalgia
-came to me. Unique Commodore computers series died. Intel and Microsoft have
-set only one standard. It's very bad, when something what you liked must
-disappear. And I decided in the October of 1996 'resurrect' my good, old, iron
-friend.
   I think I create an unique emulator, becase I have never seen any Commodore
-plus/4 (16 or 116) since March 1991... This version (1.00) of the emulator
-has created only from some my old documentation and Internet ROM-images and
+plus/4 (16 or 116) since March 1991... This version of the emulator has 
+created only from some my old documentation and Internet ROM-images and
 documentation. It is written only in 100% 80386 assember (16-bit mode).
 
 
@@ -51,11 +39,11 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 - Commodore BASIC v3.5 (60671 byte free) with graphic, sound, disk i/o and
   structural (like DO, LOOP, WHILE) commands;
 - build-in machine language monitor with assembler/disassembler (accessed by
-  BASIC MONITOR command or (this allows to work without BASIC ROM-chip at all!)
-  holding pressed Run/Stop key during Reset or power-up);
+  BASIC MONITOR command or (this allows to work without BASIC ROM-chip at
+  all!) holding pressed Run/Stop key during Reset or power-up);
 - build-in text editor, spreadsheet and database;
 - 7501/8501 CPU (almost the same as 8502) at 0.9-1.8MHz (average CPU clock
-  frequency depends on screen modes);
+  frequency depends on screen mode);
 - 121 colors palette;
 - 2 square-wave voice generators;
 - 320x200 graphic mode 121 colors, but only 2 colors in matrix 8x8[1];
@@ -65,7 +53,7 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
   text mode;
 - 64KB RAM;
 - 64KB internal ROM and up to 64KB external ROM (cartriges);
-- user port (parallel/centonics or serial/RS-232C with TTL logic up to
+- user port (parallel/centronics or serial/RS-232C with TTL logic up to
   19200 bauds!);
 - 67 keys keyboard + reset button;
 - 2 digital joysticks;
@@ -82,7 +70,7 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 - CPU:
    all standard opcodes         +
    exact opcodes timing         +
-   decimal mode                 +[7]
+   decimal mode                 +[5]
    extra opcodes support        +[1]
    RMW instructions algorithm   +
    build-in port                %[2]
@@ -93,12 +81,12 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
    timers                       +
    memory management            +
    interrupts                   +
-   keyboard                     +[5]
+   keyboard                     +
    double/single clock          +[3]
 - Parallel i/o chip (6529B)     %[6]
 - Serial i/o chip (6551A)       -
 - Keyboard                      +
-- Joysticks                     -
+- Joysticks                     +[7]
 - Serial Bus                    -
 - Serial Bus devices            -
 - C-1551 disk drives            -
@@ -109,12 +97,13 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 [2] - full support of datasette lines only (Cassette Read/Write/Motor).
 [3] - 98% compatible.
 [4] - only for Adlib or compatible (e.g. any Sound Blaster).
-[5] - without joysticks support.
+[5] - according general 6502 family standard.
 [6] - only Cassette Sense line.
-[7] - according general 6502 family standard.
+[7] - can't swap joysticks and emulate them on the keyboard.
+
  
   Internal features of the emulator:
-- fast freeze/restore computer state (in the C2F ) format files;
+- fast freeze/restore computer state (in the C2F format files);
 - fast load/save/export/import programs and data from menus;
 - support D64, PRG, P0n (S0n, D0n, R0n, U0n) and CTF (description see below)
   formats;
@@ -122,7 +111,7 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 
   This version of the emulator is something slow (for original plus/4
 perfomance it requires at least Pentium-100) because it very exact emulates
-each chip. It can run only on computer with 80386 compatible CPU and VGA
+each chip. It can run only on computer with 80486 compatible CPU and VGA
 compatible card and requires Adlib compatible card for sound effects.
 
 
@@ -131,15 +120,16 @@ compatible card and requires Adlib compatible card for sound effects.
 
   The emulator completely takes-over interrupt 9 (keyboard) and intercepts
 (but doesn't take-over) interrupt 8. The emulator uses only base memory.
-
+Screen size is 320x207.
+ 
   
 
   C+4 vs C64
 
-  C+4 and C64 were like brothers. Why does success come only for C64?
-  I think it is only one answer: C64 was two years elder! Below I place a
-table with quality/quantity comparison of the main features of both machine.
-Who have won this data competion? I think there is no leader...
+  C+4 and C64 are very similar. Why does success come only for C64?
+  I think it is only one answer: C64 is two years elder! Below I place a
+table with quality/quantity comparison of the main features of both machines.
+Who has won this data competion?...
 
                             C64     C+4     Notes
 
@@ -160,9 +150,9 @@ Who have won this data competion? I think there is no leader...
     Editor, Spreadsheet
     and DataBase            -       +
 
-  Speed                     =       =       In full screen modes C64 is
-                                            some faster than C+4, but in screen
-                                            blank case C+4 is more faster
+  Speed                     =       =       In full screen modes C64 is some
+                                            faster than C+4, but in screen
+                                            blank case C+4 is faster
   RAM
    Total                    64K     64K
    I/O holes size, byte     4098    180     C+4: CPU=2,ACIA=16,PIO=16,KBD=16,
@@ -171,10 +161,8 @@ Who have won this data competion? I think there is no leader...
                                             C64: CPU=2,VIC=1024,SID=1024,
                                                  VRAM=1024,CIA1=256,CIA2=256,
                                                  EXP1/Z80=256,EXP2/DISK=256
-                                            * These holes reduce total useable
+                                            * These holes reduce total usable
                                             RAM capacity!
-   Easy expansion up to     no easy 256K    C+4: 8x4164 -> 8x41256 and use
-                            way                  ROM Cartridge logic
 
   ROM
    Total                    2*8K+4K 4*16K   C+4 can work only with one 16K
@@ -185,25 +173,24 @@ Who have won this data competion? I think there is no leader...
                             =28K    =128K
   Keyboard
    Total keys               66      67+Reset
-   Reset button             miss!   is!
+   Reset button             -       +
    Design                   worse   better
 
   Graphics
    Colors                   16      121
-   Resolution               =       =
-   Extended mode            =       =
-   Multicolor mode          =       =
-   Bit Map Mode             =       =
+   Max. Resolution          320x200 320x200
+   Extended mode            +       +
+   Multicolor mode          +       +
+   Bit Map Mode             +       +
    Hardware cursor          -       +
-   256 chars. on screen     =       =
+   256 chars. on screen     +       +
    Hardware reverse         -       +       This allows automatically to
                                             produce inverted characters
                                             saving 2K characters ROM!
-   38/40 colums modes       =       =
-   24/25 rows modes         =       =
-   X/Y-scrolling            =       =
-   NTSC/PAL modes           =       =
-   Fixed color memory       +       -       This makes C+4 more flexible
+   38/40 colums modes       +       +
+   24/25 rows modes         +       +
+   X/Y-scrolling            +       +
+   Fixed color RAM          +       -       This makes C+4 more flexible
    Color RAM                0.5K    -       Color RAM helps C64 be some faster
                                             than C+4 in the text modes, and
                                             increase free RAM storage for some
@@ -227,26 +214,26 @@ Who have won this data competion? I think there is no leader...
   Time
    2-byte timers            4       3       C64 timers have wider range of
                                             working modes than on C+4
-   4-byte RTC               2       miss
+   4-byte RTC               2       -
 
   Interrupts
    NMI                      +       -
-   IRQ                      =       =
-   Reset                    worse   better  C64 have no simple user usabale
-                                            Reset switch, C+4 have one
+   IRQ                      +       +
+   Reset                    worse   better  C64 has no simple user usable
+                                            Reset switch, C+4 has one
    Interrupts sources
     Cassette Read/
-     Serial Bus SRQ         1       0       C64 have 13 types of interrupt
+     Serial Bus SRQ         1       -       C64 has 13 types of interrupt
     Timers                  4       3       sources: 4 from VIC, 5 from CIA1
     RTC                     1       -       and 4 from CIA2 - VIC (IRQ),
     Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can each
     Sprite's                2       -       produce only one interrupt signal;
-    Synchro Serial Port     2       -       C+4 have 6 types of interrupt
+    Synchro Serial Port     2       -       C+4 has 6 types of interrupt
     Light Pen               1       1       sources: 5 from TED and 1 from
     RS-232C                 1       1       ACIA - TED and ACIA can each
                                             produce only one IRQ signal
 
-  Serial Bus                =       =       C+4 doesn't support SRQ line
+  Serial Bus                +       +       C+4 doesn't support SRQ line
 
   Digital Joysticks         2       2
 
@@ -273,23 +260,22 @@ Who have won this data competion? I think there is no leader...
   Some keys description:
 Alt             - Commodore key
 Tab             - Run/Stop
-F9              - Emulator's file system
-F10             - Debugger
+F9              - Debugger
+F10             - Exit to DOS
 F11             - Reset button
-F12             - Exit to DOS
-Scroll Lock     - Button Play (& Record) on datasette
-
-  WARNING!!! In the debugger and in the menus only keys release events are
-reflected: to access shifted signs be sure to release SHIFT-key after desired
-sign key!
+F12             - Emulator's file system
+Scroll Lock     - Button Play on datasette
+Num Lock        - Button Record on datasette
+SysRq (Alt+PrintScreen) - Immediate exit to DOS (Warning! It can interrupt any
+                operation, e.g. with file)
 
   
 
+
   Debugger
 
-  It's a functional copy of MS-DOS DEBUGGER. It has almost the same commands
-set (see table below).
-
+  It's a functional copy of the MS-DOS DEBUGGER. It has almost the same
+commands set (see table below).
 
            MS-DOS   Commodore
 Function  debugger  plus/4 e.  Emulation
@@ -300,14 +286,14 @@ Compare      C         C       +
 Dump         D         D       +
 Enter        E         E       +[1]
 Fill         F         F       +[1]
-Go           G         G       +
+Go           G         G       +[6]
 Hex          H         H       +
 Input        I       <miss>    -
 Load         L         L       +
 Move         M         M       +
 Name         N         N       +
 Output       O       <miss>    -
-Proceed      P         P       +[3]
+Proceed      P         P       +[3][6]
 Quit         Q         Q       +[4]
 Register     R         R       +
 Search       S         S       +[1]
@@ -324,12 +310,13 @@ Zoom       <miss>      Z       !, selects 25 or 50 rows debugger mode.
       next assembler instruction, it is very useful for fast tracing
       subroutines (JSR) and loops (BNE, BEQ, ...). Using P for trace JMP
       instruction and alike generally has no viewable sense.
-[4] - It returns to DOS! Use G (Go) to quit debugger and return to the
-      emulator.
-[5] - This commands outputs time of instruction(s) execution.
-      
+[4] - It returns to the emulator and turns emulator in non-debugger mode.
+[5] - This command outputs time of instruction(s) execution.
+[6] - After these commands emulator turns into debugger mode. In this mode F9
+      causes to return to last debugger screen.
+
   When you have set breakpoint(s) by G (Go) or P (Proceed) commands, the
-emulator will work slower but only on several percent!
+emulator will work slower but only on several percent.
   It uses the next mnemonics for (un)assemble CPU commands:
 
     BRK               ;00           NOP2    #$nn      ;80
@@ -462,18 +449,26 @@ emulator will work slower but only on several percent!
     RORADC  $nnnn,X   ;7F           INCSBC  $nnnn,X   ;FF
 
   You must enter all 2 or 4 digits in operands: don't miss leading zero(s)!
-This limitation is only appliable for entering 8502 assembler mnemonics, not
-debugger commands. All spaces are ignored in a entered mnemonics between its
-natural delimiters (comma, brackets, $, #), e.g. you may enter: BNE$0672,
+This limitation is only appliable for entering 8501 assembler mnemonics, not
+debugger commands. All spaces are ignored in the entered mnemonics between
+its natural delimiters (comma, brackets, $, #), e.g. you may enter: BNE$0672,
 LDA # $ 01, etc.). Some instructions (NOP1, NOP2, JAM, etc.) have the same
 mnemonics and operands structure: during assembling the minimal appropriate
 opcode is gotten.
-  The debugger have very simple line editor with only two commands: BackSpace
-(erase last character) and F3 (repeat previous line).
+  The debugger has simple editor which is the same as DOS command line editor:
+thus you may use F1, F2, F3, F4, F5, Insert, Delete, Esc and BackSpace keys
+for edit. You may also use ^C (Control-C) and ^S (Control-S) keys during text
+output.
+  If you want to save some debugger disassebler or dump output in a file, you
+may use standard DOS streams redirection technique, e.g. PLUS4 <CMDS >LISTING
+will start normal emulator execution but after F9 all input will get from
+CMDS file and all output will send to LISTING. CMDS file must consists of
+debugger's commands (one command per a line) and last line in it ought to
+be Q.
   The debugger correct works with PRG and supports pure binary formats (with
 some other formats it can work as with pure binaries).
-  The i/o menus are not available from the debugger, i.e. after setting
-breakpoint(s).
+  The i/o menus are not available from the debugger, i.e. during execution g
+or p commands.
 
 
 
@@ -486,21 +481,17 @@ JAM type instruction then after reset the emulator begin meditation...
 
   I/O Ports Emulation
 
+FC00-FCFF       KERNEL ROM FIX          %[1]
 FD00-FD0F       ACIA                    -
-FD10-FD1F       PIO                     %[1]
-FD20-FD2F       TEMPORARY KERNEL ROM
-                FIX???                  ?[2]
+FD10-FD1F       PIO                     %[2]
 FD30-FD3F       KEYBOARD MATRIX         +
 FDD0-FDDF       ROM CHIPS SELECTION
                 PORT                    +
 FEC0-FEDF       IEC9/C1551              -
 FEE0-FEFF       IEC8/C1551              -
 
-[1] - only Cassette Sense line.
-[2] - I don't know any exact information about this port and its function,
-      I find this port only in ROM listing, I realize it in the next manner:
-      after writing to this port during next 336 TED ticks only KERNEL ROM may
-      be accessible in the high ROM area (at $C000-$FFFF).
+[1] - only for CPU access.
+[2] - only Cassette Sense line.
 
 
 
@@ -531,7 +522,7 @@ Index   Bit(s)  Function                Emulation  Description
         7       0/1 - Hardware
                 reverse on/off          +
 08      0-7     Keyboard/Joysticks      
-                latch                   +[6] 
+                latch                   +
 09      0       unused                  ?[3]
         1       0/1 - Request for
                 raster interrupt
@@ -651,7 +642,6 @@ Index   Bit(s)  Function                Emulation  Description
 [3] - it's always equal to zero.
 [4] - it's always set to one.
 [5] - bit 5 has higher priority than bit 6.
-[6] - keyboard only.
 
 
 
@@ -659,20 +649,20 @@ Index   Bit(s)  Function                Emulation  Description
 
   I'm sorry, I can't find exact system timing scheme. Below I describe
 the scheme which is used in this emulator.
-  TED screen consists of 312 raster lines which contain 57 character position.
+  TED screen consists of 312 raster lines which contains 57 character position.
 TED provides for CPU standard single frequency if it operate with character
 screen area and it provides double frequency for CPU when it displays overscan
 area (only if bit 1 of TED 13 register is set to 0).
   This scheme is not accurate: CPU runs at about 50% faster than it must...
-  The emulator maximum frame rate is limited (for synchronization with the real
-plus/4) to approximately 54.6Hz.
+  The emulator maximum frame rate is limited (for synchronization with the
+real plus/4) to approximately 54.6Hz.
 
 
 
   ROMs
 
   The emulator can possibility to change/add any ROM-chip. When emulator
-starts it look for the next ROM-image files in start-up directory:
+starts it looks for the next ROM-image files in start-up directory:
   BASIC.ROM     - BASIC ROM;
   KERNEL.ROM    - KERNEL ROM;
   3P1_LO.ROM    - 3-PLUS-1 LOW ROM;
@@ -684,7 +674,8 @@ starts it look for the next ROM-image files in start-up directory:
   Any of these files must have exact 16KB length. If one or more of the such
 files were missed then standard (build-in in the emulator program body) ROM
 contents was used instead.
-
+  Some ROM images on the Internet have 16386 bytes length (for unknown for
+me reason 2 bytes added to theirs start) - remove first 2 bytes from them.
 
       
   Datasette Emulation
@@ -737,7 +728,7 @@ OFFSET  NAME            LENGTH  COMMENTS
 0       FORMAT VERSION   2      0 FOR VERSION 1.00 OF THE EMULATOR
 2       HEAD POSITION    2      HEAD POINTS ON THE TAPE'S BLOCK WITH THIS
                                 NUMBER
-4       CAPACTY          2      QUANTITY OF BLOCKS ON THE TAPE
+4       CAPACITY         2      QUANTITY OF BLOCKS+1 ON THE TAPE
 6       BLOCK #1 POINTER
         TO THE END OF
         THIS BLOCK +1    4      THE POINTER CONTAINS ABSOLUTE FILE
@@ -788,46 +779,60 @@ after 9 marker bytes contains type specification byte, e.g.:
 OFFSET  AREA NAME       LENGTH  COMMENTS
 
 ------- FORMAT SPECIFICATION -----------
-0       VERSION         2       0 FOR VERSION 1.00 OF THE EMULATOR
-
-------- CPU REGISTERS ------------------
-2       PC              2       
-4       SP              2       HIGH BYTE = 1
-6       XR              2       HIGH BYTE = 0
-8       YR              2       HIGH BYTE = 0
-0AH     SR              1
-0BH     AC              1
-
-------- CPU PORTS ----------------------
-0CH     $0              1
-0DH     $1              1
-
-------- MEMORY CONFIGURATION -----------
-0EH     ROMMAP          1
-0FH     KERNEL FIX ST.  1       0 - NO FIX, EITHER - FIX
+0       VERSION         2       1 FOR VERSION 1.10 OF THE EMULATOR
 
 ------- ADDITIONAL INFORMATION ---------
-10H     CPU TIME        1       TICKS TO CPU
-11H     TOTAL TICKS     4       TICKS COUNTER
-15H     LED             1       KBD LED INDICATOR DATA
+2       CPU TIME        1       TICKS TO CPU
+
+------- CPU REGISTERS ------------------
+3       PC              2
+5       SP              2       HIGH BYTE = 1
+7       XR              2       HIGH BYTE = 0
+9       YR              2       HIGH BYTE = 0
+0BH     SR              1
+0CH     AC              1
+
+------- CPU PORTS ----------------------
+0DH     $0              1
+0EH     $1              1
+
+------- MEMORY CONFIGURATION -----------
+0FH     ROMMAP          1
+10H                     1       RESERVED
 
 ------- TED ----------------------------
-16H     TIMER #1 RELOAD
+11H     TIMER #1 RELOAD
         VALUE           2
-18H     TED REGISTERS   32      VALUES OF THE SOME TED REGISTERS IN THE FREEZE
-                                FILE IS NOT THE SAME AS VALUES IN THE RUNNING
-                                EMULATOR
+
+------- ADDITIONAL INFORMATION ---------
+13H     LED             1       KBD LED INDICATOR DATA
+
+------- TED ----------------------------
+14H     TED REGISTERS   20H(32)
 
 ------- RAM ----------------------------
-38H     $2-$FFFF        65534
+34H     $2-$FFFF        0FFFEH(65534)
 
 
 
   (C) Copyright
 
-  All data and program files of this package are written by Lidovski V. between
-X-1996 and IV-1997. The author thinks that this package can't bring any money
-profit. Therefore he decides that this program package may be used without any
-limitations: anybody may do any operation with this package content (to copy,
-to expand, to disassemble, etc.).
+  Almost all data and program files of this package are written by Lidovski V.
+in X-1996 - IV-1997, VI-1998 - VIII-1998, XII-1998, IV-2000. The author thinks
+that this package can't bring any money profit. Therefore he decides that this
+program package may be used without any limitations: anybody may do any
+operation with this package content (to copy, to expand, to disassemble,
+etc...).
+
+
+  Changes List
+
+  The next bugs fixed since version 1.00 of this emulator:
+  * debugger can't hang computer after g or p command in long execution
+    sequence
+  * q debugger command returns to non debugger mode of execution and
+    g debugger command turns emulator in debugger mode
+  * button End correctly works in menus
+  * made correct kernel $FCxx page fix
+  * made correct loading of PRG-files with tape origin, like PACMANIA
 

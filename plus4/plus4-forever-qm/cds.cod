@@ -1,0 +1,550 @@
+RESET_DS:       CMP     DS_MODE,1               ; RESET DATASETTE
+                JB      SHORT RDS_L1
+                MOV     BX,DS_FH
+                JZ      SHORT RDS_L2
+                MOV     AX,4200H
+                MOV     DX,WORD PTR DS_SPOS
+                MOV     CX,WORD PTR DS_SPOS+2
+                INT     21H
+                XOR     CX,CX
+                MOV     AH,40H
+                INT     21H
+RDS_L2:         MOV     AH,3EH
+                INT     21H
+                MOV     DS_MODE,0
+RDS_L1:         OR      CPU_1,8
+                RETN
+
+DS_SEEK:        MOV     DS_NPOS,ECX
+DSS_L1:         DEC     DI
+                JZ      SHORT DSS_L2
+                MOV     AH,3FH
+                LEA     DX,DS_NPOS
+                MOV     CX,4
+                INT     21H
+                MOV     AX,4200H
+                MOV     DX,WORD PTR DS_NPOS
+                MOV     CX,WORD PTR DS_NPOS+2
+                INT     21H
+                JMP     SHORT DSS_L1
+DSS_L2:         RETN
+
+CDS_IO_WR:      PUSH    EAX
+                PUSH    EDX
+                PUSH    CX
+                PUSH    DI
+                TEST    CPU1_XOR,8      ; MOTOR LINE CHANGED?
+                JZ      DSW_L1
+                TEST    LED,10H
+                JZ      DSW_L1
+                TEST    CPU_1,8         ; MOTOR TURNED ON?
+                JNZ     DSW_L2
+
+DSW_L3:         XOR     BX,BX           ; DEV #1 ASSIGNED TO A FILE?
+DSW_L22:        CMP     BX,LIST_CAP1
+                JNZ     SHORT DSW_L21
+                PUSH    BP
+                PUSH    SI
+                CALL    INIT_MENUS
+                MOV     DI,160*7+14*2
+                MOV     CX,36
+                MOV     BX,1
+                LEA     SI,DS_MSG1
+                CALL    OUT_MSG
+                CALL    WAIT_ACTIVITY
+                CALL    PLOT_SCR1
+                CALL    MENU_DISP1
+                CALL    END_MENUS
+                POP     SI
+                POP     BP
+                JMP     SHORT DSW_L3
+DSW_L21:        CMP     WORD PTR IBM_DV_LIST[EBX*2],'10'
+                JZ      SHORT DSW_L24
+                INC     BX
+                JMP     SHORT DSW_L22
+
+DSW_L24:        MOV     EAX,IBM_SZ_LIST[EBX*4]  ; SET VARIABLES
+                MOV     DS_MINDEX,BX            ; FILEPOS IN MENU 1
+                MOV     DS_SPOS,EAX             ; FILESIZE
+                MOV     EAX,DWORD PTR IBM_FN_LIST[EBX*8]
+                MOV     DWORD PTR DS_CNAME,EAX  ; FILENAME
+                MOV     EAX,DWORD PTR IBM_FN_LIST[EBX*8+4]
+                MOV     DWORD PTR DS_CNAME+4,EAX
+
+                MOV     AX,3D02H        ; OPEN FILE
+                LEA     DX,DS_CNAME
+                INT     21H
+                MOV     BX,AX           ; READ CTF HEADER
+                MOV     AH,3FH
+                LEA     DX,DS_FVER
+                MOV     CX,6
+                INT     21H
+
+                MOV     DI,DS_HPOSN
+                CALL    DS_SEEK
+
+                MOV     EAX,TOTALTICKS_LO
+                MOV     DS_FH,BX
+                MOV     DS_TIMER,EAX
+
+DSW_L5:         POP     DI
+DSG_L1:         POP     CX
+                MOV     BX,1
+                POP     EDX
+                POP     EAX
+DSG_L2:         RETN
+
+DSW_L2:         MOV     BX,DS_FH
+                CMP     DS_MODE,1       ;CLOSE (+ TRUNCATE) A FILE
+                JB      DSW_L6
+                JZ      DSW_L18
+                CALL    DSW_BIT
+                CALL    DSW_FLUSH
+
+                MOV     AX,WORD PTR DS_LBC ;TO DSW_FLUSH?
+                OR      AH,AH
+                JZ      SHORT DSW_L10
+DSW_L11:        INC     AH
+                SHL     AL,1
+                CMP     AH,8
+                JNZ     SHORT DSW_L11
+                MOV     DS_LBC,AL
+                MOV     AH,40H          ;WRITE LAST BYTE TO THE FILE
+                MOV     BX,DS_FH
+                LEA     DX,DS_LBC
+                MOV     CX,1
+                INT     21H
+
+DSW_L10:        MOV     AX,4202H                ;GET FILESIZE
+                XOR     DX,DX
+                XOR     CX,CX
+                MOV     BX,DS_FH
+                INT     21H
+                MOV     WORD PTR DS_NPOS,AX     ;CONDITIONAL TRUNCATION ???
+                MOV     WORD PTR DS_NPOS+2,DX
+                MOV     AX,4200H                ;SEEK LAST EOF
+                MOV     DX,WORD PTR DS_SPOS
+                MOV     CX,WORD PTR DS_SPOS+2
+                INT     21H
+                MOV     EAX,DS_NPOS
+                SUB     EAX,DS_SPOS
+                CMP     EAX,7
+                MOV     AH,40H
+                JBE     SHORT DSW_L7
+                
+                LEA     DX,DS_NPOS
+                MOV     CX,5
+                INT     21H
+                
+                INC     DS_QENTR
+                MOV     EAX,DS_NPOS
+                MOV     DI,DS_MINDEX
+                MOV     DS_HPOSN,1
+                MOV     IBM_SZ_LIST[EDI*4],EAX
+
+DSW_L20:        MOV     AX,4200H
+                XOR     CX,CX
+                XOR     DX,DX
+                INT     21H
+                MOV     AH,40H
+                LEA     DX,DS_FVER
+                MOV     CX,6
+                INT     21H
+
+DSW_L6:         MOV     DS_MODE,0
+                MOV     AH,3EH
+                INT     21H
+                JMP     DSW_L5
+
+DSW_L7:         XOR     CX,CX
+                INT     21H
+                JMP     DSW_L6
+
+DSW_L18:        MOV     AX,DS_HPOSN
+                INC     AX
+                CMP     AX,DS_QENTR
+                JB      SHORT DSW_L19
+                MOV     AX,1
+DSW_L19:        MOV     DS_HPOSN,AX
+                JMP     SHORT DSW_L20
+
+DSW_L1:         TEST    CPU1_XOR,2      ; WRITE LINE CHANGED?
+                JZ      DSW_L5
+                TEST    CPU_1,8         ; MOTOR ON?
+                JNZ     DSW_L5
+                CMP     DS_MODE,1
+                JZ      DSW_L5
+                JA      SHORT DSW_L8
+
+                MOV     DS_MODE,2
+                XOR     EAX,EAX
+                MOV     DS_SBUF,AL
+                TEST    CPU_1,2
+                JNZ     SHORT DSW_L9
+                NOT     DS_SBUF
+DSW_L9:         MOV     DS_MVAL,400H
+                MOV     WORD PTR DS_LBC,AX
+                MOV     DS_BUF_PTR,AX
+                MOV     DS_MCOUNT,EAX
+                MOV     DS_MSUM,EAX
+
+                MOV     AX,4202H        ; SEEK EOF & WRITE BLOCK HEADER
+                XOR     DX,DX
+                XOR     CX,CX
+                MOV     BX,DS_FH
+                INT     21H
+                MOV     CX,5
+                MOV     AH,40H
+                INT     21H
+
+DSW_L8:         CALL    DSW_BIT
+                JMP     DSW_L5
+
+DSW_BIT:        MOV     EAX,TOTALTICKS_LO       ;[SEG_AUX+500]:[DS_BUF_PTR]=
+                MOV     EDX,EAX                 ;=MIN(400H,TOTALTICKS-DS-TIMER)
+                XCHG    EAX,DS_TIMER            ;DS_BUF_PTR=+2
+                SUB     EDX,EAX
+                CMP     EDX,400H
+                JBE     SHORT DSW_B_L1
+                MOV     DX,400H
+DSW_B_L1:       PUSH    DS
+                LDS     BX,DWORD PTR DS_BUF_PTR
+                MOV     [BX],DX
+                ADD     BX,2
+                POP     DS
+
+                CMP     BX,8000
+                MOV     DS_BUF_PTR,BX
+                JZ      DSW_FLUSH
+                RETN
+
+DSW_FLUSH:      PUSH    ES
+                XOR     BX,BX
+                MOV     ES,DS_BUF_PTR+2
+DSW_F_L8:       MOV     AX,DS_MVAL
+                MOV     CX,ES:[BX]
+                MOV     DX,CX
+                CMP     AX,CX
+                JB      SHORT DSW_F_L1
+                SHR     DX,1            ;DS_MVAL>=ES:[BX]
+                ADD     DX,CX
+                CMP     AX,DX
+                JA      SHORT DSW_F_L2
+DSW_F_L7:       ADD     DS_MSUM,ECX     ;DS_MVAL<=1.5*(ES:[BX])
+                INC     DS_MCOUNT
+                CMP     AX,CX
+                JZ      SHORT DSW_F_L3
+                JS      SHORT DSW_F_L4
+                SUB     AX,2
+DSW_F_L4:       INC     AX
+DSW_F_L3:       MOV     DS_MVAL,AX
+                JMP     SHORT DSW_F_L5
+
+DSW_F_L2:       MOV     DX,CX
+                SUB     DX,ES:[BX+2]
+                JNS     SHORT DSW_F_L6
+                NEG     DX
+DSW_F_L6:       CMP     DX,7
+                JA      SHORT DSW_F_L7
+                MOV     DS_MVAL,CX
+                MOV     DS_MSUM,ECX
+                MOV     DS_MCOUNT,1
+                JMP     SHORT DSW_F_L5
+
+DSW_F_L1:       MOV     DX,AX
+                SHR     DX,1
+                ADD     DX,AX
+                CMP     DX,CX
+                JA      SHORT DSW_F_L7
+
+DSW_F_L5:       ADD     BX,2
+                CMP     BX,DS_BUF_PTR
+                JNZ     SHORT DSW_F_L8
+                MOV     EAX,DS_MSUM
+                XOR     EDX,EDX
+                DIV     DS_MCOUNT
+                SHL     EDX,1
+                CMP     EDX,DS_MCOUNT
+                JB      SHORT DSW_F_L9
+                INC     AX
+DSW_F_L9:       MOV     DS_MVAL,AX
+                MOV     CX,AX
+                SHR     CX,1
+                MOV     DS_MVAL2,CX
+                
+                XOR     BX,BX
+                XOR     DI,DI
+DSW_F_L15:      MOV     AX,ES:[BX]
+                XOR     DX,DX
+                ADD     AX,DS_MVAL2
+                DIV     DS_MVAL
+                OR      AX,AX
+                JNZ     SHORT DSW_F_L10
+                INC     AX
+DSW_F_L10:      MOV     DX,AX
+                MOV     AX,WORD PTR DS_LBC
+DSW_F_L11:      ROL     DS_SBUF,1
+                RCL     AL,1
+                INC     AH
+                DEC     DX
+                CMP     AH,8
+                JZ      SHORT DSW_F_L12
+                OR      DX,DX
+                JNZ     SHORT DSW_F_L11
+DSW_F_L14:      ADD     BX,2
+                NOT     DS_SBUF
+                MOV     WORD PTR DS_LBC,AX
+                CMP     BX,DS_BUF_PTR
+                JNZ     SHORT DSW_F_L15
+                MOV     CX,DI
+                XOR     DX,DX
+                MOV     BX,DS_FH
+                MOV     DS_BUF_PTR,DX
+                PUSH    DS
+                PUSH    ES
+                POP     DS
+                MOV     AH,40H
+                INT     21H
+                POP     DS
+                POP     ES
+                RETN
+
+DSW_F_L12:      STOSB
+                XOR     AX,AX
+                OR      DX,DX
+DSW_F_L17:      JZ      SHORT DSW_F_L14
+                ROL     DS_SBUF,1
+                RCL     AL,1
+                INC     AH
+                DEC     DX
+                JMP     SHORT DSW_F_L17
+
+RD_DS_BUF:      PUSH    EAX
+                MOV     EAX,DS_RPOSC
+                MOV     DS_RPOSP,EAX
+                ADD     EAX,8000
+                CMP     EAX,DS_RPOSE
+                JB      SHORT RDBU_L1
+                MOV     EAX,DS_RPOSE
+RDBU_L1:        MOV     DS_RPOSC,EAX
+                PUSH    CX
+                SUB     EAX,DS_RPOSP
+                MOV     CX,AX
+                MOV     AH,3FH
+                PUSH    DS
+                XOR     DX,DX
+                MOV     DS,DS_BUF_PTR+2
+                INT     21H
+                POP     DS
+                POP     CX
+                POP     EAX
+                RETN
+
+DS_AUX1:        MOV     EDX,DS_TIMER
+                MOV     EAX,TOTALTICKS_LO
+                SUB     EAX,400H
+                ADD     EDX,400H
+                CMP     EAX,EDX
+                RETN
+
+DSR_L1B:        CALL    DS_AUX1
+                JB      DSG_L1
+                MOV     DH,CPU_1
+                MOV     BX,1
+                OR      DH,8
+                CALL    MSTORE_DH
+                AND     DH,0F7H
+                CALL    MSTORE_DH
+                JMP     DSG_L1
+
+DSR_L1A:        MOV     DS_TIMER,EAX
+                JMP     DSG_L1
+
+CDS_IO_RD:      TEST    CPU_1,8
+                JNZ     DSG_L2
+                CMP     DS_MODE,1
+                PUSH    EAX
+                PUSH    EDX
+                PUSH    CX
+                JA      SHORT DSR_L1B
+                JZ      SHORT DSR_L1
+
+                MOV     AX,DS_QENTR     ;1ST INIT
+                CMP     AX,DS_HPOSN
+                JBE     DSG_L1
+
+                CALL    DS_AUX1
+                JAE     SHORT DSR_L1A
+
+                TEST    LED,30H
+                JPE     DSG_L1
+                INC     DS_MODE
+
+                MOV     EAX,TOTALTICKS_LO
+                MOV     DS_TIMER,EAX
+                MOV     CX,5
+                MOV     EAX,DS_NPOS
+                ADD     EAX,ECX
+                MOV     DS_RPOSE,EAX
+                MOV     DS_MVAL,CX
+                MOV     AH,3FH
+                LEA     DX,DS_NPOS
+                MOV     BX,DS_FH
+                INT     21H
+                MOV     EAX,DS_NPOS
+                SUB     EAX,DS_RPOSE
+                MOV     DS_RPOSE,EAX
+                MOV     DS_RPOSC,0
+
+DSR_L1:         MOV     EAX,TOTALTICKS_LO       ;READ BIT
+                MOV     BX,DS_MVAL
+                SUB     EAX,DS_TIMER
+                XOR     EDX,EDX
+                DIV     EBX
+                AND     CPU_1,0EFH
+                SHL     EDX,1
+                CMP     EDX,EBX
+                JB      SHORT DSR_L2
+                INC     EAX
+DSR_L2:         MOV     CL,AL
+                SHR     EAX,3
+                AND     CX,7
+DSR_L3:         CMP     EAX,DS_RPOSC
+                JB      SHORT DSR_L4
+
+                CMP     EAX,DS_RPOSE
+                MOV     BX,DS_FH
+                JB      SHORT DSR_L5
+
+                MOV     EAX,DS_NPOS
+                SUB     EAX,DS_RPOSE
+                SUB     EAX,5
+                MOV     DS_NPOS,EAX
+                MOV     DX,AX
+                SHR     EAX,16
+                MOV     CX,AX
+                MOV     AX,4200H
+                INT     21H
+
+                MOV     DS_MODE,0
+                MOV     EAX,TOTALTICKS_LO
+                JMP     DSR_L1A
+
+DSR_L5:         CALL    RD_DS_BUF
+                JMP     SHORT DSR_L3
+
+DSR_L4:         SUB     EAX,DS_RPOSP
+                MOV     BX,AX
+                PUSH    DS
+                MOV     DS,DS_BUF_PTR+2
+                MOV     AL,[BX]
+                POP     DS
+
+                SUB     CL,7
+                NEG     CL
+                BT      AX,CX
+                RCL     CH,5
+                OR      CPU_1,CH
+                JMP     DSG_L1
+
+READ_DS_DATA:   MOV     EAX,DS_TIMER    ; READ BIT
+                INC     DS_TIMER
+
+RDD_L1:         CMP     EAX,DS_RPOSC
+                JB      SHORT RDD_L2
+
+                CMP     EAX,DS_RPOSE
+                JAE     SHORT RDD_L3
+                MOV     BX,CBM_FH
+                CALL    RD_DS_BUF
+                JMP     SHORT RDD_L1
+
+RDD_L2:         SUB     EAX,DS_RPOSP
+                MOV     BX,AX
+                PUSH    DS
+                MOV     DS,DS_BUF_PTR+2
+                MOV     AL,[BX]
+                POP     DS
+                SHL     DS_MSUM,8
+                MOV     BYTE PTR DS_MSUM,AL
+                MOV     EAX,DS_MSUM
+                MOV     CX,31
+                STC
+RDD_L3:         RETN
+
+RDB_L8:         MOV     DS_SBUF,1
+RDB_L5:         CMP     CX,11
+                JA      SHORT RDB_L6
+                OR      DS_MSUM,EAX
+
+READ_DS_BYTE:   CALL    READ_DS_DATA
+                JNC     RDB_L2
+                
+RDB_L6:         BTS     EAX,ECX
+                DEC     CX
+                JC      SHORT RDB_L5
+                BTS     EAX,ECX          ; 0
+                DEC     CX
+                JC      SHORT RDB_L8
+                BTS     EAX,ECX          ; 0
+                DEC     CX
+                JC      SHORT RDB_L8
+                BTS     EAX,ECX          ; 0
+                DEC     CX
+                JC      SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                BTS     EAX,ECX          ; 0
+                DEC     CX
+                JC      SHORT RDB_L8
+                BTS     EAX,ECX          ; 0
+                DEC     CX
+                JC      SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                BTS     EAX,ECX          ; 1
+                DEC     CX
+                JNC     SHORT RDB_L8
+                OR      DS_MSUM,EAX
+                
+                MOV     DS_LBQ,9
+RDB_L10:        CALL    READ_DS_DATA
+                JNC     SHORT RDB_L2
+RDB_L3:         DEC     CX
+                SHL     EAX,1
+                JC      SHORT RDB_L3
+                JS      SHORT RDB_L4
+                STC                     ; ->0
+                RCR     DS_MINDEX,1
+                JMP     SHORT RDB_L1
+RDB_L4:         SHR     DS_MINDEX,1     ; ->1
+RDB_L1:         SUB     CX,5
+                SHL     EAX,5
+                DEC     DS_LBQ
+                JZ      SHORT RDB_L9
+                CMP     CX,11
+                JA      SHORT RDB_L3
+RDB_L9:         SUB     CX,31
+                NEG     CX
+                XOR     EAX,EAX
+RDB_L7:         STC
+                RCR     EAX,1
+                LOOP    SHORT RDB_L7
+                OR      DS_MSUM,EAX
+                CMP     DS_LBQ,0
+                JNE     SHORT RDB_L10
+                SHL     DS_MINDEX,1
+                MOV     AL,BYTE PTR DS_MINDEX+1
+                STC
+RDB_L2:         RETN

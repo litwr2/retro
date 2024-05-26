@@ -1,0 +1,12 @@
+                ALIGN   2
+JOY1X_LB        DW      0
+JOY1X_RB        DW      0
+JOY1Y_LB        DW      0
+JOY1Y_RB        DW      0
+JOY2X_LB        DW      0
+JOY2X_RB        DW      0
+JOY2Y_LB        DW      0
+JOY2Y_RB        DW      0
+JOY_MASK        DW      0FFFFH
+JOY_ST          DB      0
+

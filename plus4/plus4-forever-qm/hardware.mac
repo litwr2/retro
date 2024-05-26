@@ -1,0 +1,4 @@
+IODELAY         MACRO
+                JMP     SHORT $+2
+                JMP     SHORT $+2
+                ENDM

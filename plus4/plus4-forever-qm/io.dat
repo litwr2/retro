@@ -1,0 +1,27 @@
+               IF      ACIA_PRESENT
+ACIA_0          DB      0               ; $FD00-$FD0F
+ACIA_1          DB      0
+ACIA_2          DB      0
+ACIA_3          DB      0
+               ENDIF
+PIO             DB      0FFH            ; $FD10-$FD1F
+KBD             DB      0FFH            ; $FD30-$FD3F
+;ROMBANK         DB      16 DUP(?)       ; $FDD0-$FDDF
+               IF      IEC_PRESENT
+IEC9_0          DB      0               ; $FEC0-$FEDF
+IEC9_1          DB      0
+IEC9_2          DB      0
+IEC9_3          DB      0
+IEC9_4          DB      0
+IEC9_5          DB      0
+IEC9_6          DB      0
+IEC9_7          DB      0
+IEC8_0          DB      00H             ; $FEE0-$FEFF
+IEC8_1          DB      00H
+IEC8_2          DB      00H
+IEC8_3          DB      00H
+IEC8_4          DB      00H
+IEC8_5          DB      00H
+IEC8_6          DB      0
+IEC8_7          DB      0
+               ENDIF

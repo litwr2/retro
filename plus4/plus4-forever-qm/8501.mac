@@ -1,0 +1,437 @@
+GET_BYTE        MACRO   XB
+                MOV     BX,SI
+                INC     BX
+                CALL    MREAD_DH
+                XOR     BH,BH
+                IFB <XB>
+                 MOV     BL,DH
+                ENDIF
+                ENDM
+
+GET_WORD        MACRO   XB
+                MOV     BX,SI
+                INC     BX
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BX
+                CALL    MREAD_DH
+                IFB <XB>
+                 MOV     BX,DX
+                ENDIF
+                ENDM
+
+ADDR_ZP         MACRO   ICLOCK,XB
+                GET_BYTE
+                ADD     SI,2
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_IZP_Y      MACRO   ICLOCK,XB
+                LOCAL   CIN
+                GET_BYTE
+                ADD     SI,2
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BL
+                CALL    MREAD_DH
+                MOV     BX,DX
+                MOV     DX,DI
+                ADD     BL,DL
+                MOV     DL,ICLOCK
+                JNC     SHORT CIN&_3
+                INC     BH
+                INC     DL
+CIN&_3:         IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_IZP_X      MACRO   ICLOCK,XB
+                GET_BYTE
+                ADD     SI,2
+                ADD     BL,CL
+                CALL    MREAD_DH
+                MOV     DL,DH
+                INC     BL
+                CALL    MREAD_DH
+                MOV     BX,DX
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ABS        MACRO   ICLOCK,XB
+                GET_WORD
+                ADD     SI,3
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ZP_X       MACRO   ICLOCK,XB
+                GET_BYTE
+                ADD     SI,2
+                ADD     BL,CL
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ZP_Y       MACRO   ICLOCK,XB
+                GET_BYTE
+                ADD     SI,2
+                ADD     BX,DI
+                XOR     BH,BH
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ABS_Y      MACRO   ICLOCK,XB
+                LOCAL   CIN
+                GET_WORD
+                ADD     SI,3
+                MOV     DX,DI
+                ADD     BL,DL
+                MOV     DL,ICLOCK
+                JNC     SHORT CIN&_3
+                INC     DL
+                INC     BH
+CIN&_3:         IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ABS_X      MACRO   ICLOCK,XB
+                LOCAL   CIN
+                GET_WORD
+                ADD     SI,3
+                MOV     DL,ICLOCK
+                ADD     BL,CL
+                JNC     SHORT CIN&_3
+                INC     DL
+                INC     BH
+CIN&_3:         IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_ABS_X1     MACRO   ICLOCK,XB
+                GET_WORD
+                ADD     SI,3
+                ADD     BX,CX
+                MOV     DL,ICLOCK
+                IFB <XB>
+                 CALL    MREAD_DH
+                ENDIF
+                ENDM
+
+ADDR_MISS       MACRO   ICLOCK
+                INC     SI
+                MOV     DL,ICLOCK
+                ENDM
+
+ADDR_IM         MACRO   ICLOCK
+                GET_BYTE NB
+                ADD     SI,2
+                MOV     DL,ICLOCK
+                ENDM
+
+LOGIC_OPER      MACRO   OPER
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OPER    AH,DH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+BRANCH1         MACRO   COND
+                LOCAL   CIN
+                INC     SI
+                MOV     BX,SI
+                CALL    MREAD_DH
+                INC     SI
+                INC     BX
+
+                MOV     DL,2
+                OR      AL,AL
+                COND    CPU_L2
+
+                INC     DL
+                OR      DH,DH
+                JNS     SHORT CIN&_1
+                NEG     DH
+                SUB     BL,DH
+                JNC     SHORT CIN&_3
+                DEC     BH
+                INC     DL
+CIN&_3:         MOV     SI,BX
+                JMP     CPU_L2
+
+CIN&_1:         ADD     BL,DH
+                JNC     SHORT CIN&_2
+                INC     BH
+                INC     DL
+CIN&_2:         MOV     SI,BX
+                JMP     CPU_L2
+                ENDM
+
+BRANCH2         MACRO   COND,FLAG
+                LOCAL   CIN
+                INC     SI
+                MOV     BX,SI
+                CALL    MREAD_DH
+                INC     SI
+                INC     BX
+
+                MOV     DL,2
+                TEST    AL,FLAG
+                COND    CPU_L2
+
+                INC     DL
+                OR      DH,DH
+                JNS     SHORT CIN&_1
+                NEG     DH
+                SUB     BL,DH
+                JNC     SHORT CIN&_3
+                DEC     BH
+                INC     DL
+CIN&_3:         MOV     SI,BX
+                JMP     CPU_L2
+
+CIN&_1:         ADD     BL,DH
+                JNC     SHORT CIN&_2
+                INC     BH
+                INC     DL
+CIN&_2:         MOV     SI,BX
+                JMP     CPU_L2
+                ENDM
+
+CLRF            MACRO   FLAG
+                INC     SI
+                MOV     DL,2
+                AND     AL,NOT FLAG
+                JMP     CPU_L2
+                ENDM
+
+SETF            MACRO   FLAG
+                INC     SI
+                MOV     DL,2
+                OR      AL,FLAG
+                JMP     CPU_L2
+                ENDM
+
+ADDITION        MACRO
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR OVF)
+                TEST    AL,8    ; ?DECIMAL MODE
+                BTR     AX,0
+                JNZ     SHORT CIN&_3
+                ADC     AH,DH
+
+                JNO     SHORT CIN&_4
+                ADC     AL,CH
+                OR      AL,OVF
+CIN&_4:         ADC     AL,CH
+                OR      AH,AH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+
+CIN&_3:         XCHG    AL,AH
+                ADC     AL,DH
+                DAA
+                XCHG    AL,AH
+                ADC     AL,CH
+                OR      AH,AH
+                JNZ     SHORT CIN&_7
+                OR      AL,ZEF
+CIN&_7:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+SUBTRACTION     MACRO
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR OVF)
+                TEST    AL,8    ; ?DECIMAL MODE
+                BTR     AX,0
+                CMC
+                JNZ     SHORT CIN&_3
+                SBB     AH,DH
+                CMC
+
+                JNO     SHORT CIN&_4
+                ADC     AL,CH
+                OR      AL,OVF
+CIN&_4:         ADC     AL,CH
+                OR      AH,AH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+
+CIN&_3:         XCHG    AL,AH
+                SBB     AL,DH
+                DAS
+                XCHG    AL,AH
+                JC      SHORT CIN&_6
+                INC     AX
+CIN&_6:         OR      AH,AH
+                JNZ     SHORT CIN&_7
+                OR      AL,ZEF
+CIN&_7:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+ROTATE_MEM      MACRO   OPER
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                BTR     AX,0
+                OPER    DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L3B
+                OR      AL,SIF
+                JMP     CPU_L3B
+                ENDM
+
+ROTATE_AC       MACRO   OPER
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                BTR     AX,0
+                OPER    AH,1
+                ADC     AL,CH
+                OR      AH,AH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+SHIFT_MEM_L     MACRO
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                SHL     DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L3B
+                OR      AL,SIF
+                JMP     CPU_L3B
+                ENDM
+
+SHIFT_MEM_R     MACRO
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                SHR     DH,1
+                ADC     AL,CH
+                OR      DH,DH
+                JNZ     CPU_L3B
+                OR      AL,ZEF
+                JMP     CPU_L3B
+                ENDM
+
+SETF_L_AC       MACRO
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OR      AH,AH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+SETF_L_XR       MACRO
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF)
+                OR      CL,CL
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+SETF_L_YR       MACRO
+                LOCAL   CIN
+                MOV     DI,BX
+                AND     AL,NOT (ZEF OR SIF)
+                OR      BL,BL
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+COMPARE         MACRO   OPRND
+                LOCAL   CIN
+                AND     AL,NOT (ZEF OR SIF OR CAF)
+                CMP     OPRND,DH
+                JC      SHORT CIN&_1
+                BTS     AX,0
+CIN&_1:         JNZ     SHORT CIN&_2
+                OR      AL,ZEF
+CIN&_2:         JNS     CPU_L2
+                OR      AL,SIF
+                JMP     CPU_L2
+                ENDM
+
+DECREMENT       MACRO
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                DEC     DH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L3B
+                OR      AL,SIF
+                JMP     CPU_L3B
+                ENDM
+
+INCREMENT       MACRO
+                LOCAL   CIN
+                CALL    MSTORE_DH
+                AND     AL,NOT (ZEF OR SIF)
+                INC     DH
+                JNZ     SHORT CIN&_1
+                OR      AL,ZEF
+CIN&_1:         JNS     CPU_L3B
+                OR      AL,SIF
+                JMP     CPU_L3B
+                ENDM
+
+STORE_MEM       MACRO   OPRND
+                MOV     DH,OPRND
+                JMP     CPU_L3B
+                ENDM
+
+XNOP            MACRO   ICLOCK
+                INC     SI
+                MOV     DL,ICLOCK
+                JMP     CPU_L2
+                ENDM
+

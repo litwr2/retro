@@ -1,0 +1,57 @@
+SCR1_TOP_X      EQU     7
+SCR1_TOP_Y      EQU     0
+SCR1_LEN        EQU     53
+HELP1_TOP_X     EQU     2
+HELP1_TOP_Y     EQU     4
+HELP1_LEN       EQU     59
+                         ;12-123456789012-1234567890-123456789012345678901234
+SCR1_1          DB      'ษออัออออออออออออัออออออออออัออออออออออออออออออออออออป'
+SCR1_2          DB      'บD#ณ  FileName  ณ   Size   ณ    CBM Information     บ'
+SCR1_3          DB      'ศออฯออออออออออออฯออออออออออฯออออออออออออออออออออออออผ'
+BMENU1_T        DB      '1Help   2SaveBs 3       4Freeze 5New    6       '
+                DB      '7       8Assoc. 9CBM 1  10Quit  '
+BMENU_A         DB      9 DUP(7,70H,70H,70H,70H,70H,70H,7)
+                DB      7,7,70H,70H,70H,70H,70H,70H
+                ;         1         2         3         4         5
+                ;12345678901234567890123456789012345678901234567890123456789
+MHELP1  DB      '"F1" invokes this text.                                    '
+        DB      '"F2" ("Save Basic") saves a standard program (it starts at '
+        DB      '     at the pointer at $2B and ends at the pointer at $2D) '
+        DB      '     in a PRG file.                                        '
+        DB      '"F4" freezes the current machine state in a C2F file.      '
+        DB      '"F5" creates a new media: cassette or disk.                '
+        DB      '"F8" associates the selected image file(s) (e.g. D64) with '
+        DB      '     a CBM i/o device.                                     '
+        DB      '"F9" toggles between CBM Characters Set #1 and #2.         '
+        DB      '"F10", "Esc" or right mouse button returns control to the  '
+        DB      '     emulator.                                             '
+        DB      '"Enter" shows an image or loads a program.                 '
+        DB      'Left mouse button activates menu item.                     '
+CP_IN_WIN1      DB      0
+CP_MAX_WIN1     DB      21
+DIRECTION       DB      0       ;0-IN, 1-OUT
+WIN_POS1        DW      0
+LIST_CAP1       DW      0
+START_POS1      EQU     LIST_CAP2
+FPATH           DB      67 DUP(0)
+FPATH_LEN       DB      0
+DEV1            DB      12 DUP(0)
+DEV8            DB      12 DUP(0)
+DEV9            DB      12 DUP(0)
+IBM_MASK        DB      '*.???',0
+IBM_EXTS_CAP    EQU     9
+IBM_EXTS        DD      'F2C','FTC','46D','GRP','?0D','?0P','?0R','?0S','?0U'
+EXTS_DET        DB      0,0,0,0,1,1,1,1,1
+IBM_FLIST_CAP   EQU     512
+IBM_FN_LIST     DB      8*IBM_FLIST_CAP DUP(' ')
+IBM_EX_LIST     DB      3*IBM_FLIST_CAP DUP(' ')
+IBM_DV_LIST     DB      2*IBM_FLIST_CAP DUP('*')
+IBM_CI_LIST     DB      24*IBM_FLIST_CAP DUP(' ')
+IBM_SZ_LIST     DD      IBM_FLIST_CAP DUP(0)
+TT2             DW      OFFSET ENT_C2F,OFFSET ENT_CTF,OFFSET ENT_D64
+                DW      OFFSET ENT_PRG,OFFSET MENU_DISP1,OFFSET ENT_P00
+                DW      OFFSET MENU_DISP1,OFFSET MENU_DISP1,OFFSET MENU_DISP1
+TT4             DW      OFFSET FC_XX,OFFSET FC_XX,OFFSET FC_D64,OFFSET FC_XX
+                DW      OFFSET FC_X00,OFFSET FC_X00,OFFSET FC_X00
+                DW      OFFSET FC_X00,OFFSET FC_X00
+

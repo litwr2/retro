@@ -1,0 +1,106 @@
+VIDEO_SEG       EQU     0A000H
+
+VER_SCR_SZ      EQU     200
+HOR_SCR_SZ      EQU     40
+
+MAX_VER         EQU     311     ;NTSC=261
+MAX_HOR         EQU     56
+
+XZ1L            EQU     14
+XZ2L            EQU     40
+YZ2L            EQU     207     ;200
+BEAM_CH_POS     EQU     XZ2L*120*8
+
+                ALIGN   4
+BEAM_ADDR       LABEL   DWORD
+BEAM_POS        DW      0
+                DW      VIDEO_SEG       ;VGA GRAPHICS
+BEAM_POSX       DW      0
+TED_IDJ         DW      0
+XZN             DB      1               ;X-ZONE NUMBER
+XZ1C            DB      XZ1L            ;X-ZONE COUNT
+XZ2C            DB      XZ2L
+YZN             DB      2               ;Y-ZONE NUMBER
+YZ2C            DB      YZ2L            ;Y-ZONE COUNT
+
+BLINK_COUNT     DB      0F0H
+
+SYNCHRO_RETRACE DB      3
+
+BADLICOND       DB      0
+SST             DB      0
+SST2            DB      0
+
+START_V_RELOAD  EQU     0
+START_H_RELOAD  EQU     14              ;>=XZ1L
+START_V_SCR     EQU     3
+START_H_SCR     EQU     14              ;>=XZ1L
+
+EVRA            EQU     START_V_RELOAD+3+199
+SHRA            EQU     START_H_RELOAD
+EHRA            EQU     START_H_RELOAD+39
+
+                ALIGN   2
+SVSA            DW      START_V_SCR             ;START VER. SCREEN AREA
+EVSA            DW      START_V_SCR+199
+SHSA            DB      START_H_SCR
+EHSA            DB      START_H_SCR+39
+
+VIS             DB      2               ;0-X, 1-Y
+VIDEO_DATA      DB      327 DUP('V')
+VD_PTR_BEAM     DW      OFFSET VIDEO_DATA
+VD_PTR_FILL     DW      OFFSET VIDEO_DATA       ;VD_PTR_BEAM+X_OFFSET
+
+X_OFFSET        DW      0
+Y_OFFSET        DW      3
+
+CRP_S           EQU     WORD PTR TED_1A ;CHAR. RELOAD POS.
+CRP             DW      0               ;CHAR. RELOAD POS. SAVE
+
+VMODE           DW      0       ; 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH, 6-IDLE
+VMJT            DW      OFFSET T00000, OFFSET T00001, OFFSET T00010
+                DW      OFFSET T00xxx, OFFSET T00100, OFFSET T00101
+                DW      OFFSET T00xxx, OFFSET T00xxx, OFFSET T01000
+                DW      OFFSET T00001, OFFSET T00010, OFFSET T00xxx
+                DW      OFFSET T00100, OFFSET T00101, OFFSET T00xxx
+                DW      OFFSET T00xxx, OFFSET T10000, OFFSET T00001
+                DW      OFFSET T00010, OFFSET T00xxx, OFFSET T00100
+                DW      OFFSET T00101, OFFSET T00xxx, OFFSET T00xxx
+                DW      OFFSET T11000, OFFSET T00001, OFFSET T00010
+                DW      OFFSET T00xxx, OFFSET T00100, OFFSET T00101
+                DW      OFFSET T00xxx, OFFSET T00xxx
+                DW      32 DUP (OFFSET T01xxx)
+
+MAINJUMP        DW      OFFSET MAINLOOP
+
+                ALIGN   4
+BORDER_COLOR    DD      ?
+MDATA_ADDR      LABEL   DWORD
+VSA             DB      0               ;VERTICAL SUBADDRESS
+MDATA_OFFSET    DB      0D0H
+MDATA_SEG       DW      SEG SEG_ROM
+CG_BASE         DB      0D0H
+VM_BASE         DB      8
+
+VID_BUF         DW      40 DUP('AC')
+
+COLOR0          DW      ?               ;TED_15
+COLOR1          DW      ?
+COLOR2          DW      ?
+
+                ALIGN   4
+RETRACE_COUNT   DD      1
+
+                ALIGN   2
+V1PP            LABEL   WORD
+                IRPC    HIB,0123456789ABCDEF
+                IRPC    LOB,0123456789ABCDEF
+                DW      OFFSET V1_&HIB&&LOB
+                ENDM
+                ENDM
+V2PP            LABEL   WORD
+                IRPC    HIB,0123456789ABCDEF
+                IRPC    LOB,0123456789ABCDEF
+                DW      OFFSET V2_&HIB&&LOB
+                ENDM
+                ENDM

@@ -1,0 +1,31 @@
+                ALIGN   4
+TIMER_TICKS     DD      0
+SYNCHRO_TIMER   DB      0
+TIMER_ST        DB      0
+
+INTR8:          CMP     CS:TIMER_ST,0
+                JNE     SHORT INTR8_L1
+                INC     CS:TIMER_TICKS
+INTR8_L1:       INC     CS:SYNCHRO_TIMER
+                DB      0EAH
+SAVE8LO         DW      ?
+SAVE8HI         DW      ?
+
+SET_INTR8:      MOV     AX,3508H        ;SAVE/SET INTR8 VECTOR
+                INT     21H
+                MOV     CS:SAVE8LO,BX
+                MOV     CS:SAVE8HI,ES
+                PUSH    DS
+                PUSH    CS
+                POP     DS
+                LEA     DX,CS:INTR8
+SI8_L1:         MOV     AX,2508H
+                INT     21H
+                POP     DS
+                RETN
+
+RESTORE_INTR8:  MOV     DX,SAVE8LO      ;RESTORE INTR8 VECTOR
+                PUSH    DS
+                MOV     DS,SAVE8HI
+                JMP     SHORT SI8_L1
+

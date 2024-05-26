@@ -1,0 +1,6 @@
+@ECHO OFF
+TASMX /dxx_d7_47 /la /zi /m2 PLUS4.ASM
+TLINK /v /3 PLUS4.OBJ
+DEL *.OBJ
+td286 plus4.exe
+DEL *.LST
