@@ -1,3 +1,4 @@
+REGS0           DB      'PrevPC=0000',0DH,0AH,'$'
 REGS1           DB      'PC=0000  AC=00  XR=00  YR=00  SP=00  SR=00  SV1BDIZC'
 EOL             DB      0DH,0AH,'$'
 REGS2           DB      '0000 000000 *ASLORA ($80),Y',0DH,0AH
@@ -13,7 +14,7 @@ D_H_BUF         DB      '0000  0000',0DH,0AH,'$'
 D_O_BUF         DB      '00'
 D_S_BUF         DB      '0000',0AH,0DH,'$'
 D_W_BUF         DB      'Writing 0000 byte(s)',0DH,0AH,'$'
-SDMSG           DB      'Enter ? for commands list',0DH,0AH,'$'
+SDMSG           DB      'Enter ? for commands list and ! for immediate exit from the emulator',0DH,0AH,'$'
 KBD_BUF_B       DB      62
 KBD_BUF_L       DB      0
 KBD_BUF         RB      63
@@ -32,15 +33,14 @@ UPC             DW      ?
 CPC             DW      ?
 SSI             DW      ?
 FNAME           RB      63
-T_CLOCK_LO      DW      ?
-T_CLOCK_HI      DB      ?
-                DB      ?       ;set to 0 by T command
+T_CLOCK_SUM     DD      ?
 ZOOM_MODE       DB      0
 ODM             DB      0
 LINP_BUF        DW      ?
 CURSOR          DW      0
-SAVE_SOUND      DB      ?
+OLD_PC          DW      0
 WATCHPOINT_FLAG DB      0
+
 
 OPCL    DB      1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
         DB      3,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
@@ -336,9 +336,14 @@ D_HELPM DB      'Assemble       A [address]                           (ex: A1000
         DB      'Trace          T [=address] [number]                    (ex: T4)',0DH,0AH
         DB      'Unassemble     U [range]                             (ex: U L80)',0DH,0AH
         DB      'View +4 screen V                               (any key returns)',0DH,0AH
-        DB      'watchpOint     O [=address] [watchpoints]    (ex: W=3000,1,FF11)',0DH,0AH
-        DB      'Write          W address [modus]                   (ex: W1001,1)',0DH,0AH
+        DB      'watchpOint     O [=address] [watchpoints]    (ex: O=3000,1,FF11)',0DH,0AH
+        DB      'Write          W range [modus]                (ex: W1001,3000,1)',0DH,0AH
         DB      'Zoom on/off    Z',0DH,0AH
         DB      '(Range is either: <START ADDRESS>,<END ADDRESS> or <START ADDRESS>,L<LENGTH>)',0DH,0AH
         DB      '(If modus=0 (default) then the parameter (address) will be saved before data)',0DH,0AH
-        DB      '(Command W (Write) gets filelength from XR:YR, i.e. <FILELENGTH>=XR*256+YR)',0DH,0AH,'$'
+        DB      'T command hides interrupts',0DH,0Ah,'$'
+
+XVALS   DB      'DMA_B=0000 CP_RELOAD=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 TICKS=00'
+XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 DMA_O=0000'
+        DB      0DH,0AH,'$'
+

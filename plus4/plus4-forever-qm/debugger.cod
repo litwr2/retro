@@ -26,20 +26,14 @@ INIT_DEBUG:     MOV     AX,[PC]
 
 EXIT_DEBUG:     JMP     RESTORE_TED
 
-SILENCE:        MOV     AL,[SAVE_SOUND]
-                MOV     BX,0FF11H
-                XOR     DH,DH
-                CALL    MSTORE_DH
-                MOV     [TED_11],AL
-                RETN
+SILENCE:        XOR     DH,DH
+                JMP     [SOUND_11]
 
-SAVE_TED:       MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
+SAVE_TED:       NOT     [TIMER_ST]
+                MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
                 SUB     AX,VIDEO_SEG
                 ADD     AX,SEG SEG_VRAM1
                 MOV     [BEAM_POS+2],AX
-
-                MOV     AL,[TED_11]             ;SAVE SOUND
-                MOV     [SAVE_SOUND],AL
 
                 PUSH    DS
                 MOV     AX,SEG SEG_VRAM1        ;SAVE VRAM
@@ -55,7 +49,7 @@ SAVE_TED:       MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
                 MOV     ES,AX
                 MOV     AX,VIDEO_SEG+1000H
                 MOV     DS,AX
-                MOV     CX,XZ2L*YZ2L*4-8000H
+                MOV     CX,SCR_XSIZE*SCR_YSIZE*4-8000H
                 MOV     DX,CX
                 XOR     SI,SI
                 XOR     DI,DI
@@ -66,28 +60,27 @@ SAVE_TED:       MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
                 MOV     CX,7
                 INT     10H
                 CMP     BX,64   ;=4096/64 - IT'S ENOUGH FOR 336x207 MODE!
-                JA      RESET
+                JA      END_EMU
 
                 MOV     AX,1C01H
                 MOV     BX,DX
                 SHL     BX,1
                 INT     10H
-                NOT     [TIMER_ST]
                 RETN
 
-RESTORE_TED:    MOV     AX,[BEAM_POS+2]           ;SET BEAM SEG
+RESTORE_TED:    MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
                 SUB     AX,SEG SEG_VRAM1
                 ADD     AX,VIDEO_SEG
                 MOV     [BEAM_POS+2],AX
 
                 MOV     BX,0FF11H               ;RESTORE SOUND
-                MOV     DH,[SAVE_SOUND]
+                MOV     DH,[TED_11]
                 CALL    MSTORE_DH
 
                 MOV     AX,SEG SEG_VRAM2        ;RESTORE VGA REGISTERS
                 MOV     ES,AX
                 MOV     AX,1C02H
-                MOV     BX,(XZ2L*YZ2L*4-8000H)*2
+                MOV     BX,(SCR_XSIZE*SCR_YSIZE*4-8000H)*2
                 MOV     CX,7
                 INT     10H
                 
@@ -105,11 +98,13 @@ RESTORE_TED:    MOV     AX,[BEAM_POS+2]           ;SET BEAM SEG
                 MOV     ES,AX
                 MOV     AX,SEG SEG_VRAM2
                 MOV     DS,AX
-                MOV     CX,XZ2L*YZ2L*4-8000H
+                MOV     CX,SCR_XSIZE*SCR_YSIZE*4-8000H
                 XOR     SI,SI
                 XOR     DI,DI
                 REP     MOVSW
                 POP     DS
+                MOV     DWORD [KMATRIX],0FFFFFFFFH
+                MOV     DWORD [KMATRIX+4],0FFFFFFFFH
                 NOT     [TIMER_ST]
                 RETN
 
@@ -325,10 +320,10 @@ OUTSPC:         MOV     AH,2
                 JNZ     OUTSPC
                 RETN
 
-SHOW_CLOCKS:    MOV     AL,[T_CLOCK_HI]
+SHOW_CLOCKS:    MOV     AL,BYTE [T_CLOCK_SUM+2]
                 CALL    BIN2HEX
                 MOV     WORD [D_O_BUF],DX
-                MOV     BX,[T_CLOCK_LO]
+                MOV     BX,WORD [T_CLOCK_SUM]
                 MOV     AL,BH
                 CALL    BIN2HEX
                 MOV     WORD [D_S_BUF],DX
@@ -767,42 +762,33 @@ SHOW_REGS:      MOV     BX,[PC]
                 CALL    OUT_DAS
                 RETN
 
-CPU8501T:       MOV     SI,[PC]         ;for T command
+CPU8501T:       MOV     SI,[PC]
                 MOV     BP,[SPR]
                 MOV     AX,WORD [SR]
                 MOV     CX,[XR]
                 MOV     DI,[YR]
-
-                MOV     BX,SI
-                CALL    MREAD_DH
-                MOVZX   BX,DH
-                CALL    WORD [OPP+EBX*2]
-                JMP     CPU8501D.L2
-
-CPU8501D:       MOV     SI,[PC]         ;for G, P, (T-interrupt) command
-                MOV     BP,[SPR]
-                MOV     AX,WORD [SR]
-                MOV     CX,[XR]
-                MOV     DI,[YR]
-
-                MOV     BX,SI
-                CALL    MREAD_DH
-                MOVZX   BX,DH
-                CALL    WORD [OPP+EBX*2]
-                SUB     [TICKS],DL
 
                 TEST    AL,4
-                JNZ     .L2
+                JNZ     .L4
 
                 MOV     DL,[TED_9]
                 AND     DL,[TED_A]
                 TEST    DL,5AH
-                JZ      .L2
+                JZ      .L4
 
+                CMP     [IRQTICKS],1
+                JL      .L3
+
+                MOV     [IRQTICKS],77H
                 CALL    CPU8501.IRQ
-                SUB     [TICKS],DL
+                JMP     .L5
 
-.L2:            SUB     [TICKS],CH
+.L3:            MOV     [IRQTICKS],1
+.L4:            MOV     BX,SI
+                CALL    MREAD_DH
+                MOVZX   BX,DH
+                CALL    WORD [OPP+EBX*2]
+.L5:            SUB     [TICKS],DL
 
                 MOV     [PC],SI
                 MOV     [SPR],BP
@@ -811,40 +797,12 @@ CPU8501D:       MOV     SI,[PC]         ;for G, P, (T-interrupt) command
                 MOV     [YR],DI
                 RETN
 
-RROUT:          CALL    CPU8501D
-                JGE     .L5
+CPU8501O:       MOV     SI,[PC]         ;for O command
+                MOV     [OLD_PC],SI
+                JMP     CPU8501.L0
 
+RROUT:          CALL    CPU8501
                 CALL    TED
-
-.L5:            TEST    [KBUFA],40H
-                JZ      .L2
-
-                XOR     AX,AX
-                XCHG    AX,WORD [KBUFS]
-
-                CMP     AL,0C4H         ;F10
-                JZ      END_EMU
-
-                CMP     AL,0C3H         ;F9
-                JZ      .L3
-
-                CMP     AL,0D7H         ;F11
-                JNZ     .L2
-                CALL    XRESET
-
-.L2:            PUSH    DS
-                POP     ES
-                MOV     AX,[PC]
-                MOV     CX,WORD [D_BUF1]
-                OR      CX,CX
-                JZ      RROUT
-                MOV     DI,D_BUF1+2
-                REPNZ   SCASW
-                JNZ     RROUT
-.L3:            RETN
-
-OROUT:          CALL    TED
-                CALL    CPU8501
 
                 TEST    [KBUFA],40H
                 JZ      .L2
@@ -860,10 +818,45 @@ OROUT:          CALL    TED
 
                 CMP     AL,0D7H         ;F11
                 JNZ     .L2
+
+                CALL    XRESET
+
+.L2:            PUSH    DS
+                POP     ES
+                MOV     AX,[PC]
+                MOV     CX,WORD [D_BUF1]
+                OR      CX,CX
+                JZ      RROUT
+
+                MOV     DI,D_BUF1+2
+                REPNZ   SCASW
+                JNZ     RROUT
+
+.L3:            RETN
+
+OROUT:          CALL    CPU8501O
+                CALL    TED
+
+                TEST    [KBUFA],40H
+                JZ      .L2
+
+                XOR     AX,AX
+                XCHG    AX,WORD [KBUFS]
+
+                CMP     AL,0C4H         ;F10
+                JZ      END_EMU
+
+                CMP     AL,0C3H         ;F9
+                JZ      .L3
+
+                CMP     AL,0D7H         ;F11
+                JNZ     .L2
+
                 CALL    XRESET
 
 .L2:            CMP     [WATCHPOINT_FLAG],0
                 JNE     OROUT
+
 .L3:            RETN
 
 OUT_CHR:        MOV     AH,3
@@ -969,6 +962,10 @@ D_DISPATCHER:   CALL    SILENCE
                 JZ      D_Z
                 CMP     AL,'?'
                 JZ      D_HELP
+                CMP     AL,'!'
+                JZ      END_EMU
+                CMP     AL,'X'
+                JZ      D_X
 
                 MOV     DX,SDMSG
                 JMP     D_ERRX
@@ -1668,6 +1665,15 @@ D_O:            CALL    GET_PARS        ;WATCHPOINT(S)
 
                 CALL    SAVE_TED
                 CALL    RESTORE_DEBUG
+                MOV     BX,[OLD_PC]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [REGS0+7],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [REGS0+9],DX
+                MOV     DX,REGS0
+                CALL    OUT_STR
                 CALL    SHOW_REGS
                 JMP     D_DISPATCHER
 
@@ -1763,6 +1769,8 @@ D_R:            MOV     AX,WORD [INP_BUF+1]         ;REGISTER
 D_S:            CALL    GET_FPARS       ;SEARCH
                 JC      D_ERR
 
+                DEC     CX              ;BETTER CX <- (CX - [QPARS])
+
 .L6:            MOV     AL,[QPARS]
                 MOV     DI,D_BUF1
                 SUB     AL,2
@@ -1787,8 +1795,8 @@ D_S:            CALL    GET_FPARS       ;SEARCH
                 MOV     DX,D_S_BUF
                 CALL    OUT_STR
 
-.L5:            MOV     DI,SI
-                INC     DI
+.L5:            MOV     BX,SI
+                INC     BX
                 DEC     CX
                 JNZ     .L6
                 JMP     D_DISPATCHER
@@ -1796,32 +1804,32 @@ D_S:            CALL    GET_FPARS       ;SEARCH
 D_T:            CALL    GET_TPARS               ;TRACE
                 JC      D_ERR
 
-                MOV     DWORD [T_CLOCK_LO],0
-.L2:            MOV     AL,[TED_9]
-                AND     AL,[TED_A]
-                TEST    AL,5AH
-                JZ      .L3
+                MOV     DWORD [T_CLOCK_SUM],0
 
-                TEST    [SR],4
+.L1:            CALL    CPU8501T
+                CMP     [IRQTICKS],77H
                 JNZ     .L3
 
+                MOV     [IRQTICKS],0
                 MOV     WORD [D_BUF1],1
                 MOV     AX,[PC]
                 MOV     WORD [D_BUF1+2],AX
+
+                NOT     [TIMER_ST]
                 CALL    RROUT
-                JMP     .L2
+                NOT     [TIMER_ST]
+                JMP     .L1
 
-.L3:            CALL    CPU8501T
-                PUSHF
-                XOR     DH,DH
-                ADD     WORD [T_CLOCK_LO],DX
-                ADC     [T_CLOCK_HI],DH
-.L1:            POPF
-                JGE     .L4
+.L3:            XOR     DH,DH
+                ADD     WORD [T_CLOCK_SUM],DX
+                ADC     BYTE [T_CLOCK_SUM+2],DH
 
+                NOT     [TIMER_ST]
                 CALL    TED
+                NOT     [TIMER_ST]
+
 .L4:            DEC     [VAL1]
-                JNZ     .L2
+                JNZ     .L1
 
                 CALL    SHOW_CLOCKS
                 CALL    SHOW_REGS
@@ -1906,7 +1914,7 @@ D_V:            CALL    SAVE_DEBUG              ;VIEW CBM SCREEN
 
                 CALL    SILENCE
 
-                MOV     AH,86H  ; DELAY
+                MOV     AH,86H          ;DELAY
                 XOR     CX,7
                 INT     15H
 
@@ -1923,17 +1931,18 @@ D_V:            CALL    SAVE_DEBUG              ;VIEW CBM SCREEN
                 INT     16H
                 JNZ     .L3
 
-.L2:            CALL    SAVE_TED
-                NOT     [TIMER_ST]
+.L2:            NOT     [TIMER_ST]
+                CALL    SAVE_TED
                 CALL    RESTORE_DEBUG
                 JMP     D_DISPATCHER
 
 D_W:            CALL    GET_PARS                ;WRITE
                 JC      D_ERR
 
-                CMP     [QPARS],2
+                CMP     [QPARS],3
                 JA      D_ERR
-                JPO     D_ERR
+                CMP     [QPARS],2
+                JB      D_ERR
 
                 XOR     BP,BP
 
@@ -1952,10 +1961,31 @@ D_W:            CALL    GET_PARS                ;WRITE
 
                 MOV     [VAL1],AX
 
-                CMP     [QPARS],1
+                MOV     DI,5
+                MOV     SI,[PPARS+2]
+                CMP     [INP_BUF+SI],'L'
+                JNZ     .L5
+
+                INC     SI
+                ADD     DI,SI
+                CALL    TRAN_VAL
+                JC      D_ERR
+
+                MOV     [VAL2],AX
+                JMP     .L6
+
+.L5:            ADD     DI,SI
+                CALL    TRAN_VAL
+                JC      D_ERR
+
+                SUB     AX,[VAL1]
+                JB      D_ERR
+                MOV     [VAL2],AX
+
+.L6:            CMP     [QPARS],2
                 JE      .L1A
 
-                MOV     SI,[PPARS+2]
+                MOV     SI,[PPARS+4]
                 MOV     DI,SI
                 ADD     DI,2
                 CALL    TRAN_VAL
@@ -1971,8 +2001,7 @@ D_W:            CALL    GET_PARS                ;WRITE
                 INT     21H
                 JC      .L3
 
-.L1:            MOV     CH,BYTE [XR]
-                MOV     CL,BYTE [YR]
+.L1:            MOV     CX,[VAL2]
                 OR      CX,CX
                 JZ      .L4
 
@@ -2045,6 +2074,139 @@ D_Z:            MOV     AH,3            ;ZOOM SCREEN ON/OFF
                 MOV     AH,2
                 INT     10H
                 JMP     D_DISPATCHER
+
+D_X:            MOV     BX,[DMA_BASE]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+6],DX
+
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+8],DX
+
+                MOV     BX,[CP_RELOAD]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+21],DX
+
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+23],DX
+
+                MOV     AL,[ISDMANOW]
+                ADD     AL,'0'
+                MOV     [XVALS+35],AL
+
+                MOV     AL,[ISDMA]
+                ADD     AL,'0'
+                MOV     [XVALS+43],AL
+
+                MOV     AX,[CLADDR]
+                CMP     AX,LDMAS
+                JNZ     .L4A
+
+                MOV     DWORD [XVALS+50],'DMAS'
+.L4A:           CMP     AX,LDMAF
+                JNZ     .L4B
+
+                MOV     DWORD [XVALS+50],'DMAF'
+.L4B:           CMP     AX,LNORMF
+                JNZ     .L4C
+
+                MOV     DWORD [XVALS+50],'NORF'
+.L4C:           CMP     AX,LNORMS
+                JNZ     .L4D
+
+                MOV     DWORD [XVALS+50],'N/BS'
+.L4D:           CMP     AX,LBLAF
+                JNZ     .L4E
+
+                MOV     DWORD [XVALS+50],'BLAF'
+
+.L4E:           MOV     BX,[EVSA]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     [XVALS+60],DH
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+61],DX
+
+                MOV     AL,[EHSA]
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+69],DX
+
+                MOV     AL,[TICKS]
+                CALL    BIN2HEX
+                MOV     WORD [XVALS+78],DX
+
+                MOV     BX,[VD_PTR_BEAM]
+                SUB     BX,VIDEO_DATA
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+12],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+14],DX
+
+                MOV     BX,[VD_PTR_FILL]
+                SUB     BX,VIDEO_DATA
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+29],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+31],DX
+
+                MOV     BX,[VMODE]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+40],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+42],DX
+
+                MOV     BX,[BEAM_POS+2]
+                SUB     BX,SEG SEG_VRAM1
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+55],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+57],DX
+
+                MOV     BX,[BEAM_POS]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+60],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+62],DX
+
+                MOV     BX,[DMA_OFF]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+71],DX
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+73],DX
+
+                MOV     DX,XVALS
+                CALL    OUT_STR
+
+                MOV     EAX,'FF00'
+                MOV     DWORD [INP_BUF+1],EAX
+                MOV     EAX,',L20'
+                MOV     DWORD [INP_BUF+5],EAX
+                XOR     AL,AL
+                MOV     [INP_BUF+9],AL
+                JMP     D_D
+
+OUT_AL:         CALL    BIN2HEX
+                MOV     AH,2
+                INT     21H
+                MOV     DL,DH
+                INT     21H
+                RETN
 
 ;SHOW_EAX:       CALL    HEX2DEC
 ;                XOR     BX,BX

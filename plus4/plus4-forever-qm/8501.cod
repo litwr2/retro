@@ -154,21 +154,28 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 
                 MOV     AL,DH
                 AND     AL,7
-                XCHG    BYTE [Y_OFFSET],AL
-                SUB     AL,BYTE [Y_OFFSET]
-                ADD     [VSA],AL
-                AND     [VSA],7
+                MOV     BYTE [Y_OFFSET],AL
 
-                MOV     [EVSA],START_V_SCR+199
-                MOV     [SST],0
+                MOV     [EVSA],CHAR_VSTART+CHAR_VSIZE-1
+                MOV     [SVSA],CHAR_VSTART
                 TEST    DH,8                    ;24 ROWS? (0-24, 1-25)
                 JNZ     .L8B
-                MOV     [SST],4
-                MOV     [EVSA],START_V_SCR+191
+                MOV     [SVSA],CHAR_VSTART+4
+                MOV     [EVSA],CHAR_VSTART+CHAR_VSIZE-5
 
-.L8B:           MOV     AL,[CG_BASE]
+.L8B:           MOV     AL,[TED_13]
+                AND     AL,0FCH
+                TEST    [TED_7],80H     ;HRM?
+                JNZ     .L6C1
+
+                TEST    DH,40H          ;ECM?
+                JZ      .L6A1
+
+.L6C1:          AND     AL,0F8H
+.L6A1:          MOV     [CG_BASE],AL
                 TEST    DH,20H                  ;BMM? (0-TEXT, 1-BMM)
                 JZ      .L8H
+
                 MOV     AL,[TED_12]
                 AND     AL,38H
                 SHL     AL,2
@@ -179,6 +186,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 AND     BYTE [VMODE],0F9H
                 SHR     AL,4
                 OR      BYTE [VMODE],AL
+
                 POP     AX
                 MOV     [TED_6],DH
                 JMP     SET_MDATA_SEG
@@ -187,16 +195,13 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 JNZ     .L8N
 
                 PUSH    AX
-                MOV     AX,[X_OFFSET]
-                SUB     [VD_PTR_FILL],AX
                 MOV     AL,DH
                 AND     AL,7
-                ADD     [VD_PTR_FILL],AX
-                MOV     [X_OFFSET],AX
+                MOV     BYTE [X_OFFSET],AL
                 POP     AX
 
-                MOV     [EHSA],START_H_SCR+39
-                MOV     [SHSA],START_H_SCR
+                MOV     [EHSA],EHRA
+                MOV     [SHSA],SHRA
                 TEST    DH,8                    ;38 COLUMNS? (0-38, 1-40)
                 JNZ     .L8E
                 INC     [SHSA]
@@ -210,6 +215,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 TEST    [TED_6],40H     ;ECM? (1-ECM ON)
                 JZ      .L8F
                 JMP     .L8L
+
 .L8K:           OR      BYTE [VMODE],10H
 .L8L:           AND     DH,0F8H
 .L8F:           AND     DH,0FCH
@@ -322,6 +328,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 MOV     [TED_12],DH
                 TEST    [TED_6],20H     ;BMM?
                 JZ      .L12A
+
                 AND     DH,38H
                 SHL     DH,2
                 MOV     [MDATA_OFFSET],DH
@@ -338,13 +345,16 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 OR      [TED_13],DH
                 TEST    [TED_7],80H     ;HRM?
                 JNZ     .L6C
+
                 TEST    [TED_6],40H     ;ECM?
                 JZ      .L6A
+
 .L6C:           AND     DH,0F8H
 .L6A:           AND     DH,0FCH
                 MOV     [CG_BASE],DH
                 TEST    [TED_6],20H     ;BMM?
                 JNZ     .L6B
+
                 MOV     [MDATA_OFFSET],DH
 .L6B:           POP     DX
                 JMP     SET_MDATA_SEG
@@ -416,22 +426,9 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 .L11C:          CMP     BL,1EH
                 JNZ     .L11D
                 PUSH    AX
-                MOVZX   AX,DH
+                MOV     AL,DH
                 SHR     AL,2
-                MOV     [TED_1E],AL
-                SUB     AL,SHRA
-                JAE     .L11E
-                XOR     AX,AX
-.L11E:          INC     AX
-                PUSH    AX
-                SHL     AX,3
-                ADD     AX,VIDEO_DATA    ;$$$
-                MOV     [VD_PTR_BEAM],AX
-                ADD     AX,[X_OFFSET]
-                MOV     [VD_PTR_FILL],AX
-                POP     AX
-                ADD     AX,WORD [TED_1A]
-                MOV     [CRP],AX
+                ;MOV     [TED_1E],AL     ;***WRONG!
                 POP     AX
                 RETN
 
@@ -441,17 +438,11 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 PUSH    AX
                 MOV     AL,DH
 
-;                AND     AL,7   ;VSA=0-2
-;                MOV     [VSA],AL 
-;                MOV     AL,DH
-;                AND     AL,78H
-;                SHR     AL,3
-
-                AND     AL,70H  ;VSA=4-6
-                SHR     AL,4
+                AND     AL,7
                 MOV     [VSA],AL
                 MOV     AL,DH
-                AND     AL,0FH
+                AND     AL,78H
+                SHR     AL,3
 
                 OR      AL,0F0H
                 MOV     [BLINK_COUNT],AL
@@ -534,7 +525,7 @@ MREAD_DH:       CMP     BX,1
                 JPO     .L9
 
                 CMP     BL,1FH
-                JA      .LM
+                JA      .LM1
 
                 CMP     BL,0CH          ;TED
                 JNZ     .L3
@@ -579,7 +570,13 @@ MREAD_DH:       CMP     BX,1
                 JNZ     .L2A
 
                 MOV     DH,[TED_1E]
-                SHL     DH,2
+                ;ADD     DH,033H
+                CMP     DH,57
+                JB      .L1Y
+
+                SUB     DH,57
+
+.L1Y:           SHL     DH,2
                 PUSH    AX
                 MOV     AL,BYTE [TOTALTICKS]
                 AND     AL,3
@@ -592,10 +589,9 @@ MREAD_DH:       CMP     BX,1
 
                 PUSH    AX
                 MOV     AL,[VSA]
-                SHL     AL,4
                 MOV     DH,[BLINK_COUNT]
                 AND     DH,0FH
-;                SHL     DH,3
+                SHL     DH,3
                 OR      AL,DH
                 MOV     DH,[TED_1F]
                 AND     DH,80H
@@ -606,8 +602,8 @@ MREAD_DH:       CMP     BX,1
 .L2C:           MOV     DH,[TED_0+BX+100H]
                 RETN
 
-.L9:                                    ;IF IEC_PRESENT
-;                CMP     BL,0C0H
+.L9:            JMP     .LM1            
+;                CMP     BL,0C0H         ;IF IEC_PRESENT
 ;                JB      .LM
 ;                CMP     BL,0DFH
 ;                JA      .L15
@@ -627,19 +623,53 @@ MREAD_DH:       CMP     BX,1
 .LM:            OR      BH,BH
                 JNS     .LR
 
-                TEST    [TED_13],1
+.LM1:           TEST    [TED_13],1
                 JZ      .LR
 
-                MOV     GS,[SA_ROM_LO]    ;$$$
+                MOV     GS,[SA_ROM_LO]  ;$$$
                 TEST    BH,40H
                 JZ      .L16
 
-                MOV     GS,[SA_ROM_HI]    ;$$$
+                CMP     SI,0F070H       ;LOAD
+                JNZ     .L16B
 
+                TEST    [ROMMAP],0CH
+                JNZ     .L16B
+
+                CMP     [FS:93H],CH             ;VERIFY?
+                JNZ     .L16B
+
+                CMP     BYTE [FS:0AEH],8        ;DEV
+                JNZ     .L16B
+
+                ;CMP     [FS:0ABH],CH           ;FILENAME LENGTH
+                ;JE      .L16B
+
+                PUSHA
+                MOV     AX,WORD [FS:0B4H]       ;LOAD ADDR
+                MOV     [FD_LA],AX
+                CALL    FD_LOAD
+                POPA
+                CMP     [FD_ERR],CH
+                JNE     .L16B
+
+                MOV     BYTE [FS:BP],0F0H       ;HIGH ADDR OF JSR$F0EB
+                MOV     BYTE [FS:BP-1],0EAH     ;LOW-1 ADDR OF JSR$F0EB
+                MOV     BYTE [FS:BP-2],0F1H     ;HIGH ADDR OF JSR$F189
+                MOV     BYTE [FS:BP-3],88H      ;LOW-1 ADDR OF JSR$F189
+                SUB     BP,4
+                MOV     DH,60H          ;RTS
+                AND     AL,0FEH         ;CY <- 0
+                ;MOV     CL,[FD_BUF]
+                ;MOVZX   DI,[FD_BUF+1]
+                MOV     [FS:90H],CH     ;ST <- 0
+                RETN
+
+.L16B:          MOV     GS,[SA_ROM_HI]  ;$$$
                 CMP     BH,0FCH         ;KERNEL FIX
                 JNZ     .L16
 
-                MOV     GS,[TSA_ROM]      ;$$$
+                MOV     GS,[TSA_ROM]    ;$$$
 
 .L16:           MOV     DH,[GS:BX]
                 RETN
@@ -648,41 +678,32 @@ MREAD_DH:       CMP     BX,1
                 RETN
 
 CPU8501:        MOV     SI,[PC]
-                MOV     BP,[SPR]
+.L0:            MOV     BP,[SPR]
                 MOV     AX,WORD [SR]
                 MOV     CX,[XR]
                 MOV     DI,[YR]
 
-;                IF DEFINED XX_D7_47
-;                CMP     BYTE [FS:0D7H],47H      ;$$$
-;                JNZ     .LDP
-;.TRACE:         NOP
-;                END IF
-
-.LDP:           MOV     BX,SI
-                CALL    MREAD_DH
-                MOVZX   BX,DH
-                CALL    WORD [OPP+EBX*2]
-                SUB     [TICKS],DL
-
                 TEST    AL,4
-                JNZ     .L1
+                JNZ     .L4
 
                 MOV     DL,[TED_9]
                 AND     DL,[TED_A]
                 TEST    DL,5AH
-                JZ      .L1
+                JZ      .L4
 
+                CMP     [IRQTICKS],1
+                JL      .L3
+
+                MOV     [IRQTICKS],CH
                 CALL    .IRQ
-                SUB     [TICKS],DL
+                JMP     .L5
 
-.L1:            MOV     BX,SI
+.L3:            MOV     [IRQTICKS],1
+.L4:            MOV     BX,SI
                 CALL    MREAD_DH
                 MOVZX   BX,DH
                 CALL    WORD [OPP+EBX*2]
-
-                SUB     [TICKS],DL
-                JNS     .L1
+.L5:            SUB     [TICKS],DL
 
                 MOV     [PC],SI
                 MOV     [SPR],BP
@@ -708,11 +729,11 @@ CPU8501:        MOV     SI,[PC]
                 CALL    MREAD_DH
                 MOV     SI,DX
                 
-                MOV     DL,7           ;IRQ TIMING
+                MOV     DL,7            ;IRQ TIMING
                 OR      AL,4
                 RETN
 
-O00:            INC     SI              ;BRK
+O00:            ADD     SI,2            ;BRK
                 JMP     CPU8501.L2X
 
 O01:            ADDR_IZP_X 6            ;ORA (zp,X)
@@ -937,7 +958,7 @@ O5D:            ADDR_ABS_X 4            ;EOR abs,X
 O5E:            ADDR_ABS_X1 7           ;LSR abs,X
                 SHIFT_MEM_R
 
-O60:            MOV     BX,BP           ;RETN
+O60:            MOV     BX,BP           ;RTS
                 INC     BL
                 MOV     DL,[FS:BX]
                 INC     BL

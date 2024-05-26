@@ -1,7 +1,7 @@
-MAIN_ISCR:      MOV     DI,160*3+23*2
+MAIN_ISCR:      MOV     DI,160*3+23*2   ;IN: BP
                 MOV     CX,15
                 MOV     BX,1
-                MOV     SI,M3_MSG3
+                MOV     SI,M3_MSG3      ;ENTER FILENAME
                 CALL    OUT_MSG
                 MOV     DI,160*5+27*2
                 MOV     CL,7
@@ -13,8 +13,8 @@ MAIN_ISCR:      MOV     DI,160*3+23*2
                 CALL    HIDEM
                 JMP     CUROFF
 
-IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX
-                MOV     DX,61CH
+IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
+                MOV     DX,61CH         ;cursor position
                 MOV     SI,DI
 .L1:            PUSH    DX
                 CALL    WAITM
@@ -29,7 +29,12 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX
                 JZ      .L1
                 XOR     AH,AH
                 INT     16H
-                XCHG    AL,AH
+                OR      BP,BP
+                JZ      .L5
+                DEC     BP
+                JMP     .L10
+
+.L5:            XCHG    AL,AH
                 CMP     AL,1
                 JB      .L1
                 JNZ     .L4
@@ -49,11 +54,11 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX
                 MOV     BX,CHR_TRT1
 .L8:            PUSH    DI
                 SUB     DI,SI
-                CMP     DI,16
+                CMP     DI,2*8
                 POP     DI
                 JZ      .L1
                 XLATB
-                INC     DX
+.L10:           INC     DX
                 CALL    HIDEM
                 MOV     AH,7
                 STOSW
@@ -101,97 +106,6 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX
                 JA      .L1A
                 JMP     .L8
 
-TOGG_CUR3:      MOVZX   SI,[CP_IN_WIN3]
-                MOV     CX,3
-                SHL     SI,CL
-                ADD     SI,160*6+55
-.L1:            ROL     BYTE [ES:SI],4
-                ADD     SI,2
-                LOOP    .L1
-                RETN
-
-MAIN_DSCR:      MOV     DI,160*3+44
-                MOV     SI,M3_MSG4
-                MOV     CX,18
-                MOV     BX,1
-                CALL    OUT_MSG
-                MOV     DI,160*5+50
-                MOV     SI,M3_MSG2
-                MOV     CX,12
-                INC     BX
-                CALL    OUT_MSG
-                CALL    TOGG_CUR3
-
-MENU_DISP3:     CALL    SHOWM           ; OUT: SI=0 - OK, SI!=0 - ESC
-.L1:            XOR     SI,SI
-                CALL    WAITM
-                MOV     AX,DX
-                INC     SI
-                TEST    BX,2
-                JNZ     HIDEM
-                DEC     SI
-                TEST    BX,1
-                JNZ     MOUSE_DISP3
-
-                MOV     AH,1
-                INT     16H
-                JZ      .L1
-                XOR     AH,AH
-                INT     16H
-                CALL    HIDEM
-
-                CMP     AH,4BH          ; LEFT?
-                JZ      MD3_LEFT
-
-                CMP     AH,4DH          ; RIGHT?
-                JZ      MD3_RIGHT
-
-                CMP     AH,1CH          ; ENTER?
-                JZ      MD3_ENTER
-
-                INC     SI
-                CMP     AH,1            ; ESC?
-                JNZ     MENU_DISP3
-                RETN
-
-MD3_LEFT:       CALL    TOGG_CUR3
-                DEC     [CP_IN_WIN3]
-                JNS     .L1
-                INC     [CP_IN_WIN3]
-.L1:            CALL    TOGG_CUR3
-                JMP     MENU_DISP3
-
-MD3_RIGHT:      CALL    TOGG_CUR3
-                CMP     [CP_IN_WIN3],2
-                JZ      .L1
-                INC     [CP_IN_WIN3]
-.L1:            CALL    TOGG_CUR3
-                JMP     MENU_DISP3
-
-MOUSE_DISP3:    CALL    HIDEM
-                SHR     AX,3
-                SHR     CX,3
-                CMP     AL,6
-                JNZ     MENU_DISP3
-                SUB     CL,27
-                JS      MENU_DISP3
-                CMP     CL,3
-                JZ      MENU_DISP3
-                CMP     CL,7
-                JZ      MENU_DISP3
-                CMP     CL,10
-                JA      MENU_DISP3
-                SHR     CX,2
-                MOV     [CP_IN_WIN3],CL
-
-MD3_ENTER:      MOV     WORD [DEV],'07'
-                MOV     AL,[CP_IN_WIN3]
-                ADD     [DEV+1],AL
-                OR      AL,AL
-                JNZ     .L1
-                MOV     WORD [DEV],'**'
-.L1:            RETN
-
 TOGG_CUR4:      MOVZX   SI,[CP_IN_WIN4]
                 MOV     CX,4
                 IMUL    SI,10
@@ -201,7 +115,7 @@ TOGG_CUR4:      MOVZX   SI,[CP_IN_WIN4]
                 LOOP    .L1
                 RETN
 
-MAIN_SCR4:      MOV     DI,160*3+44
+MAIN_SCR4:      MOV     DI,160*3+44     ;SELECT MEDIA TYPE
                 MOV     SI,M3_MSG6
                 MOV     CX,18
                 MOV     BX,1
@@ -286,8 +200,8 @@ TOGG_CUR5:      MOVZX   SI,AL           ;AL-X, AH-Y
                 LOOP    .L1
                 RETN
 
-MAIN_SCR5:      MOV     AX,WORD [CP_IN_WIN5U]
-                MOV     WORD [JOY1_ST],AX
+MAIN_SCR5:      MOV     AX,WORD [JOY1_ST]       ;JOYSTICKS SETTINGS
+                MOV     WORD [CP_IN_WIN5U],AX
                 MOV     DI,160*3+18
                 MOV     SI,M3_MSG7
                 MOV     CX,46
@@ -300,9 +214,9 @@ MAIN_SCR5:      MOV     AX,WORD [CP_IN_WIN5U]
                 MOV     CX,3
                 MOV     BX,1
                 CALL    OUT_MSG
-                MOVZX   AX,[CP_IN_WIN5U]
+                MOVZX   AX,[JOY1_ST]
                 CALL    TOGG_CUR5
-                MOV     AL,[CP_IN_WIN5D]
+                MOV     AL,[JOY2_ST]
                 INC     AH
                 CALL    TOGG_CUR5
 
@@ -344,12 +258,19 @@ MENU_DISP5:     CALL    SHOWM           ;OUT: SI=0 - OK, SI!=0 - ESC
                 JNZ     MENU_DISP5
                 RETN
 
-MD5_ENTER:      MOV     AX,WORD [JOY1_ST]
+MD5_ENTER:      MOV     AX,WORD [CP_IN_WIN5U]
                 CMP     AL,4
                 JZ      .L1
                 CMP     AH,AL
                 JZ      MENU_DISP5
-.L1:            MOV     WORD [CP_IN_WIN5U],AX
+.L1:            MOV     WORD [JOY1_ST],AX
+                SHL     AL,5
+                SHL     AH,2
+                OR      AH,AL
+                MOV     AL,[SJCFG]
+                AND     AL,3
+                OR      AL,AH
+                MOV     [SJCFG],AL
                 JMP     INIT_JOY
 
 MD5_LEFT:       MOV     AX,WORD [CP_IN_WIN5X]
@@ -369,22 +290,22 @@ MD5_RIGHT:      MOV     AX,WORD [CP_IN_WIN5X]
                 CALL    TOGG_CUR5
                 OR      AH,AH
                 JZ      .L2
-                MOV     [JOY2_ST],AL
+                MOV     [CP_IN_WIN5D],AL
                 JMP     MENU_DISP5
-.L2:            MOV     [JOY1_ST],AL
+.L2:            MOV     [CP_IN_WIN5U],AL
                 JMP     MENU_DISP5
 
 MD5_UP:         DEC     [CP_IN_WIN5Y]
                 JNS     .L1
                 INC     [CP_IN_WIN5Y]
-.L1:            MOV     AL,[JOY1_ST]
+.L1:            MOV     AL,[CP_IN_WIN5U]
                 MOV     [CP_IN_WIN5X],AL
                 JMP     MENU_DISP5
 
 MD5_DOWN:       CMP     [CP_IN_WIN5Y],1
                 JZ      .L1
                 INC     [CP_IN_WIN5Y]
-.L1:            MOV     AL,[JOY2_ST]
+.L1:            MOV     AL,[CP_IN_WIN5D]
                 MOV     [CP_IN_WIN5X],AL
                 JMP     MENU_DISP5
 
@@ -417,10 +338,10 @@ MOUSE_DISP5:    CALL    HIDEM
                 CMP     AH,DH
                 JZ      .L3
                 MOV     AH,DH
-                MOV     AL,[JOY1_ST]
+                MOV     AL,[CP_IN_WIN5U]
                 OR      DH,DH
                 JZ      .L3
-                MOV     AL,[JOY2_ST]
+                MOV     AL,[CP_IN_WIN5D]
 .L3:            CALL    TOGG_CUR5
                 MOV     AX,DX
                 JMP     MD5_RIGHT.L1
@@ -430,4 +351,93 @@ MOUSE_DISP5:    CALL    HIDEM
                 CMP     CL,4
                 JA      MENU_DISP5
                 JMP     MD5_ENTER
+
+TOGG_CUR6:      MOVZX   SI,[CP_IN_WIN6]
+                MOV     CX,3
+                IMUL    SI,8
+                ADD     SI,160*6+59
+.L1:            ROL     BYTE [ES:SI],4
+                ADD     SI,2
+                LOOP    .L1
+                RETN
+
+MAIN_SCR6:      MOV     DI,160*3+48     ;ARE YOU SURE? YES NO
+                MOV     [CP_IN_WIN6],1
+                MOV     SI,M3_MSG9
+                MOV     CX,14
+                MOV     BX,1
+                CALL    OUT_MSG
+                MOV     DI,160*3+60
+                MOV     SI,M3_MSG11
+                MOV     CX,6
+                CALL    OUT_MSG1
+                MOV     DI,160*5+54
+                MOV     SI,M3_MSG10
+                MOV     CX,8
+                MOV     BX,1
+                CALL    OUT_MSG
+                CALL    TOGG_CUR6
+
+MENU_DISP6:     CALL    SHOWM           ; OUT: SI=0 - OK, SI!=0 - ESC
+.L1:            XOR     SI,SI
+                CALL    WAITM
+                MOV     AX,DX
+                INC     SI
+                TEST    BX,2
+                JNZ     HIDEM
+                DEC     SI
+                TEST    BX,1
+                JNZ     MOUSE_DISP6
+
+                MOV     AH,1
+                INT     16H
+                JZ      .L1
+                XOR     AH,AH
+                INT     16H
+                CALL    HIDEM
+
+                CMP     AH,4BH          ;LEFT?
+                JZ      MD6_LEFT
+
+                CMP     AH,4DH          ;RIGHT?
+                JZ      MD6_RIGHT
+
+                CMP     AH,1CH          ;ENTER?
+                JZ      MD6_ENTER
+
+                INC     SI
+                CMP     AH,1            ;ESC?
+                JNZ     MENU_DISP6
+MD6_ENTER:      RETN
+
+MD6_LEFT:       CALL    TOGG_CUR6
+                DEC     [CP_IN_WIN6]
+                JNS     .L1
+
+                INC     [CP_IN_WIN6]
+.L1:            CALL    TOGG_CUR6
+                JMP     MENU_DISP6
+
+MD6_RIGHT:      CALL    TOGG_CUR6
+                CMP     [CP_IN_WIN6],1
+                JZ      .L1
+
+                INC     [CP_IN_WIN6]
+.L1:            CALL    TOGG_CUR6
+                JMP     MENU_DISP6
+
+MOUSE_DISP6:    CALL    HIDEM
+                SHR     AX,3
+                SHR     CX,3
+                CMP     AL,6
+                JNZ     MENU_DISP6
+                SUB     CL,28
+                JS      MENU_DISP6
+                CMP     CL,4
+                JZ      MENU_DISP6
+                CMP     CL,8
+                JA      MENU_DISP6
+                SHR     CX,2
+                MOV     [CP_IN_WIN6],CL
+                RETN
 

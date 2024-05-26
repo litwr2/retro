@@ -12,7 +12,7 @@ AC              DB      0       ;AH
 CPU_0           DB      0FH             ;$0-$1
 CPU_1           DB      0C8H
 ROMMAP          DB      0
-                DB      0       ;former kernel_ws
+SJCFG           DB      4CH     ;former kernel_ws, sound+joysticks cfg
 TIMER1_RELOAD   DW      8000H
 LED             DB      ?       ;4 - Scroll Lock, 5 - Num Lock, 6 - Caps Lock
 
@@ -64,8 +64,8 @@ TED_1B          DB      0       ; $FF1B
 TED_1C          DB      0       ; $FF1C \
 TED_1D          DB      0       ; $FF1D -- VER. POS.
                 ;HOR_POS
-TED_1E          DB      0       ; $FF1E -- HOR. POS.
-TED_1F          DB      080H    ; $FF1F
+TED_1E          DB      49       ; $FF1E -- HOR. POS.
+TED_1F          DB      087H    ; $FF1F
 
 ;TED_3E          DB      ?       ; $FF3E
 ;TED_3F          DB      ?       ; $FF3F

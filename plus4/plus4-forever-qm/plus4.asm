@@ -15,6 +15,7 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'romfn.dat'
                 INCLUDE '8501.dat'
                 INCLUDE 'cds.dat'
+                INCLUDE 'fdisk.dat'
                 INCLUDE 'debugger.dat'
                 INCLUDE 'kbd.dat'
                 INCLUDE 'joy.dat'
@@ -40,10 +41,11 @@ START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
 
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
+;MAIN_ENTRY:     MOV     [MAINJUMP],DEBUG_ENTRY
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
 
-MAINLOOP:       CALL    TED
-                CALL    CPU8501
+MAINLOOP:       CALL    CPU8501
+                CALL    TED
                 JMP     [MAINJUMP]
 
 END_EMU:        MOV     SP,[RESET_SP]
@@ -56,6 +58,7 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE '8501.cod'
                 INCLUDE 'cpu_io.cod'
                 INCLUDE 'cds.cod'
+                INCLUDE 'fdisk.cod'
                 INCLUDE 'csb.cod'
 ;                INCLUDE 'acia.inc'
 ;                INCLUDE 'c1551.inc'

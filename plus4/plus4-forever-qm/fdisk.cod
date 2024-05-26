@@ -1,0 +1,632 @@
+GET_DENTRY:     MOV     AH,3FH
+                MOV     BX,[CBM_FH]
+                MOV     CL,32
+                MOV     DX,FD_BUF
+                INT     21H
+                MOV     AL,[FD_BUF]
+                RETN
+
+FDF:            MOV     SI,FD_BUF+4
+                MOV     [FD_FREE],0
+                MOV     CX,35           ;TRACKS IN BAM
+.L2:            LODSD
+                CMP     CX,18
+                JZ      .L1
+
+                XOR     AH,AH
+                ADD     [FD_FREE],AX
+.L1:            LOOP    .L2
+                RETN
+
+FDF1:           MOV     AH,36H
+                MOV     DL,[FPATH]
+                SUB     DL,64
+                INT     21H
+                SHR     CX,8
+                MUL     BX
+                OR      DX,DX
+                JNZ     .L1
+
+                MUL     CX
+                OR      DX,DX
+                JZ      .L2
+
+.L1:            MOV     AX,0FFFFH
+.L2:            MOV     [FD_FREE],AX
+                RETN
+
+FD_LOAD:        XOR     BX,BX           ;DEV #8 ASSIGNED TO A FILE?
+                MOV     [FD_ERR],1
+.L2:            CMP     BX,[LIST_CAP1]
+                JNZ     .L1
+
+                CALL    INIT_MENUS
+                MOV     DI,160*7+14*2
+                MOV     CX,36
+                MOV     BX,1
+                MOV     SI,DS_MSG1
+                MOV     [DS_MSG1+34],'8'
+                CALL    OUT_MSG
+                CALL    WAIT_ACTIVITY
+                CALL    PLOT_SCR1
+                CALL    MENU_DISP1
+                CALL    END_MENUS
+                JMP     FD_LOAD
+
+.L1:            CMP     WORD [IBM_DV_LIST+EBX*2],'08'
+                JZ      .L4
+
+                INC     BX
+                JMP     .L2
+
+.L4:            MOV     EAX,[IBM_SZ_LIST+EBX*4]         ;FILESIZE
+                OR      EAX,EAX
+                JZ      .DIRDIR
+
+                MOV     EAX,DWORD [IBM_FN_LIST+EBX*8]
+                MOV     DWORD [FD_D64NAME],EAX          ;FILENAME
+                MOV     EAX,DWORD [IBM_FN_LIST+EBX*8+4]
+                MOV     DWORD [FD_D64NAME+4],EAX
+
+                MOV     AX,3D00H                        ;OPEN FILE
+                MOV     DX,FD_D64NAME
+                INT     21H
+                MOV     [CBM_FH],AX
+
+                MOV     DI,[FS:0AFH]
+                MOV     AL,[FS:0ABH]
+                CMP     WORD [FS:DI],'0:'
+                JNZ     .L25
+
+                ADD     DI,2
+                SUB     AL,2
+
+.L25:           CMP     AL,1
+                JNZ     .L1C
+
+                CMP     BYTE [FS:DI],'$'
+                JNZ     .L1C
+
+                MOV     [D64_POS],12H
+                CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     BX,[CBM_FH]
+                MOV     CX,256
+                MOV     DX,FD_BUF
+                INT     21H
+
+                CALL    FDF
+                MOV     DI,[FS:2BH]
+                MOV     WORD [FS:DI+2],0
+                MOV     WORD [FS:DI+4],2212H
+                MOV     CX,4
+                MOV     SI,FD_BUF+144
+                ADD     DI,6
+.L10:           LODSD
+                MOV     [FS:DI],EAX
+                ADD     DI,4
+                LOOP    .L10
+
+                MOV     BYTE [FS:DI],22H
+                MOV     CX,6
+                MOV     BX,FD_BUF+161
+.L10B:          MOV     AL,[BX]                 ;ID,2A
+                CMP     AL,0A0H
+                JNZ     .L10A
+
+                AND     AL,7FH
+
+.L10A:          INC     DI
+                MOV     [FS:DI],AL
+                INC     BX
+                LOOP    .L10B
+                INC     DI
+                MOV     BYTE [FS:DI],0
+                INC     DI
+                MOV     WORD [FS:DI-1EH],DI
+                MOV     [FD_NLINE],DI
+
+                MOV     [D64_POS],112H
+.L11:           CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     BX,[CBM_FH]
+                MOV     CX,256
+                MOV     DX,FD_BUF
+                INT     21H
+
+                XOR     BX,BX                   ;POS IN DIR
+.L23:           MOV     DI,[FD_NLINE]
+                MOV     AL,[FD_BUF+2+BX]        ;TYPE
+                MOV     [FD_ETYPE],AL
+                AND     AL,7
+                MOV     [FD_ETYPE2],AL
+                JZ      .L12
+
+                MOV     AX,WORD [FD_BUF+BX+2+28]        ;SIZE
+                MOV     [FS:DI+2],AX
+                MOV     BYTE [FS:DI+4],20H
+                ADD     DI,5
+                CMP     AX,99
+                JA      .L26
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+                CMP     AX,9
+                JA      .L26
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+
+.L26:           MOV     BYTE [FS:DI],22H
+                INC     DI
+                MOV     CX,16
+                LEA     SI,[FD_BUF+BX+2+3]      ;NAME
+.L15:           LODSB
+                CMP     AL,0A0H
+                JZ      .L14
+
+                MOV     [FS:DI],AL
+                INC     DI
+                LOOP    .L15
+
+.L14:           MOV     BYTE [FS:DI],22H
+                INC     DI
+                OR      CX,CX
+                JZ      .L16
+
+.L17:           MOV     BYTE [FS:DI],20H
+                INC     DI
+                LOOP    .L17
+
+.L16:           CMP     [FD_ETYPE2],1
+                JNZ     .L24
+
+                MOV     EAX,' SEQ'
+.L24:           CMP     [FD_ETYPE2],2
+                JNZ     .L18
+
+                MOV     EAX,' PRG'
+.L18:           CMP     [FD_ETYPE2],3
+                JNZ     .L19
+
+                MOV     EAX,' USR'
+.L19:           CMP     [FD_ETYPE2],4
+                JNZ     .L20
+
+                MOV     EAX,' REL'
+.L20:           TEST    [FD_ETYPE],80H
+                JNZ     .L21
+
+                MOV     AL,2AH                  ;'*'
+.L21:           MOV     DWORD [FS:DI],EAX
+                ADD     DI,4
+                MOV     BYTE [FS:DI],20H
+                TEST    [FD_ETYPE],40H
+                JZ      .L22
+
+                MOV     BYTE [FS:DI],3CH        ;'<'
+.L22:           INC     DI
+                MOV     BYTE [FS:DI],0
+                INC     DI
+                MOV     SI,[FD_NLINE]
+                MOV     [FS:SI],DI
+                MOV     [FD_NLINE],DI
+.L12:           ADD     BX,32
+                CMP     BX,256
+                JNZ     .L23
+
+                MOV     AX,WORD [FD_BUF]
+                MOV     [D64_POS],AX
+                OR      AL,AL
+                JNZ     .L11
+
+.L37:           MOV     DI,[FD_NLINE]
+                MOV     AX,[FD_FREE]
+                MOV     [FS:DI+2],AX
+                MOV     DWORD [FS:DI+4],'BLOC'
+                MOV     DWORD [FS:DI+8],'KS F'
+                MOV     DWORD [FS:DI+12],'REE.'
+                MOV     DWORD [FS:DI+16],'   '
+                ADD     DI,20
+                MOV     SI,[FD_NLINE]
+                MOV     [FS:SI],DI
+                MOV     [FD_NLINE],DI
+
+                MOV     BX,[FD_NLINE]
+                MOV     WORD [FS:BX],0
+                ADD     BX,2
+                MOV     [FS:2DH],BX
+                MOV     [FS:2FH],BX
+                MOV     [FS:31H],BX
+                MOV     [FS:9DH],BX
+                MOV     [FD_ERR],0
+                MOV     AH,3EH                  ;CLOSE
+                MOV     BX,[CBM_FH]
+                INT     21H
+                RETN
+
+.L1C:           MOV     [D64_POS],112H
+.L1A:           CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     BX,[CBM_FH]
+                MOV     CX,2
+                MOV     DX,D64_POS
+                INT     21H
+
+                MOV     BP,8
+.L2A:           CALL    GET_DENTRY
+                OR      AL,AL
+                JZ      .L6
+
+                ;MOV     AH,AL
+                AND     AL,7
+                CMP     AL,2            ;PRG?
+                JNZ     .L6
+
+                XOR     BX,BX
+                MOV     CL,[FS:0ABH]    ;FILENAME LENGTH
+                MOV     DI,[FS:0AFH]    ;FILENAME POINTER
+                CMP     WORD [FS:DI],'0:'
+                JNZ     .L7
+
+                SUB     CL,2
+                JBE     .L6B
+
+                ADD     DI,2
+
+.L7:            MOV     AL,[FD_BUF+3+BX]
+                MOV     AH,[FS:DI]
+                INC     BX
+                INC     DI
+                CMP     AH,'*'
+                JZ      .L8
+
+                CMP     AL,AH
+                LOOPE   .L7
+                JZ      .L8
+
+.L6:            DEC     BP
+                JNZ     .L2A
+
+                CMP     BYTE [D64_POS],0
+                JNE     .L1A
+
+.L6B:           MOV     AH,3EH                  ;CLOSE
+                MOV     BX,[CBM_FH]
+                INT     21H
+                MOV     AX,WORD [FD_BUF]
+                MOV     [FS:9DH],AX
+                RETN
+
+.L8:            MOV     AX,WORD [FD_BUF+1]
+                MOV     BP,252
+                MOV     [D64_POS],AX
+.L2B:           CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     BX,[CBM_FH]
+                MOV     CX,2
+                MOV     DX,D64_POS
+                INT     21H
+                OR      BP,BP
+                JPO     .L3B
+
+                MOV     AH,3FH
+                MOV     CL,2
+                MOV     DX,FD_BUF
+                INT     21H
+
+                CMP     BYTE [FS:0ADH],0        ;SEC. ADDRESS
+                JNE     .L3B
+
+                MOV     AX,[FD_LA]
+                MOV     WORD [FD_BUF],AX
+
+.L3B:           MOV     CX,BP
+                MOV     DX,WORD [FD_BUF]
+                
+                CMP     BYTE [D64_POS],0
+                JNE     .L1B
+
+                MOV     CL,BYTE [D64_POS+1]
+                DEC     CX
+.L1B:           MOV     AH,3FH
+                PUSH    DS
+                ADD     WORD [FD_BUF],CX
+                PUSH    FS
+                POP     DS
+                INT     21H
+                POP     DS
+                MOV     BP,254
+                CMP     BYTE [D64_POS],0
+                JNE     .L2B
+
+                MOV     [FD_ERR],0
+                JMP     .L6B
+
+.DIRDIR:        INC     BX              ;POINTER TO FIRST FILE ENTRY
+
+                MOV     DI,[FS:0AFH]
+                MOV     AL,[FS:0ABH]
+                CMP     WORD [FS:DI],'0:'
+                JNZ     .L25D
+
+                ADD     DI,2
+                SUB     AL,2
+
+.L25D:          CMP     AL,1
+                JNZ     .L1CD
+
+                CMP     BYTE [FS:DI],'$'
+                JNZ     .L1CD
+
+                PUSH    BX
+                CALL    FDF1
+                POP     BX
+                MOV     DI,[FS:2BH]
+                MOV     WORD [FS:DI+2],0
+                MOV     WORD [FS:DI+4],2212H
+                MOVZX   AX,[FPATH_LEN]
+                MOV     SI,FPATH
+                SUB     AX,16
+                JBE     .L29
+
+                ADD     SI,AX
+                DEC     SI
+
+.L29:           MOV     CX,16
+                ADD     DI,6
+.L10D:          LODSB
+                CMP     AL,'\'
+                JNZ     .L31A
+
+                MOV     AL,'/'
+.L31A:          OR      AL,AL
+                JNZ     .L30
+
+.L31:           MOV     BYTE [FS:DI],20H
+                INC     DI
+                LOOP    .L31
+                JMP     .L32
+
+.L30:           MOV     [FS:DI],AL
+                INC     DI
+                LOOP    .L10D
+
+.L32:           MOV     DWORD [FS:DI],37372022H         ;ID
+                MOV     DWORD [FS:DI+4],00423420H
+                ADD     DI,8
+                MOV     WORD [FS:DI-1EH],DI
+                MOV     [FD_NLINE],DI
+
+.L23D:          MOV     DI,[FD_NLINE]
+                MOV     AX,WORD [IBM_EX_LIST+EBX*2+EBX] ;TYPE
+                MOV     WORD [FD_ETYPE],AX
+                CMP     AX,'PR'
+                JZ      .L34
+
+                CMP     AX,'P0'
+                JZ      .L34
+
+                CMP     AX,'S0'
+                JZ      .L34
+
+                CMP     AX,'U0'
+                JZ      .L34
+
+                CMP     AX,'R0'
+                JNZ     .L12D
+
+.L34:           MOV     EAX,[IBM_SZ_LIST+EBX*4]         ;SIZE
+                OR      AL,AL
+                JZ      .L34A
+
+                ADD     AH,1
+.L34A:          SHR     EAX,8
+                MOV     [FS:DI+2],AX
+                MOV     BYTE [FS:DI+4],20H
+                ADD     DI,5
+                CMP     AX,9999
+                JA      .L26D
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+                CMP     AX,999
+                JA      .L26D
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+                CMP     AX,99
+                JA      .L26D
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+                CMP     AX,9
+                JA      .L26D
+
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+
+.L26D:          MOV     BYTE [FS:DI],22H
+                INC     DI
+
+                CMP     WORD [FD_ETYPE],'PR'
+                JNZ     .L36
+
+                LEA     SI,[IBM_FN_LIST+EBX*8]          ;NAME
+                MOV     CX,8
+
+.L15D:          LODSB
+                CMP     AL,20H
+                JZ      .L14D
+
+                MOV     [FS:DI],AL
+                INC     DI
+                LOOP    .L15D
+
+.L14D:          MOV     BYTE [FS:DI],22H
+                INC     DI
+                ADD     CX,8
+                JMP     .L17D
+
+.L36:           IMUL    SI,BX,24
+                LEA     SI,[IBM_CI_LIST+SI]             ;NAME
+                MOV     CX,16
+
+.L15D1:         LODSB
+                CMP     AL,0A0H
+                JZ      .L14D1
+
+                MOV     [FS:DI],AL
+                INC     DI
+                LOOP    .L15D1
+
+.L14D1:         MOV     BYTE [FS:DI],22H
+                INC     DI
+                OR      CX,CX
+                JZ      .L16D
+
+.L17D:          MOV     BYTE [FS:DI],20H
+                INC     DI
+                LOOP    .L17D
+
+.L16D:          MOV     AX,WORD [IBM_EX_LIST+EBX*2+EBX]
+                MOV     EDX,' PRG'
+                CMP     AX,'PR'
+                JZ      .L42
+
+                CMP     AX,'P0'
+                JZ      .L42
+
+                MOV     EDX,' SEQ'
+                CMP     AX,'S0'
+                JZ      .L42
+
+                MOV     EDX,' USR'
+                CMP     AX,'U0'
+                JZ      .L42
+
+                MOV     EDX,' REL'
+.L42:           MOV     DWORD [FS:DI],EDX
+                ADD     DI,4
+                MOV     BYTE [FS:DI],20H
+                INC     DI
+                MOV     BYTE [FS:DI],0
+                INC     DI
+                MOV     SI,[FD_NLINE]
+                MOV     [FS:SI],DI
+                MOV     [FD_NLINE],DI
+.L12D:          INC     BX
+                CMP     BX,[LIST_CAP1]
+                JB      .L23D
+                JMP     .L37
+
+.L1CD:          MOV     AX,WORD [IBM_EX_LIST+EBX*2+EBX]
+                MOV     CL,[FS:0ABH]    ;FILENAME LENGTH
+                MOV     DI,[FS:0AFH]    ;FILENAME POINTER
+                CMP     WORD [FS:DI],'0:'
+                JNZ     .L7D
+
+                SUB     CL,2
+                JBE     .L6B
+
+                ADD     DI,2
+.L7D:           CMP     AX,'PR'
+                JZ      .L38
+
+                CMP     AX,'P0'
+                JZ      .L41
+                JNZ     .L6AD
+
+.L38:           XOR     SI,SI
+.L40:           MOV     AL,[IBM_FN_LIST+EBX*8+ESI]
+                MOV     AH,[FS:DI]
+                INC     SI
+                INC     DI
+                CMP     AH,'*'
+                JZ      .L8D
+
+                CMP     AL,AH
+                LOOPE   .L40
+                JZ      .L8D
+
+.L6AD:          INC     BX
+                CMP     BX,[LIST_CAP1]
+                JB      .L1CD
+                JMP     .L6B
+
+.L8D:           MOV     EAX,DWORD [IBM_FN_LIST+EBX*8]
+                MOV     DWORD [FD_PRGNAME],EAX
+                MOV     EAX,DWORD [IBM_FN_LIST+EBX*8+4]
+                MOV     DWORD [FD_PRGNAME+4],EAX
+                MOV     EAX,DWORD [IBM_EX_LIST+EBX*2+EBX]
+                MOV     DWORD [FD_PRGNAME+9],EAX
+                MOV     [FD_PRGNAME+12],0
+                MOV     SI,BX
+
+                MOV     AX,3D00H                ;OPEN FILE
+                MOV     DX,FD_PRGNAME
+                INT     21H
+                MOV     [CBM_FH],AX
+
+                XOR     BP,BP
+                CMP     WORD [IBM_EX_LIST+EBX*2+EBX],'PR'
+                MOV     BX,AX
+                MOV     DX,FD_BUF
+                JZ      .L44
+
+                MOV     AH,3FH
+                MOV     CX,26
+                MOV     BP,CX
+                INT     21H
+
+.L44:           MOV     AH,3FH
+                MOV     CX,2
+                ADD     BP,2
+                INT     21H
+
+                CMP     BYTE [FS:0ADH],0        ;SEC. ADDRESS
+                JNE     .L3BD
+
+                MOV     AX,[FD_LA]
+                MOV     WORD [FD_BUF],AX
+
+.L3BD:          MOV     CX,WORD [IBM_SZ_LIST+ESI*4]
+                SUB     CX,BP
+                MOV     DX,WORD [FD_BUF]
+                ADD     WORD [FD_BUF],CX
+                
+                MOV     AH,3FH
+                PUSH    DS
+                PUSH    FS
+                POP     DS
+                INT     21H
+                POP     DS
+
+                MOV     [FD_ERR],0
+                JMP     .L6B
+
+.L41:           XOR     SI,SI
+.L40_1:         IMUL    BP,BX,24
+.L40_2:         MOV     AL,[DS:IBM_CI_LIST+BP+SI]
+                MOV     AH,[FS:DI]
+                INC     SI
+                INC     DI
+                CMP     AH,'*'
+                JZ      .L8D
+
+                CMP     AL,60H
+                JB      .L46
+
+                CMP     AL,7DH
+                JA      .L46
+
+                ADD     AL,60H
+.L46:           CMP     AL,AH
+                LOOPE   .L40_2
+                JZ      .L8D
+
+                INC     BX
+                CMP     BX,[LIST_CAP1]
+                JB      .L1CD
+                JMP     .L6B
+

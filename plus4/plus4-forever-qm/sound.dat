@@ -15,6 +15,5 @@ ADLIB_VECS      DW      RESET_ADLIB, RESET_ADLIB
                 DW      ADLIB_10, ADLIB_11
                 DW      ADLIB_12
 SOUND_SRC       DW      SET_TIMERSND, SET_ADLIBSND
-                DW      SET_NOSND
-CURRENT_SND     DB      0
+                DW      SET_NOSND, SET_SBSND
 

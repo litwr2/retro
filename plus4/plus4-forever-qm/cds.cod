@@ -50,6 +50,7 @@ CDS_IO_WR:      PUSH    EAX
                 MOV     CX,36
                 MOV     BX,1
                 MOV     SI,DS_MSG1
+                MOV     [DS_MSG1+34],'1'
                 CALL    OUT_MSG
                 CALL    WAIT_ACTIVITY
                 CALL    PLOT_SCR1
@@ -162,9 +163,56 @@ CDS_IO_WR:      PUSH    EAX
 
 .L18:           MOV     AX,[DS_HPOSN]
                 INC     AX
-                CMP     AX,[DS_QENTR]   ;$$$!
+                CMP     AX,[DS_QENTR]
                 JB      .L19
-                MOV     AX,1
+                CMP     BYTE [DS_MVAL],15H
+                JA      .L27
+                CMP     BYTE [DS_MVAL],12H
+                JB      .L27
+
+                ADD     [DS_RPOSBY],2
+                MOV     EAX,[DS_RPOSE]
+                SUB     EAX,[DS_RPOSBY]
+                CMP     EAX,4096        ;min block?
+                JB      .L27
+                CMP     [DS_RPOSBY],4096        ;min block?
+                JB      .L27
+                INC     [DS_QENTR]
+                MOV     EAX,[DS_NPOS]   ;find beginning of previous block
+                MOV     [DS_RPOSP],EAX  ;save pos of next block
+                SUB     EAX,[DS_RPOSE]
+                SUB     EAX,5
+                PUSH    EAX
+                MOV     DX,AX
+                SHR     EAX,16
+                MOV     CX,AX
+                MOV     AX,4200H
+                INT     21H
+                POP     EAX
+                ADD     EAX,[DS_RPOSBY]
+                MOV     [DS_NPOS],EAX
+                PUSH    EAX
+                MOV     AH,40H          ;write new NPOS (middle)
+                MOV     CX,4
+                MOV     DX,DS_NPOS
+                INT     21H
+                POP     EAX
+                MOV     DX,AX
+                SHR     EAX,16
+                MOV     CX,AX
+                MOV     AX,4200H
+                INT     21H
+                MOV     EAX,[DS_RPOSP]
+                MOV     [DS_NPOS],EAX
+                MOV     AH,40H          ;write new NPOS
+                MOV     CX,5
+                MOV     DX,DS_NPOS
+                INT     21H
+
+                INC     [DS_HPOSN]
+                JMP     .L20
+
+.L27:           MOV     AX,1
 .L19:           MOV     [DS_HPOSN],AX
                 JMP     .L20
 
@@ -322,7 +370,7 @@ DSW_FLUSH:      PUSH    ES
 RD_DS_BUF:      PUSH    EAX
                 MOV     EAX,[DS_RPOSC]
                 MOV     [DS_RPOSP],EAX
-                ADD     EAX,8000
+                ADD     EAX,8000                ;ds buffer size
                 CMP     EAX,[DS_RPOSE]
                 JB      .L1
                 MOV     EAX,[DS_RPOSE]
@@ -408,6 +456,7 @@ CDS_IO_RD:      TEST    [CPU_1],8
                 INC     EAX
 .L2:            MOV     CL,AL
                 SHR     EAX,3
+                MOV     [DS_RPOSBY],EAX
                 AND     CX,7
 .L3:            CMP     EAX,[DS_RPOSC]
                 JB      .L4

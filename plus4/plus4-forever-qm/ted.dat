@@ -1,93 +1,118 @@
 VIDEO_SEG       EQU     0A000H
 
-VER_SCR_SZ      EQU     200
-HOR_SCR_SZ      EQU     40
-
-MAX_VER         EQU     311     ;NTSC=261
+MAX_VER         EQU     311             ;NTSC=261
 MAX_HOR         EQU     56
 
-XZ1L            EQU     14
-XZ2L            EQU     40
-YZ2L            EQU     207     ;200
-BEAM_CH_POS     EQU     XZ2L*120*8
+SCR_XSIZE       EQU     40
+SCR_YSIZE       EQU     207
+BEAM_CH_POS     EQU     SCR_XSIZE*200*8
+
+CHAR_VSTART     EQU     4
+CHAR_VSIZE      EQU     200
+
+SHVA            EQU     54
+EHVA            EQU     36
+SVVA            EQU     0
+EVVA            EQU     SVVA+SCR_YSIZE-1
+
+SHRA            EQU     SHVA            ;START HOR. RELOAD AREA
+EHRA            EQU     EHVA
+SVRA            EQU     0
+EVRA            EQU     202
 
                 ALIGN   4
 LABEL           BEAM_ADDR DWORD
 BEAM_POS        DW      0
                 DW      VIDEO_SEG       ;VGA GRAPHICS
-BEAM_POSX       DW      0
-TED_IDJ         DW      TED.L22Z
-XZN             DB      1               ;X-ZONE NUMBER
-XZ1C            DB      XZ1L            ;X-ZONE COUNT
-XZ2C            DB      XZ2L
-YZN             DB      2               ;Y-ZONE NUMBER
-YZ2C            DB      YZ2L            ;Y-ZONE COUNT
 
-BLINK_COUNT     DB      0F0H
+BORDER_COLOR    DD      ?
 
-BADLICOND       DB      0
-SST             DB      0
-SST2            DB      0
+LABEL           MDATA_ADDR DWORD
+VSA             DB      7               ;VERTICAL SUBADDRESS
+MDATA_OFFSET    DB      0D0H
+MDATA_SEG       DW      SEG SEG_ROM
 
-START_V_RELOAD  EQU     0
-START_H_RELOAD  EQU     14              ;>=XZ1L
-START_V_SCR     EQU     3
-START_H_SCR     EQU     14              ;>=XZ1L
+RETRACE_COUNT   DD      0
 
-EVRA            EQU     START_V_RELOAD+3+199
-SHRA            EQU     START_H_RELOAD
-EHRA            EQU     START_H_RELOAD+39
+SVSA            DW      CHAR_VSTART     ;START VER. CHAR SCREEN AREA
+EVSA            DW      CHAR_VSTART+CHAR_VSIZE-1
+SHSA            DB      SHRA
+EHSA            DB      EHRA
 
-                ALIGN   2
-SVSA            DW      START_V_SCR             ;START VER. SCREEN AREA
-EVSA            DW      START_V_SCR+199
-SHSA            DB      START_H_SCR
-EHSA            DB      START_H_SCR+39
-
-VIS             DB      2               ;0-X, 1-Y
-LABEL           VIDEO_DATA BYTE
-TIMES   327     DB      'V'
 VD_PTR_BEAM     DW      VIDEO_DATA
-VD_PTR_FILL     DW      VIDEO_DATA       ;VD_PTR_BEAM+X_OFFSET
+VD_PTR_FILL     DW      VIDEO_DATA      ;VD_PTR_BEAM+X_OFFSET
 
 X_OFFSET        DW      0
 Y_OFFSET        DW      3
 
-CRP             DW      0               ;CHAR. RELOAD POS.
+CP_RELOAD       DW      0               ;CHAR. RELOAD POS.
+DMA_BASE        DW      0               ;SCREEN POS. FOR DMA
+DMA_OFF         DW      0               ;DMA OFFSET
 
-VMODE           DW      0       ; 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH, 6-IDLE
+VMODE           DW      0  ; (0-0,) 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH
 VMJT            DW      T00000, T00001, T00010, T00xxx
                 DW      T00100, T00101, T00xxx, T00xxx
                 DW      T01000, T00001, T00010, T00xxx
                 DW      T01100, T00101, T00xxx, T00xxx
                 DW      T10000, T00001, T00010, T00xxx
-                Dw      T00100, T00101, T00xxx, T00xxx
+                DW      T00100, T00101, T00xxx, T00xxx
                 DW      T11000, T00001, T00010, T00xxx
                 DW      T01100, T00101, T00xxx, T00xxx
-TIMES   32      DW      T01xxx
 
 MAINJUMP        DW      MAINLOOP
-
-                ALIGN   4
-BORDER_COLOR    DD      ?
-LABEL           MDATA_ADDR DWORD
-VSA             DB      0               ;VERTICAL SUBADDRESS
-MDATA_OFFSET    DB      0D0H
-MDATA_SEG       DW      SEG SEG_ROM
-CG_BASE         DB      0D0H
-VM_BASE         DB      8
-
-LABEL		VID_BUF WORD
-TIMES	40      DW      'CA'
 
 COLOR0          DW      ?               ;TED_15
 COLOR1          DW      ?
 COLOR2          DW      ?
 
-                ALIGN   4
-RETRACE_COUNT   DD      0
+CLADDR          DW      LNORMF
 
-                ALIGN   2
-LABEL           V2PP    WORD
-                IRPC2   V2_,0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F
+BLINK_COUNT     DB      0F0H
+ISDMANOW        DB      0               ;0-no, 1-attr, 2-char
+ISDMA           DB      1
+IRQTICKS        DB      0
+
+LABEL           VIDEO_DATA BYTE
+TIMES   327     DB      'V'
+
+TXX       DW      'XX'
+
+CG_BASE         DB      0D0H
+VM_BASE         DB      8
+
+LABEL           VID_BUF1 BYTE
+TIMES   40      DB      'T'
+LABEL           VID_BUF2 BYTE
+TIMES   40      DB      'A'
+LABEL           VID_BUF3 BYTE
+TIMES   40      DB      'C'
+
+TXX1       DW      'XX'
+
+LABEL           LDMAF   BYTE
+TIMES   37      DB      0       ;22+3
+TIMES   5       DB      1
+TIMES   8       DB      2
+                DB      1
+TIMES   6       DB      0
+
+LABEL           LDMAS   BYTE
+TIMES   37      DB      0       ;14+3
+TIMES   14      DB      1
+TIMES   6       DB      0
+
+LABEL           LNORMF  BYTE
+TIMES   42      DB      1       ;65
+TIMES   8       DB      2
+TIMES   7       DB      1
+
+LABEL           LNORMS  BYTE
+LABEL           LBLAS   BYTE
+TIMES   57      DB      1       ;57
+
+
+LABEL           LBLAF   BYTE
+TIMES   37      DB      2       ;109
+TIMES   5       DB      1
+TIMES   15      DB      2
 

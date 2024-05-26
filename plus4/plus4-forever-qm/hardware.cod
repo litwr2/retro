@@ -47,18 +47,6 @@ RESTORE_INTR23: MOV     DX,[SAVE23LO]   ;RESTORE INTR23 VECTOR
                 MOV     DS,[SAVE23HI]
                 JMP     SET_INTR23.L1
 
-GET_DELAYCONST: XOR     EDX,EDX         ;approx. 50mks for 37kHz timer
-                MOV     EAX,[SYNCHRO_TICKS]
-.L2:            CMP     EAX,[SYNCHRO_TICKS]
-                JZ      .L2
-                INC     EAX
-.L1:            INC     EDX
-                CMP     EAX,[SYNCHRO_TICKS]
-                JZ      .L1
-                SHL     EDX,1
-                MOV     [DELAYCONST],EDX
-                RETN
-
 SET_VMODE:      MOV     AX,13H
                 INT     10H
                 CLI
@@ -199,12 +187,19 @@ INITIBM:        CLD
                 CALL    SET_INTR23
                 CALL    SET_INTR24
                 CALL    SET_INTR9
-
                 CALL    SET_INTR8
-;                CALL    SET_ADLIBSND
-                CALL    SET_TIMERSND
+
+                MOVZX   BX,[SJCFG]
+                AND     BL,3
+                CALL    [SOUND_SRC+EBX*2]
                 CALL    [RESET_SOUND]
 
+                MOV     AL,[SJCFG]
+                MOV     AH,AL
+                SHR     AL,5
+                SHR     AH,2
+                AND     AH,7
+                MOV     WORD [JOY1_ST],AX
                 CALL    INIT_JOY
 
                 XOR     SI,SI           ;LOAD ROMs
@@ -255,8 +250,6 @@ INITIBM:        CLD
                 CALL    GET_FPATH
                 CALL    INIT_WIN1
 
-                CALL    GET_DELAYCONST
-
                 XOR     AX,AX
                 MOV     ES,AX
                 MOV     AL,[ES:417H]
@@ -271,5 +264,7 @@ INITIBM:        CLD
 
                 MOV     AX,0A000H       ;Init ES For TED
                 MOV     ES,AX
+
+                MOV     [TOTALTICKS],0
                 RETN
 

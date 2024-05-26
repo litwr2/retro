@@ -5,26 +5,29 @@ RESTORE_INTR9:  MOV     DX,[CS:SAVE9LO] ;RESTORE INTR9 VECTOR
 
 SET_INTR9:      MOV     AX,3509H        ;SAVE/SET INTR9 VECTOR
                 INT     21H
-                MOV     [CS:SAVE9LO],BX
-                MOV     [CS:SAVE9HI],ES
                 PUSH    DS
                 PUSH    CS
                 POP     DS
+                MOV     [SAVE9LO],BX
+                MOV     [SAVE9HI],ES
                 MOV     DX,INTR9
 .L1:            MOV     AX,2509H
                 INT     21H
                 POP     DS
                 RETN
 
-WAIT50MKS:      PUSH    EAX
-                MOV     EAX,[DELAYCONST]
-.L1:            DEC     [DELAYCONST]
-                JNZ     .L1
-                MOV     [DELAYCONST],EAX
-                POP     EAX
+KB_WAIT:        PUSH    CX
+                PUSH    AX
+                XOR     CX,CX
+.L1:            IN      AL,64H
+                TEST    AL,2
+                LOOPNE  .L1
+                POP     AX
+                POP     CX
                 RETN
 
-SET_LED:        MOV     AL,0EDH
+SET_LED:        CALL    KB_WAIT
+                MOV     AL,0EDH
                 OUT     60H,AL
                 MOV     AL,[LED]
                 PUSH    DS
@@ -34,7 +37,7 @@ SET_LED:        MOV     AL,0EDH
                 OR      [DS:417H],AL
                 POP     DS
                 SHR     AL,4
-                CALL    WAIT50MKS
+                CALL    KB_WAIT
                 OUT     60H,AL
                 RETN
 
@@ -80,7 +83,7 @@ INTR9:          PUSH    AX
                 CMP     AL,0BAH         ;CapsLock?
                 JZ      .LCL
 
-                CMP     [TIMER_ST],0      ;debugger mode?
+                CMP     [TIMER_ST],0    ;debugger mode?
                 JNE     .LX
 
                 CMP     AL,3AH          ;CapsLock Pressed?
@@ -90,6 +93,7 @@ INTR9:          PUSH    AX
                 MOVZX   DX,BYTE [JOY_MASK]
                 JA      .JE_L2
                 JZ      .JE_L8
+
                 CALL    .JE1          ;J1 AT K1
                 JMP     .JE_L7
 
@@ -98,6 +102,7 @@ INTR9:          PUSH    AX
                 CALL    I9_JSB
 .JE_L7:         OR      DH,DH
                 JNZ     .JE_L2
+
 .JE_L9:         MOV     BYTE [JOY_MASK],DL
                 JMP     .LE
 
@@ -105,11 +110,13 @@ INTR9:          PUSH    AX
                 MOVZX   DX,BYTE [JOY_MASK+1]
                 JA      .NJE
                 JZ      .JE_L1
+
                 CALL    I9_JSB        ;J2 AT K1
                 CALL    .JE1
                 CALL    I9_JSB
 .JE_L5:         OR      DH,DH
                 JNZ     .NJE
+
                 MOV     BYTE [JOY_MASK+1],DL
                 JMP     .LE
 
@@ -321,12 +328,16 @@ SYS_KEYS:       CMP     [ISMOUSE],0
                 CMP     AL,0BFH         ;F5=CHOOSE SOUND
                 JNZ     .L7
                 CALL    [EXIT_SOUND]
-                MOVZX   BX,[CURRENT_SND]
+                MOVZX   BX,[SJCFG]
+                MOV     AL,BL
+                AND     AL,0FCH
+                AND     BL,3
                 INC     BX
                 CMP     BL,3
                 JNZ     .L6
                 XOR     BX,BX
-.L6:            MOV     [CURRENT_SND],BL
+.L6:            OR      AL,BL
+                MOV     [SJCFG],AL
                 SHL     BX,1
                 CALL    [SOUND_SRC+BX]
                 CALL    [RESET_SOUND]
@@ -338,7 +349,11 @@ SYS_KEYS:       CMP     [ISMOUSE],0
 
 .L1:            CMP     AL,0D7H         ;F11=RESET
                 JNZ     .L2
-                MOV     [MAINJUMP],RESET
+                TEST    [KMATRIX+1],80H
+                JNZ     .L11
+                MOV     BX,0FF3EH       ;HARD RESET
+                CALL    MSTORE_DH
+.L11:           MOV     [MAINJUMP],RESET
 
 .L2:            CMP     AL,0D8H         ;F12=MENUS
                 JNZ     .L3

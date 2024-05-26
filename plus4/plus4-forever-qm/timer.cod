@@ -1,20 +1,23 @@
 SET_INTR8:      MOV     AX,3508H        ;SAVE/SET INTR8 VECTOR
                 INT     21H
-                MOV     [CS:SAVE8LO],BX
-                MOV     [CS:SAVE8HI],ES
                 PUSH    DS
                 PUSH    CS
                 POP     DS
+                MOV     [SAVE8LO],BX
+                MOV     [SAVE8HI],ES
                 MOV     DX,INTR8SND
                 MOV     AX,2508H
                 INT     21H
                 POP     DS
+
+                CLI
                 MOV     AL,36H          ;SET TIMER HARDWARE
                 OUT     43H,AL
-                MOV     AL,TIMERV
+                MOV     AL,TIMERV AND 0FFH
                 OUT     40H,AL
-                XOR     AL,AL
+                MOV     AL,TIMERV SHR 8
                 OUT     40H,AL
+                STI
                 RETN
 
 RESTORE_INTR8:  MOV     DX,[CS:SAVE8LO]     ;RESTORE INTR8 VECTOR
@@ -24,11 +27,13 @@ RESTORE_INTR8:  MOV     DX,[CS:SAVE8LO]     ;RESTORE INTR8 VECTOR
                 INT     21H
                 POP     DS
 
+                CLI
                 MOV     AL,36H          ;RESTORE TIMER HARDWARE
                 OUT     43H,AL
                 XOR     AL,AL
                 OUT     40H,AL
                 OUT     40H,AL
+                STI
                 RETN
 
 INTR8SND:       PUSH    AX

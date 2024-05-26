@@ -46,7 +46,7 @@ IBM_MASK        DB      '*.???',0
 IBM_EXTS_CAP    EQU     9
 IBM_EXTS        DD      'C2F','CTF','D64','PRG','D0?','P0?','R0?','S0?','U0?'
 EXTS_DET        DB      0,0,0,0,1,1,1,1,1
-IBM_FLIST_CAP   EQU     512
+IBM_FLIST_CAP   EQU     515
 LABEL           IBM_FN_LIST BYTE
 TIMES   8*IBM_FLIST_CAP DB ' '
 LABEL           IBM_EX_LIST BYTE
@@ -64,5 +64,5 @@ TT4             DW      FC_XX,FC_XX,FC_D64,FC_XX
                 DW      FC_X00,FC_X00,FC_X00
                 DW      FC_X00,FC_X00
 RSPEED          DB      'SPEED   000.0%'
-SPEEDL          DB      'LIMIT < 100.6%>'
+SPEEDL          DB      'LIMIT < 100.0%>'
 

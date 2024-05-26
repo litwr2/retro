@@ -71,7 +71,7 @@ READ_DS_SB:     MOV     CX,5            ; SET VARIABLES
                 SUB     AL,0D5H
                 JNS     .L2
                 NEG     AL
-.L2:            CMP     AL,4
+.L2:            CMP     AL,7
                 JNC     RETNR
 
                 MOV     [DS_LBC],89H
@@ -294,6 +294,10 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 INT     21H
                 CMP     WORD [KBD_BUF],1
                 JNZ     .L3
+
+                MOVZX   BP,[SJCFG]      ;saves current sound hardware
+                AND     BP,3
+
                 MOV     AH,3FH          ;RESTORE GENERAL INFO
                 MOV     CX,FREEZE_LEN-2
                 MOV     DX,FREEZE_VER+2
@@ -313,6 +317,29 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 INT     21H
                 POP     DS
 
+                MOVZX   BX,[SJCFG]      ;RESTORE SOUND & JOYS CFG
+                MOV     AL,BL
+                MOV     AH,AL
+                SHR     AL,5
+                SHR     AH,2
+                AND     AH,7
+                PUSH    AX
+                OR      AL,AH           ;IS VALUES CORRECT? OLD (<1.20) C2F?
+                POP     AX
+                JZ      .L3B
+                MOV     WORD [JOY1_ST],AX
+.L3B:           AND     BL,3
+                CMP     BX,BP
+                JZ      .L3A
+                PUSH    BX
+                CALL    [EXIT_SOUND]
+                POP     BX
+                CALL    [SOUND_SRC+EBX*2]
+                CALL    [RESET_SOUND]
+.L3A:           PUSH    SI
+                CALL    INIT_JOY
+                POP     SI
+
                 LODSW
                 MOV     WORD [TED_0],AX
                 MOV     BX,0FF02H
@@ -325,7 +352,6 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 MOV     AL,[KBD_BUF+9]  ;TED CORRECTION
                 MOV     [TED_9],AL
                 MOV     AL,[TED_11]
-                MOV     [SAVE_SOUND],AL
                 MOV     BL,3EH
                 TEST    [KBD_BUF+13H],1
                 JNZ     .L4
@@ -341,6 +367,7 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 MOV     [KMATRIX+1],0FFH
                 JZ      .L3
                 MOV     [KMATRIX+1],7FH
+
 .L3:            JMP     MD2_QUIT
 
 LD_CTF:         MOV     AX,4200H
@@ -356,7 +383,7 @@ LD_CTF:         MOV     AX,4200H
                 MOV     AH,40H
                 MOV     DX,DS_HPOSN
                 INT     21H
-                JMP     MD2_QUIT
+                JMP     MENU_DISP2.L4
 
 LD_D64:         MOVZX   SI,[CP_IN_WIN2]
                 MOV     BP,252
@@ -381,6 +408,7 @@ LD_D64:         MOVZX   SI,[CP_IN_WIN2]
                 MOV     DX,WORD [D_BUF1]
                 CMP     BYTE [D64_POS],0
                 JNE     .L1
+
                 MOV     CL,BYTE [D64_POS+1]
                 DEC     CX
 .L1:            MOV     AH,3FH
@@ -397,6 +425,7 @@ LD_D64:         MOVZX   SI,[CP_IN_WIN2]
                 MOV     [FS:2DH],AX
                 MOV     [FS:2FH],AX
                 MOV     [FS:31H],AX
+                MOV     [FS:9DH],AX
                 JMP     MD2_QUIT
 
 FILL_SCR_CBM:   MOV     DI,160*2+(SCR2_TOP_X+1)*2
@@ -479,6 +508,7 @@ OPEN_CBM_FILE:  PUSH    ES              ;IN: SI, BX=SI*3
 .L2:            LODSB
                 CMP     AL,' '
                 JZ      .L1
+
                 STOSB
                 LOOP    .L2
 .L1:            MOV     AL,'.'
@@ -488,7 +518,7 @@ OPEN_CBM_FILE:  PUSH    ES              ;IN: SI, BX=SI*3
                 ADD     SI,BX
                 REP     MOVSB
                 MOV     [DI],CH
-                MOV     AX,3D00H        ;for R/O access!
+                MOV     AX,3D00H        ;for R/O access
                 MOV     DX,FPATH
                 INT     21H
                 POP     DI
@@ -545,6 +575,7 @@ OUT_FRAME2:     MOV     DI,SCR2_TOP_X*2+SCR2_TOP_Y*160
 .L1HE:          LODSB
                 STOSW
                 LOOP    .L1HE
+
                 MOV     DI,(SCR2_TOP_Y+1)*160+(SCR2_TOP_X+1)*2+1
                 MOV     AL,3
                 MOV     CL,16
@@ -557,8 +588,10 @@ OUT_FRAME2:     MOV     DI,SCR2_TOP_X*2+SCR2_TOP_Y*160
 .L3HE:          STOSB
                 INC     DI
                 LOOP    .L3HE
+
                 DEC     BH
                 JNZ     .L4HE
+
                 RETN
 
 TOGG_CUR2:      MOVZX   SI,[CP_IN_WIN2]         ;USED: SI,CX,AX
@@ -581,63 +614,96 @@ MOUSE_DISP2:    CALL    HIDEM
                 SHR     CX,3
                 CMP     DL,2
                 JB      MENU_DISP2
+
                 CMP     DL,23
                 JA      .L1
+
                 JZ      MENU_DISP2
+
                 CMP     CL,SCR2_TOP_X+1
                 JB      MENU_DISP2
+
                 CMP     CL,SCR2_TOP_X+SCR2_LEN-2
                 JA      .L3
+
                 SUB     DL,2
                 MOV     [CP_IN_WIN2],DL
                 JMP     MD2_ENTER
+
 .L1:            CMP     CL,7
                 JB      MD2_HELP
+
                 CMP     CL,32
                 JB      MENU_DISP2
+
                 CMP     CL,39
                 JB      MD2_EXFILE
+
                 CMP     CL,64
                 JB      MENU_DISP2
+
                 CMP     CL,71
                 JB      MD2_CBMCS
+
                 JZ      MENU_DISP2
+
                 JMP     MD2_QUIT
 .L2:            CMP     DL,2
                 JNZ     .L4
+
                 CMP     CL,5
                 JB      MENU_DISP2
+
                 CMP     CL,8
                 JA      MENU_DISP2
+
                 JMP     MD2_UP
+
 .L4:            CMP     DL,21
                 JNZ     MENU_DISP2
+
                 CMP     CL,5
                 JB      MENU_DISP2
+
                 CMP     CL,8
                 JA      MENU_DISP2
+
                 JMP     MD2_DOWN
+
 .L3:            CMP     CL,SCROLL_TOP_X+1       ; SCROLL MENU
                 JB      MENU_DISP2
+
                 CMP     CL,SCROLL_TOP_X+4
                 JA      MENU_DISP2
+
                 CMP     DL,3
                 JB      MENU_DISP2
+
                 JZ      MD2_HOME
+
                 CMP     DL,4
                 JZ      MENU_DISP2
+
                 CMP     DL,7
                 JZ      MENU_DISP2
+
                 JB      MD2_PGUP
+
                 CMP     DL,11
                 JZ      MENU_DISP2
+
                 JB      MD2_UP
+
                 CMP     DL,15
                 JZ      MENU_DISP2
+
                 JB      MD2_DOWN
+
                 CMP     DL,18
                 JZ      MENU_DISP2
+
                 JB      MD2_PGDN
+
                 CMP     DL,20
                 JB      MD2_END
 
@@ -645,12 +711,14 @@ MENU_DISP2:     CALL    SHOWM
 .L1:            CALL    WAITM
                 TEST    BL,2
                 JNZ     .L2
+
                 TEST    BL,1
                 JNZ     MOUSE_DISP2
 
                 MOV     AH,1
                 INT     16H
                 JZ      .L1
+
                 XOR     AH,AH
                 INT     16H
                 CALL    HIDEM
@@ -690,9 +758,11 @@ MENU_DISP2:     CALL    SHOWM
 
                 CMP     AH,1            ; Esc
                 JNZ     MENU_DISP2
-                CALL    CLOSE_CBM_FILE
+
+.L4:            CALL    CLOSE_CBM_FILE
                 CALL    FILL_IBM_FLIST
 .L3:            JMP     MD1_ENTER.L8A
+
 .L2:            CALL    HIDEM
                 JMP     .L3
 
@@ -703,9 +773,11 @@ MD2_QUIT:       CALL    CLOSE_CBM_FILE
 MD2_UP:         CALL    TOGG_CUR2
                 DEC     [CP_IN_WIN2]
                 JNS     .L1
+
                 INC     [CP_IN_WIN2]
                 CMP     [WIN_POS2],0
                 JE      .L1
+
                 DEC     [WIN_POS2]
                 CALL    FILL_SCR_CBM
 .L1:            CALL    TOGG_CUR2
@@ -716,11 +788,13 @@ MD2_DOWN:       CALL    TOGG_CUR2
                 MOV     AL,[CP_MAX_WIN2]
                 CMP     [CP_IN_WIN2],AL
                 JNZ     .L1
+
                 DEC     [CP_IN_WIN2]
                 XOR     AH,AH
                 ADD     AX,[WIN_POS2]
                 CMP     AX,[LIST_CAP2]
                 JZ      .L1
+
                 INC     [WIN_POS2]
                 CALL    FILL_SCR_CBM
 .L1:            CALL    TOGG_CUR2
@@ -738,6 +812,7 @@ MD2_END:        CALL    TOGG_CUR2
                 MOV     AX,[LIST_CAP2]
                 SUB     AX,21
                 JNS     .L1
+
                 XOR     AX,AX
 .L1:            MOV     [WIN_POS2],AX
                 MOV     AL,[CP_MAX_WIN2]
@@ -750,12 +825,15 @@ MD2_END:        CALL    TOGG_CUR2
 MD2_PGUP:       CALL    TOGG_CUR2
                 SUB     [WIN_POS2],21
                 JGE     .L1
+
                 ADD     [WIN_POS2],21
                 MOV     [WIN_POS2],0
                 JZ      .L3
+
 .L1:            CALL    FILL_SCR_CBM
 .L2:            CALL    TOGG_CUR2
                 JMP     MENU_DISP2
+
 .L3:            MOV     [CP_IN_WIN2],0
                 JMP     .L2
 
@@ -764,17 +842,21 @@ MD2_PGDN:       CALL    TOGG_CUR2
                 ADD     AX,21*2
                 CMP     AX,[LIST_CAP2]
                 JA      .L1
+
                 ADD     [WIN_POS2],21
 .L3:            CALL    FILL_SCR_CBM
 .L2:            CALL    TOGG_CUR2
                 JMP     MENU_DISP2
+
 .L1:            SUB     AX,21
                 CMP     AX,[LIST_CAP2]
                 JAE     .L4
+
                 MOV     AX,[LIST_CAP2]
                 SUB     AX,21
                 MOV     [WIN_POS2],AX
                 JMP     .L3
+
 .L4:            MOV     AL,[CP_MAX_WIN2]
                 DEC     AX
                 MOV     [CP_IN_WIN2],AL
@@ -782,12 +864,15 @@ MD2_PGDN:       CALL    TOGG_CUR2
 
 MD2_ENTER:      CMP     [CBM_FTYPE],2     ; 4 - D64, 2 - CTF
                 JZ      LD_CTF
+
                 MOVZX   SI,[CP_IN_WIN2]
                 ADD     SI,[WIN_POS2]
                 CMP     WORD [CBM_TY_LIST+ESI*4],'PR'
                 JNZ     MENU_DISP2
+
                 CMP     WORD [CBM_SZ_LIST+ESI*2],0
                 JE      MENU_DISP2
+
                 JMP     LD_D64
 
 MD2_HELP:       MOV     DI,HELP2_TOP_Y*160+HELP1_TOP_X*2
@@ -805,10 +890,12 @@ MD2_EXFILE:     MOVZX   SI,[CP_IN_WIN2]
                 JNZ     MD2EF_CTF
 
 MD2EF_D64:      PUSH    SI
+                XOR     BP,BP
                 CALL    MAIN_ISCR
                 POP     SI
                 OR      BX,BX
                 JZ      MD2_HELP.XL
+
                 MOV     EAX,'X00'
                 MOV     AL,[CBM_TY_LIST+ESI*4]
                 MOV     DWORD [D_BUF2+BX],EAX
@@ -817,6 +904,7 @@ MD2EF_D64:      PUSH    SI
                 MOV     DX,D_BUF2
                 INT     21H
                 JC      MD2_HELP.XL
+
                 MOV     [IBM_FH],AX
                 MOV     BX,AX
                 MOV     AH,40H
@@ -851,7 +939,9 @@ MD2EF_D64:      PUSH    SI
                 MOV     CL,254
                 CMP     BYTE [D64_POS],0
                 JNE     .L1
+
                 MOV     CL,BYTE [D64_POS+1]
+                DEC     CX
 .L1:            MOV     DX,KBD_BUF
                 MOV     BP,CX
                 MOV     AH,3FH
@@ -863,6 +953,7 @@ MD2EF_D64:      PUSH    SI
                 INT     21H
                 CMP     BYTE [D64_POS],0
                 JNE     .L2
+
 .L3:            MOV     AH,3EH
                 MOV     BX,[IBM_FH]
                 INT     21H
@@ -872,32 +963,43 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 MOV     [MENU2_TEMP],'P'
                 CMP     AL,'1'
                 JZ      .L5
+
                 CMP     AL,'3'
                 JNZ     .L6
+
 .L5:            CMP     [CBM_TY_LIST+ESI*4+7],' '
                 JZ      .L1
+
                 JMP     MD2_HELP.XL
 
 .L6:            CMP     AL,' '
                 JNZ     .L8
+
                 CMP     [CBM_TY_LIST+ESI*4-1],'1'
                 JZ      .L9
+
                 CMP     [CBM_TY_LIST+ESI*4-1],'3'
                 JNZ     MD2_HELP.XL
+
 .L9:            DEC     SI
                 JMP     .L1
 
 .L8:            CMP     AL,'4'
                 MOV     [MENU2_TEMP],'S'
                 JZ      .L7
+
                 CMP     AL,'2'
                 JNZ     MD2_HELP.XL
+
 .L10:           DEC     SI
                 JS      MD2_HELP.XL
+
                 CMP     AL,[CBM_TY_LIST+ESI*4+3]
                 JZ      .L10
+
                 CMP     [CBM_TY_LIST+ESI*4+3],'4'
                 JNZ     MD2_HELP.XL
+
 .L7:            CMP     [CBM_TY_LIST+ESI*4+7],'2'
                 JNZ     MD2_HELP.XL
 
@@ -911,10 +1013,12 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 MOV     DX,DS_FVER
                 INT     21H
                 PUSH    SI
+                XOR     BP,BP
                 CALL    MAIN_ISCR
                 POP     SI
                 OR      BX,BX
                 JZ      MD2_HELP.XL
+
                 MOV     EAX,'000'
                 MOV     AL,[MENU2_TEMP]
                 MOV     DWORD [D_BUF2+BX],EAX
@@ -923,6 +1027,7 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 MOV     DX,D_BUF2
                 INT     21H
                 JC      MD2_HELP.XL
+
                 MOV     [IBM_FH],AX
                 MOV     BX,AX
                 MOV     AH,40H
@@ -966,14 +1071,18 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 INC     DI
                 DEC     SI
                 JZ      .L3
+
 .L4:            CALL    READ_DS_BYTE
                 JNC     MD2EF_D64.L3
+
                 MOV     [KBD_BUF+DI],AL
                 INC     DI
                 DEC     SI
                 JZ      .L3
+
                 CMP     DI,318
                 JNZ     .L4
+
 .L3:            MOV     AH,40H
                 MOV     CX,DI
                 MOV     DX,KBD_BUF
@@ -982,23 +1091,28 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 XOR     DI,DI
                 OR      SI,SI
                 JNZ     .L4
+
                 JMP     MD2EF_D64.L3
 
 .L2:            MOV     [MENU2_TEMP],191
 .L12:           CALL    READ_DS_BYTE
                 JNC     MD2EF_D64.L3
+
                 MOV     [KBD_BUF+DI],AL
                 INC     DI
                 OR      AL,AL
                 JZ      .L11
+
                 CMP     DI,318
                 JZ      .L11
+
 .L14:           DEC     [MENU2_TEMP]
                 JNZ     .L12
 
                 INC     SI
                 CMP     [CBM_TY_LIST+ESI*4+3],'2'
                 JNZ     MD2EF_D64.L3
+
                 CMP     SI,[LIST_CAP2]
                 JZ      MD2EF_D64.L3
 
@@ -1009,6 +1123,7 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 INT     21H
                 CALL    READ_DS_SB
                 JC      .L2
+
                 JMP     MD2EF_D64.L3
 
 .L11:           PUSH    AX
@@ -1021,11 +1136,13 @@ MD2EF_CTF:      MOV     AL,[CBM_TY_LIST+ESI*4+3]
                 POP     AX
                 OR      AL,AL
                 JNZ     .L14
+
                 JMP     MD2EF_D64.L3
 
 MD2_CBMCS:      MOV     AL,'1'
                 CMP     AL,[BMENU1_T+69]
                 JNZ     .L1
+
                 INC     AL
 .L1:            MOV     [BMENU1_T+69],AL
                 MOV     [BMENU2_T+69],AL

@@ -22,6 +22,8 @@ SET_NOSND:      XOR     BX,BX
                 JNZ     .L1
 NO_SOUND:       RETN
 
+SET_SBSND:      JMP     SET_NOSND
+
 RELOAD_SND:     MOV     BX,0FF0EH
 .L1:            CALL    MREAD_DH
                 CALL    MSTORE_DH

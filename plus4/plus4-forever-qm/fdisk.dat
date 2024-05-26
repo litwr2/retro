@@ -1,0 +1,11 @@
+                ALIGN   2
+FD_LA           DW      0
+FD_NLINE        DW      0
+FD_FREE         DW      0
+FD_D64NAME      DB      '????????.D64',0
+FD_PRGNAME      DB      '????????.???',0
+FD_BUF          RB      256
+FD_ETYPE        DB      0
+FD_ETYPE2       DB      0
+FD_ERR          DB      0
+

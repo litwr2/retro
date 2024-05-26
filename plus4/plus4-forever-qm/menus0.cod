@@ -255,8 +255,10 @@ CBM_ASCII2:     MOV     BX,21
                 JZ      .L6
                 CMP     AL,40H
                 JB      .L2
-                CMP     AL,80H
+                CMP     AL,60H
                 JB      .L5
+                CMP     AL,80H
+                JB      .L7
                 CMP     AL,0A0H
                 JB      .L1
                 CMP     AL,0C0H
@@ -272,6 +274,8 @@ CBM_ASCII2:     MOV     BX,21
 .L1:            MOV     AL,' '
                 JMP     .L2
 .L6:            MOV     AL,0DEH
+                JMP     .L2
+.L7:            ADD     AL,60H
                 JMP     .L2
 
 CBM_ASCII1:     MOV     BX,21
@@ -321,10 +325,10 @@ INIT_SCROLL:    MOV     DI,SCROLL_TOP_Y*160+SCROLL_TOP_X*2
                 RETN
 
 OUT_MSG:        MOV     AX,'É'+7*256    ;IN: BX,CX,SI,DI  USED: AX
-                STOSW
-                PUSH    CX
-                MOV     AL,'Í'
-                INC     CX
+                STOSW                   ;DI - TOP LEFT CORNER
+                PUSH    CX              ;CX - HOR. LENGTH
+                MOV     AL,'Í'          ;SI - MSG POINTER
+                INC     CX              ;BX - QUANTITY OF LINES
                 REP     STOSW
                 MOV     AL,'»'
                 STOSW
@@ -337,9 +341,7 @@ OUT_MSG:        MOV     AX,'É'+7*256    ;IN: BX,CX,SI,DI  USED: AX
                 STOSW
                 MOV     AL,' '
                 STOSW
-.L2:            LODSB
-                STOSW
-                LOOP    .L2
+                CALL    OUT_MSG1.L1
                 MOV     AL,'º'
                 STOSW
                 DEC     BX
@@ -357,6 +359,12 @@ OUT_MSG:        MOV     AX,'É'+7*256    ;IN: BX,CX,SI,DI  USED: AX
                 STOSW
                 RETN
 
+OUT_MSG1:       MOV     AH,7            ;IN: CX,SI,DI  USED: AX
+.L1:            LODSB                   ;DI - TOP LEFT CORNER
+                STOSW                   ;CX - HOR. LENGTH
+                LOOP    .L1             ;SI - MSG POINTER
+                RETN
+
 WAIT_ACTIVITY:  CALL    SHOWM
 .L2:            CALL    WAITM
                 TEST    BX,7
@@ -369,8 +377,11 @@ WAIT_ACTIVITY:  CALL    SHOWM
                 INT     16H
 .L1:            JMP     HIDEM
 
-MAKE_FNAME:     LEA     SI,[IBM_FN_LIST+EBX*8]  ;ES MUST BE EQUAL TO DS!!!
-                MOV     DI,D_BUF1               ;INPUT: BX - FLIST POINTER
+MAKE_FNAME:     PUSH    ES                      ;INPUT: BX - FLIST POINTER
+                PUSH    DS
+                POP     ES                      
+                LEA     SI,[IBM_FN_LIST+EBX*8]  
+                MOV     DI,D_BUF1               
                 MOV     CX,8
 .L2:            MOVSB
                 CMP     BYTE [SI],' '
@@ -387,6 +398,7 @@ MAKE_FNAME:     LEA     SI,[IBM_FN_LIST+EBX*8]  ;ES MUST BE EQUAL TO DS!!!
                 MOVSB
                 LOOP    .L4
 .L3:            MOV     BYTE [DI],CH    ;ASCIIZ!
+                POP     ES
                 RETN
 
 SAV_FPATH:      XOR     SI,SI
