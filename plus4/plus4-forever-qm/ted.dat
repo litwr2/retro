@@ -120,6 +120,7 @@ RIRQ            DB      0
 ISBORDER        DB      0
 VISIBLE         DB      0
 FRAMESKIP       DB      1       ;1-none, 3 - 2/3, 5 - 4/5, 7 - 6/7
+BEAMX           DB      49
 
 LABEL           VIDEO_DATA BYTE
 TIMES   375     DB      'V'

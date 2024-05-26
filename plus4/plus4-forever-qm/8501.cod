@@ -10,17 +10,18 @@ XRESET:         MOV     AX,SEG_ROM - 800H       ;SET ROM MAP
                 MOV     [PC],DX
                 MOV     [CPUOP],FETCHBYTE1
                 CALL    IEC8FLUSH
-                CALL    IEC9FLUSH
-                JMP     RESET_DS
+                JMP     IEC9FLUSH
 
-CPU8501:        CMP     [TICKS],1
+CPU8501:        SUB     [TICKS],1
                 JE      .L1
                 JS      .L2
 
                 CALL    [CPUOP]
+                DEC     [TICKS]
 .L1:            JMP     [CPUOP]
 
 .L2:            MOV     BX,[CPUOP]
+                MOV     [TICKS],0
                 CMP     BYTE [CS:BX-1],'W'
                 JZ      .L1
 

@@ -2,8 +2,8 @@ CPUCYCLE:       CMP     [TICKS],0
                 JE      .L1
                 JS      .L2
 
-.L4:            CALL    [CPUOP]
-                DEC     [TICKS]
+.L4:            DEC     [TICKS]
+                CALL    [CPUOP]
                 INC     [T_CLOCK_SUM]   ;FOR T COMMAND
 .L1:            RETN
 
@@ -11,7 +11,7 @@ CPUCYCLE:       CMP     [TICKS],0
                 CMP     BYTE [CS:BX-1],'W'
                 JNZ     .L1
 
-                INC     [TICKS]
+                MOV     [TICKS],1
                 JMP     .L4
 
 ADJUST_CPU:     MOV     [TICKS],0
@@ -782,10 +782,11 @@ SHOW_REGS:      MOV     BX,[PC]
 
                 MOV     BX,0FF1EH
                 CALL    MREAD_DH
-                MOV     AL,[TICKS]
-                SHL     AL,1
-                NEG     AL
-                ADD     AL,DH
+                ;MOV     AL,[TICKS]
+                ;SHL     AL,1
+                ;NEG     AL
+                ;ADD     AL,DH
+                MOV     AL,DH
                 CALL    BIN2HEX
                 MOV     WORD [REGS1+69],DX
 
@@ -1023,6 +1024,8 @@ D_DISPATCHER:   CALL    SILENCE
                 CMP     AL,'A'
                 JZ      D_A
 
+        cmp AL,'B'
+        jz D_B
                 CMP     AL,'C'
                 JZ      D_C
 
@@ -2349,6 +2352,9 @@ D_X:            MOV     BX,[DMA_BASE]
                 MOV     AL,DH
                 CALL    BIN2HEX
                 MOV     WORD [XVALS3+6],DX
+                MOV     AL,[BEAMX]
+                CALL    BIN2HEX
+                MOV     WORD [XVALS3+26],DX
 
                 MOV     DX,XVALS
                 CALL    OUT_STR
@@ -2357,4 +2363,22 @@ D_X:            MOV     BX,[DMA_BASE]
                 MOV     DWORD [INP_BUF+5],',L20'
                 MOV     [INP_BUF+9],0
                 JMP     D_D
+
+D_B:            XOR     SI,SI
+.L2:            MOV     BX,16                   ;25
+.L1:            MOV     AL,[DEBUGAREA+SI]
+                CALL    BIN2HEX
+                MOV     WORD [D_D_BUF+1],DX
+                MOV     DX,D_D_BUF
+                CALL    OUT_STR
+                INC     SI
+                DEC     BX
+                JNZ     .L1
+
+                MOV     DX,EOL
+                CALL    OUT_STR
+                CMP     SI,112          ;26*20
+                JB      .L2
+
+                JMP     D_DISPATCHER
 

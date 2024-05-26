@@ -9,7 +9,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 
                 DEC     [TICKS2TED]
                 INC     [TOTALTICKS]
-                CMP     BL,36H          ;DMA FETCH START
+                CMP     [TED_1E],36H            ;DMA FETCH START
                 JNE     .L2
 
                 CMP     [ISDMANOW],1
@@ -42,7 +42,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 AND     BH,0FBH
                 LOOP    .CHAR
 
-.L2:            MOV     AL,[TED_1E]
+.L2:            MOV     AL,[BEAMX]
                 CMP     AL,[SHVA]
                 JAE     .L9
 
@@ -95,6 +95,13 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 .SHOW8:         CMP     [VISIBLE],0
                 JE      .COUNTERS
 
+        ;cmp [BEAMY],294
+        ;jnz .ll1
+        ;
+        ;mov eax,[TOTALTICKS]
+        ;MOV     [DI],EAX
+        ;MOV     [DI+4],EAX
+;.ll1:
                 ADD     DWORD [VD_PTR_BEAM],80008H
 .COUNTERS:      CMP     [ISDMA],2
                 JNE     .L14
@@ -251,8 +258,10 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     AX,T00xxx
 .L28:           MOV     [VIDCJMP],AX
 .L29:           CALL    [VIDVRETRACE]
+                CALL    PARAM
+                CALL    CDS_LED
                 CALL    GET_JOYS
-                CMP     [TOTALTICKS],4000000000
+                CMP     [TOTALTICKS],0FF000000H
                 JBE     .L17
 
                 CALL    ADJUST_TICKS
@@ -329,11 +338,13 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     SI,[CLADDR]
                 MOV     AL,[BX+SI]
                 MOV     [TICKS],AL
+                INC     [BEAMX]
                 INC     [TED_1E]
                 CMP     [TED_1E],38H
                 JBE     .L15
 
                 MOV     [TED_1E],0
+                MOV     [BEAMX],0
 .L15:           OR      AL,AL
                 JE      TED
 
@@ -362,12 +373,24 @@ T01100:         BTR     DX,11           ;*** MCM+ HRV+
 
 T01000:         MOVZX   SI,DL           ;*** HRV+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                MOV     SI,[CP_CURRENT]
+                CMP     SI,WORD [TED_C]
+                JNZ     T00000.L0A
+
+                MOVZX   SI,DL
+                MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
+                NOT     CH
                 JMP     T00000.L0A
 
 T00000:         MOV     SI,DX           ;***
                 AND     SI,7FH
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                OR      DL,DL
+                MOV     SI,[CP_CURRENT]
+                CMP     SI,WORD [TED_C]
+                JNZ     .L9
+
+                NOT     CH
+.L9:            OR      DL,DL
                 JNS     .L0A
 
 .L0B:           NOT     CH
@@ -421,13 +444,8 @@ T00000:         MOV     SI,DX           ;***
 T11000:         OR      DH,DH                   ;*** HRV+ FLASH+
                 JS      V1_00
 
-                MOV     SI,[CP_CURRENT]
-                CMP     SI,WORD [TED_C]
-                JNZ     T01000
-
                 MOVZX   SI,DL
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                NOT     CH
                 JMP     T00000.L0A
 
 V1_00:          MOV     EAX,[COLOR0]
@@ -436,20 +454,23 @@ V1_00:          MOV     EAX,[COLOR0]
                 RETN
 
 T10000:         OR      DH,DH                   ;*** FLASH+
-                JS      V1_00
+                JS      .L2
 
                 MOV     SI,DX
                 AND     SI,7FH
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                MOV     SI,[CP_CURRENT]
-                CMP     SI,WORD [TED_C]
-                JNZ     .L1
+                JMP     T00000.L9
 
-                NOT     CH
-.L1:            OR      DL,DL
-                JS      T00000.L0B
+.L2:            OR      DL,DL
+                JNS     V1_00
 
-                JMP     T00000.L0A
+                MOV     DL,DH
+                MOV     AX,DX
+                BSWAP   EAX
+                MOV     AX,DX
+                MOV     [DI],EAX
+                MOV     [DI+4],EAX
+                RETN
 
 T00010:         MOV     SI,DX                   ;*** ECM+
                 AND     SI,3FH

@@ -32,6 +32,7 @@ MHELP1  DB      '"F1" invokes this text.                                    '
         DB      '"<", ">" sets emulator speed limit.                        '
         DB      '"Enter" shows an image or loads a program.                 '
         DB      'Left mouse button activates menu item.                     '
+DVTR            DB      '*89'
 CP_IN_WIN1      DB      0
 CP_MAX_WIN1     DB      21
 DIRECTION       DB      0       ;0-IN, 1-OUT
@@ -56,21 +57,24 @@ DEV1FH          DW      ?
 DEV8FH          DW      ?
 DEV9FH          DW      ?
 DEV1SZ          DD      ?
+DEV1FMT         DB      ?       ;C,T
 DEV8BAM         RB      256
 DEV8ES          RB      683     ;SECTORS MAP
 DEV8WP          DB      ?       ;DISK WRITE PROTECTION
 DEV9BAM         RB      256
 DEV9ES          RB      683     ;SECTORS MAP
 DEV9WP          DB      ?       ;DISK WRITE PROTECTION
+DEV1WP          DB      ?       ;TAPE WRITE PROTECTION
 TEST_DRV        DB      'A:'
 IBM_MASK        DB      '*.???',0
-IBM_EXTS_CAP    EQU     9
+IBM_EXTS_CAP    EQU     10
 IBM_EXTS        DD      'C2F','CTF','D64','PRG','P0?','S0?','U0?','R0?','D0?'
-EXTS_DET        DB      0,0,0,0,1,1,1,1,1
+                DD      'TAP'
+EXTS_DET        DB      0,0,0,0,1,1,1,1,1,0
 TT2             DW      ENT_C2F,ENT_CTF,ENT_D64,ENT_PRG,ENT_P00,MENU_DISP1
-                DW      MENU_DISP1,MENU_DISP1,MENU_DISP1
+                DW      MENU_DISP1,MENU_DISP1,MENU_DISP1,MENU_DISP1
 TT4             DW      FC_XX,FC_XX,FC_D64,FC_PRG,FC_X00,FC_X00,FC_X00
-                DW      FC_X00,FC_X00
+                DW      FC_X00,FC_X00,FC_XX
 IBM_FLIST_CAP   EQU     416
 IBM_FN_LIST     RB      8*IBM_FLIST_CAP
 IBM_EX_LIST     RB      3*IBM_FLIST_CAP
@@ -80,5 +84,4 @@ IBM_SZ_LIST     RD      IBM_FLIST_CAP
 RSPEED          DB      'SPEED   000.0%'
 SPEEDL          DB      'LIMIT < 100.0%>'
 IOBUF           RB      1024
-DVTR            DB      '*89'
 

@@ -1,10 +1,28 @@
-DEV1DETACH:     PUSH    SI              ;USE: BX
+DEV1DETACH:     TEST    [LED],10H               ;BUTTON PLAY?
+                JZ      .L2
+
+                AND     [LED],0CFH
+                CALL    SET_LED
+.L2:            PUSH    SI              ;USE: BX
                 MOV     SI,[DEV1FNP]    ;CLOSE ASSO FILES
                 MOV     BX,[DEV1FH]
 .L0:            CMP     BYTE [SI],0
                 JE      .L1
 
-                MOV     BYTE [SI],0
+                CMP     [DEV1WP],0      ;TAP too!
+                JNE     .L3
+
+                MOV     AX,4200H                ;SEEK START OF FILE
+                XOR     CX,CX
+                XOR     DX,DX
+                INT     21H
+
+                MOV     AH,40H          ;WRITE
+                MOV     DX,DS_FVER
+                MOV     CX,6
+                INT     21H
+
+.L3:            MOV     BYTE [SI],0
                 MOV     AH,3EH
                 INT     21H
 .L1:            POP     SI
@@ -33,17 +51,62 @@ DEV1ATTACH:     XOR     BX,BX                   ;IN: SI
                 MOV     [DI],EAX
                 MOV     EAX,DWORD [IBM_FN_LIST+ESI*8+4]
                 MOV     [DI+4],EAX
-                MOV     DWORD [DI+8],'.CTF'
                 MOV     BYTE [DI+12],0
                 MOV     DX,DI
                 MOV     AX,3D02H        ;OPEN FILE, R/W
+                CMP     [DEV1FMT],'C'
+                JNZ     .TAP
+
+                MOV     DWORD [DI+8],'.CTF'
+                MOV     [DEV1WP],0
+                INT     21H
+                JNC     .L2
+
+                INC     [DEV1WP]
+                MOV     AX,3D00H        ;TRY R/O
                 INT     21H
                 JC      DEV8ATTACH.FAIL
 
-                MOV     [DEV1FH],AX
-                MOV     EAX,[DS:IBM_SZ_LIST+ESI*4]
+.L2:            MOV     [DEV1FH],AX
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,6
+                MOV     DX,DS_FVER
+                INT     21H
+
+.L4:            MOV     EAX,[IBM_SZ_LIST+ESI*4]
                 MOV     [DEV1SZ],EAX
                 RETN
+
+.TAP:           MOV     DWORD [DI+8],'.TAP'
+                MOV     [DEV1WP],1      ;ALWAYS R/O!
+                INT     21H
+                JNC     .L3
+
+                ;INC     [DEV1WP]
+                MOV     AX,3D00H        ;TRY R/O
+                INT     21H
+                JC      DEV8ATTACH.FAIL
+
+.L3:            MOV     [DEV1FH],AX
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,20
+                MOV     DX,DS_TAP
+                INT     21H
+
+                XOR     EAX,EAX
+                MOV     [DS_TAPSUM],EAX
+                MOV     [DS_TAPEB],AX
+                MOV     [DS_BUF_PTR],AX
+                MOV     [DS_TAPPM],10H
+                MOV     [DS_TAPF],AL
+                CMP     WORD [DS_TAP+13],2      ;C16 & PAL
+                JZ      .L4
+
+                MOV     AH,3EH
+                INT     21H
+                JMP     DEV8ATTACH.FAIL
 
 DEV8ATTACH:     XOR     BX,BX                   ;IN: SI
                 MOVZX   CX,[FPATH_LEN]          ;USE: EAX,BX,CX,DX,DI
@@ -577,6 +640,38 @@ FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
                 JNZ     .L7
 
                 MOV     WORD [IBM_DV_LIST+EBX*2],AX
+                CMP     AX,'01'
+                JNZ     .L10
+
+                CMP     [DEV1FMT],'C'
+                JZ      .L10
+
+                IMUL    BX,24
+                MOV     DWORD [IBM_CI_LIST+BX+1],'POS '
+                PUSH    BX
+                MOV     AX,4201H
+                MOV     BX,[DEV1FH]
+                XOR     CX,CX
+                XOR     DX,DX
+                INT     21H
+                SHL     EDX,16
+                MOV     DX,AX
+                MOVZX   EAX,[DS_BUF_PTR]
+                ADD     EAX,EDX
+                MOVZX   EDX,[DS_TAPEB]
+                SUB     EAX,EDX
+                CALL    HEX2DEC
+                POP     BX
+                MOV     CX,10
+                MOV     SI,HEX2DECBUF
+.LL1:           LODSB
+                CMP     AL,' '
+                JZ      .LL2
+
+                MOV     [IBM_CI_LIST+BX+5],AL
+                INC     BX
+.LL2:           LOOP    .LL1
+
 .L10:           ADD     BP,2
                 CMP     BP,DEV9FNP
                 JBE     .L9
@@ -597,6 +692,7 @@ TRAN_CBM_SCR1:  MOV     DI,160*(SCR1_TOP_Y+2)+SCR1_TOP_X*2+56
                 MOV     DX,24
                 CMP     [BMENU1_T+69],'2'
                 JZ      CBM_ASCII2
+
                 JMP     CBM_ASCII1
 
 FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
@@ -710,7 +806,7 @@ PLOT_SCR1:      CALL    OUT_FRAME1
                 MOV     DI,160*7+10*2
                 MOV     CX,44
                 MOV     BX,1
-                MOV     SI,DS_MSG2
+                MOV     SI,M0_MSG1
                 CALL    OUT_MSG
                 CALL    WAIT_ACTIVITY
                 MOV     [DIROVERST],0
@@ -1088,6 +1184,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
                 MOV     EAX,[IBM_SZ_LIST+EBX*4]
                 OR      EAX,EAX
                 JS      .L9                     ;DISK?
+
                 JNZ     .L2                     ;DIR?
 
                 MOVZX   SI,[FPATH_LEN]          ;SET NEW DIRECTORY
@@ -1189,6 +1286,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
                 SHR     DI,1
                 MOV     DWORD [CP_IN_WIN2],1500H
                 MOV     [CBM_FTYPE],DI
+                MOV     [CBM_MENUPOS],SI
                 PUSH    DI
                 CALL    OPEN_CBM_FILE
                 POP     DI
@@ -1345,7 +1443,12 @@ MD1_ASSO:       MOVZX   SI,[CP_IN_WIN1]
                 MOV     DL,[IBM_EX_LIST+2+ESI*2+ESI]
                 MOV     CL,[IBM_DV_LIST+ESI*2+1]
                 CMP     AX,'CT'
-                JZ      .CTF
+                MOV     DH,'F'
+                JZ      .TAPE
+
+                CMP     AX,'TA'
+                MOV     DH,'P'
+                JZ      .TAPE
 
                 CMP     AX,'D6'
                 JNZ     MENU_DISP1
@@ -1455,16 +1558,22 @@ MD1_ASSO:       MOVZX   SI,[CP_IN_WIN1]
                 INC     [DEV4SCR]
                 JMP     MD1_SAVEBS.L0
 
-.CTF:           CMP     DL,'F'
+.TAPE:          CMP     DL,DH
                 JNZ     MENU_DISP1
 
-                CMP     CL,'*'
-                JZ      .L8
+                MOV     [DEV1FMT],AL
+.LC3:           CMP     CL,'*'
+                JZ      .LC1
 
                 CALL    DEV1DETACH
                 JMP     MD1_SAVEBS.L0
 
-.L8:            CALL    DEV1ATTACH
+.LC1:           MOV     BX,[DEV1FNP]
+                CMP     BYTE [BX],0
+                JE      .LC2
+
+                CALL    DEV1DETACH
+.LC2:           CALL    DEV1ATTACH
                 JMP     MD1_SAVEBS.L0
 
 MD1_NEWM:       XOR     BP,BP
@@ -1485,15 +1594,15 @@ MD1_NEWM:       XOR     BP,BP
                 JNZ     .L1
 
                 MOV     DWORD [FILENAMEBUF+BX],'CTF'
-                MOV     [DS_HPOSN],1
-                MOV     [DS_QENTR],1
+                MOV     [DSM_HPOSN],1
+                MOV     [DSM_QENTR],1
                 INT     21H
                 JC      MD1_ENTER.L8A
 
                 MOV     BX,AX
                 MOV     CL,6
                 MOV     AH,40H
-                MOV     DX,DS_FVER
+                MOV     DX,DSM_FVER
                 INT     21H
 
 .L2:            MOV     AH,3EH
@@ -1734,6 +1843,7 @@ ADJUST_TICKS:   XOR     EAX,EAX
                 MOV     [RETRACE_COUNT],EAX
                 MOV     [SYNCHRO_TICKS],EAX
                 XCHG    EAX,[TOTALTICKS]
+                DEC     EAX
                 SUB     [DS_TIMER],EAX
                 RETN
 

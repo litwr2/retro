@@ -6,9 +6,7 @@ IEC#NU#FAIL:       inc     [BORDER_COLOR]
                 MOV     [IEC#NU#JMP],IEC#NU#J1
                 RETN
 
-IEC#NU#ERRZ:       MOVZX   BX,[IEC#NU#CH]
-                MOV     [IEC#NU#ERR+BX],AL
-                MOV     [IEC#NU#GERR],AL
+IEC#NU#ERRZ:       MOV     [IEC#NU#GERR],AL
 IEC#NU#ERRY:       OR      [IEC#NU#_1],2
                 RETN
 
@@ -199,6 +197,7 @@ IEC#NU#J12:        CMP     [IEC#NU#_0PREV],81H
                 MOV     [IEC#NU#JMP],IEC#NU#J121      ;READ DATA
                 RETN
 
+
 IEC#NU#J111:       CMP     [IEC#NU#_0PREV],83H        ;SET FN
                 JNE     .L1
 
@@ -212,10 +211,9 @@ IEC#NU#J111:       CMP     [IEC#NU#_0PREV],83H        ;SET FN
                 JNE     IEC#NU#FAIL
 
                 MOVZX   BX,[IEC#NU#CH]
-                CMP     [IEC#NU#ERR+BX],BH
+                CMP     [IEC#NU#GERR],BH
                 JZ      .L2
 
-                MOV     [IEC#NU#ERR+BX],BH
                 MOV     [IEC#NU#GERR],BH
                 CMP     [IEC#NU#FHST+BX],BH
                 JE      .L2
@@ -237,16 +235,14 @@ IEC#NU#J111:       CMP     [IEC#NU#_0PREV],83H        ;SET FN
                 JZ      IEC#NU#COMMAND
 
                 CALL    IEC#NU#PARSEFN
-                MOVZX   BX,[IEC#NU#CH]
-                CMP     [IEC#NU#ERR+BX],BH
-                JE      IEC#NU#FOPEN
+                CMP     [IEC#NU#GERR],1
+                JBE     IEC#NU#FOPEN
 
 .L0:            RETN
 
 IEC#NU#COMMAND:    CALL    IEC#NU#PARSECMD
-                MOVZX   BX,[IEC#NU#CH]
-                CMP     [IEC#NU#ERR+BX],BH
-                JNE     IEC#NU#J111.L0
+                CMP     [IEC#NU#GERR],1
+                JA      IEC#NU#J111.L0
 
                 JMP     [IEC#NU#CMDJMP]
 
@@ -257,18 +253,15 @@ IEC#NU#J112:       CMP     [IEC#NU#_0PREV],81H        ;CLOSE
                 JNE     IEC#NU#J1.L0
 
                 MOV     [IEC#NU#JMP],IEC#NU#J1
-                MOVZX   BX,[IEC#NU#CH]
-                CMP     [IEC#NU#ERR+BX],BH
-                JNE     IEC#NU#ERRY
+                CMP     [IEC#NU#GERR],1
+                JA      IEC#NU#ERRY
 
                 JMP     IEC#NU#CLOSE
 
 IEC#NU#J113:       CMP     [IEC#NU#_0PREV],83H
-                JNE     .L1
+                JE      IEC#NU#SENDBYTE
 
-                JMP     IEC#NU#SENDBYTE
-
-.L1:            CMP     [IEC#NU#_0PREV],81H
+                CMP     [IEC#NU#_0PREV],81H
                 JNE     IEC#NU#FAIL
 
                 CMP     [IEC#NU#_0],3FH
@@ -301,11 +294,13 @@ IEC#NU#J121:       CMP     [IEC#NU#_3],0
         END IF
                 INC     [IEC#NU#ST]
                 CALL    IEC#NU#GETBYTE
-                MOVZX   SI,[IEC#NU#CH]
-                CMP     [IEC#NU#ERR+SI],0
-                JNE     IEC#NU#ERRY
+                CMP     [IEC#NU#CH],3
+                JZ      .L3
 
-                OR      BX,BX
+                CMP     [IEC#NU#GERR],1
+                JA      IEC#NU#ERRY
+
+.L3:            OR      BX,BX
                 JNE     .L1
 
                 OR      [IEC#NU#_1],3
@@ -1039,7 +1034,7 @@ IEC#NU#GETBYTE:    MOV     BX,[DEV#NU#FNP]
                 MOV     [IEC#NU#GETBUF0V+2*ESI],IEC#NU#SBUF
                 JMP     .L2
 
-.L3:            CMP     [IEC#NU#ERR+SI],1
+.L3:            CMP     [IEC#NU#GERR],1
                 JA      IEC#NU#ERRY
 
                 MOV     [IEC#NU#GETBUF0V+2*ESI],IEC#NU#NBUF64
@@ -1076,11 +1071,11 @@ IEC#NU#GETBYTE:    MOV     BX,[DEV#NU#FNP]
                 JB      .L1
 
                 CALL    [IEC#NU#GETBUF0V+SI]
-                PUSH    SI
-                SHR     SI,1
-                CMP     [IEC#NU#ERR+SI],0
-                POP     SI
-                JNE     .L5
+                CMP     SI,3*2                  ;CMD CHANNEL?
+                JZ      .L1
+
+                CMP     [IEC#NU#GERR],1
+                JA      .L5
 
 .L1:            INC     [IEC#NU#BUF0P+SI]
                 SHL     SI,8
@@ -1092,11 +1087,13 @@ IEC#NU#GETBYTE:    MOV     BX,[DEV#NU#FNP]
                 JB      .NOTLAST
 
                 CALL    [IEC#NU#GETBUF0V+SI]
-                SHR     SI,1
-                CMP     [IEC#NU#ERR+SI],0
-                JNE     .L5
+                CMP     SI,3*2                  ;CMD CHANNEL?
+                JZ      .L8
 
-                OR      AX,AX
+                CMP     [IEC#NU#GERR],1
+                JA      .L5
+
+.L8:            OR      AX,AX
                 JNZ     .NOTLAST
 
                 XOR     BX,BX
@@ -1452,8 +1449,8 @@ IEC#NU#SENDBYTE:   MOVZX   SI,[IEC#NU#CH]
                 CMP     SI,3            ;CMD?
                 JZ      .L2
 
-                CMP     [IEC#NU#ERR+SI],0
-                JNE     IEC#NU#ERRY
+                CMP     [IEC#NU#GERR],1
+                JA      IEC#NU#ERRY
 
                 CMP     [IEC#NU#AM+SI],'#'
                 JZ      .L3
@@ -1508,17 +1505,6 @@ IEC#NU#SENDBYTE:   MOVZX   SI,[IEC#NU#CH]
                 JB      .L6
 
                 SHL     SI,8
-                MOV     AX,WORD [IEC#NU#BUF0-2+SI]
-                MOVZX   BX,AL                   ;BLOCK-ALLOCATE
-                MOVZX   EDX,AH
-                BTR     DWORD [DEV#NU#BAM+1+EBX*4],EDX
-                JNC     IEC#NU#ERR72
-
-                DEC     [DEV#NU#BAM+EBX*4]
-                CALL    IEC#NU#WBAM             ;SETS BX!
-                MOV     AX,WORD [IEC#NU#BUF0-2+SI]
-                MOV     [D64_POS],AX
-                CALL    SEEK_D64_POS
                 XOR     BX,BX
 .L7:            INC     BX
                 CALL    IEC#NU#GETFS64
@@ -1528,7 +1514,20 @@ IEC#NU#SENDBYTE:   MOVZX   SI,[IEC#NU#CH]
                 CMP     BL,18
                 JZ      .L7
 
-                MOV     WORD [IEC#NU#BUF0-2+SI],BX
+                MOV     AX,BX
+                XCHG    WORD [IEC#NU#BUF0-2+SI],BX
+                MOV     DI,BX
+                MOVZX   EDX,AH                  ;BLOCK-ALLOCATE
+                MOVZX   BX,AL
+                BTR     DWORD [DEV#NU#BAM+1+EBX*4],EDX
+                JNC     IEC#NU#ERR72
+
+                DEC     [DEV#NU#BAM+EBX*4]
+                CALL    IEC#NU#WBAM             ;SETS BX!
+
+                MOV     [D64_POS],DI
+                CALL    SEEK_D64_POS
+
                 MOV     BX,[DEV#NU#FH]
                 MOV     CX,256
                 LEA     DX,[IEC#NU#BUF0-2+SI]
@@ -1664,7 +1663,8 @@ IEC#NU#RENAME:     CALL    IEC#NU#FM
                 JB      .L4
 
                 CALL    IEC#NU#FM
-                OR      BX,BX
+                MOV     AX,BX
+                OR      AX,AX
                 POP     BX
                 JNZ     IEC#NU#ERR63
 
@@ -1933,11 +1933,10 @@ IEC#NU#POSITION:   MOV     AL,[IEC#NU#BUF+1]
                 INT     21H
 
                 SHR     SI,8
-                MOV     [IEC#NU#BUF0L+SI],DX       ;DX=0!
+                MOV     [IEC#NU#BUF0L+SI],DX    ;DX=0
                 MOV     [IEC#NU#BUF0P+SI],DX
-                SHR     SI,1
-                CMP     [IEC#NU#ERR+SI],DL
-                JNE     IEC#NU#ERRY
+                CMP     [IEC#NU#GERR],1
+                JA      IEC#NU#ERRY
 
                 RETN
 
@@ -1981,6 +1980,7 @@ IEC#NU#U1:         XOR     SI,SI
                 SHL     SI,9
                 LEA     DX,[IEC#NU#BUF0+SI]
                 SHR     SI,8
+                MOV     [IEC#NU#BUF0P+SI],0     ;SET B-P TO 0
                 MOV     AH,3FH
                 MOV     CX,256
                 INT     21H
@@ -2526,7 +2526,7 @@ IEC#NU#FOPEN64:    MOVZX   SI,[IEC#NU#CH]
 
                 INC     AX
 .LS2:           POP     BX
-                MOV     [IOBUF+BX],AL           ;FILL FT
+                MOV     [IOBUF+BX],AL           ;FILL FTYPE
                 MOV     DWORD [IOBUF+19+BX],0
                 MOV     DWORD [IOBUF+23+BX],0
                 MOV     [IOBUF+27+BX],0
@@ -2558,15 +2558,22 @@ IEC#NU#FOPEN64:    MOVZX   SI,[IEC#NU#CH]
                 SHR     DI,1                    ;USE SAVED SI
                 MOV     [IEC#NU#FHST+DI],1
                 SHL     DI,9
-                MOV     WORD [DS:IEC#NU#BUF0-2+DI],BX
-
+                MOV     WORD [IEC#NU#BUF0-2+DI],BX
                 MOV     BX,[DEV#NU#FH]          ;WRITE DE
                 CALL    SEEK_D64_POS
                 MOV     AH,40H
                 MOV     CX,256
                 MOV     DX,IOBUF
                 INT     21H
-                RETN
+
+                MOV     AX,WORD [IEC#NU#BUF0-2+DI]
+                MOVZX   BX,AL                   ;BLOCK-ALLOCATE
+                MOVZX   EDX,AH
+                BTR     DWORD [DEV#NU#BAM+1+EBX*4],EDX
+                JNC     IEC#NU#ERR72
+
+                DEC     [DEV#NU#BAM+EBX*4]
+                JMP     IEC#NU#WBAM             ;SETS BX!
 
 .OPEN:          CMP     [IEC#NU#CFT],'A'
                 JZ      IEC#NU#ERR75
@@ -2677,8 +2684,13 @@ IEC#NU#DBUF64:     MOV     BP,SI
                 MOV     DWORD [DS:IEC#NU#BUF0+BP],1010401H
                 MOV     DWORD [DS:IEC#NU#BUF0+4+BP],22120000H
                 MOV     CX,16
+                MOV     AH,7FH
 .L3:            MOV     AL,[DEV#NU#BAM+144+DI]
-                AND     AL,7FH
+                CMP     AL,'"'
+                JNZ     .L70
+
+                XOR     AH,80H
+.L70:           AND     AL,AH
                 MOV     [DS:IEC#NU#BUF0+8+BP+DI],AL
                 INC     DI
                 LOOP    .L3
@@ -2872,14 +2884,7 @@ IEC#NU#CLOSE64:    MOVZX   SI,[IEC#NU#CH]
 .L1:            MOV     DI,SI
                 SHL     SI,9
                 MOV     AX,WORD [IEC#NU#BUF0-2+SI]
-                MOVZX   BX,AL                   ;BLOCK-ALLOCATE
-                MOVZX   EDX,AH
-                BTR     DWORD [DEV#NU#BAM+1+EBX*4],EDX
-                JNC     IEC#NU#ERR72
-
-                DEC     [DEV#NU#BAM+EBX*4]
-                CALL    IEC#NU#WBAM             ;SETS BX!
-                MOV     AX,WORD [IEC#NU#BUF0-2+SI]
+                MOV     BX,[DEV#NU#FH]
                 MOV     [D64_POS],AX
                 CALL    SEEK_D64_POS
                 MOV     AX,[IEC#NU#BUF0L+EDI*2]
@@ -3041,7 +3046,7 @@ IEC#NU#VALIDATE64:
 .L3:            CMP     [IOBUF+2+SI],0
                 JZ      .NEXTDE
 
-                AND     [IOBUF+2+SI],80H
+                TEST    [IOBUF+2+SI],80H
                 JNZ     .L2
 
                 MOV     [IOBUF+2+SI],0  ;REMOVE SPLAT FILES!
@@ -3134,7 +3139,7 @@ MACRO           DRIVED  NU
                 ALIGN   2
 IEC#NU#JMP         DW      IEC#NU#J1
 IEC#NU#CHFH        DW      0,0,0,0      ;FILE HANDLES FOR IBM FS OR
-                                ;FILE DE ID=#S FOR CBM FS
+                                ;FILE DE ID=#SECT FOR CBM FS
                                 ;LAST WORD FOR IEC#NU#GETS64 ONLY
 IEC#NU#BUF0        RB      512
 IEC#NU#BUF1        RB      512
@@ -3156,7 +3161,6 @@ IEC#NU#GETBUF3V    DW      0
 IEC#NU#CMDJMP      DW      0
 IEC#NU#_0PREV      DB      0
 IEC#NU#ST          DB      0
-IEC#NU#ERR         DB      0,0,0,0
 IEC#NU#GERR        DB      0
 
 IEC#NU#CNI         DB      177,177,177,177 ;0-15 - CHANNEL#, 177 - FREE

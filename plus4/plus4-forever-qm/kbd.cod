@@ -1,21 +1,3 @@
-RESTORE_INTR9:  MOV     DX,[CS:SAVE9LO] ;RESTORE INTR9 VECTOR
-                PUSH    DS
-                MOV     DS,[CS:SAVE9HI]
-                JMP     SET_INTR9.L1
-
-SET_INTR9:      MOV     AX,3509H        ;SAVE/SET INTR9 VECTOR
-                INT     21H
-                PUSH    DS
-                PUSH    CS
-                POP     DS
-                MOV     [SAVE9LO],BX
-                MOV     [SAVE9HI],ES
-                MOV     DX,INTR9
-.L1:            MOV     AX,2509H
-                INT     21H
-                POP     DS
-                RETN
-
 KB_WAIT:        PUSH    CX
                 PUSH    AX
                 XOR     CX,CX
@@ -42,6 +24,24 @@ SET_LED:        CALL    KB_WAIT
                 OUT     60H,AL
                 RETN
 
+RESTORE_INTR9:  MOV     DX,[CS:SAVE9LO] ;RESTORE INTR9 VECTOR
+                PUSH    DS
+                MOV     DS,[CS:SAVE9HI]
+                JMP     SET_INTR9.L1
+
+SET_INTR9:      MOV     AX,3509H        ;SAVE/SET INTR9 VECTOR
+                INT     21H
+                PUSH    DS
+                PUSH    CS
+                POP     DS
+                MOV     [SAVE9LO],BX
+                MOV     [SAVE9HI],ES
+                MOV     DX,INTR9
+.L1:            MOV     AX,2509H
+                INT     21H
+                POP     DS
+                RETN
+
 INTR9:          PUSH    AX
                 PUSH    DS
                 MOV     AX,SEG_DATA
@@ -64,25 +64,22 @@ INTR9:          PUSH    AX
                 CMP     AH,36H
                 JZ      .LEZ
 
-.L2:            PUSH    BX
-                PUSH    DX
-
-                CMP     AL,0C6H         ;ScrollLock?
+.L2:            CMP     AL,0C6H         ;ScrollLock?
                 JNZ     .L4
 
-                XOR     [LED],10H
-                TEST    [LED],10H
-                JNZ     .L7
+                OR      [LED_NEW],10H
+                JMP     .LEZ
 
-                AND     [LED],0DFH
-.L7:            CALL    SET_LED
-                JMP     .LE
+.L4:            CMP     AL,0C5H         ;NumLock?
+                JNZ     .L5
 
-.L4:            CMP     AL,0D4H         ;SysReq (Alt+PrintScreen)?
+                OR      [LED_NEW],20H
+                JMP     .LEZ
+
+.L5:            PUSH    BX
+                PUSH    DX
+                CMP     AL,0D4H         ;SysReq (Alt+PrintScreen)?
                 JZ      .SR
-
-                CMP     AL,0C5H         ;NumLock?
-                JZ      .LNL
 
                 CMP     AL,0BAH         ;CapsLock?
                 JZ      .LCL
@@ -160,15 +157,6 @@ INTR9:          PUSH    AX
                 OUT     20H,AL
 .LEZ1:          POP     AX
                 IRET
-
-.LNL:           XOR     [LED],20H
-                MOV     AL,[LED]
-                AND     AL,20H
-                SHR     AL,1
-                AND     [LED],0EFH
-                OR      [LED],AL
-                CALL    SET_LED
-                JMP     .LE
 
 .LCL:           XOR     [LED],40H
                 XOR     [KMATRIX+1],80H
@@ -379,7 +367,7 @@ SYS_KEYS:       CMP     [ISMOUSE],0
 .L7:            CMP     AL,0C3H         ;F9=DEBUGGER
                 JNZ     .L1
 
-                CMP     [VIDCJMP],T00xxx
+                CMP     [VIDCJMP],T00xxx        ;FRAME SKIP?
                 JE      .L4
 
                 MOV     [MAINJUMP],DEBUG_ENTRY
@@ -397,13 +385,7 @@ SYS_KEYS:       CMP     [ISMOUSE],0
 .L2:            CMP     AL,0D8H         ;F12=MENUS
                 JNZ     .L3
 
-.L9:            TEST    [CPU_1],8
-                JNZ     .L5
-
-                TEST    [LED],10H
-                JNZ     .L4
-
-.L5:            MOV     [MAINJUMP],MENUS_ENTRY
+.L9:            MOV     [MAINJUMP],MENUS_ENTRY
 .L3:            CMP     AL,0C4H         ;F10=EXIT
                 JNZ     .L4
 

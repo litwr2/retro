@@ -15,7 +15,7 @@ IECDSIDX        DW      IECDS00,IECDS01,IECDS20
                 DW      IECDS73,IECDS74,IECDS75
                 DW      NOTDOSCHARS
 
-D64SECP         DW      ?
+D64SECP         DW      ?       ;sector# set in SEEK_D64_POS
 
 IECDS           DB      ',00,00',0DH
 IECDS00         DB      '00, OK'
@@ -63,4 +63,7 @@ XXXFN           DB      'IECDEBUG.BIN',0
 XXXFH           DW      0
 XXXBUF          DB      2
 END IF
+
+LABEL           DEBUGAREA       BYTE
+TIMES   500     DB      0
 

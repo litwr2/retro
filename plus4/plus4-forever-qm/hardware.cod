@@ -46,8 +46,10 @@ RESTORE_INTR23: MOV     DX,[SAVE23LO]   ;RESTORE INTR23 VECTOR
                 MOV     DS,[SAVE23HI]
                 JMP     SET_INTR23.L1
 
-FINISHIBM:      CALL    RESET_DS
-
+FINISHIBM:      MOV     BX,1
+                MOV     DH,[CPU_1]
+                OR      DH,8
+                CALL    MSTORE_DH       ;CLOSE TAPE
         IF IEC8DEBUG > 0
                 MOV AH,3EH
                 MOV BX,[XXXFH]
@@ -144,6 +146,8 @@ INITIBM:        CLD
                 XOR     ECX,ECX
                 XOR     EBP,EBP
 
+                CALL    INIT_VIDEO
+
                 MOV     AX,3D00H
                 MOV     DX,CFGFILE
                 INT     21H
@@ -159,14 +163,12 @@ INITIBM:        CLD
                 INT     21H
 
                 MOV     AX,WORD [KBD_BUF]
-                MOV     [VIDMODE],AL
+                MOV     [VIDMODE],AL            ;test with - in msg16!!!
                 MOV     [FRAMESKIP],AH
                 MOV     AL,[KBD_BUF+2]
                 OR      [SJCFG],AL
 
-.L6:            CALL    INIT_VIDEO
-
-                MOV     AX,SEG_RAM      ;INIT FS
+.L6:            MOV     AX,SEG_RAM      ;INIT FS
                 MOV     FS,AX
 
                 CALL    SET_VMODE       ;SET VIDEO MODE
@@ -322,5 +324,66 @@ INIT_VIDEO:     MOV     AX,SEG_VRAM1
                 CMP     BL,MAXVIDMODEN-VBESWITCH
                 JB      .L3
 
+.EXIT:          RETN
+
+SPARAM:         MOVZX   CX,BYTE [ES:80H]
+                SUB     CL,1
+                JBE     .EXIT
+
+                XOR     BX,BX
+.L1:            MOV     AL,[ES:82H+BX]
+                MOV     [FNAME+BX],AL
+                INC     BX
+                LOOP    .L1
+
+                MOV     [FNAME+BX],CL
+                RETN
+
+.EXIT:          INC     [PARAMF]
+                RETN
+
+PARAM:          CMP     [PARAMF],0
+                JNE     .EXIT
+
+                CMP     [RETRACE_COUNT],34    ;17/25sec
+                JB      .EXIT
+
+                PUSHA
+                PUSH    ES
+                INC     [PARAMF]
+                MOV     AX,3D00H
+                MOV     DX,FNAME
+                INT     21H
+                JC      .EXIT1
+
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     DX,IOBUF
+                MOV     CX,2
+                INT     21H
+
+                MOV     AH,3FH
+                MOV     DX,WORD [IOBUF]
+                MOV     CX,0F500H
+                PUSH    DS
+                PUSH    FS
+                POP     DS
+                INT     21H
+                ADD     AX,DX
+                CMP     AX,1009H
+                JB      .L2
+
+                CMP     AX,0FD00H
+                JAE     .L2
+
+                MOV     [2DH],AX
+                MOV     [2FH],AX
+                MOV     [31H],AX
+                MOV     [9DH],AX
+.L2:            POP     DS
+                MOV     AH,3EH
+                INT     21H
+.EXIT1:         POP     ES
+                POPA
 .EXIT:          RETN
 

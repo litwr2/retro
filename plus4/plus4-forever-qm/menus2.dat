@@ -36,7 +36,24 @@ CBM_FH          DW      ?
 IBM_FH          DW      ?
 D64_POS         DW      ?
 CBM_FTYPE       DW      ?
+CBM_MENUPOS     DW      ?
 DETEMP          DB      ?
 CBM00ID         DB      'C64File',0     ;compatibility!
 MENU2_TEMP      DB      ?
+
+DSM_SBUF        DB      ?
+DSM_LBC         DB      ?
+DSM_LBQ         DB      ?
+DSM_TIMER       DD      ?
+DSM_MSUM        DD      ?
+DSM_TEMP        DW      ?
+DSM_BUF_PTR     DW      ?
+DSM_FVER        DW      0               ;CURRENT FORMAT VERSION
+DSM_HPOSN       DW      ?               ;CURRENT TAPE HEAD POSITION NUMBER
+DSM_QENTR       DW      ?               ;QUANTITY OF CURRENT TAPE ENTRIES +1
+DSM_RPOSP       DD      ?               ;BUFFER START POS
+DSM_RPOSC       DD      ?               ;BUFFER END POS
+DSM_RPOSE       DD      ?               ;END OF BLOCK
+DSM_NPOS        DD      ?               ;NEXT POSITION
+DSM_MVAL        DW      ?
 

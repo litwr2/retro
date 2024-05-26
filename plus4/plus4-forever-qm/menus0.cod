@@ -48,7 +48,8 @@ INIT_MENUS:     CALL    SAVE_TED.L0
                 CALL    SILENCE
                 MOV     AX,3            ;SET VIDEO MODE
                 INT     10H
-                MOV     ES,[DS_BUF_PTR+2]       ;LOAD CBM FONTS
+                MOV     AX,SEG_VRAM2    ;LOAD CBM FONTS
+                MOV     ES,AX
                 PUSH    DS
                 XOR     DI,DI
                 MOV     AX,SEG_ROM + 0500H
@@ -116,14 +117,17 @@ GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
 
                 OR      AL,AL
                 JZ      .L1
+
                 CMP     AL,BL
                 JNZ     .L2
 
 .L1:            MOV     AX,4408H        ;VALIDATE DRIVE
                 INT     21H             ;REMOVABLE MEDIA?
                 JC      .L6
+
                 OR      AX,AX
                 JZ      .L4
+
 .L6:            MOV     AH,4EH
                 MOV     [TEST_DRV],BL
                 ADD     [TEST_DRV],'@'
@@ -150,6 +154,7 @@ GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
 .L5:            INC     BX
                 CMP     BL,CL
                 JBE     .L3
+
                 SUB     BL,CH
                 DEC     BX
                 MOV     [TOT_DRVS],BX

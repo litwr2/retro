@@ -38,6 +38,7 @@ START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
                 PUSH    WORD 0
                 MOV     AX,SEG_DATA     ;INIT DS
                 MOV     DS,AX
+                CALL    SPARAM
                 MOV     [RESET_SP],SP
 
                 CALL    INITIBM
@@ -92,7 +93,7 @@ TIMES   16*1024 DB      'I'             ;C2-HIGH
 SEGMENT         SEG_VRAM1 USE16
 TIMES   16*1024 DD      'VBE2'
 
-SEGMENT         SEG_VRAM2 USE16
+SEGMENT         SEG_VRAM2 USE16 ;4K used for fonts transform 8->16
 TIMES   79*512  DB      '2'
 
 SEGMENT         SEG_DBG USE16
