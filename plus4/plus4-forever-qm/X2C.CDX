@@ -1,3 +1,0 @@
-XRESET_F:       CALL    XRESET
-                RETF
-
