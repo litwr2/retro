@@ -231,6 +231,11 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CMP     [VD_PTR_BEAM],VIDEO_DATA
                 JE      .L30
 
+        push es
+        mov ax,0b800h
+        mov es,ax
+        mov byte [es:0],'@'
+        pop es
                 CALL    [VIDCJMP]
 .L30:           MOV     [VD_PTR_BEAM],VIDEO_DATA
                 INC     WORD [TED_1C]
@@ -261,10 +266,10 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CALL    CDS_LED
                 CALL    GET_JOYS
                 CMP     [TOTALTICKS],0FF000000H
-                JBE     .L17
+                JBE     .L17A
 
-                CALL    ADJUST_TICKS
-                MOV     AX,WORD [TED_1C]
+                CALL    SEG_CODEX:ADJUST_TICKS_F
+.L17A:          MOV     AX,WORD [TED_1C]
 .L17:           CMP     AX,[SVSA]
                 JNZ     .L31
 
@@ -295,7 +300,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     WORD [ISDMANOW],AX
                 MOV     DWORD [CP_CURRENT],EAX
                 MOV     DWORD [TED_1A],EAX
-                CALL    PARAM
+                CALL    SEG_CODEX:NPARAM
                 CALL    SYS_KEYS
                 TEST    [TED_6],10H             ;SCREEN BLANK?
                 JZ      .L23

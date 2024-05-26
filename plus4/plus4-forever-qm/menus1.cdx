@@ -2,7 +2,7 @@ DEV1DETACH:     TEST    [LED],10H               ;BUTTON PLAY?
                 JZ      .L2
 
                 AND     [LED],0CFH
-                CALL    SET_LED
+                CALL    SEG_CODE:SET_LED_F
 .L2:            PUSH    SI              ;USE: BX
                 MOV     SI,[DEV1FNP]    ;CLOSE ASSO FILES
                 MOV     BX,[DEV1FH]
@@ -665,7 +665,7 @@ FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
                 ADD     EAX,EDX
                 MOVZX   EDX,[DS_TAPEB]
                 SUB     EAX,EDX
-                CALL    SEG_CODE2:HEX2DEC
+                CALL    HEX2DEC
                 POP     BX
                 MOV     CX,10
                 MOV     SI,HEX2DECBUF
@@ -795,7 +795,7 @@ FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 ADD     DI,20
                 JMP     .L6
 
-.L5:            CALL    SEG_CODE2:HEX2DEC
+.L5:            CALL    HEX2DEC
                 CALL    OUT_DEC1
 .L6:            ADD     DI,160-20
                 LOOP    .L4B
@@ -1408,7 +1408,7 @@ MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
                 PUSH    BX
                 MOV     BX,0FF00H
                 MOV     SI,IOBUF
-.L1:            CALL    MREAD_DH
+.L1:            CALL    SEG_CODE:MREAD_DH_F
                 MOV     [SI],DH
                 INC     SI
                 INC     BX
@@ -1719,14 +1719,13 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 OR      SI,SI
                 JNZ     MD1_CONFIG
 
-                CALL    [EXIT_SOUND]
+                CALL    SEG_CODE:EXIT_SND_E_F
                 MOVZX   BX,[CP_IN_WIN10]
                 AND     [SJCFG],0FCH
                 OR      [SJCFG],BL
-                CALL    [SOUND_SRC+EBX*2]
-                CALL    [RESET_SOUND]
-                CALL    RELOAD_SND
-                CALL    SILENCE
+                CALL    SEG_CODE:RESET_SND_E_F
+                CALL    SEG_CODE:RELOAD_SND_F
+                CALL    SEG_CODE:SILENCE_F
                 JMP     MD1_ENTER.L8A
 
 .L3:            MOV     AL,[VIDMODE]    ;SAVE
@@ -1776,7 +1775,7 @@ MD1_ISL:        MOVZX   EAX,[SPEED_LIMIT]
                 JB      .L1
 
                 INC     AX
-.L1:            CALL    SEG_CODE2:HEX2DEC
+.L1:            CALL    HEX2DEC
                 XOR     BX,BX
 .L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [SPEEDL+7+BX],AL
@@ -1832,7 +1831,7 @@ GET_SPEED:      XOR     EAX,EAX
                 JB      .L1
 
                 INC     AX
-.L1:            CALL    SEG_CODE2:HEX2DEC
+.L1:            CALL    HEX2DEC
                 XOR     BX,BX
 .L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [RSPEED+7+BX],AL
@@ -1844,12 +1843,12 @@ GET_SPEED:      XOR     EAX,EAX
                 MOV     [RSPEED+12],AL
                 RETN
 
-ADJUST_TICKS:   XOR     EAX,EAX
+ADJUST_TICKS_F: XOR     EAX,EAX
                 INC     EAX
                 MOV     [RETRACE_COUNT],EAX
                 MOV     [SYNCHRO_TICKS],EAX
                 XCHG    EAX,[TOTALTICKS]
                 DEC     EAX
                 SUB     [DS_TIMER],EAX
-                RETN
+                RETF
 

@@ -164,6 +164,85 @@ VGA320x200o:    LES     DI,[BEAM_ADDR]  ;320x200/VBE
                 ADD     [BEAM_POS],320
                 RETN
 
+VBE400x300od:   MOV     BX,400          ;400(368)x300(288)
+                MOV     CX,92
+
+VBEod:          MOV     AX,65536/4      ;IN: BX - LINE LENGTH TOTAL
+                XOR     DX,DX           ;    CX - LINE LENGTH VISIBLE/4
+                DIV     CX
+                MOV     BP,AX
+                LES     AX,[BEAM_ADDR]
+                MOVZX   DX,[VBECURBANK]
+                MOV     SI,VIDEO_DATA
+                ADD     [BEAM_POS],BX
+                JNC     .L1
+
+                INC     [VBECURBANK]
+.L1:            DIV     BX
+                CMP     AX,BP
+                JB      .L2
+
+                SUB     AX,BP
+                MOV     DI,ES
+                XCHG    AX,BP
+                IMUL    CX
+                SHR     AX,2
+                ADD     DI,AX
+                MOV     ES,DI
+                MOV     AX,BP
+.L2:            IMUL    CX
+                IMUL    DI,AX,4
+                REP MOVSD
+                RETN
+
+VBE640x400od:   MOV     BX,640          ;640(368)x400(288)/480
+                MOV     CX,92
+                JMP     VBEod
+
+VGAod_pla:      MOV     BP,BX           ;IN: BX - SIZE OF SAVED VIDEO PLANE
+                SHR     BP,3            ;    CX - Xres/4, SI - XresFULL/4
+                ADD     BP,SEG_VRAM1
+                MOV     AX,[BEAM_POS]
+                ADD     [BEAM_POS],SI
+                XOR     DX,DX
+                MUL     CX
+                DIV     SI
+                MOV     DI,AX
+                MOV     SI,VIDEO_DATA
+                MOV     DX,SEG_VRAM1
+.L0:            MOV     ES,DX
+                LODSW
+                MOV     [ES:DI],AL
+                MOV     [ES:DI+BX],AH
+                MOV     ES,BP
+                LODSW
+                MOV     [ES:DI+BX],AH
+                STOSB
+                LOOP    .L0
+
+                RETN
+
+SVGA400x300od:  MOV     BX,368*288/4    ;400(368)x400(288)
+.L0:            MOV     CX,92
+                MOV     SI,100
+                JMP     VGAod_pla
+                
+VGA360x240od:   MOV     BX,352*240/4    ;360(352)x240
+.L0:            MOV     CX,88
+                MOV     SI,90
+                JMP     VGAod_pla
+
+VGA360x400od:   MOV     BX,352*288/4    ;360(352)x400(288)
+                JMP     VGA360x240od.L0
+
+VGA320x240od:   MOV     BX,320*240/4    ;320x240
+.L0:            MOV     CX,80
+                MOV     SI,CX
+                JMP     VGAod_pla
+
+VGA320x400od:   MOV     BX,320*288/4    ;320x400(288)
+                JMP     VGA320x240od.L0
+
 VGAiX:          MOV     DX,3C4H         ;SETS DX AS 3D4/3B4 = COLOR/MONO !!!
                 MOV     AX,604H
                 OUT     DX,AX           ;3C4.4<-6
@@ -473,17 +552,7 @@ VBE640x400i:    MOV     DI,4
 VBE640x480i:    MOV     DI,6
                 JMP     VBEi
 
-ADJUST_BEAM:    MOV     [BEAM_POS],0            ;IN: SI - VIDMODE/2
-                SHL     SI,1
-                MOV     AX,[BEAMY]
-                SUB     AX,[SVVAY+SI]
-                JB      .L1
-
-                MUL     [LHVA+SI]
-                MOV     [BEAM_POS],AX
-.L1:            RETN
-
-SET_VMODE:      MOVZX   SI,[VIDMODE]
+SET_VMODE:      MOVZX   SI,[VIDMODE]            ;SETS SI
                 MOV     AX,[SVVAY+SI]
                 MOV     [SVVA],AX
                 MOV     AX,[EVVAY+SI]

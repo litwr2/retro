@@ -44,17 +44,19 @@ RELOAD_SND:     MOV     BX,0FF0EH
                 CMP     BL,12H
                 JBE     .L1
 
-.L0:            RETN
+                RETN
 
-SILENCE:        XOR     DH,DH
-                JMP     [SOUND_11]
+EXIT_SND_E_F:   CMP     [EXIT_SOUND],0
+                JE      .L1
 
-RESTSOUND:      MOV     BX,0FF11H
-                MOV     DH,[TED_11]
-                JMP     MSTORE_DH
+                CALL    [EXIT_SOUND]
+.L1:            RETF
 
-EXIT_SND_ENTRY: CMP     [EXIT_SOUND],0
-                JE      RELOAD_SND.L0
+SILENCE_F:      XOR     DH,DH
+                CALL    [SOUND_11]
+                RETF
 
-                JMP     [EXIT_SOUND]
+RESET_SND_E_F:  CALL    [SOUND_SRC+EBX*2]       ;IN: BX
+                CALL    [RESET_SOUND]
+                RETF
 

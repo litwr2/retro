@@ -112,6 +112,10 @@ TED_1D          DB      0       ; $FF1D -- VER. POS.
 TED_1E          DB      49      ; $FF1E -- HOR. POS.
 TED_1F          DB      087H    ; $FF1F
 
+LABEL           VIDEO_DATA BYTE
+TIMES   375     DB      'V'
+TIMES   125     DB      'R'     ;reserves...???
+
 VIDMODE         DB      0       ;0-4 - VGA, 5-A - VBE  *2!
 BLINK_COUNT     DB      0F0H
 ISDMANOW        DB      0       ;0-no, 1-attr, 2-char : +ISDMA = WORD !!!
@@ -121,9 +125,6 @@ ISBORDER        DB      0
 VISIBLE         DB      0
 FRAMESKIP       DB      1       ;1-none, 3 - 2/3, 5 - 4/5, 7 - 6/7
 BEAMX           DB      49
-
-LABEL           VIDEO_DATA BYTE
-TIMES   375     DB      'V'
 
 CG_BASE         DB      0D0H
 VM_BASE         DB      8

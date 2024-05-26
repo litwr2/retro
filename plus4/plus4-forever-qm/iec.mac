@@ -2,7 +2,10 @@ IECDEBUG        EQU     0
 
 MACRO           DRIVEC  NU
 {
-IEC#NU#FAIL:       inc     [BORDER_COLOR]
+IEC#NU#JMP_I:      CALL    [IEC#NU#JMP]
+                RETF
+
+IEC#NU#FAIL:       ;inc     [BORDER_COLOR]
                 MOV     [IEC#NU#JMP],IEC#NU#J1
                 RETN
 
@@ -742,7 +745,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
                 CMP     [IEC#NU#CNI+SI],0          ;LOAD?
                 JNZ     .SAVE
 
-.LOAD:          CALL    SEG_CODE2:IEC_FM
+.LOAD:          CALL    IEC_FM
                 OR      BX,BX
                 JZ      IEC#NU#ERR62
 
@@ -776,7 +779,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
 .SAVE:          CMP     [IEC#NU#CNI+SI],1
                 JNZ     .OPEN
 
-.L5:            CALL    SEG_CODE2:IEC_FM
+.L5:            CALL    IEC_FM
                 OR      BX,BX
                 JNZ     .FOUND
 
@@ -827,7 +830,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
                 CMP     [IEC_CFA],'W'
                 JZ      .L5
 
-                CALL    SEG_CODE2:IEC_FM
+                CALL    IEC_FM
                 CMP     [IEC_CFT],'X'
                 JZ      .LO1
 
@@ -850,7 +853,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
                 MOV     [IEC_CFT],AL
                 JMP     .LO2
 
-.APPEND:        CALL    SEG_CODE2:IEC_FM
+.APPEND:        CALL    IEC_FM
                 OR      BX,BX
                 JZ      IEC#NU#ERR62
 
@@ -902,7 +905,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
                 INT     21H
 
                 CALL    FILL_IBM_FLIST
-                CALL    SEG_CODE2:IEC_FM
+                CALL    IEC_FM
                 JMP     .RELATIVE
 
 .RFOUND:        CMP     [IBM_EX_LIST+EBX*2+EBX],'R'
@@ -1223,7 +1226,7 @@ IEC#NU#DBUF:       MOV     BP,SI
                 JNZ     .NEXT
 
 .L38:           PUSH    DX
-                CALL    SEG_CODE2:IEC_DIRM
+                CALL    IEC_DIRM
                 POP     DX
 
                 OR      CX,CX
@@ -1334,7 +1337,7 @@ IEC#NU#DBUF:       MOV     BP,SI
                 PUSH    SI
                 MOV     DI,[IEC#NU#BUF0L+ESI*2]
                 MOV     WORD [DS:IEC#NU#BUF0+BP+DI],101H
-                CALL    SEG_CODE2:IEC_FDFI
+                CALL    IEC_FDFI
                 MOV     WORD [DS:IEC#NU#BUF0+2+BP+DI],AX
                 MOV     DWORD [DS:IEC#NU#BUF0+4+BP+DI],'BLOC'
                 MOV     DWORD [DS:IEC#NU#BUF0+8+BP+DI],'KS F'
@@ -1455,7 +1458,7 @@ IEC#NU#XBUF:       MOV     BP,SI
 
 .L38:           MOV     [DS:IEC#NU#BUF0+BP],AL
                 PUSH    DX
-                CALL    SEG_CODE2:IEC_DIRM
+                CALL    IEC_DIRM
                 POP     DX
 
                 OR      CX,CX
@@ -2037,7 +2040,7 @@ IEC#NU#CLOSE:       MOVZX   SI,[IEC_CCH]
                 JMP     .L4
 
 IEC#NU#SCRATCH:    XOR     DI,DI
-                CALL    SEG_CODE2:IEC_FM
+                CALL    IEC_FM
 .L3:            OR      BX,BX
                 JZ      .L1
 
@@ -2056,12 +2059,12 @@ IEC#NU#SCRATCH:    XOR     DI,DI
 
                 INC     DI
 .L5:            INC     BX
-                CALL    SEG_CODE2:IEC_FM.L0
+                CALL    IEC_FM.L0
                 JMP     .L3
 
 .L1:            MOV     [IEC#NU#GERR],1
                 MOVZX   EAX,DI
-                CALL    SEG_CODE2:HEX2DEC
+                CALL    HEX2DEC
                 MOV     AX,WORD [HEX2DECBUF+8]
                 CMP     AL,' '
                 JNZ     .L4
@@ -2073,7 +2076,7 @@ IEC#NU#SCRATCH:    XOR     DI,DI
 
                 RETN
 
-IEC#NU#RENAME:     CALL    SEG_CODE2:IEC_FM
+IEC#NU#RENAME:     CALL    IEC_FM
                 OR      BX,BX
                 JZ      IEC#NU#ERR62
 
@@ -2089,7 +2092,7 @@ IEC#NU#RENAME:     CALL    SEG_CODE2:IEC_FM
 .L5:            CMP     BL,16
                 JB      .L4
 
-                CALL    SEG_CODE2:IEC_FM
+                CALL    IEC_FM
                 MOV     AX,BX
                 OR      AX,AX
                 POP     BX
@@ -2173,15 +2176,15 @@ IEC#NU#RENAME:     CALL    SEG_CODE2:IEC_FM
                 INT     21H
                 JMP     FILL_IBM_FLIST
 
-IEC#NU#COPY:       CALL    SEG_CODE2:IEC_CFN2CFN
-                CALL    SEG_CODE2:IEC_FM
+IEC#NU#COPY:       CALL    IEC_CFN2CFN
+                CALL    IEC_FM
                 OR      BX,BX
                 JNZ     IEC#NU#ERR63
 
-                CALL    SEG_CODE2:IEC_CFN2CFN
+                CALL    IEC_CFN2CFN
                 XOR     BX,BX
 .L2:            MOV     AH,[IEC_CFN2+BX]
-                CALL    SEG_CODE2:CBM2IBMCNV
+                CALL    CBM2IBMCNV
                 MOV     [IEC_PRGNAME+BX],AH
                 INC     BX
                 CMP     BL,8
@@ -2197,7 +2200,7 @@ IEC#NU#COPY:       CALL    SEG_CODE2:IEC_CFN2CFN
                 INC     BX
                 JMP     .L4
 
-.L3:            CALL    SEG_CODE2:IEC_FM
+.L3:            CALL    IEC_FM
                 OR      BX,BX
                 JZ      IEC#NU#ERR62
 
@@ -2223,7 +2226,7 @@ IEC#NU#COPY:       CALL    SEG_CODE2:IEC_CFN2CFN
                 MOV     CX,18
                 INT     21H
 
-.L9:            CALL    SEG_CODE2:IEC_FM
+.L9:            CALL    IEC_FM
                 OR      BX,BX
                 JZ      .ERR            ;-> ERR62
 
@@ -3555,7 +3558,7 @@ IEC#NU#DBUF64:     MOV     BP,SI
                 CMP     CL,[IEC_CFT]
                 JNZ     .NEXT
 
-.L38:           CALL    SEG_CODE2:IEC_DIRM64
+.L38:           CALL    IEC_DIRM64
                 OR      CX,CX
                 JNZ     .NEXT
 
@@ -3900,7 +3903,7 @@ IEC#NU#SCRATCH64:           CMP     [DEV#NU#WP],0
 
 .L1:            MOV     [IEC#NU#GERR],1
                 MOVZX   EAX,[IECTEMP]
-                CALL    SEG_CODE2:HEX2DEC
+                CALL    HEX2DEC
                 MOV     AX,WORD [HEX2DECBUF+8]
                 CMP     AL,' '
                 JNZ     .L4
@@ -4109,13 +4112,13 @@ IEC#NU#RENAME64:
 IEC#NU#COPY64:     CMP     [DEV#NU#WP],0
                 JNE     IEC#NU#ERR26
 
-                CALL    SEG_CODE2:IEC_CFN2CFN
+                CALL    IEC_CFN2CFN
                 MOV     BX,[DEV#NU#FH]
                 CALL    IEC_FM64
                 OR      BX,BX
                 JNS     IEC#NU#ERR63
 
-                CALL    SEG_CODE2:IEC_CFN2CFN
+                CALL    IEC_CFN2CFN
                 MOV     BX,[DEV#NU#FH]
                 CALL    IEC_FM64
                 OR      BX,BX
@@ -4446,7 +4449,7 @@ IEC#NU#BUF0        RB      4*256
 IEC#NU#BAM         RB      256
 IEC#NU#BUF         RB      256          ;FOR OPEN, PARSE BUFFER, M-R, CMD CHANNEL
                 ALIGN   2
-IEC#NU#JMP         DW      IEC#NU#J1
+IEC#NU#JMP         DW      IEC#NU#J1,SEG_CODEX
 IEC#NU#DIR         DW      0
 IEC#NU#XIR         DW      0
 IEC#NU#CHFH        DW      0,0,0,0      ;FILE HANDLES FOR IBM FS OR

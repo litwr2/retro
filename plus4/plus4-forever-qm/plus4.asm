@@ -12,6 +12,7 @@ STACK 2000H                             ;stack size
 HEAP 0
 
 SEGMENT         SEG_DATA USE16
+        db 'xxxx'
                 INCLUDE 'dos.dat'
                 INCLUDE 'hardware.dat'
                 INCLUDE 'mdac.dat'
@@ -34,19 +35,17 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'timer.dat'
                 INCLUDE 'sb.dat'
                 ;INCLUDE 'log.dat'
-        db 'xxxx'
 
 SEGMENT         SEG_CODE USE16          ;main program segment
+        db 'xxxx'
 START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
                 PUSH    WORD 0
                 MOV     AX,SEG_DATA     ;INIT DS
                 MOV     DS,AX
                 MOV     [RESET_SP],SP
-                CALL    SEG_CODE2:SB_ENV
-                CALL    SEG_CODE2:SPARAM
-                CALL    INITIBM
+                CALL    SEG_CODEX:INITIBM_F
 RESET:          MOV     SP,[RESET_SP]
-                CALL    XRESET
+                CALL    SEG_CODEX:XRESET_F
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
                 ;MOV     [MAINJUMP],DEBUG_ENTRY
 
@@ -55,8 +54,7 @@ MAINLOOP:       CALL    TED
                 JMP     [MAINJUMP]
 
 END_EMU:        MOV     SP,[RESET_SP]
-                CALL    FINISHIBM
-                RETF
+                JMP     SEG_CODEX:FINISHIBM_F
 
                 INCLUDE 'kbd.cod'
                 INCLUDE 'joy.cod'
@@ -65,24 +63,29 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE '8501.cod'
                 INCLUDE 'cpu_io.cod'
                 INCLUDE 'cds.cod'
-                INCLUDE 'iec.cod'
                 INCLUDE 'csb.cod'
                 INCLUDE 'video.cod'
-                INCLUDE 'hardware.cod'
-                INCLUDE 'debugger.cod'
-                INCLUDE 'menus0.cod'
-                INCLUDE 'menus1.cod'
-                INCLUDE 'menus2.cod'
-                INCLUDE 'menus3.cod'
                 INCLUDE 'sound.cod'
                 INCLUDE 'adlib.cod'
                 INCLUDE 'timer.cod'
                 INCLUDE 'sb.cod'
-                ;INCLUDE 'log.cod'
+                INCLUDE 'c2x.cod'
 
-SEGMENT         SEG_CODE2 USE16          ;extra program segment
+SEGMENT         SEG_CODEX USE16          ;extra program segment
         db 'xxxx'
-                INCLUDE 'extras.cod'
+                INCLUDE 'conv.cdx'
+                INCLUDE 'intr8.cdx'
+                INCLUDE 'intr9.cdx'
+                INCLUDE 'x2c.cdx'
+                INCLUDE 'iec.cdx'
+                INCLUDE 'debugger.cdx'
+                INCLUDE 'menus0.cdx'
+                INCLUDE 'menus1.cdx'
+                INCLUDE 'menus2.cdx'
+                INCLUDE 'menus3.cdx'
+                INCLUDE 'hardware.cdx'
+                ;INCLUDE 'log.cdx'
+        db 'xxxx'
 
 SEGMENT         SEG_RAM USE16
 TIMES   32*1024 DW      0FFH

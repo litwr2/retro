@@ -1,17 +1,3 @@
-XRESET:         MOV     AX,SEG_ROM - 800H       ;SET ROM MAP
-                MOV     [SA_ROM_LO],AX
-                MOV     [SA_ROM_HI],AX
-                CALL    SET_MDATA_SEG
-                MOV     BX,0FFFCH               ;USE RESET VECTOR
-                CALL    MREAD_DH
-                MOV     DL,DH
-                INC     BX
-                CALL    MREAD_DH
-                MOV     [PC],DX
-                MOV     [CPUOP],FETCHBYTE1
-                CALL    IEC8FLUSH
-                JMP     IEC9FLUSH
-
 CPU8501:        SUB     [TICKS],1
                 JE      .L1
                 JS      .L2
@@ -1496,4 +1482,20 @@ O8B:            ADDR_IM                 ;TXA:AND im *** TAA/ANE
                 AND     AL,DH
                 AND     [AC],AL
                 SETNZ
+
+CPUCYCLE_F:     CMP     [TICKS],0
+                JE      .L1
+                JS      .L2
+
+.L4:            DEC     [TICKS]
+                CALL    [CPUOP]
+                INC     [T_CLOCK_SUM]   ;FOR T COMMAND
+.L1:            RETF
+
+.L2:            MOV     BX,[CPUOP]
+                CMP     BYTE [CS:BX-1],'W'
+                JNZ     .L1
+
+                MOV     [TICKS],1
+                JMP     .L4
 

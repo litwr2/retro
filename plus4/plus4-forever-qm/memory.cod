@@ -448,6 +448,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 PUSH    AX
                 MOV     AL,DH
                 NOT     AL
+                INC     AX
                 SHR     AL,2
                 CMP     AL,38H
                 JBE     .L11E
@@ -530,7 +531,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 MOV     [IEC9ST],0
                 JNE     .L1I9
 
-                CALL    [IEC9JMP]
+                CALL    SEG_CODEX:IEC9JMP_I
         IF IECDEBUG > 0
                 MOV AL,[IEC9_0PREV]
                 ADD AL,10H
@@ -592,7 +593,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 MOV     [IEC8ST],0
                 JNE     .L1I8
 
-                CALL    [IEC8JMP]
+                CALL    SEG_CODEX:IEC8JMP_I
         IF IECDEBUG > 0
                 MOV AL,[IEC8_0PREV]
                 MOV AH,[IEC8_0]

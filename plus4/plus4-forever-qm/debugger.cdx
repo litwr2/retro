@@ -1,24 +1,16 @@
-CPUCYCLE:       CMP     [TICKS],0
-                JE      .L1
-                JS      .L2
+RESTSOUND:      MOV     BX,0FF11H
+                MOV     DH,[TED_11]
+                CALL    SEG_CODE:MSTORE_DH_F
+                RETN
 
-.L4:            DEC     [TICKS]
-                CALL    [CPUOP]
-                INC     [T_CLOCK_SUM]   ;FOR T COMMAND
-.L1:            RETN
-
-.L2:            MOV     BX,[CPUOP]
-                CMP     BYTE [CS:BX-1],'W'
-                JNZ     .L1
-
-                MOV     [TICKS],1
-                JMP     .L4
+CPUCYCLE:       CALL    SEG_CODE:CPUCYCLE_F
+                RETN
 
 ADJUST_CPU:     MOV     [TICKS],0
 .L2:            CMP     [CPUOP],FETCHBYTE1
                 JZ      .L1
 
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
                 CALL    CPUCYCLE
                 CMP     [CPUOP],FETCHBYTE1
                 JZ      .L1
@@ -28,90 +20,11 @@ ADJUST_CPU:     MOV     [TICKS],0
 
 .L1:            RETN
 
-VBE400x300od:   MOV     BX,400          ;400(368)x300(288)
-                MOV     CX,92
-
-VBEod:          MOV     AX,65536/4      ;IN: BX - LINE LENGTH TOTAL
-                XOR     DX,DX           ;    CX - LINE LENGTH VISIBLE/4
-                DIV     CX
-                MOV     BP,AX
-                LES     AX,[BEAM_ADDR]
-                MOVZX   DX,[VBECURBANK]
-                MOV     SI,VIDEO_DATA
-                ADD     [BEAM_POS],BX
-                JNC     .L1
-
-                INC     [VBECURBANK]
-.L1:            DIV     BX
-                CMP     AX,BP
-                JB      .L2
-
-                SUB     AX,BP
-                MOV     DI,ES
-                XCHG    AX,BP
-                IMUL    CX
-                SHR     AX,2
-                ADD     DI,AX
-                MOV     ES,DI
-                MOV     AX,BP
-.L2:            IMUL    CX
-                IMUL    DI,AX,4
-                REP MOVSD
-                RETN
-
-VBE640x400od:   MOV     BX,640          ;640(368)x400(288)/480
-                MOV     CX,92
-                JMP     VBEod
-
-VGAod_pla:      MOV     BP,BX           ;IN: BX - SIZE OF SAVED VIDEO PLANE
-                SHR     BP,3            ;    CX - Xres/4, SI - XresFULL/4
-                ADD     BP,SEG_VRAM1
-                MOV     AX,[BEAM_POS]
-                ADD     [BEAM_POS],SI
-                XOR     DX,DX
-                MUL     CX
-                DIV     SI
-                MOV     DI,AX
-                MOV     SI,VIDEO_DATA
-                MOV     DX,SEG_VRAM1
-.L0:            MOV     ES,DX
-                LODSW
-                MOV     [ES:DI],AL
-                MOV     [ES:DI+BX],AH
-                MOV     ES,BP
-                LODSW
-                MOV     [ES:DI+BX],AH
-                STOSB
-                LOOP    .L0
-
-                RETN
-
-SVGA400x300od:  MOV     BX,368*288/4    ;400(368)x400(288)
-.L0:            MOV     CX,92
-                MOV     SI,100
-                JMP     VGAod_pla
-                
-VGA360x240od:   MOV     BX,352*240/4    ;360(352)x240
-.L0:            MOV     CX,88
-                MOV     SI,90
-                JMP     VGAod_pla
-
-VGA360x400od:   MOV     BX,352*288/4    ;360(352)x400(288)
-                JMP     VGA360x240od.L0
-
-VGA320x240od:   MOV     BX,320*240/4    ;320x240
-.L0:            MOV     CX,80
-                MOV     SI,CX
-                JMP     VGAod_pla
-
-VGA320x400od:   MOV     BX,320*288/4    ;320x400(288)
-                JMP     VGA320x240od.L0
-
-DEBUG_ENTRY:    CALL    ADJUST_CPU
+DEBUG_ENTRY_F:  CALL    ADJUST_CPU
                 CALL    INIT_DEBUG
                 CALL    D_DISPATCHER
                 CALL    EXIT_DEBUG
-                JMP     MAIN_ENTRY
+                JMP     SEG_CODE:MAIN_ENTRY
 
 INIT_DEBUG:     MOV     AX,[PC]
                 MOV     [APC],AX
@@ -138,7 +51,7 @@ EXIT_DEBUG:     CALL    RESTORE_TED
 SAVE_TED:       MOVZX   SI,[VIDMODE]
                 MOV     AX,[VIDJUMP+(1+MAXVIDMODEN)*2+SI]
                 MOV     [VIDCJMP],AX
-                CALL    [SAVEVIDJMP+SI]
+                CALL    SEG_CODE:SAVEVIDJMP_F
 
 .L0:            NOT     [TIMER_ST]
                 RETN
@@ -146,7 +59,7 @@ SAVE_TED:       MOVZX   SI,[VIDMODE]
 RESTORE_TED:    MOVZX   SI,[VIDMODE]
                 MOV     AX,[VIDJUMP+SI]
                 MOV     [VIDCJMP],AX
-                CALL    [RESTVIDJMP+SI]
+                CALL    SEG_CODE:RESTVIDJMP_F
 
 .L0:            CALL    RESTSOUND
                 MOV     DWORD [KMATRIX],0FFFFFFFFH
@@ -318,13 +231,13 @@ TRAN_VAL:       MOV     EAX,30303030H   ;IN: SI,DI / OUT: AX / TEMP: EAX,DX
                 RETN
 
 .L1A:           MOV     DX,AX
-                CALL    SEG_CODE2:HEX2BIN
+                CALL    HEX2BIN
                 JC      .L1
 
                 MOV     AH,AL
                 ROR     EAX,16
                 MOV     DX,AX
-                CALL    SEG_CODE2:HEX2BIN
+                CALL    HEX2BIN
                 JC      .L1
 
                 ROL     EAX,8
@@ -340,36 +253,36 @@ OUTSPC:         MOV     AH,2
                 RETN
 
 SHOW_CLOCKS:    MOV     AL,BYTE [T_CLOCK_SUM+2]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_O_BUF],DX
                 MOV     BX,WORD [T_CLOCK_SUM]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_S_BUF],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_S_BUF+2],DX
                 MOV     DX,D_O_BUF
                 JMP     OUT_STR
 
 OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS2],DX
 
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS2+2],DX
 
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     DL,DH
                 INC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 SHL     EDX,16
                 INC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     DL,DH
                 INC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 ROL     EDX,16
                 MOV     EAX,EDX
                 SUB     BX,3
@@ -384,7 +297,7 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 SHL     EAX,8
                 MOV     SI,5
 .L1:            MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS2+SI],DX
                 SHR     EAX,8
                 ADD     SI,2
@@ -420,7 +333,7 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 MOV     AL,AH
                 JZ      .L6
 
-.L7:            CALL    SEG_CODE2:BIN2HEX
+.L7:            CALL    BIN2HEX
                 MOV     WORD [REGS2+SI],DX
                 ADD     SI,2
                 ADD     BX,2
@@ -432,7 +345,7 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 ADD     AX,BP
                 MOV     CL,AL
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS2+SI],DX
                 ADD     SI,2
                 ADD     BX,2
@@ -458,14 +371,14 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 MOV     [D_BUF1],'('
                 MOV     WORD [D_BUF1+5],')='
                 MOV     BX,[PC]
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOVZX   SI,DH
                 MOV     AL,[OCAM+SI]
                 INC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     DL,DH
                 INC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOVZX   BX,DL
                 OR      AL,AL
                 JNZ     .L5_1
@@ -477,20 +390,20 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 JNZ     .L5_2
 
                 ADD     BL,[XR]          ; (zp,X)
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     DL,DH
                 INC     BL
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     BX,DX
                 JMP     .L9
 
 .L5_2:          DEC     AL
                 JNZ     .L5_3
 
-                CALL    MREAD_DH        ;(zp),Y
+                CALL    SEG_CODE:MREAD_DH_F        ;(zp),Y
                 MOV     DL,DH
                 INC     BL
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 ADD     DL,[YR]
                 ADC     DH,0
                 MOV     BX,DX
@@ -529,21 +442,21 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 ADC     BH,0
                 JMP     .L9
 
-.L5_8:          CALL    MREAD_DH        ;(abs)
+.L5_8:          CALL    SEG_CODE:MREAD_DH_F        ;(abs)
                 MOV     DL,DH
                 INC     BL
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     BX,DX
 
 .L9:            MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_BUF1+1],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_BUF1+3],DX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_BUF1+7],DX
                 MOV     DWORD [D_BUF1+9],240A0DH
                 MOV     DX,D_BUF1
@@ -710,56 +623,56 @@ GET_FPARS:      CALL    GET_PARS
 SHOW_REGS:      MOV     BX,[PC]
                 MOV     [UPC],BX
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+3],DX
 
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+5],DX
 
                 MOV     AX,WORD [TED_1C]
                 OR      AH,30H
                 MOV     [REGS1+58],AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+59],DX
 
                 MOV     AL,[TED_1E]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+66],DX
 
                 MOV     BX,0FF1EH
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 ;MOV     AL,[TICKS]
                 ;SHL     AL,1
                 ;NEG     AL
                 ;ADD     AL,DH
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+69],DX
 
                 MOV     AL,[TICKS]      ;2CPU
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     [REGS1+77],DH
 
                 MOV     AL,[AC]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+12],DX
 
                 MOV     AL,[XR]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+19],DX
 
                 MOV     AL,[YR]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+26],DX
 
                 MOV     AL,BYTE [SPR]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+33],DX
 
                 MOV     AL,BYTE [SR]
                 PUSH    AX
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS1+40],DX
 
                 POP     AX
@@ -807,7 +720,7 @@ SHOW_REGS:      MOV     BX,[PC]
                 JMP     OUT_DAS
 
 RROUT:          CALL    CPUCYCLE
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
 .L5:            CALL    CPUCYCLE
                 CMP     [CPUOP],FETCHBYTE1
                 JZ      .L4
@@ -822,9 +735,11 @@ RROUT:          CALL    CPUCYCLE
                 XOR     AX,AX
                 XCHG    AX,WORD [KBUFS]
                 CMP     AL,0C4H         ;F10
-                JZ      END_EMU
+                JNZ     .L6
 
-                CMP     AL,0C3H         ;F9
+                JMP     SEG_CODE:END_EMU
+
+.L6:            CMP     AL,0C3H         ;F9
                 JZ      .L3
 
                 CMP     AL,0D7H         ;F11
@@ -844,7 +759,7 @@ RROUT:          CALL    CPUCYCLE
 .L3:            RETN
 
 LROUT:          CALL    CPUCYCLE
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
 .L5:            CALL    CPUCYCLE
                 CMP     [CPUOP],FETCHBYTE1
                 JZ      .L4
@@ -859,9 +774,11 @@ LROUT:          CALL    CPUCYCLE
                 XOR     AX,AX
                 XCHG    AX,WORD [KBUFS]
                 CMP     AL,0C4H         ;F10
-                JZ      END_EMU
+                JNZ     .L6
 
-                CMP     AL,0C3H         ;F9
+                JMP     SEG_CODE:END_EMU
+
+.L6:            CMP     AL,0C3H         ;F9
                 JZ      .L3
 
                 CMP     AL,0D7H         ;F11
@@ -877,7 +794,7 @@ LROUT:          CALL    CPUCYCLE
 OROUT:          MOV     SI,[PC]         ;for O command
                 MOV     [OLD_PC],SI
 .L1:            CALL    CPUCYCLE
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
                 CALL    CPUCYCLE
                 CMP     [CPUOP],FETCHBYTE1
                 JZ      .L4
@@ -892,9 +809,11 @@ OROUT:          MOV     SI,[PC]         ;for O command
                 XOR     AX,AX
                 XCHG    AX,WORD [KBUFS]
                 CMP     AL,0C4H         ;F10
-                JZ      END_EMU
+                JNZ     .L6
 
-                CMP     AL,0C3H         ;F9
+                JMP     SEG_CODE:END_EMU
+
+.L6:            CMP     AL,0C3H         ;F9
                 JZ      .L3
 
                 CMP     AL,0D7H         ;F11
@@ -964,7 +883,7 @@ GET_PARS:       XOR     BX,BX
                 MOV     [QPARS],BL
                 RETN
 
-D_DISPATCHER:   CALL    SILENCE
+D_DISPATCHER:   CALL    SEG_CODE:SILENCE_F
                 CALL    INPUT_LINE
 .L0:            MOV     [BREAK_FLAG],0
                 MOV     AX,WORD [INP_BUF]
@@ -1036,13 +955,15 @@ D_DISPATCHER:   CALL    SILENCE
                 CMP     AL,'?'
                 JZ      D_HELP
 
-                CMP     AL,'!'
-                JZ      END_EMU
-
                 CMP     AL,'X'
                 JZ      D_X
 
-                MOV     DX,SDMSG
+                CMP     AL,'!'
+                JNZ     .L1
+
+                JMP     SEG_CODE:END_EMU
+
+.L1:            MOV     DX,SDMSG
                 JMP     D_ERRX
 
 D_HELP:         MOV     DX,D_HELPM      ;HELP
@@ -1065,10 +986,10 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 MOV     [EPC],AX
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_A_BUF],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_A_BUF+2],DX
                 MOV     DX,D_A_BUF
                 CALL    OUT_STR
@@ -1153,12 +1074,12 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 SHL     EDX,16
                 MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
-                CALL    SEG_CODE2:HEX2BIN
+                CALL    HEX2BIN
                 JC      .L17
 
                 MOV     AH,AL
                 SHR     EDX,16
-                CALL    SEG_CODE2:HEX2BIN
+                CALL    HEX2BIN
                 JC      .L17
 
                 MOV     CX,AX
@@ -1175,17 +1096,17 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 ADD     [APC],2
                 MOV     DH,BL
                 MOV     BX,SI
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 INC     BX
                 MOV     DH,AL
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 JMP     .L18B
 
 .L8:            MOV     CL,[OPCL+BX]
                 MOV     SI,[APC]
                 MOV     DH,BL
                 MOV     BX,SI
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 CMP     CL,1
                 JZ      .L18A
 
@@ -1199,20 +1120,20 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
                 ROL     EDX,16
-                CALL    SEG_CODE2:HEX2BIN
+                CALL    HEX2BIN
                 JC      .L17
 
                 MOV     DH,AL
                 ADD     BX,2
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 SHR     EDX,16
-.L16:           CALL    SEG_CODE2:HEX2BIN
+.L16:           CALL    HEX2BIN
                 JC      .L17
 
                 MOV     BX,SI
                 INC     BX
                 MOV     DH,AL
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
 .L18A:          ADD     [APC],CX
 .L18B:          MOV     AH,3
                 XOR     BH,BH
@@ -1232,10 +1153,10 @@ D_C:            CALL    GET_MPARS       ;COMPARE
 
                 MOV     SI,BX
 .L1:            MOV     BX,SI
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     DL,DH
                 XCHG    BX,DI
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 XCHG    BX,DI
                 INC     DI
                 INC     SI
@@ -1253,27 +1174,27 @@ D_C:            CALL    GET_MPARS       ;COMPARE
                 DEC     AX
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF+2],DX
 
                 MOV     AX,DI
                 DEC     AX
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF+14],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF+16],DX
                 MOV     AX,BP
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF+6],DX
                 MOV     AX,BP
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_C_BUF+10],DX
                 MOV     DX,D_C_BUF
                 CALL    OUT_STR
@@ -1345,20 +1266,20 @@ D_D:            CALL    GET_PARS        ;DUMP
                 MOV     AX,SI
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_A_BUF],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_A_BUF+2],DX
                 MOV     DX,D_A_BUF
                 CALL    OUT_STR
                 XOR     BX,BX
 .L6:            XCHG    SI,BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
                 XCHG    SI,BX
                 MOV     [D_BUF2+BX],AL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_D_BUF+1],DX
                 MOV     DX,D_D_BUF
                 CALL    OUT_STR
@@ -1425,7 +1346,7 @@ D_E:            CALL    GET_PARS        ;ENTER
                 JZ      D_DISPATCHER
                 
                 MOV     DH,[SI]
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 INC     BX
                 INC     SI
                 JMP     .L2
@@ -1433,14 +1354,14 @@ D_E:            CALL    GET_PARS        ;ENTER
 .L8:            MOV     AX,[CPC]
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_E_BUF],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_E_BUF+2],DX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_E_BUF+6],DX
                 MOV     DX,D_E_BUF
                 CALL    OUT_STR
@@ -1455,7 +1376,7 @@ D_E:            CALL    GET_PARS        ;ENTER
 
                 MOV     BX,[CPC]
                 MOV     DH,AL
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 JMP     D_DISPATCHER
 
 D_F:            CALL    GET_FPARS       ;FILL
@@ -1465,7 +1386,7 @@ D_F:            CALL    GET_FPARS       ;FILL
                 MOV     DI,D_BUF1
                 SUB     AL,2
 .L5:            MOV     DH,[DI]
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 INC     BX
                 INC     DI
                 DEC     CX
@@ -1562,19 +1483,19 @@ D_H:            CALL    GET_PARS        ;HEX
                 ADD     AX,[VAL1]
                 PUSH    AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_H_BUF],DX
                 POP     AX
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_H_BUF+2],DX
                 MOV     AX,[VAL1]
                 SUB     AX,[VAL2]
                 PUSH    AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_H_BUF+6],DX
                 POP     AX
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_H_BUF+8],DX
                 MOV     DX,D_H_BUF
                 JMP     D_ERRX
@@ -1653,9 +1574,9 @@ D_L:            CALL    GET_PARS        ;LOAD
 D_M:            CALL    GET_MPARS       ;MOVE
                 JC      D_ERR
                 
-.L1:            CALL    MREAD_DH
+.L1:            CALL    SEG_CODE:MREAD_DH_F
                 XCHG    BX,DI
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
                 XCHG    BX,DI
                 INC     BX
                 INC     DI
@@ -1724,10 +1645,10 @@ D_O:            CALL    GET_PARS        ;WATCHPOINT(S)
                 CALL    RESTORE_DEBUG
                 MOV     BX,[OLD_PC]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS0+7],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [REGS0+9],DX
                 MOV     DX,REGS0
                 CALL    OUT_STR
@@ -1833,7 +1754,7 @@ D_S:            CALL    GET_FPARS       ;SEARCH
                 MOV     DI,D_BUF1
                 SUB     AL,2
                 MOV     SI,BX
-.L1:            CALL    MREAD_DH
+.L1:            CALL    SEG_CODE:MREAD_DH_F
                 INC     BX
                 CMP     DH,[DI]
                 JNZ     .L5
@@ -1844,10 +1765,10 @@ D_S:            CALL    GET_FPARS       ;SEARCH
 
                 MOV     AX,SI
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_S_BUF],DX
                 MOV     AX,SI
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_S_BUF+2],DX
                 MOV     DX,D_S_BUF
                 CALL    OUT_STR
@@ -1864,7 +1785,7 @@ D_T:            CALL    GET_TPARS               ;TRACE
                 MOV     DWORD [T_CLOCK_SUM],0
                 NOT     [TIMER_ST]
 .L5:            CALL    CPUCYCLE
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
                 CALL    CPUCYCLE
                 CMP     [CPUOP],IRQSEQ
                 JZ      .IRQ
@@ -1971,7 +1892,7 @@ D_U:            CALL    GET_PARS        ;UNASSEMBLE
 D_V:            CALL    SAVE_DEBUG              ;VIEW CBM SCREEN
                 CALL    RESTORE_TED
                 NOT     [TIMER_ST]
-                CALL    SILENCE
+                CALL    SEG_CODE:SILENCE_F
                 MOV     AH,86H          ;DELAY
                 XOR     CX,7
                 INT     15H
@@ -2080,10 +2001,10 @@ D_W:            CALL    GET_PARS                ;WRITE
                 ADD     AX,BP
                 MOV     BX,AX
                 MOV     AL,AH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_W_BUF+8],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_W_BUF+10],DX
                 MOV     DX,D_W_BUF
                 JMP     D_ERRX
@@ -2106,7 +2027,7 @@ D_Y:            MOV     SI,1            ;CYCLE
 .L1:            NOT     [TIMER_ST]
                 MOV     DWORD [T_CLOCK_SUM],0
                 CALL    CPUCYCLE
-.L5:            CALL    TED
+.L5:            CALL    SEG_CODE:TED_FAR
                 CALL    CPUCYCLE
                 CALL    CPUCYCLE
                 DEC     [VAL1]
@@ -2122,7 +2043,7 @@ D_Y:            MOV     SI,1            ;CYCLE
 .L2:            CMP     [CPUOP],FETCHBYTE1
                 JZ      D_DISPATCHER.L0
 
-                CALL    TED
+                CALL    SEG_CODE:TED_FAR
                 CALL    CPUCYCLE
                 CMP     [CPUOP],FETCHBYTE1
                 JZ      D_DISPATCHER.L0
@@ -2168,18 +2089,18 @@ D_Z:            MOV     AH,3            ;ZOOM SCREEN ON/OFF
 
 D_X:            MOV     BX,[DMA_BASE]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+6],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+8],DX
 
                 MOV     BX,[CP_CURRENT]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+21],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+23],DX
 
                 MOV     AL,[ISDMANOW]
@@ -2214,93 +2135,93 @@ D_X:            MOV     BX,[DMA_BASE]
 
 .L4E:           MOV     BX,[EVSA]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     [XVALS+60],DH
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+61],DX
 
                 MOV     AL,[EHSA]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+69],DX
 
                 MOV     AL,[VM_BASE]            ;remove!
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS+78],DX
 
                 MOV     BX,[VD_PTR_BEAM]
                 SUB     BX,VIDEO_DATA
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+12],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+14],DX
 
                 MOV     BX,[VD_PTR_FILL]
                 SUB     BX,VIDEO_DATA
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+29],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+31],DX
 
                 MOV     BX,[VMODE]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+40],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+42],DX
 
                 MOV     BX,[BEAM_POS+2]
                 SUB     BX,SEG_VRAM1
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+55],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+57],DX
 
                 MOV     BX,[BEAM_POS]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+60],DX
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+62],DX
 
                 MOV     BX,[BEAMY]
                 MOV     AL,BH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     [XVALS2+71],DH
                 MOV     AL,BL
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS2+72],DX
 
                 MOV     BX,0FFFDH               ;Reset & IRQ vectors
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS3+15],DX
                 DEC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS3+17],DX
                 ADD     BL,3
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS3+4],DX
                 DEC     BX
-                CALL    MREAD_DH
+                CALL    SEG_CODE:MREAD_DH_F
                 MOV     AL,DH
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS3+6],DX
                 MOV     AL,[BEAMX]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [XVALS3+26],DX
 
                 MOV     DX,XVALS
@@ -2312,9 +2233,9 @@ D_X:            MOV     BX,[DMA_BASE]
                 JMP     D_D
 
 D_B:            XOR     SI,SI
-.L2:            MOV     BX,16                   ;25
+.L2:            MOV     BX,16                   ;max=25
 .L1:            MOV     AL,[IOBUF+SI]
-                CALL    SEG_CODE2:BIN2HEX
+                CALL    BIN2HEX
                 MOV     WORD [D_D_BUF+1],DX
                 MOV     DX,D_D_BUF
                 CALL    OUT_STR

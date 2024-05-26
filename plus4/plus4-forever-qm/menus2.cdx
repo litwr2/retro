@@ -375,10 +375,9 @@ ENT_C2F_BODY:   MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 JZ      .L3A
 
                 PUSH    BX
-                CALL    [EXIT_SOUND]
+                CALL    SEG_CODE:EXIT_SND_E_F
                 POP     BX
-                CALL    [SOUND_SRC+EBX*2]
-                CALL    [RESET_SOUND]
+                CALL    SEG_CODE:RESET_SND_E_F
 .L3A:           PUSH    SI
                 CALL    INIT_JOY
                 POP     SI
@@ -391,7 +390,7 @@ ENT_C2F_BODY:   MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 CMP     BL,1EH
                 JZ      .L5
 
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
 .L5:            INC     BX
                 CMP     BL,20H
                 JNZ     .L2
@@ -405,13 +404,13 @@ ENT_C2F_BODY:   MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 JNZ     .L4
 
                 INC     BX
-.L4:            CALL    MSTORE_DH
+.L4:            CALL    SEG_CODE:MSTORE_DH_F
 
                 MOV     BX,0FDD0H       ;RESTORE ROMMAP
                 ADD     BL,[ROMMAP]
-                CALL    MSTORE_DH
+                CALL    SEG_CODE:MSTORE_DH_F
 
-                CALL    SET_LED         ;RESTORE LED & CAPS LOCK STATE
+                CALL    SEG_CODE:SET_LED_F      ;RESTORE LED & CAPS LOCK STATE
                 TEST    [LED],40H
                 MOV     [KMATRIX+1],0FFH
                 JZ      .L1
@@ -559,7 +558,7 @@ FILL_SCR_CBM:   MOV     DI,160*2+(SCR2_TOP_X+1)*2
                 XOR     EAX,EAX
                 LEA     SI,[CBM_SZ_LIST+ESI*2]
 .L4B:           LODSW
-                CALL    SEG_CODE2:HEX2DEC
+                CALL    HEX2DEC
                 CALL    OUT_DEC2
                 ADD     DI,160-10
                 LOOP    .L4B

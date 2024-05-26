@@ -1,54 +1,3 @@
-INIT_JOY:       MOV     DX,201H         ;INIT JOYSTICKS
-                OUT     DX,AL
-                MOV     CX,4
-                MOV     [JOY_ST],CH
-                MOV     AH,0FH
-.L2B:           IN      AL,DX
-                AND     AL,AH
-                INC     CX
-                JS      .L2A
-
-                XOR     AL,AH
-                JZ      .L2B
-
-                MOV     BX,CX
-                MOV     SI,CX
-                SHR     BX,1
-                ADD     SI,BX
-                TEST    AL,1
-                JZ      .L2C
-
-                MOV     [JOY1X_LB],BX
-                MOV     [JOY1X_RB],SI
-                OR      [JOY_ST],1
-                AND     AH,0EH
-.L2C:           TEST    AL,2
-                JZ      .L2D
-
-                MOV     [JOY1Y_LB],BX
-                MOV     [JOY1Y_RB],SI
-                OR      [JOY_ST],2
-                AND     AH,0DH
-.L2D:           TEST    AL,4
-                JZ      .L2E
-
-                MOV     [JOY2X_LB],BX
-                MOV     [JOY2X_RB],SI
-                OR      [JOY_ST],4
-                AND     AH,0BH
-.L2E:           TEST    AL,8
-                JZ      .L2F
-
-                MOV     [JOY2Y_LB],BX
-                MOV     [JOY2Y_RB],SI
-                OR      [JOY_ST],8
-                AND     AH,07H
-.L2F:           ADD     CX,12
-                OR      AH,AH
-                JNZ     .L2B
-
-.L2A:           RETN
-
 GET_JOYS:       CMP     [JOY1_ST],2
                 JZ      .L100
 
@@ -164,13 +113,13 @@ GET_JOYS:       CMP     [JOY1_ST],2
                 JNZ     .L19
 
                 MOV     DL,BH
-                CALL    I9_JSB
+                CALL    I9_JSB_COPY
                 MOV     BYTE [JOY_MASK],DL
 .L19:           CMP     [JOY2_ST],2
                 JNZ     .L20
 
                 MOV     DL,BL
-                CALL    I9_JSB
+                CALL    I9_JSB_COPY
                 MOV     BYTE [JOY_MASK+1],DL
                 RETN
 
@@ -179,4 +128,11 @@ GET_JOYS:       CMP     [JOY1_ST],2
 
                 MOV     BYTE [JOY_MASK+1],BH
 .L21:           RETN
+
+I9_JSB_COPY:    XOR     DL,0C0H
+                TEST    DL,0C0H
+                JNZ     .L1
+
+                XOR     DL,0C0H
+.L1:            RETN
 
