@@ -413,14 +413,25 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 MOV     BX,0FF02H
 .L2:            LODSB
                 MOV     DH,AL
+                CMP     BL,1EH
+                JZ      .L5
+
                 CALL    MSTORE_DH
-                INC     BX
+.L5:            INC     BX
                 CMP     BL,20H
                 JNZ     .L2
 
                 MOV     AL,[IOBUF+9]    ;TED CORRECTION
                 MOV     [TED_9],AL
-                MOV     AL,[TED_11]
+;                MOV     AL,[IOBUF+1EH]
+;                ADD     AL,2
+;                SHR     AL,2
+;                CMP     AL,57
+;                JNZ     .L5
+
+                XOR     AL,AL
+;.L5:            MOV     [TED_1E],AL
+;                MOV     AL,[TED_11]
                 MOV     BL,3EH
                 TEST    [IOBUF+13H],1
                 JNZ     .L4

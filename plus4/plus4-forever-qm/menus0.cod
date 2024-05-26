@@ -6,6 +6,7 @@ MENUS_ENTRY:    CALL    ADJUST_CPU
 
 HIDEM:          CMP     [ISMOUSE],0
                 JE      NOMOUSE1
+
                 PUSH    AX
                 MOV     AX,2
                 INT     33H
@@ -14,6 +15,7 @@ NOMOUSE1:       RETN
 
 SHOWM:          CMP     [ISMOUSE],0
                 JE      NOMOUSE2
+
                 MOV     AX,1
                 INT     33H
 NOMOUSE2:       RETN
@@ -21,15 +23,18 @@ NOMOUSE2:       RETN
 WAITM:          XOR     BX,BX
                 CMP     [ISMOUSE],BL
                 JE      NOMOUSE3
+
                 MOV     AX,3
                 INT     33H
                 OR      BX,BX
                 JZ      NOMOUSE3
+
                 PUSH    BX
 .L1:            MOV     AX,3
                 INT     33H
                 OR      BX,BX
                 JNZ     .L1
+
                 POP     BX
 NOMOUSE3:       RETN
 
@@ -39,14 +44,14 @@ CUROFF:         MOV     AH,2            ;HIDE CURSOR
                 INT     10H
                 RETN
 
-INIT_MENUS:     CALL    SAVE_TED
+INIT_MENUS:     CALL    SAVE_TED.L0
                 CALL    SILENCE
                 MOV     AX,3            ;SET VIDEO MODE
                 INT     10H
                 MOV     ES,[DS_BUF_PTR+2]       ;LOAD CBM FONTS
                 PUSH    DS
                 XOR     DI,DI
-                MOV     AX,SEG SEG_ROM +0500H
+                MOV     AX,SEG_ROM + 0500H
                 MOV     BP,DI           ;TRASFORM FONT SIZE: 8x8 -> 8x16
                 MOV     DS,AX
                 XOR     SI,SI
@@ -55,6 +60,7 @@ INIT_MENUS:     CALL    SAVE_TED
                 MOV     AH,AL
                 STOSW
                 LOOP    .L1
+
                 POP     DS
                 MOV     AX,1100H
                 INC     CH
@@ -83,11 +89,14 @@ INIT_MENUS:     CALL    SAVE_TED
                 CALL    FILL_IBM_FLIST
                 JMP     PLOT_SCR1
 
-END_MENUS:      CALL    RESTORE_TED
+END_MENUS:      CALL    RESTORE_TED.L0
 .L1:            CMP     [PREV_KEY],44H
                 JZ      .L1
 
                 MOV     [KBUFA],0
+                CALL    ADJUST_TICKS
+                CALL    SET_VMODE
+                CALL    ADJUST_BEAM
                 JMP     CPUCYCLE
 
 GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
@@ -348,6 +357,7 @@ OUT_MSG:        MOV     AX,'É'+7*256    ;IN: BX,CX,SI,DI  USED: AX
                 STOSW
                 DEC     BX
                 JNZ     .L5
+
                 POP     CX
                 ADD     DI,154
                 SUB     DI,CX

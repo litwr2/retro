@@ -94,6 +94,7 @@ ADLIB_11:       PUSH    DX
                 MOV     AH,[ADLIB_VOL+BX]
                 TEST    DH,80H
                 JZ      .L1
+
                 MOV     AH,3FH          ;63
 .L1:            MOV     BH,AH
                 XCHG    BL,DH
@@ -169,6 +170,7 @@ OUT_ADLIB:      MOV     DX,388H         ;AL-INDEX,AH-VALUE
 .L1:            IN      AL,DX
                 DEC     AH
                 JNZ     .L1
+
                 POP     AX
                 MOV     AL,AH
                 INC     DX
@@ -178,6 +180,7 @@ OUT_ADLIB:      MOV     DX,388H         ;AL-INDEX,AH-VALUE
 .L2:            IN      AL,DX
                 DEC     AH
                 JNZ     .L2
+
                 STI
                 RETN
 

@@ -44,7 +44,7 @@ IECDS61         DB      '61, FILE NOT OPEN'     ;22
 IECDS62         DB      '62, FILE NOT FOUND'    ;23
 IECDS63         DB      '63, FILE EXISTS'       ;24
 IECDS64         DB      '64, FILE TYPE MISMATCH';25
-IECDS65         DB      '65, NO BLOCK';26
+IECDS65         DB      '65, NO BLOCK'          ;26
 IECDS66         DB      '66, ILLEGAL TRACK AND SECTOR'  ;27
 IECDS70         DB      '70, NO CHANNEL'        ;28
 IECDS72         DB      '72, DISK FULL'         ;29

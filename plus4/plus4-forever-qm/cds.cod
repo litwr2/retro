@@ -273,7 +273,7 @@ CDS_IO_WR:      PUSH    EAX
 .L8:            CALL    DSW_BIT
                 JMP     .L5
 
-DSW_BIT:        MOV     EAX,[TOTALTICKS]        ;[SEG_AUX+500]:[DS_BUF_PTR]=
+DSW_BIT:        MOV     EAX,[TOTALTICKS]        ;[SEG_DS]:[DS_BUF_PTR]=
                 MOV     EDX,EAX                 ;=MIN(400H,TOTALTICKS-DS_TIMER)
                 XCHG    EAX,[DS_TIMER]          ;DS_BUF_PTR=+2
                 SUB     EDX,EAX
@@ -290,6 +290,7 @@ DSW_BIT:        MOV     EAX,[TOTALTICKS]        ;[SEG_AUX+500]:[DS_BUF_PTR]=
                 CMP     BX,8000
                 MOV     [DS_BUF_PTR],BX
                 JZ      DSW_FLUSH
+
                 RETN
 
 DSW_FLUSH:      PUSH    ES
@@ -469,8 +470,8 @@ CDS_IO_RD:      TEST    [CPU_1],8
 
                 TEST    [LED],30H
                 JPE     CDS_IO_WR.GL1
-                INC     [DS_MODE]
 
+                INC     [DS_MODE]
                 MOV     EAX,[TOTALTICKS]
                 MOV     [DS_TIMER],EAX
                 MOV     CX,5

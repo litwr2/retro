@@ -11,7 +11,7 @@ DS_MCOUNT       DD      ?
 DS_MVAL2        DW      ?
 DS_TEMP         DW      ?               ;USED IN MENUS
 DS_BUF_PTR      DW      ?               ;USED IN MENUS
-                DW      SEG SEG_AUX +500
+                DW      SEG_DS
 DS_RPOSBY       DD      ?               ;POS OF BREAK
 DS_SPOS         DD      ?               ;FILE SIZE
 DS_FVER         DW      0               ;CURRENT FORMAT VERSION!!!

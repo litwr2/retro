@@ -1,6 +1,6 @@
 INTR23:         PUSH    DS
                 PUSH    AX
-                MOV     AX,SEG SEG_DATA
+                MOV     AX,SEG_DATA
                 MOV     DS,AX
                 INC     [BREAK_FLAG]
                 POP     AX
@@ -28,7 +28,6 @@ RESTORE_INTR24: MOV     DX,[SAVE24LO]   ;RESTORE INTR24 VECTOR
                 MOV     DS,[SAVE24HI]
                 JMP     SET_INTR24.L1
 
-
 SET_INTR23:     MOV     AX,3523H        ;SAVE/SET INTR23 VECTOR
                 INT     21H
                 MOV     [SAVE23LO],BX
@@ -46,52 +45,6 @@ RESTORE_INTR23: MOV     DX,[SAVE23LO]   ;RESTORE INTR23 VECTOR
                 PUSH    DS
                 MOV     DS,[SAVE23HI]
                 JMP     SET_INTR23.L1
-
-SET_VMODE:      MOV     AX,13H
-                INT     10H
-                CLI
-                MOV     DX,3CEH ;SET 128KB VIDEO RAM MODE
-                MOV     AL,6
-                OUT     DX,AL
-                MOV     AH,AL
-                INC     DX
-                IN      AL,DX
-                AND     AL,0F3H
-                XCHG    AL,AH
-                DEC     DX
-                OUT     DX,AX
-                XOR     AX,AX   ;PROVIDE ACCESS TO THE CRTC REGISTERS
-                MOV     ES,AX
-                MOV     DX,[ES:463H]
-                MOV     AL,11H
-                OUT     DX,AL
-                MOV     AH,AL
-                INC     DX
-                IN      AL,DX
-                MOV     BL,AL
-                ;AND     AL,7FH
-                ;XCHG    AL,AH
-                DEC     DX
-                ;OUT     DX,AX           ;DISABLE WRITE PROTECTION
-                ;MOV     AX,5101H        ;SET THE HORIZONTAL REGISTERS
-                ;OUT     DX,AX
-                ;MOV     AX,5202H
-                ;OUT     DX,AX
-                ;MOV     AX,2A13H
-                ;OUT     DX,AX
-                MOV     AX,0A210H       ;SET THE VERTICAL REGISTERS
-                OUT     DX,AX
-                MOV     AX,9D12H
-                OUT     DX,AX
-                MOV     AX,0A015H
-                OUT     DX,AX
-                MOV     AL,11H
-                MOV     AH,BL
-                AND     AH,0F0H
-                OR      AH,4
-                OUT     DX,AX
-                STI
-                RETN
 
 FINISHIBM:      CALL    RESET_DS
 
@@ -160,12 +113,10 @@ FINISHIBM:      CALL    RESET_DS
                 RETN
 
 INITIBM:        CLD
-                MOV     AX,SEG SEG_RAM  ; INIT FS
-                MOV     FS,AX
-                MOV     AH,30H          ; TEST DOS VERSION
+                MOV     AH,30H          ;TEST DOS VERSION
                 INT     21H
                 XCHG    AL,AH
-                CMP     AX,31EH         ; DOS >= 3.30
+                CMP     AX,31EH         ;DOS >= 3.30
                 JNC     .L3
 
                 MOV     DX,ERROR1
@@ -191,20 +142,34 @@ INITIBM:        CLD
                 XOR     ECX,ECX
                 XOR     EDI,EDI
                 XOR     ECX,ECX
+                XOR     EBP,EBP
+
+                MOV     AX,3D00H
+                MOV     DX,CFGFILE
+                INT     21H
+                JC      .L6
+
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,3
+                MOV     DX,KBD_BUF
+                INT     21H
+
+                MOV     AH,3EH
+                INT     21H
+
+                MOV     AX,WORD [KBD_BUF]
+                MOV     [VIDMODE],AL
+                MOV     [FRAMESKIP],AH
+                MOV     AL,[KBD_BUF+2]
+                OR      [SJCFG],AL
+
+.L6:            CALL    INIT_VIDEO
+
+                MOV     AX,SEG_RAM      ;INIT FS
+                MOV     FS,AX
 
                 CALL    SET_VMODE       ;SET VIDEO MODE
-
-                PUSH    DS              ;INIT DAC = SET PALETTE
-                POP     ES
-                XOR     BX,BX
-                MOV     CX,128
-                MOV     AX,1012H
-                MOV     DX,DAC_T
-                INT     10H
-                MOV     BX,CX
-                MOV     AX,1012H
-                INT     10H
-
                 CALL    SET_INTR23
                 CALL    SET_INTR24
                 CALL    SET_INTR9
@@ -224,11 +189,12 @@ INITIBM:        CLD
                 CALL    INIT_JOY
 
                 XOR     SI,SI           ;LOAD ROMs
-                MOV     DI,SEG SEG_ROM
+                MOV     DI,SEG_ROM
 .L2:            MOV     AX,3D00H
                 LEA     DX,[ROMS_FN+SI]
                 INT     21H
                 JC      .L5
+
                 MOV     BX,AX
                 MOV     AX,4202H
                 XOR     CX,CX
@@ -236,8 +202,10 @@ INITIBM:        CLD
                 INT     21H
                 OR      DX,DX
                 JNZ     .L1
+
                 CMP     AX,16*1024
                 JNZ     .L1
+
                 MOV     AX,4200H
                 INT     21H
                 PUSH    DS
@@ -275,11 +243,12 @@ INITIBM:        CLD
                 AND     BYTE [ES:417H],0CFH
                 AND     AL,40H
                 JZ      .L4
+
                 AND     [KMATRIX+1],7FH
 .L4:            MOV     [LED],AL
                 CALL    SET_LED
 
-                MOV     AX,0A000H       ;Init ES For TED
+                MOV     AX,0A000H       ;? Init ES For TED
                 MOV     ES,AX
 
                 MOV     [TOTALTICKS],0
@@ -288,4 +257,70 @@ INITIBM:        CLD
                 CALL    GET_FPATH
                 CALL    INIT_WIN1
                 JMP     FILL_IBM_FLIST
+
+INIT_VIDEO:     MOV     AX,SEG_VRAM1
+                MOV     ES,AX
+                XOR     DI,DI
+                MOV     AX,4F00H
+                INT     10H
+
+                CMP     AX,4FH
+                JNE     .EXIT
+
+                LFS     BP,[ES:0EH]     ;TO VIDEO MODES LIST
+                TEST    BYTE [ES:0AH],2 ;VGA COMPATIBILITY
+                JE      .VBE
+
+                XOR     BX,BX
+.L6:            IMUL    SI,BX,15
+                MOV     [M3_MSG16+16+SI],' '
+                INC     BX
+                CMP     BL,VBESWITCH
+                JB      .L6
+
+.VBE:           CMP     WORD [ES:4],0           ;VBE VER
+                JE      .EXIT
+
+                MOV     DI,512
+                XOR     BX,BX
+.L3:            PUSH    BP
+                IMUL    SI,BX,15
+.L4:            MOV     CX,[FS:BP]
+                ADD     BP,2
+                CMP     CX,0FFFFH
+                JZ      .L5
+
+                MOV     AX,4F01H
+                INT     10H
+
+                MOV     EAX,[VIDIDS+EBX*4]
+                CMP     EAX,[ES:512+12H]        ;X, Y RES
+                JNZ     .L4
+
+                CMP     BYTE [ES:512+19H],8     ;BITS PER PIXEL
+                JNZ     .L4
+
+                CMP     BYTE [ES:512+1BH],4     ;MEMORY MODEL TYPE
+                JNZ     .L4
+
+                CMP     WORD [ES:512+4],40H     ;WINDOWS GRANULARITY
+                JNZ     .L4
+
+                MOV     EAX,[ES:512+0CH]        ;WINPOS FUNCTION
+                OR      EAX,EAX
+                JZ      .L4
+
+                XCHG    EAX,[VBECSWF]
+                OR      EAX,[VBECSWF]
+                CMP     EAX,[VBECSWF]
+                JNZ     .L4
+
+                MOV     [VBEMODEN+EBX*2],CX     ;MODE #
+                MOV     [M3_MSG16+15*VBESWITCH+16+SI],'+'
+.L5:            POP     BP
+                INC     BX
+                CMP     BL,MAXVIDMODEN-VBESWITCH
+                JB      .L3
+
+.EXIT:          RETN
 

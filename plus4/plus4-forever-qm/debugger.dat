@@ -42,7 +42,6 @@ CURSOR          DW      0
 OLD_PC          DW      0
 WATCHPOINT_FLAG DB      0
 
-
 OPCL    DB      1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
         DB      3,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
         DB      1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
@@ -347,6 +346,7 @@ D_HELPM DB      'Help           ?',0DH,0AH
         DB      'T command hides interrupts',0DH,0Ah,'$'
 
 XVALS   DB      'DMA_B=0000 CP_CURREN=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
-XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 BEAMY=000'
+XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 BEAMY=000',0DH,0AH
+XVALS3  DB      'IRQ=0000 Reset=0000'
         DB      0DH,0AH,'$'
 

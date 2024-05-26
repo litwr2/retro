@@ -1,4 +1,4 @@
-XRESET:         MOV     AX,SEG SEG_ROM -800H    ;SET ROM MAP
+XRESET:         MOV     AX,SEG_ROM - 800H       ;SET ROM MAP
                 MOV     [SA_ROM_LO],AX
                 MOV     [SA_ROM_HI],AX
                 CALL    SET_MDATA_SEG

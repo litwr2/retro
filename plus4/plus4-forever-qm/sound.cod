@@ -4,6 +4,7 @@ SET_ADLIBSND:   XOR     BX,BX
                 ADD     BX,2
                 CMP     BL,14
                 JNZ     .L1
+
                 RETN
 
 SET_TIMERSND:   XOR     BX,BX
@@ -12,6 +13,7 @@ SET_TIMERSND:   XOR     BX,BX
                 ADD     BX,2
                 CMP     BL,14
                 JNZ     .L1
+
                 RETN
 
 SET_NOSND:      XOR     BX,BX
@@ -20,6 +22,7 @@ SET_NOSND:      XOR     BX,BX
                 ADD     BX,2
                 CMP     BL,14
                 JNZ     .L1
+
 NO_SOUND:       RETN
 
 SET_SBSND:      JMP     SET_NOSND
@@ -30,5 +33,13 @@ RELOAD_SND:     MOV     BX,0FF0EH
                 INC     BX
                 CMP     BL,12H
                 JBE     .L1
+
                 RETN
+
+SILENCE:        XOR     DH,DH
+                JMP     [SOUND_11]
+
+RESTSOUND:      MOV     BX,0FF11H
+                MOV     DH,[TED_11]
+                JMP     MSTORE_DH
 

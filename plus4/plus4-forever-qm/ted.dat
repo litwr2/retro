@@ -2,45 +2,43 @@ VIDEO_SEG       EQU     0A000H
 
 MAX_VER         EQU     311             ;NTSC=261
 
-SCR_XSIZE       EQU     40
-SCR_YSIZE       EQU     207
-BEAM_CH_POS     EQU     SCR_XSIZE*200*8
-
-CHAR_VSTART     EQU     4
-CHAR_VSIZE      EQU     200
-
-SHVA            EQU     56
-EHVA            EQU     38
-SVVA            EQU     0
-EVVA            EQU     SVVA+SCR_YSIZE-1
-
                 ALIGN   4
 LABEL           BEAM_ADDR DWORD
 BEAM_POS        DW      0
-                DW      VIDEO_SEG       ;VGA GRAPHICS
+                DW      VIDEO_SEG       ;VGA/VBE GRAPHICS
 
 BORDER_COLOR    DD      ?
+COLOR0          DD      ?               ;TED_15
 
 LABEL           MDATA_ADDR DWORD
 VSA             DB      7               ;VERTICAL SUBADDRESS
 MDATA_OFFSET    DB      0D0H
-MDATA_SEG       DW      SEG SEG_ROM
+MDATA_SEG       DW      SEG_ROM
 
 RETRACE_COUNT   DD      0
 
-SVSA            DW      CHAR_VSTART     ;START VER. CHAR SCREEN AREA
-EVSA            DW      CHAR_VSTART+CHAR_VSIZE-1
-SHSA            DB      56
-EHSA            DB      38
+LABEL           VID_BUF1 BYTE
+TIMES   40      DB      'T'
+LABEL           VID_BUF2 BYTE
+TIMES   40      DB      'A'
+LABEL           VID_BUF3 BYTE
+TIMES   40      DB      'C'
 
-VD_PTR_BEAM     DW      VIDEO_DATA
+FASTTEDB        DW      0
+
+SVSA            DW      4               ;START VER. CHAR SCREEN AREA: 4/8
+EVSA            DW      204             ;204/200
+SHSA            DB      56              ;56/0
+EHSA            DB      39              ;39/38
+
+VD_PTR_BEAM     DW      VIDEO_DATA      ;+NEXT = DWORD!!!
 VD_PTR_FILL     DW      VIDEO_DATA      ;VD_PTR_BEAM+X_OFFSET
 
 X_OFFSET        DW      0
 Y_OFFSET        DW      3
 BEAMY           DW      0
 
-CP_CURRENT      DW      0               ;CHAR. POS. CURRENT
+CP_CURRENT      DW      0               ;CHAR.POS.CURRENT - united with next!
 DMA_BASE        DW      0               ;SCREEN POS. FOR DMA
 
 VMODE           DW      0  ; (0-0,) 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH
@@ -55,58 +53,23 @@ VMJT            DW      T00000, T00001, T00010, T00xxx
 
 MAINJUMP        DW      MAINLOOP
 
-COLOR0          DW      ?               ;TED_15
+SHVA            DB      ?       ;START HOR VISIBLE AREA
+EHVA            DB      ?
+                ;         0    1    2    3    4    5    6    7    8    9   10
+                ;       320, 320, 320, 320, 360, 360, 400, 320, 400, 640, 640
+LHVA            DW      320,  80,  80,  80,  90,  90, 100, 320, 400, 640, 640
+SHVAX           DB       56,  56,  56,  56,  54,  54,  53,  56,  53,  53,  53
+EHVAX           DB       38,  38,  38,  38,  40,  40,  41,  38,  41,  41,  41
+SVVA            DW      ?
+EVVA            DW      ?
+                ;       200  240  350  400  240  400  300  200  300  400  480
+SVVAY           DW       48,  32,   8,   8,  32,   8,   8,  48,   8,   8,   8
+EVVAY           DW      247, 271, 295, 295, 271, 295, 295, 247, 295, 295, 295
+
 COLOR1          DW      ?
 COLOR2          DW      ?
 
 CLADDR          DW      LNORMF
-
-BLINK_COUNT     DB      0F0H
-ISDMANOW        DB      0               ;0-no, 1-attr, 2-char
-ISDMA           DB      1               ;0-no, 1-no data, 2 - ok
-IRQTICKS        DB      0
-
-LABEL           VIDEO_DATA BYTE
-TIMES   327     DB      'V'
-
-CG_BASE         DB      0D0H
-VM_BASE         DB      8
-
-LABEL           VID_BUF1 BYTE
-TIMES   40      DB      'T'
-LABEL           VID_BUF2 BYTE
-TIMES   40      DB      'A'
-LABEL           VID_BUF3 BYTE
-TIMES   40      DB      'C'
-
-LABEL           LDMAF   BYTE    ;22+3
-TIMES   37      DB      0
-TIMES   6       DB      1
-TIMES   8       DB      2
-TIMES   3       DB      90H
-TIMES   3       DB      0
-
-LABEL           LDMAS   BYTE    ;14+3
-TIMES   37      DB      0
-TIMES   14      DB      1
-TIMES   3       DB      90H
-TIMES   3       DB      0
-
-LABEL           LNORMF  BYTE    ;65
-TIMES   43      DB      1
-TIMES   8       DB      2
-TIMES   6       DB      1
-
-
-LABEL           LNORMS  BYTE
-LABEL           LBLAS   BYTE
-TIMES   57      DB      1       ;57
-
-
-LABEL           LBLAF   BYTE    ;109
-TIMES   37      DB      2
-TIMES   5       DB      1
-TIMES   15      DB      2
 
                 ;TIMER1
 TED_0           DB      0FFH    ; $FF00
@@ -146,9 +109,50 @@ TED_1B          DB      0       ; $FF1B
 TED_1C          DB      0       ; $FF1C \
 TED_1D          DB      0       ; $FF1D -- VER. POS.
                 ;HOR_POS
-TED_1E          DB      49       ; $FF1E -- HOR. POS.
+TED_1E          DB      49      ; $FF1E -- HOR. POS.
 TED_1F          DB      087H    ; $FF1F
 
-;TED_3E          DB      ?       ; $FF3E
-;TED_3F          DB      ?       ; $FF3F
+VIDMODE         DB      0       ;0-4 - VGA, 5-A - VBE  *2!
+BLINK_COUNT     DB      0F0H
+ISDMANOW        DB      0       ;0-no, 1-attr, 2-char : +ISDMA = WORD !!!
+ISDMA           DB      1       ;0-no, 1-no data, 2 - ok
+RIRQ            DB      0
+ISBORDER        DB      0
+VISIBLE         DB      0
+FRAMESKIP       DB      1       ;1-none, 3 - 2/3, 5 - 4/5, 7 - 6/7
+
+LABEL           VIDEO_DATA BYTE
+TIMES   375     DB      'V'
+
+CG_BASE         DB      0D0H
+VM_BASE         DB      8
+
+LABEL           LDMAF   BYTE    ;22+3
+TIMES   37      DB      0
+TIMES   6       DB      1
+TIMES   8       DB      2
+TIMES   3       DB      90H
+TIMES   3       DB      0
+
+LABEL           LDMAS   BYTE    ;14+3
+TIMES   37      DB      0
+TIMES   14      DB      1
+TIMES   3       DB      90H
+TIMES   3       DB      0
+
+LABEL           LNORMF  BYTE    ;65
+TIMES   43      DB      1
+TIMES   8       DB      2
+TIMES   6       DB      1
+
+
+LABEL           LNORMS  BYTE
+LABEL           LBLAS   BYTE
+TIMES   57      DB      1       ;57
+
+
+LABEL           LBLAF   BYTE    ;109
+TIMES   37      DB      2
+TIMES   5       DB      1
+TIMES   15      DB      2
 

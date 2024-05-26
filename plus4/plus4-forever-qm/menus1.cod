@@ -843,8 +843,8 @@ MOUSE_DISP1:    CALL    HIDEM
                 JB      MD1_JOYS
 
                 JZ      MENU_DISP1
-                CMP     CL,31
 
+                CMP     CL,31
                 JB      MD1_FREEZE
 
                 JZ      MENU_DISP1
@@ -853,7 +853,7 @@ MOUSE_DISP1:    CALL    HIDEM
                 JB      MD1_NEWM
 
                 CMP     CL,47
-                JB      MENU_DISP1      ;free slot
+                JB      MD1_CONFIG
 
                 JZ      MENU_DISP1
 
@@ -960,7 +960,7 @@ MENU_DISP1:     CALL    SHOWM
                 CMP     AH,3CH          ;F2=SAVEBS
                 JZ      MD1_SAVEBS
 
-                CMP     AH,3DH          ;F3=JOYS
+                CMP     AH,3DH          ;F3=JOYSTICKS
                 JZ      MD1_JOYS
 
                 CMP     AH,3EH          ;F4=FREEZE
@@ -968,6 +968,9 @@ MENU_DISP1:     CALL    SHOWM
 
                 CMP     AH,3FH          ;F5=NEW_MEDIA
                 JZ      MD1_NEWM         
+
+                CMP     AH,40H          ;F6=CONFIG
+                JZ      MD1_CONFIG
 
                 CMP     AH,41H          ;F7=ASSOCIATE
                 JZ      MD1_ASSO
@@ -1225,7 +1228,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
 
 MD1_HELP:       MOV     DI,HELP1_TOP_Y*160+HELP1_TOP_X*2
                 MOV     CX,HELP1_LEN
-                MOV     BX,15
+                MOV     BX,17
                 MOV     SI,MHELP1
                 CALL    OUT_MSG
                 CALL    WAIT_ACTIVITY
@@ -1285,6 +1288,7 @@ MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
                 CALL    MAIN_ISCR
                 OR      BX,BX
                 JZ      MD1_ENTER.L8A
+
                 MOV     DWORD [FILENAMEBUF+BX],'C2F'
                 MOV     AH,3CH
                 XOR     CX,CX
@@ -1562,7 +1566,77 @@ MD1_CBMCS:      MOV     AL,'1'
                 MOV     [BMENU2_T+69],AL
                 JMP     MD1_ENTER.L8A
 
-MD1_JOYS:       CALL    MAIN_SCR5
+MD1_CONFIG:     CALL    MAIN_SCR8
+                OR      SI,SI
+                JNZ     MD1_ENTER.L8A
+
+                CMP     [CP_IN_WIN8],1
+                JA      .L1
+
+                JZ      .L2
+
+                CALL    MAIN_SCR9       ;VIDEO
+                OR      SI,SI
+                JNZ     MD1_CONFIG
+
+                MOVZX   AX,[CP_IN_WIN9]
+                IMUL    BX,AX,15
+                SHL     AX,1
+                CMP     [M3_MSG16+1+BX],'-'
+                JZ      MD1_ENTER.L8A
+
+                MOV     [VIDMODE],AL
+                JMP     MD1_ENTER.L8A
+
+.L2:            CALL    MAIN_SCR11      ;FRAMES SKIP
+                OR      SI,SI
+                JNZ     MD1_CONFIG
+
+                MOV     AL,[CP_IN_WIN11]
+                SHL     AL,1
+                INC     AX
+                MOV     [FRAMESKIP],AL
+                JMP     MD1_ENTER.L8A
+
+.L1:            CMP     [CP_IN_WIN8],3
+                JA      .L3
+
+                CALL    MAIN_SCR10      ;SOUND
+                OR      SI,SI
+                JNZ     MD1_CONFIG
+
+                MOVZX   BX,[CP_IN_WIN10]
+                AND     [SJCFG],0FCH
+                OR      [SJCFG],BL
+                CALL    [SOUND_SRC+EBX*2]
+                CALL    [RESET_SOUND]
+                CALL    RELOAD_SND
+                CALL    SILENCE
+                JMP     MD1_ENTER.L8A
+
+.L3:            MOV     AL,[VIDMODE]    ;SAVE
+                MOV     AH,[FRAMESKIP]
+                MOV     WORD [KBD_BUF],AX
+                MOV     AL,[SJCFG]
+                AND     AL,3
+                MOV     [KBD_BUF+2],AL
+                MOV     AH,3CH
+                XOR     CX,CX
+                MOV     DX,CFGFILE
+                INT     21H
+                JC      MD1_CONFIG
+
+                MOV     BX,AX
+                MOV     AH,40H
+                MOV     CX,3
+                MOV     DX,KBD_BUF
+                INT     21H
+
+                MOV     AH,3EH
+                INT     21H
+                JMP     MD1_ENTER.L8A
+
+MD1_JOYS:       CALL    MAIN_SCR5       ;JOYSTICKS
                 JMP     MD1_ENTER.L8A
 
 MD1_ISL:        MOVZX   EAX,[SPEED_LIMIT]
@@ -1598,7 +1672,6 @@ MD1_ISL:        MOVZX   EAX,[SPEED_LIMIT]
                 MOV     AL,[HEX2DECBUF+9]
                 MOV     [SPEEDL+12],AL
                 CALL    SHOW_SPEEDL
-                CALL    ADJUST_TICKS
                 JMP     MENU_DISP1
 
 MD1_DSL:        MOVZX   EAX,[SPEED_LIMIT]

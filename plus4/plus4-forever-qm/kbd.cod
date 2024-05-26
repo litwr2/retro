@@ -22,6 +22,7 @@ KB_WAIT:        PUSH    CX
 .L1:            IN      AL,64H
                 TEST    AL,2
                 LOOPNE  .L1
+
                 POP     AX
                 POP     CX
                 RETN
@@ -43,7 +44,7 @@ SET_LED:        CALL    KB_WAIT
 
 INTR9:          PUSH    AX
                 PUSH    DS
-                MOV     AX,SEG SEG_DATA
+                MOV     AX,SEG_DATA
                 MOV     DS,AX
                 IN      AL,60H
                 MOV     AH,AL
@@ -59,6 +60,7 @@ INTR9:          PUSH    AX
                 AND     AH,7FH
                 CMP     AH,2AH
                 JZ      .LEZ
+
                 CMP     AH,36H
                 JZ      .LEZ
 
@@ -67,9 +69,11 @@ INTR9:          PUSH    AX
 
                 CMP     AL,0C6H         ;ScrollLock?
                 JNZ     .L4
+
                 XOR     [LED],10H
                 TEST    [LED],10H
                 JNZ     .L7
+
                 AND     [LED],0DFH
 .L7:            CALL    SET_LED
                 JMP     .LE
@@ -92,6 +96,7 @@ INTR9:          PUSH    AX
                 CMP     [JOY1_ST],1
                 MOVZX   DX,BYTE [JOY_MASK]
                 JA      .JE_L2
+
                 JZ      .JE_L8
 
                 CALL    .JE1          ;J1 AT K1
@@ -109,6 +114,7 @@ INTR9:          PUSH    AX
 .JE_L2:         CMP     [JOY2_ST],1
                 MOVZX   DX,BYTE [JOY_MASK+1]
                 JA      .NJE
+
                 JZ      .JE_L1
 
                 CALL    I9_JSB        ;J2 AT K1
@@ -147,7 +153,6 @@ INTR9:          PUSH    AX
                 AND     [KMATRIX+1],07FH
 .L3:            MOV     [KBUFA],AH
                 MOV     WORD [KBUFS],DX
-
 .LE:            POP     DX
                 POP     BX
 .LEZ:           POP     DS
@@ -170,8 +175,9 @@ INTR9:          PUSH    AX
                 JMP     .LX1
 
 .SR:            XCHG    BP,SP
-                CMP     WORD [BP+10],SEG SEG_CODE
+                CMP     WORD [BP+10],SEG_CODE
                 JNZ     .L4B
+
                 MOV     WORD [BP+8],END_EMU
                 MOV     DWORD [FMSG+12],' abo'
                 MOV     WORD [FMSG+16],'rt'
@@ -180,51 +186,61 @@ INTR9:          PUSH    AX
 
 .JE1:           CMP     AL,12H          ;JOY1 UP P
                 JNZ     .J1
+
                 AND     DL, 0FEH
                 RETN
 
 .J1:            CMP     AL,92H          ;JOY1 UP R
                 JNZ     .J2
+
                 OR      DL, 1
                 RETN
 
 .J2:            CMP     AL,1FH          ;JOY1 LEFT P
                 JNZ     .J3
+
                 AND     DL, 0FBH
                 RETN
 
 .J3:            CMP     AL,9FH          ;JOY1 LEFT R
                 JNZ     .J4
+
                 OR      DL, 4
                 RETN
 
 .J4:            CMP     AL,20H          ;JOY1 RIGHT P
                 JNZ     .J5
+
                 AND     DL, 0F7H
                 RETN
 
 .J5:            CMP     AL,0A0H         ;JOY1 RIGHT R
                 JNZ     .J6
+
                 OR      DL, 8
                 RETN
 
 .J6:            CMP     AL,2DH          ;JOY1 DOWN P
                 JNZ     .J7
+
                 AND     DL, 0FDH
                 RETN
 
 .J7:            CMP     AL,0ADH         ;JOY1 DOWN R
                 JNZ     .J8
+
                 OR      DL, 2
                 RETN
 
 .J8:            CMP     AL,35H          ;JOY1 FIRE P
                 JNZ     .J9
+
                 AND     DL, 0BFH
                 RETN
 
 .J9:            CMP     AL,0B5H         ;JOY1 FIRE R
                 JNZ     .J10
+
                 OR      DL, 040H
                 RETN
 .J10:           INC     DH
@@ -232,6 +248,7 @@ INTR9:          PUSH    AX
 
 .JE2:           CMP     AL,48H          ;JOY2 UP P
                 JNZ     .J11
+
                 AND     DL, 0FEH
                 RETN
 
@@ -242,31 +259,37 @@ INTR9:          PUSH    AX
 
 .J12:           CMP     AL,4BH          ;JOY2 LEFT P
                 JNZ     .J13
+
                 AND     DL, 0FBH
                 RETN
 
 .J13:           CMP     AL,0CBH         ;JOY2 LEFT R
                 JNZ     .J14
+
                 OR      DL, 4
                 RETN
 
 .J14:           CMP     AL,4DH          ;JOY2 RIGHT P
                 JNZ     .J15
+
                 AND     DL, 0F7H
                 RETN
 
 .J15:           CMP     AL,0CDH         ;JOY2 RIGHT R
                 JNZ     .J16
+
                 OR      DL, 8
                 RETN
 
 .J16:           CMP     AL,50H          ;JOY2 DOWN P
                 JNZ     .J17
+
                 AND     DL, 0FDH
                 RETN
 
 .J17:           CMP     AL,0D0H         ;JOY2 DOWN R
                 JNZ     .J18
+
                 OR      DL, 2
                 RETN
 
@@ -301,7 +324,6 @@ INTR9:          PUSH    AX
                 IN      AL,21H          ;mask timer interrupt
                 OR      AL,1
                 OUT     21H,AL
-
                 PUSHF
                 DB      9AH
 SAVE9LO         DW      ?
@@ -314,15 +336,18 @@ SAVE9HI         DW      ?
 I9_JSB:         XOR     DL,0C0H
                 TEST    DL,0C0H
                 JNZ     .L1
+
                 XOR     DL,0C0H
 .L1:            RETN
 
 SYS_KEYS:       CMP     [ISMOUSE],0
                 JE      .L8
+
                 MOV     AX,3
                 INT     33H
                 TEST    BL,1
                 JNZ     .L9
+
                 TEST    BL,2
                 JNZ     .L10
 
@@ -331,9 +356,9 @@ SYS_KEYS:       CMP     [ISMOUSE],0
 
                 XOR     AX,AX
                 XCHG    AX,WORD [KBUFS]
-
                 CMP     AL,0BFH         ;F5=CHOOSE SOUND
                 JNZ     .L7
+
                 CALL    [EXIT_SOUND]
                 MOVZX   BX,[SJCFG]
                 MOV     AL,BL
@@ -342,6 +367,7 @@ SYS_KEYS:       CMP     [ISMOUSE],0
                 INC     BX
                 CMP     BL,3
                 JNZ     .L6
+
                 XOR     BX,BX
 .L6:            OR      AL,BL
                 MOV     [SJCFG],AL
@@ -352,27 +378,35 @@ SYS_KEYS:       CMP     [ISMOUSE],0
 
 .L7:            CMP     AL,0C3H         ;F9=DEBUGGER
                 JNZ     .L1
+
+                CMP     [VIDCJMP],T00xxx
+                JE      .L4
+
                 MOV     [MAINJUMP],DEBUG_ENTRY
+                RETN
 
 .L1:            CMP     AL,0D7H         ;F11=RESET
                 JNZ     .L2
+
                 TEST    [KMATRIX+1],80H
                 JNZ     .L11
+
                 MOV     BX,0FF3EH       ;HARD RESET
                 CALL    MSTORE_DH
 .L11:           MOV     [MAINJUMP],RESET
-
 .L2:            CMP     AL,0D8H         ;F12=MENUS
                 JNZ     .L3
 
 .L9:            TEST    [CPU_1],8
                 JNZ     .L5
+
                 TEST    [LED],10H
                 JNZ     .L4
-.L5:            MOV     [MAINJUMP],MENUS_ENTRY
 
+.L5:            MOV     [MAINJUMP],MENUS_ENTRY
 .L3:            CMP     AL,0C4H         ;F10=EXIT
                 JNZ     .L4
+
 .L10:           MOV     [MAINJUMP],END_EMU
 .L4:            RETN
 

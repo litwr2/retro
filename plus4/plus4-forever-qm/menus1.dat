@@ -2,13 +2,13 @@ SCR1_TOP_X      EQU     7
 SCR1_TOP_Y      EQU     0
 SCR1_LEN        EQU     53
 HELP1_TOP_X     EQU     2
-HELP1_TOP_Y     EQU     3
+HELP1_TOP_Y     EQU     1
 HELP1_LEN       EQU     59
                          ;12-123456789012-1234567890-123456789012345678901234
 SCR1_1          DB      'ษออัออออออออออออัออออออออออัออออออออออออออออออออออออป'
 SCR1_2          DB      'บD#ณ  FileName  ณ   Size   ณ    CBM Information     บ'
 SCR1_3          DB      'ศออฯออออออออออออฯออออออออออฯออออออออออออออออออออออออผ'
-BMENU1_T        DB      '1Help   2SaveBs 3Joys   4Freeze 5New    6       '
+BMENU1_T        DB      '1Help   2SaveBs 3Joys   4Freeze 5New    6Config '
                 DB      '7Assoc. 8Delete 9CBM 1  10Quit  '
 LABEL           BMENU_A BYTE
 TIMES   9       DB      7,70H,70H,70H,70H,70H,70H,7
@@ -19,15 +19,17 @@ MHELP1  DB      '"F1" invokes this text.                                    '
         DB      '"F2" ("Save Basic") saves a standard program (it starts at '
         DB      '     at the pointer at $2B and ends at the pointer at $2D) '
         DB      '     in a PRG file.                                        '
-        DB      '"F3" sets joysticks                                        '
+        DB      '"F3" sets joysticks.                                       '
         DB      '"F4" freezes the current machine state in a C2F file.      '
         DB      '"F5" creates a new media: cassette or disk.                '
+        DB      '"F6" sets hardware (video, sound, ...).                    '
         DB      '"F7" associates the selected image file(s) (e.g. D64) with '
         DB      '     a CBM i/o device.                                     '
-        DB      '"F8", "Del" deletes a file                                 '
+        DB      '"F8", "Del" deletes selected file.                         '
         DB      '"F9" toggles between CBM Characters Set #1 and #2.         '
         DB      '"F10", "Esc" or right mouse button returns control to the  '
         DB      '     emulator.                                             '
+        DB      '"<", ">" sets emulator speed limit.                        '
         DB      '"Enter" shows an image or loads a program.                 '
         DB      'Left mouse button activates menu item.                     '
 CP_IN_WIN1      DB      0

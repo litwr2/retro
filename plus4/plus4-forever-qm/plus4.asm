@@ -12,6 +12,7 @@ HEAP 0
 
 SEGMENT         SEG_DATA USE16
                 INCLUDE 'dos.dat'
+                INCLUDE 'hardware.dat'
                 INCLUDE 'mdac.dat'
                 INCLUDE 'romfn.dat'
                 INCLUDE '8501.dat'
@@ -22,6 +23,7 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'joy.dat'
                 INCLUDE 'io.dat'
                 INCLUDE 'ted.dat'
+                INCLUDE 'video.dat'
                 INCLUDE 'menus0.dat'
                 INCLUDE 'menus1.dat'
                 INCLUDE 'menus2.dat'
@@ -29,17 +31,16 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'sound.dat'
                 INCLUDE 'adlib.dat'
                 INCLUDE 'timer.dat'
+                ;INCLUDE 'log.dat'
 
 SEGMENT         SEG_CODE USE16          ;main program segment
 START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
-                SUB     AX,AX
-                PUSH    AX
-                MOV     AX,SEG SEG_DATA ;INIT DS
+                PUSH    WORD 0
+                MOV     AX,SEG_DATA     ;INIT DS
                 MOV     DS,AX
                 MOV     [RESET_SP],SP
 
                 CALL    INITIBM
-
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
@@ -62,10 +63,7 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE 'cds.cod'
                 INCLUDE 'iec.cod'
                 INCLUDE 'csb.cod'
-;                INCLUDE 'acia.inc'
-;                INCLUDE 'c1551.inc'
-;                INCLUDE 'csb_fdd.inc'
-;                INCLUDE 'csb_prt.inc'
+                INCLUDE 'video.cod'
                 INCLUDE 'hardware.cod'
                 INCLUDE 'debugger.cod'
                 INCLUDE 'menus0.cod'
@@ -75,9 +73,10 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE 'sound.cod'
                 INCLUDE 'adlib.cod'
                 INCLUDE 'timer.cod'
+                ;INCLUDE 'log.cod'
 
 SEGMENT         SEG_RAM USE16
-TIMES   32*1024 DW      0
+TIMES   32*1024 DW      0FFH
 
 SEGMENT         SEG_ROM USE16
                 FILE    '../BASIC.ROM'
@@ -91,12 +90,14 @@ TIMES   16*1024 DB      'H'             ;C2-LOW
 TIMES   16*1024 DB      'I'             ;C2-HIGH
 
 SEGMENT         SEG_VRAM1 USE16
-TIMES   32*1024 DW      'V1'
+TIMES   16*1024 DD      'VBE2'
 
 SEGMENT         SEG_VRAM2 USE16
-TIMES   4*1024  DW      'V2'
+TIMES   79*512  DB      '2'
 
-SEGMENT         SEG_AUX USE16
-TIMES   8000    DB      4               ;DEBUGGER
+SEGMENT         SEG_DBG USE16
+TIMES   4000    DB      4               ;DEBUGGER
+
+SEGMENT         SEG_DS  USE16
 TIMES   8000    DB      5               ;DATASETTE
 

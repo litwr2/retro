@@ -146,13 +146,13 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 AND     AL,7
                 MOV     BYTE [Y_OFFSET],AL
 
-                MOV     [EVSA],CHAR_VSTART+CHAR_VSIZE-1
-                MOV     [SVSA],CHAR_VSTART
+                MOV     [EVSA],204
+                MOV     [SVSA],4
                 TEST    DH,8                    ;24 ROWS? (0-24, 1-25)
                 JNZ     .L8B
 
-                MOV     [SVSA],CHAR_VSTART+4
-                MOV     [EVSA],CHAR_VSTART+CHAR_VSIZE-5
+                MOV     [SVSA],8
+                MOV     [EVSA],200
 .L8B:           MOV     AL,[TED_13]
                 AND     AL,0FCH
                 TEST    [TED_7],80H     ;HRM?
@@ -190,7 +190,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 MOV     BYTE [X_OFFSET],AL
                 POP     AX
 
-                MOV     [EHSA],38
+                MOV     [EHSA],39
                 MOV     [SHSA],56
                 TEST    DH,8                    ;38 COLUMNS? (0-38, 1-40)
                 JNZ     .L8E
@@ -279,8 +279,10 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 RETN
 
 .L4N:           CMP     BL,0AH
-                JNZ     .LT0C
+                JNZ     .LT0B
 
+                MOV     BYTE [FASTTEDB+1],DH
+                AND     BYTE [FASTTEDB+1],1
                 MOV     [TED_A],DH
                 AND     DH,5AH
                 AND     [TED_9],7FH
@@ -289,6 +291,13 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 
                 OR      [TED_9],80H
 .L4N1:          MOV     DH,[TED_A]
+                RETN
+
+.LT0B:          CMP     BL,0BH
+                JNZ     .LT0C
+
+                MOV     BYTE [FASTTEDB],DH
+                MOV     [TED_B],DH
                 RETN
 
 .LT0C:          CMP     BL,0CH
@@ -380,6 +389,8 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 
                 MOV     BYTE [COLOR0],DH
                 MOV     BYTE [COLOR0+1],DH
+                MOV     BYTE [COLOR0+2],DH
+                MOV     BYTE [COLOR0+3],DH
                 JMP     .L11
 
 .L11A5:         CMP     BL,16H
@@ -438,13 +449,11 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 MOV     AL,DH
                 NOT     AL
                 SHR     AL,2
-                ;INC     AX
-                ;CMP     AL,38H
-                ;JBE     .L11E
+                CMP     AL,38H
+                JBE     .L11E
 
-                ;SUB     AL,39H
-;.L11E:
-                MOV     [TED_1E],AL     ;???
+                XOR     AX,AX
+.L11E:          MOV     [TED_1E],AL     ;???
                 POP     AX
                 RETN
 

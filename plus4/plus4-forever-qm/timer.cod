@@ -39,7 +39,7 @@ RESTORE_INTR8:  MOV     DX,[CS:SAVE8LO]     ;RESTORE INTR8 VECTOR
 INTR8SND:       PUSH    AX
                 PUSH    BX
                 PUSH    DS
-                MOV     AX,SEG SEG_DATA
+                MOV     AX,SEG_DATA
                 MOV     DS,AX
         
                 CMP     [TIMER_ST],0

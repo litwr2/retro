@@ -22,8 +22,8 @@ LED             DB      ?       ;4 - Scroll Lock, 5 - Num Lock, 6 - Caps Lock
 RESET_SP        DW      ?
 SA_ROM_LO       DW      ?       ;ACTIVE ROM BANKS
 SA_ROM_HI       DW      ?
-TSA_ROM         DW      SEG SEG_ROM -800H, SEG SEG_ROM
-                DW      SEG SEG_CART-800H, SEG SEG_CART
+TSA_ROM         DW      SEG_ROM - 800H, SEG_ROM
+                DW      SEG_CART - 800H, SEG_CART
 CPUOP           DW      FETCHBYTE1
 IRQOP           DW      ?
 TADDR           DW      ?
@@ -34,6 +34,6 @@ LABEL           OPP     BYTE
 
 TMPCPUV         DB      ?
 
-FREEZE_LEN      EQU     LED-FREEZE_VER+1
+FREEZE_LEN      EQU     LED - FREEZE_VER + 1
 
 
