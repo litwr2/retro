@@ -751,9 +751,18 @@ SHOW_REGS:      MOV     BX,[PC]
                 CALL    BIN2HEX
                 MOV     WORD [REGS1+66],DX
 
+                MOV     BX,0FF1EH
+                CALL    MREAD_DH
                 MOV     AL,[TICKS]
+                SHL     AL,1
+                NEG     AL
+                ADD     AL,DH
                 CALL    BIN2HEX
-                MOV     [REGS1+74],DH
+                MOV     WORD [REGS1+69],DX
+
+                MOV     AL,[TICKS]      ;2CPU
+                CALL    BIN2HEX
+                MOV     [REGS1+77],DH
 
                 MOV     AL,[AC]
                 CALL    BIN2HEX
@@ -815,7 +824,8 @@ SHOW_REGS:      MOV     BX,[PC]
 .L7:            MOV     DX,REGS1
                 CALL    OUT_STR
 
-                MOV     BP,BX           ;BX=PC!
+                MOV     BX,[PC]
+                MOV     BP,BX
                 MOV     [ODM],1
                 JMP     OUT_DAS
 
@@ -2186,7 +2196,7 @@ D_X:            MOV     BX,[DMA_BASE]
                 CALL    BIN2HEX
                 MOV     WORD [XVALS+8],DX
 
-                MOV     BX,[CP_RELOAD]
+                MOV     BX,[CP_CURRENT]
                 MOV     AL,BH
                 CALL    BIN2HEX
                 MOV     WORD [XVALS+21],DX
@@ -2283,6 +2293,14 @@ D_X:            MOV     BX,[DMA_BASE]
                 MOV     AL,BL
                 CALL    BIN2HEX
                 MOV     WORD [XVALS2+62],DX
+
+                MOV     BX,[BEAMY]
+                MOV     AL,BH
+                CALL    BIN2HEX
+                MOV     [XVALS2+71],DH
+                MOV     AL,BL
+                CALL    BIN2HEX
+                MOV     WORD [XVALS2+72],DX
 
                 MOV     DX,XVALS
                 CALL    OUT_STR

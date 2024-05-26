@@ -523,11 +523,17 @@ IEC#NU#PARSECMD:   CMP     WORD [IEC#NU#BUF],'U9'
                 CMP     WORD [IEC#NU#BUF+SI],'0:'
                 JNZ     .LC9
 
+                PUSH    SI
+                INC     SI
+                CMP     SI,[IEC#NU#BUFL]
+                POP     SI
+                JE      .LC7
+
                 ADD     SI,2
 .LC9:           CMP     SI,[IEC#NU#BUFL]
                 JAE     IEC#NU#ERR30
 
-                XOR     BX,BX
+.LC7:           XOR     BX,BX
 .LC4:           MOV     AL,[IEC#NU#BUF+SI]
                 CMP     AL,','
                 JZ      .LC6
@@ -572,7 +578,10 @@ IEC#NU#PARSEFN:    XOR     SI,SI
                 JMP     .L2
 
 .L1:            CMP     WORD [IEC#NU#BUF],'0:'
-                JZ      .L1C
+                JNZ     .L2
+
+                CMP     [IEC#NU#BUFL],1
+                JA      .L1C
 
 .L2:            CMP     [IEC#NU#BUFL],SI
                 JBE     .L5
@@ -694,6 +703,7 @@ IEC#NU#PARSEFN:    XOR     SI,SI
                 INC     SI
                 CMP     SI,[IEC#NU#BUFL]
                 JB      .L16
+
                 JMP     .L5
 
 .L17:           MOV     AL,[IEC#NU#BUF+1+SI]

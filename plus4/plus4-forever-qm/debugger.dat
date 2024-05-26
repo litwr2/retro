@@ -1,6 +1,6 @@
 REGS0           DB      'PrevPC=0000',0DH,0AH,'$'
 REGS1           DB      'PC=0000  AC=00  XR=00  YR=00  SP=00  SR=00  SV1BDIZC '
-                DB      'LINE=000 POS=00 2CPU=0'
+                DB      'LINE=000 POS=00/00 2CPU=0'
 EOL             DB      0DH,0AH,'$'
 REGS2           DB      '0000 000000 *ASLORA ($80),Y',0DH,0AH
 DERR1           DB      '  ^ ERROR',0DH,0AH,'$'
@@ -346,7 +346,7 @@ D_HELPM DB      'Help           ?',0DH,0AH
         DB      'If mode=0 (default) then the parameter (address) will be saved before data',0DH,0AH
         DB      'T command hides interrupts',0DH,0Ah,'$'
 
-XVALS   DB      'DMA_B=0000 CP_RELOAD=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
-XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000'
+XVALS   DB      'DMA_B=0000 CP_CURREN=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
+XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 BEAMY=000'
         DB      0DH,0AH,'$'
 

@@ -113,6 +113,7 @@ CDS_IO_WR:      PUSH    EAX
                 MOV     AX,WORD [DS_LBC]        ;TO DSW_FLUSH?
                 OR      AH,AH
                 JZ      .L10
+
 .L11:           INC     AH
                 SHL     AL,1
                 CMP     AH,8
@@ -192,8 +193,10 @@ CDS_IO_WR:      PUSH    EAX
                 SUB     EAX,[DS_RPOSBY]
                 CMP     EAX,4096        ;min block?
                 JB      .L27
+
                 CMP     [DS_RPOSBY],4096        ;min block?
                 JB      .L27
+
                 INC     [DS_QENTR]
                 MOV     EAX,[DS_NPOS]   ;find beginning of previous block
                 MOV     [DS_RPOSP],EAX  ;save pos of next block
@@ -276,6 +279,7 @@ DSW_BIT:        MOV     EAX,[TOTALTICKS]        ;[SEG_AUX+500]:[DS_BUF_PTR]=
                 SUB     EDX,EAX
                 CMP     EDX,400H
                 JBE     .L1
+
                 MOV     DX,400H
 .L1:            PUSH    DS
                 LDS     BX,DWORD [DS_BUF_PTR]
@@ -395,6 +399,7 @@ DSW_FLUSH:      PUSH    ES
                 XOR     AX,AX
                 OR      DX,DX
 .L17:           JZ      .L14
+
                 ROL     [DS_SBUF],1
                 RCL     AL,1
                 INC     AH
@@ -407,6 +412,7 @@ RD_DS_BUF:      PUSH    EAX
                 ADD     EAX,8000                ;ds buffer size
                 CMP     EAX,[DS_RPOSE]
                 JB      .L1
+
                 MOV     EAX,[DS_RPOSE]
 .L1:            MOV     [DS_RPOSC],EAX
                 PUSH    CX
@@ -431,6 +437,7 @@ DS_AUX1:        MOV     EDX,[DS_TIMER]
 
 CDS_IO_RD.L1B:  CALL    DS_AUX1
                 JB      CDS_IO_WR.GL1
+
                 MOV     DH,[CPU_1]
                 MOV     BX,1
                 OR      DH,8
@@ -444,6 +451,7 @@ CDS_IO_RD.L1A:  MOV     [DS_TIMER],EAX
 
 CDS_IO_RD:      TEST    [CPU_1],8
                 JNZ     CDS_IO_WR.GL2
+
                 CMP     [DS_MODE],1
                 PUSH    EAX
                 PUSH    EDX
@@ -488,6 +496,7 @@ CDS_IO_RD:      TEST    [CPU_1],8
                 SHL     EDX,1
                 CMP     EDX,EBX
                 JB      .L2
+
                 INC     EAX
 .L2:            MOV     CL,AL
                 SHR     EAX,3

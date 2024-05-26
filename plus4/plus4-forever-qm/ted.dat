@@ -38,8 +38,9 @@ VD_PTR_FILL     DW      VIDEO_DATA      ;VD_PTR_BEAM+X_OFFSET
 
 X_OFFSET        DW      0
 Y_OFFSET        DW      3
+BEAMY           DW      0
 
-CP_RELOAD       DW      0               ;CHAR. RELOAD POS.
+CP_CURRENT      DW      0               ;CHAR. POS. CURRENT
 DMA_BASE        DW      0               ;SCREEN POS. FOR DMA
 
 VMODE           DW      0  ; (0-0,) 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH
@@ -80,9 +81,8 @@ TIMES   40      DB      'C'
 
 LABEL           LDMAF   BYTE    ;22+3
 TIMES   37      DB      0
-TIMES   5       DB      1
+TIMES   6       DB      1
 TIMES   8       DB      2
-                DB      1
 TIMES   3       DB      90H
 TIMES   3       DB      0
 
@@ -93,9 +93,9 @@ TIMES   3       DB      90H
 TIMES   3       DB      0
 
 LABEL           LNORMF  BYTE    ;65
-TIMES   42      DB      1
+TIMES   43      DB      1
 TIMES   8       DB      2
-TIMES   7       DB      1
+TIMES   6       DB      1
 
 
 LABEL           LNORMS  BYTE
