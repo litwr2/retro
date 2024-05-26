@@ -149,7 +149,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     WORD [TED_1A],AX
                 JMP     .L23
 
-.L14:           CMP     [TED_1E],29H
+.L14:           CMP     [TED_1E],29H    ;2F-30?
                 JNE     .L25
 
                 CMP     [ISDMANOW],0
@@ -258,7 +258,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     AX,T00xxx
 .L28:           MOV     [VIDCJMP],AX
 .L29:           CALL    [VIDVRETRACE]
-                CALL    PARAM
                 CALL    CDS_LED
                 CALL    GET_JOYS
                 CMP     [TOTALTICKS],0FF000000H
@@ -296,6 +295,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     WORD [ISDMANOW],AX
                 MOV     DWORD [CP_CURRENT],EAX
                 MOV     DWORD [TED_1A],EAX
+                CALL    PARAM
                 CALL    SYS_KEYS
                 TEST    [TED_6],10H             ;SCREEN BLANK?
                 JZ      .L23

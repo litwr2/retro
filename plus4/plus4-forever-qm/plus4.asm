@@ -5,6 +5,7 @@ format MZ
                 INCLUDE '8501.mac'
                 INCLUDE 'adlib.mac'
                 INCLUDE 'iec.mac'
+                INCLUDE 'hardware.mac'
 
 ENTRY SEG_CODE:START                    ;program entry point
 STACK 2000H                             ;stack size
@@ -32,16 +33,17 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'adlib.dat'
                 INCLUDE 'timer.dat'
                 ;INCLUDE 'log.dat'
+        db 'xxxx'
 
 SEGMENT         SEG_CODE USE16          ;main program segment
 START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
                 PUSH    WORD 0
                 MOV     AX,SEG_DATA     ;INIT DS
                 MOV     DS,AX
-                CALL    SPARAM
                 MOV     [RESET_SP],SP
-
+                CALL    SEG_CODE2:SPARAM
                 CALL    INITIBM
+
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
@@ -76,6 +78,10 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE 'timer.cod'
                 ;INCLUDE 'log.cod'
 
+SEGMENT         SEG_CODE2 USE16          ;extra program segment
+        db 'xxxx'
+                INCLUDE 'extras.cod'
+
 SEGMENT         SEG_RAM USE16
 TIMES   32*1024 DW      0FFH
 
@@ -83,6 +89,9 @@ SEGMENT         SEG_ROM USE16
                 FILE    '../BASIC.ROM'
                 FILE    '../KERNAL.ROM'
                 FILE    '../3P1.ROM'
+
+SEGMENT         SEG_1551 USE16
+                FILE    '../1551.ROM'
 
 SEGMENT         SEG_CART USE16
 TIMES   16*1024 DB      'F'             ;C1-LOW

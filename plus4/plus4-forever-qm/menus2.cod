@@ -308,10 +308,10 @@ ENT_PRG:        MOV     DI,2
                 ADD     SI,[WIN_POS1]
                 MOV     DX,AX
                 MOV     CX,WORD [IBM_SZ_LIST+ESI*4]
-                PUSH    DS
                 SUB     CX,DI
-                PUSH    FS
                 ADD     AX,CX
+                PUSH    DS
+                PUSH    FS
                 POP     DS
                 CMP     AX,1009H
                 JB      .L1
@@ -328,13 +328,12 @@ ENT_PRG:        MOV     DI,2
                 POP     DS
                 JMP     MD2_QUIT
 
-ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
-                MOV     BX,[CBM_FH]
+ENT_C2F_BODY:   MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 MOV     CX,2
-                MOV     DX,IOBUF
+                MOV     DX,IOBUF+980
                 INT     21H
-                CMP     WORD [IOBUF],1
-                JNZ     MD2_QUIT
+                CMP     WORD [IOBUF+980],1
+                JNZ     .L1
 
                 MOVZX   BP,[SJCFG]      ;saves current sound hardware
                 AND     BP,3
@@ -346,7 +345,7 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
 
                 MOV     AH,3FH          ;RESTORE TED
                 MOV     CX,20H
-                MOV     DX,IOBUF
+                MOV     DX,IOBUF+980
                 MOV     SI,DX
                 INT     21H
 
@@ -397,19 +396,12 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 CMP     BL,20H
                 JNZ     .L2
 
-                MOV     AL,[IOBUF+9]    ;TED CORRECTION
+                MOV     AL,[IOBUF+980+9]        ;TED CORRECTION
                 MOV     [TED_9],AL
-;                MOV     AL,[IOBUF+1EH]
-;                ADD     AL,2
-;                SHR     AL,2
-;                CMP     AL,57
-;                JNZ     .L5
 
-                XOR     AL,AL
-;.L5:            MOV     [TED_1E],AL
-;                MOV     AL,[TED_11]
+                ;XOR     AL,AL
                 MOV     BL,3EH
-                TEST    [IOBUF+13H],1
+                TEST    [IOBUF+980+13H],1
                 JNZ     .L4
 
                 INC     BX
@@ -422,9 +414,13 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 CALL    SET_LED         ;RESTORE LED & CAPS LOCK STATE
                 TEST    [LED],40H
                 MOV     [KMATRIX+1],0FFH
-                JZ      MD2_QUIT
+                JZ      .L1
 
                 MOV     [KMATRIX+1],7FH
+.L1:            RETN
+
+ENT_C2F:        MOV     BX,[CBM_FH]
+                CALL    ENT_C2F_BODY
                 JMP     MD2_QUIT
 
 LD_CTF:         MOVZX   AX,[CP_IN_WIN2]
@@ -563,7 +559,7 @@ FILL_SCR_CBM:   MOV     DI,160*2+(SCR2_TOP_X+1)*2
                 XOR     EAX,EAX
                 LEA     SI,[CBM_SZ_LIST+ESI*2]
 .L4B:           LODSW
-                CALL    HEX2DEC
+                CALL    SEG_CODE2:HEX2DEC
                 CALL    OUT_DEC2
                 ADD     DI,160-10
                 LOOP    .L4B

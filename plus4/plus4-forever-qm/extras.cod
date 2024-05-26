@@ -1,0 +1,557 @@
+HEX2DEC:        MOV     EBX,1000000000  ;IN: EAX - HEX 
+                PUSH    CX              ;OUT: ->HEX2DECBUF
+                PUSH    SI              ;USED: BX, EDX
+                XOR     EDX,EDX
+                MOV     SI,HEX2DECBUF   ;*** FAR! ***
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     EBX,100000000
+                XCHG    EAX,EDX
+                INC     SI
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     EBX,10000000
+                XCHG    EAX,EDX
+                INC     SI
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     EBX,1000000
+                XCHG    EAX,EDX
+                INC     SI
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     EBX,100000
+                XCHG    EAX,EDX
+                INC     SI
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     EBX,10000
+                XCHG    EAX,EDX
+                INC     SI
+                DIV     EBX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     BX,1000
+                XCHG    AX,DX
+                INC     SI
+                DIV     BX
+                OR      AL,30H
+                MOV     [SI],AL
+                XOR     AL,AL
+                MOV     BX,100
+                XCHG    AX,DX
+                INC     SI
+                DIV     BX
+                OR      AL,30H
+                MOV     [SI],AL
+                MOV     BL,10
+                XCHG    AL,DL
+                INC     SI
+                DIV     BL
+                OR      AX,3030H
+                MOV     [SI],AX
+                SUB     SI,8
+                MOV     CX,9
+.L2:            LODSB
+                CMP     AL,30H
+                JNZ     .L1
+
+                MOV     AL,20H
+                MOV     [SI-1],AL
+                LOOP    .L2
+.L1:            POP     SI
+                POP     CX
+                RETF
+
+BIN2HEX:        MOV     AH,AL           ;AL -> DX
+                AND     AL,0FH
+                ADD     AL,30H
+                CMP     AL,3AH
+                JC      .L1
+
+                ADD     AL,7
+.L1:            MOV     DH,AL
+                MOV     AL,AH
+                SHR     AL,4
+                ADD     AL,30H
+                CMP     AL,3AH
+                JC      .L2
+
+                ADD     AL,7
+
+.L2:            MOV     DL,AL
+                RETF
+
+HEX2BIN:        SUB     DL,30H          ;DX -> AL
+                JAE     .L3
+
+.L4:            STC
+                RETF
+
+.L3:            CMP     DL,9
+                JBE     .L1
+
+                SUB     DL,7
+                CMP     DL,0AH
+                JB      .L4
+
+                CMP     DL,0FH
+                JA      .L4
+
+.L1:            MOV     AL,DL
+                SUB     DH,30H
+                JC      .L4
+
+                CMP     DH,9
+                JBE     .L2
+
+                SUB     DH,7
+                CMP     DH,0AH
+                JB      .L4
+
+                CMP     DH,0FH
+                JA      .L4
+
+.L2:            SHL     DH,4
+                OR      AL,DH
+                RETF
+
+CBM2IBMCNV:     CMP     AH,128          ;IN & OUT: AH
+                JB      .L1
+
+                SUB     AH,128
+.L1:            CMP     AH,32
+                JA      .L2
+
+                MOV     AH,'_'
+                JMP     .L5
+
+.L2:            PUSH    SI
+                MOV     SI,NOTDOSCHARS-1
+.L4:            INC     SI
+                CMP     BYTE [SI],0
+                JE      .L3
+
+                CMP     AH,[SI]
+                JNZ     .L4
+
+                MOV     AH,'_'
+.L3:            POP     SI
+.L5:            RETF
+                                     
+GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
+                INT     21H
+                MOV     DL,AL
+
+                MOV     AH,0EH
+                INT     21H
+                MOVZX   CX,AL
+
+                XOR     SI,SI
+                MOV     EDX,'[A:]'
+                MOV     BX,1
+.L3:            MOV     AX,440EH        ;PHANTOM DISK?
+                INT     21H
+                JC      .L1
+
+                OR      AL,AL
+                JZ      .L1
+
+                CMP     AL,BL
+                JNZ     .L2
+
+.L1:            MOV     AX,4408H        ;VALIDATE DRIVE
+                INT     21H             ;REMOVABLE MEDIA?
+                JC      .L6
+
+                OR      AX,AX
+                JZ      .L4
+
+.L6:            MOV     AH,4EH
+                MOV     [TEST_DRV],BL
+                ADD     [TEST_DRV],'@'
+                PUSH    CX
+                PUSH    DX
+                MOV     CX,3FH
+                MOV     DX,TEST_DRV
+                INT     21H
+                POP     DX
+                POP     CX
+                JNC     .L4
+
+                CMP     AX,12H
+                JZ      .L4
+
+.L2:            INC     CH
+                JMP     .L5
+
+.L4:            MOV     DH,BL
+                ADD     DH,64
+                MOV     WORD [IBM_DV_LIST+ESI*2],'  '
+                MOV     DWORD [IBM_FN_LIST+ESI*8],EDX
+                MOV     DWORD [IBM_FN_LIST+ESI*8+4],'    '
+                MOV     [IBM_SZ_LIST+ESI*4],-1
+                INC     SI
+.L5:            INC     BX
+                CMP     BL,CL
+                JBE     .L3
+
+                SUB     BL,CH
+                DEC     BX
+                MOV     [TOT_DRVS],BX
+                RETF
+
+SPARAM:         MOVZX   CX,BYTE [ES:80H]
+                MOV     [IOBUF],CH
+                SUB     CL,1
+                JBE     .EXIT
+
+                XOR     BX,BX
+                MOV     SI,IOBUF+25             ;iobuf - counter
+                MOV     DI,IOBUF+1              ;iobuf+1 - vectors (12)
+.L3:            MOV     [DI],SI                 ;iobuf+25 - fnames
+                INC     [IOBUF]
+.L1:            MOV     AL,[ES:82H+BX]
+                CMP     AL,' '
+                JNZ     .L2
+
+                MOV     [SI],CH
+                DEC     CX
+                JZ      .L4
+
+                ADD     DI,2
+                INC     BX
+                INC     SI
+                JMP     .L3
+
+.L2:            MOV     [SI],AL
+                INC     SI
+                INC     BX
+                LOOP    .L1
+
+                MOV     [SI],CL
+.L4:            INC     SI
+                MOV     [DI+2],SI               ;ENDMARK
+                MOV     BX,WORD [IOBUF+1]
+.L6:            MOV     AL,[BX]
+                CMP     AL,'a'
+                JB      .L5
+
+                CMP     AL,'z'
+                JA      .L5
+
+                SUB     AL,'a'-'A'
+.L5:            MOV     [BX],AL
+                INC     BX
+                CMP     BX,SI
+                JB      .L6
+
+                RETF
+
+.EXIT:          INC     [PARAMF]
+                RETF
+
+INIT_VIDEO:     MOV     AX,SEG_VRAM1
+                MOV     ES,AX
+                XOR     DI,DI
+                MOV     AX,4F00H
+                INT     10H
+
+                CMP     AX,4FH
+                JNE     .EXIT
+
+                LFS     BP,[ES:0EH]     ;TO VIDEO MODES LIST
+                TEST    BYTE [ES:0AH],2 ;VGA COMPATIBILITY
+                JE      .VBE
+
+                XOR     BX,BX
+.L6:            IMUL    SI,BX,15
+                MOV     [M3_MSG16+16+SI],' '
+                INC     BX
+                CMP     BL,VBESWITCH
+                JB      .L6
+
+.VBE:           CMP     WORD [ES:4],0           ;VBE VER
+                JE      .EXIT
+
+                MOV     DI,512
+                XOR     BX,BX
+.L3:            PUSH    BP
+                IMUL    SI,BX,15
+.L4:            MOV     CX,[FS:BP]
+                ADD     BP,2
+                CMP     CX,0FFFFH
+                JZ      .L5
+
+                MOV     AX,4F01H
+                INT     10H
+
+                MOV     EAX,[VIDIDS+EBX*4]
+                CMP     EAX,[ES:512+12H]        ;X, Y RES
+                JNZ     .L4
+
+                CMP     BYTE [ES:512+19H],8     ;BITS PER PIXEL
+                JNZ     .L4
+
+                CMP     BYTE [ES:512+1BH],4     ;MEMORY MODEL TYPE
+                JNZ     .L4
+
+                CMP     WORD [ES:512+4],40H     ;WINDOWS GRANULARITY
+                JNZ     .L4
+
+                MOV     EAX,[ES:512+0CH]        ;WINPOS FUNCTION
+                OR      EAX,EAX
+                JZ      .L4
+
+                XCHG    EAX,[VBECSWF]
+                OR      EAX,[VBECSWF]
+                CMP     EAX,[VBECSWF]
+                JNZ     .L4
+
+                MOV     [VBEMODEN+EBX*2],CX     ;MODE #
+                MOV     [M3_MSG16+15*VBESWITCH+16+SI],'+'
+.L5:            POP     BP
+                INC     BX
+                CMP     BL,MAXVIDMODEN-VBESWITCH
+                JB      .L3
+
+.EXIT:          RETF
+
+IEC_CFN2CFN:    XOR     BX,BX
+.L3:            CMP     BL,[IEC_CFNL]   ;CFN2 <-> CFN
+                JB      .L1
+
+                CMP     BL,[IEC_CFN2L]
+                JAE     .L2
+
+.L1:            MOV     AL,[IEC_CFN+BX]
+                XCHG    AL,[IEC_CFN2+BX]
+                MOV     [IEC_CFN+BX],AL
+                INC     BX
+                JMP     .L3
+
+.L2:            MOV     AL,[IEC_CFNL]
+                XCHG    AL,[IEC_CFN2L]
+                MOV     [IEC_CFNL],AL
+                RETF
+
+IEC_FDFI:       MOV     AH,36H          ;FREE DISK SPACE
+                MOV     DL,[FPATH]      ;OUT: AX; USED: DX,BX,CX
+                SUB     DL,64
+                INT     21H
+                SHR     CX,8
+                MUL     BX
+                OR      DX,DX
+                JNZ     .L1
+
+                MUL     CX
+                OR      DX,DX
+                JZ      .L2
+
+.L1:            MOV     AX,0FFFFH
+.L2:            RETF
+
+IEC_FM:         MOV     BX,[TOT_DRVS]           ;USE: SI,CX,BP,DX,BX
+.L0:            CMP     BX,[LIST_CAP1]
+                JAE     .FAIL
+
+                MOV     EAX,[IBM_SZ_LIST+EBX*4]
+                OR      EAX,EAX
+                JE      .NEXTENTRY
+
+                INC     EAX
+                JE      .NEXTENTRY
+
+                MOV     DX,WORD [IBM_EX_LIST+EBX*2+EBX]
+                CMP     DX,'PR'
+                JZ      .L7
+
+                CMP     DX,'P0'
+                JZ      .L7
+
+                CMP     DX,'D0'
+                JZ      .L7
+
+                CMP     DX,'U0'
+                JZ      .L7
+
+                CMP     DX,'S0'
+                JZ      .L7
+
+                CMP     DX,'R0'
+                JNZ     .NEXTENTRY
+
+.L7:            XOR     SI,SI
+                MOVZX   CX,[IEC_CFNL]
+.TESTCHAR:      MOV     AH,[IEC_CFN+SI]
+                CMP     AH,'*'
+                JZ      .MATCH
+
+                CMP     DH,'0'          ;X00?
+                JNZ     .L2
+
+                IMUL    BP,BX,24
+                MOV     AL,[DS:IBM_CI_LIST+BP+SI]
+                CMP     AL,0A0H
+                JZ      .NEXTENTRY
+
+                JMP     .L1
+
+.L2:            CMP     SI,8
+                JE      .NEXTENTRY
+
+                MOV     AL,[IBM_FN_LIST+EBX*8+ESI]
+                CMP     AL,' '
+                JZ      .NEXTENTRY
+
+                CALL    SEG_CODE2:CBM2IBMCNV
+.L1:            INC     SI
+                CMP     AH,'?'
+                JNZ     .L4
+
+                LOOP    .TESTCHAR
+.L6:            CMP     DH,'0'
+                JZ      .L5
+
+                CMP     SI,8
+                JZ      .MATCH
+
+                CMP     [IBM_FN_LIST+EBX*8+ESI],' '
+                JZ      .MATCH
+
+                JMP     .NEXTENTRY
+
+.L5:            CMP     SI,16
+                JZ      .MATCH
+
+                CMP     [DS:IBM_CI_LIST+BP+SI],0A0H
+                JZ      .MATCH
+
+.NEXTENTRY:     INC     BX
+                JMP     .L0
+
+.FAIL:          SUB     BX,BX
+.MATCH:         RETF
+
+.L4:            CMP     AL,AH
+                JNZ     .NEXTENTRY
+
+                LOOP    .TESTCHAR
+                JMP     .L6
+
+IEC_DIRM:       XOR     SI,SI                   ;IN: BX,CX; USE: SI,DX,AX
+                MOVZX   DX,[IEC_CFNL]           ;OUT: CX
+                OR      DX,DX
+                JZ      .MATCH
+
+.L3:            CMP     SI,DX
+                JAE     .L4
+
+                MOV     AH,[IEC_CFN+SI]
+                CMP     AH,'*'
+                JZ      .MATCH
+
+                CMP     CX,'PR'
+                JZ      .L1
+
+                PUSH    BX
+                IMUL    BX,BX,24
+                MOV     AL,[IBM_CI_LIST+BX+SI]
+                POP     BX
+                CMP     AL,0A0H
+                JNZ     .L2
+
+.FAIL:          RETF
+
+.L1:            MOV     AL,[IBM_FN_LIST+EBX*8+ESI]
+                CMP     AL,' '
+                JZ      .FAIL
+
+                CALL    SEG_CODE2:CBM2IBMCNV
+.L2:            INC     SI
+                CMP     AH,'?'
+                JZ      .L3
+
+                CMP     AL,AH
+                JZ      .L3
+
+                RETF
+
+.L4:            CMP     CX,'PR'
+                JZ      .L6
+
+                CMP     SI,16
+                JZ      .MATCH
+
+                PUSH    BX
+                IMUL    BX,BX,24
+                CMP     [IBM_CI_LIST+BX+SI],0A0H
+                POP     BX
+                JZ      .MATCH
+
+                RETF
+
+.L6:            CMP     SI,8
+                JZ      .MATCH
+
+                CMP     [IBM_FN_LIST+EBX*8+ESI],' '
+                JNZ     .FAIL
+
+.MATCH:         XOR     CX,CX
+                RETF
+
+IEC_DIRM64:     XOR     SI,SI                   ;IN: BX,CX; USE: SI,DX,AX
+                MOVZX   DX,[IEC_CFNL]           ;OUT: CX
+                OR      DX,DX
+                JZ      .MATCH
+
+.L3:            CMP     SI,DX
+                JAE     .L4
+
+                MOV     AH,[IEC_CFN+SI]
+                CMP     AH,'*'
+                JZ      .MATCH
+
+                PUSH    BX
+                SHL     BX,4
+                MOV     AL,[CBM_FN_LIST+BX+SI]
+                POP     BX
+                CMP     AL,0A0H
+                JNZ     .L2
+
+.FAIL:          RETF
+
+.L2:            INC     SI
+                CMP     AH,'?'
+                JZ      .L3
+
+                CMP     AL,AH
+                JZ      .L3
+
+                RETF
+
+.L4:            CMP     SI,16
+                JZ      .MATCH
+
+                PUSH    BX
+                SHL     BX,4
+                CMP     [CBM_FN_LIST+BX+SI],0A0H
+                POP     BX
+                JZ      .MATCH
+
+                RETF
+
+.MATCH:         XOR     CX,CX
+                RETF
+

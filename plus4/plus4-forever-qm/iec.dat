@@ -30,6 +30,7 @@ IEC_CRL         DB      0       ; REL FILE RECORD LENGTH
 IEC_CFRS        DB      0       ; CFN REPLACE ST (0 - NO REPLACE)
 IEC_CFMCS       DB      0       ; CFN META CHARS ST
 IEC_PRGNAME     DB      '????????.???',0
+IEC_SBUF_ST     DB      1
 
 IECDS           DB      ',00,00',0DH
 IECDS00         DB      '00, OK'
@@ -77,7 +78,4 @@ XXXFN           DB      'IECDEBUG.BIN',0
 XXXFH           DW      0
 XXXBUF          RB      2
 END IF
-
-LABEL           DEBUGAREA       BYTE
-TIMES   500     DB      0
 

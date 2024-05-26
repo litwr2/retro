@@ -38,12 +38,13 @@ CP_MAX_WIN1     DB      21
 DIRECTION       DB      0       ;0-IN, 1-OUT
 WIN_POS1        DW      0
 LIST_CAP1       DW      0
-START_POS1      DW      0       ;for sort
+START_POS1      DW      0       ;temp for sort
 DIROVERST       DB      0       ;DIRECTORY OVERFLOW? 0 - NO
 FPATH_LEN       DB      0
 FPATH           RB      67
 SAVED_FPATH     RB      67
 DEV4SCR         DB      '8'
+DEVDPATH        EQU     FPATH
 DEV1PATH        DB      0
                 RB      66
 DEV8PATH        DB      0
@@ -53,6 +54,7 @@ DEV9PATH        DB      0
 DEV1FNP         DW      DEV1PATH        ;POINTER
 DEV8FNP         DW      DEV8PATH        ;POINTER
 DEV9FNP         DW      DEV9PATH        ;POINTER
+DEVDFNP         EQU     START_POS1      ;DUMMY
 DEV1FH          DW      ?
 DEV8FH          DW      ?
 DEV9FH          DW      ?

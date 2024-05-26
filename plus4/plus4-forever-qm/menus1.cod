@@ -665,7 +665,7 @@ FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
                 ADD     EAX,EDX
                 MOVZX   EDX,[DS_TAPEB]
                 SUB     EAX,EDX
-                CALL    HEX2DEC
+                CALL    SEG_CODE2:HEX2DEC
                 POP     BX
                 MOV     CX,10
                 MOV     SI,HEX2DECBUF
@@ -795,7 +795,7 @@ FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 ADD     DI,20
                 JMP     .L6
 
-.L5:            CALL    HEX2DEC
+.L5:            CALL    SEG_CODE2:HEX2DEC
                 CALL    OUT_DEC1
 .L6:            ADD     DI,160-20
                 LOOP    .L4B
@@ -1775,7 +1775,7 @@ MD1_ISL:        MOVZX   EAX,[SPEED_LIMIT]
                 JB      .L1
 
                 INC     AX
-.L1:            CALL    HEX2DEC
+.L1:            CALL    SEG_CODE2:HEX2DEC
                 XOR     BX,BX
 .L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [SPEEDL+7+BX],AL
@@ -1831,7 +1831,7 @@ GET_SPEED:      XOR     EAX,EAX
                 JB      .L1
 
                 INC     AX
-.L1:            CALL    HEX2DEC
+.L1:            CALL    SEG_CODE2:HEX2DEC
                 XOR     BX,BX
 .L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [RSPEED+7+BX],AL
