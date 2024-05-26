@@ -2377,7 +2377,7 @@ D_B:            XOR     SI,SI
 
                 MOV     DX,EOL
                 CALL    OUT_STR
-                CMP     SI,112          ;26*20
+                CMP     SI,16*10             ;26*20
                 JB      .L2
 
                 JMP     D_DISPATCHER

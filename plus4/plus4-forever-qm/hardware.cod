@@ -50,7 +50,7 @@ FINISHIBM:      MOV     BX,1
                 MOV     DH,[CPU_1]
                 OR      DH,8
                 CALL    MSTORE_DH       ;CLOSE TAPE
-        IF IEC8DEBUG > 0
+        IF IECDEBUG > 0
                 MOV AH,3EH
                 MOV BX,[XXXFH]
                 INT 21H
@@ -131,7 +131,7 @@ INITIBM:        CLD
                 INT     33H
                 MOV     [ISMOUSE],AL
 
-        IF IEC8DEBUG > 0
+        IF IECDEBUG > 0
                 MOV AH,3CH
                 MOV CX,20H
                 MOV DX,XXXFN

@@ -19,15 +19,17 @@ TRAN_CBM_SCR2:  MOV     DI,160*(SCR2_TOP_Y+2)+SCR2_TOP_X*2+2
                 JMP     CBM_ASCII1
 
 SEEK_D64_POS:   CALL    PREP_SEEK_D64           ;IN&OUT: BX - CBM FH
+                JC      RETNR
+
                 INT     21H
-                RETN
+RETNR:          RETN
 
 PREP_SEEK_D64:  MOVZX   AX,BYTE [D64_POS]       ;LOW - TRACK, HIGH - SECTOR
                 DEC     AL                      ;USE: AX,CX,DX
-                JS      RETNR
+                JS      .ERR
 
-                CMP     AL,39                   
-                JA      RETNR
+                CMP     AL,40
+                JA      .ERR
 
                 SUB     AL,17
                 JA      .L1
@@ -58,13 +60,17 @@ PREP_SEEK_D64:  MOVZX   AX,BYTE [D64_POS]       ;LOW - TRACK, HIGH - SECTOR
                 IMUL    AX,17
                 ADD     DX,AX
 .L2:            MOVZX   AX,BYTE [D64_POS+1]
-                ADD     DX,AX
+                ADD     DX,AX           ;SETS CY=0!
                 MOV     [D64SECP],DX
                 XOR     CX,CX
                 XCHG    CL,DH           ;*256
                 XCHG    DL,DH
                 MOV     AX,4200H
-RETNR:          RETN
+                ;CLC
+                RETN
+
+.ERR:           STC
+                RETN
 
 ENT_CTF:        MOV     AH,3FH
                 MOV     DX,DSM_FVER

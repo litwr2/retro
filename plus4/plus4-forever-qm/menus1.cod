@@ -6,7 +6,7 @@ DEV1DETACH:     TEST    [LED],10H               ;BUTTON PLAY?
 .L2:            PUSH    SI              ;USE: BX
                 MOV     SI,[DEV1FNP]    ;CLOSE ASSO FILES
                 MOV     BX,[DEV1FH]
-.L0:            CMP     BYTE [SI],0
+                CMP     BYTE [SI],0
                 JE      .L1
 
                 CMP     [DEV1WP],0      ;TAP too!
@@ -31,12 +31,17 @@ DEV1DETACH:     TEST    [LED],10H               ;BUTTON PLAY?
 DEV8DETACH:     PUSH    SI
                 MOV     SI,[DEV8FNP]
                 MOV     BX,[DEV8FH]
-                JMP     DEV1DETACH.L0
+.L0:            CMP     BYTE [SI],0
+                JNE     DEV1DETACH.L3
+
+                POP     SI
+                RETN
+
 
 DEV9DETACH:     PUSH    SI
                 MOV     SI,[DEV9FNP]
                 MOV     BX,[DEV9FH]
-                JMP     DEV1DETACH.L0
+                JMP     DEV8DETACH.L0
 
 DEV1ATTACH:     XOR     BX,BX                   ;IN: SI
                 MOVZX   CX,[FPATH_LEN]          ;USE: EAX,BX,CX,DX,DI
@@ -140,7 +145,7 @@ DEV8ATTACH:     XOR     BX,BX                   ;IN: SI
                 CALL    SEEK_D64_POS
                 MOV     AH,3FH
                 MOV     CX,256
-                MOV     DX,DEV8BAM
+                MOV     DX,IEC8BAM
                 INT     21H
 
                 XOR     DI,DI           ;CLEAR SECTORS MAP
@@ -199,7 +204,7 @@ DEV9ATTACH:     XOR     BX,BX                   ;IN: SI
                 CALL    SEEK_D64_POS
                 MOV     AH,3FH
                 MOV     CX,256
-                MOV     DX,DEV9BAM
+                MOV     DX,IEC9BAM
                 INT     21H
 
                 XOR     DI,DI           ;CLEAR SECTORS MAP

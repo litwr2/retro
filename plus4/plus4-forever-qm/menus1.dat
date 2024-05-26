@@ -58,10 +58,8 @@ DEV8FH          DW      ?
 DEV9FH          DW      ?
 DEV1SZ          DD      ?
 DEV1FMT         DB      ?       ;C,T
-DEV8BAM         RB      256
 DEV8ES          RB      683     ;SECTORS MAP
 DEV8WP          DB      ?       ;DISK WRITE PROTECTION
-DEV9BAM         RB      256
 DEV9ES          RB      683     ;SECTORS MAP
 DEV9WP          DB      ?       ;DISK WRITE PROTECTION
 DEV1WP          DB      ?       ;TAPE WRITE PROTECTION

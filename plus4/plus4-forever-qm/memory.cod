@@ -531,6 +531,22 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 JNE     .L1I9
 
                 CALL    [IEC9JMP]
+        IF IECDEBUG > 0
+                MOV AL,[IEC9_0PREV]
+                ADD AL,10H
+                MOV AH,[IEC9_0]
+                MOV WORD [XXXBUF],AX
+                ;CMP AX,5f81h
+                ;JNZ .LXXX9
+
+                ;MOV [MAINJUMP],DEBUG_ENTRY
+;.LXXX9:
+                MOV AH,40H
+                MOV BX,[XXXFH]
+                MOV CX,2
+                MOV DX,XXXBUF
+                INT 21H
+        END IF
                 JMP     .L1I9
 
 .L4I9:          AND     [IEC9_2],7FH
@@ -577,15 +593,16 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 JNE     .L1I8
 
                 CALL    [IEC8JMP]
-        IF IEC8DEBUG > 0
+        IF IECDEBUG > 0
                 MOV AL,[IEC8_0PREV]
                 MOV AH,[IEC8_0]
                 MOV WORD [XXXBUF],AX
                 ;CMP AX,5f81h
-                ;JNZ .LXXX
+                ;JNZ .LXXX8
 
                 ;MOV [MAINJUMP],DEBUG_ENTRY
-.LXXX:          MOV AH,40H
+;.LXXX8:
+                MOV AH,40H
                 MOV BX,[XXXFH]
                 MOV CX,2
                 MOV DX,XXXBUF
@@ -689,6 +706,7 @@ MREAD_DH:       CMP     BX,1
 
 .L4R:           CMP     BL,14H
                 JB      .L2C
+
                 JNZ     .L4Q
 
                 MOV     DH,[TED_14]
@@ -701,6 +719,7 @@ MREAD_DH:       CMP     BX,1
 
 .L4Q:           CMP     BL,1AH
                 JB      .L4Q1
+
                 JNZ     .L4B
 
                 MOV     DH,[TED_1B]
