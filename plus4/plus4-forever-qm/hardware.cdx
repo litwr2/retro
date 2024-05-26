@@ -612,6 +612,9 @@ SPARAM:         MOVZX   CX,BYTE [ES:80H]
                 MOV     [DI+2],SI               ;ENDMARK
                 MOV     BX,WORD [IOBUF+1]
 .L6:            MOV     AL,[BX]
+                CMP     AL,'?'
+                JZ      .PARINFO
+
                 CMP     AL,'a'
                 JB      .L5
 
@@ -628,6 +631,13 @@ SPARAM:         MOVZX   CX,BYTE [ES:80H]
 
 .EXIT:          INC     [PARAMF]
                 RETN
+
+.PARINFO:       MOV     DX,USAGE
+                MOV     AH,9
+                INT     21H
+                MOV     SP,[RESET_SP]
+                RETF
+
 
 SB_ENV:         MOV     AX,[ES:2CH]
                 MOV     GS,AX
