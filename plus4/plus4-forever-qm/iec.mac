@@ -8,6 +8,7 @@ IEC#NU#FAIL:       inc     [BORDER_COLOR]
 
 IEC#NU#ERRZ:       ;....
 IEC#NU#ERRX:       MOV     [IEC#NU#GERR],AL
+                MOV     [IEC#NU#BUFL],0
 IEC#NU#ERRY:       OR      [IEC#NU#_1],2
                 RETN
 
@@ -899,6 +900,7 @@ IEC#NU#FOPEN:      MOV     BX,[DEV#NU#FNP]
                 INT     21H
 
                 CALL    FILL_IBM_FLIST
+                CALL    SEG_CODE2:IEC_FM
                 JMP     .RELATIVE
 
 .RFOUND:        CMP     [IBM_EX_LIST+EBX*2+EBX],'R'

@@ -46,6 +46,67 @@ RESTORE_INTR23: MOV     DX,[SAVE23LO]   ;RESTORE INTR23 VECTOR
                 MOV     DS,[SAVE23HI]
                 JMP     SET_INTR23.L1
 
+RESTORE_PATH:   MOV     DL,[SAVE_FPATH]   ;RESTORE STARTUP PATH & DRIVE
+                MOV     [FPATH],DL
+                MOV     AH,0EH
+                SUB     DL,'A'
+                INT     21H
+
+                MOV     AH,3BH
+                MOV     DX,SAVE_FPATH
+                INT     21H
+                RETN
+
+SAVE_PATH:      MOV     AH,47H          ;SAVE STARTUP PATH & DRIVE
+                MOV     SI,SAVE_FPATH+3
+                XOR     DL,DL
+                INT     21H
+
+                MOV     AH,19H
+                INT     21H
+
+                ADD     AL,41H
+                MOV     [SAVE_FPATH],AL
+                MOV     [FPATH],AL      ;+ SET CURRENT DRIVE LETTER
+                MOV     AX,':\'
+                MOV     WORD [SAVE_FPATH+1],AX
+                MOV     WORD [FPATH+1],AX
+                RETN
+
+LOAD_CFG:       MOV     AX,3D00H                ;IN: DX
+                INT     21H
+                JC      .L6
+
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,3
+                MOV     DX,KBD_BUF
+                INT     21H
+
+                MOV     AH,3EH
+                INT     21H
+
+                MOV     AX,WORD [KBD_BUF]
+                MOV     [VIDMODE],AL            ;test with - in msg16!!!
+                MOV     [FRAMESKIP],AH
+                MOV     AL,[KBD_BUF+2]
+                OR      [SJCFG],AL
+.L6:            RETN
+
+SET_CFG:        CALL    SET_VMODE       ;SET VIDEO MODE
+                MOVZX   BX,[SJCFG]
+                AND     BL,3
+                CALL    [SOUND_SRC+EBX*2]
+                CALL    [RESET_SOUND]
+
+                MOV     AL,[SJCFG]
+                MOV     AH,AL
+                SHR     AL,5
+                SHR     AH,2
+                AND     AH,7
+                MOV     WORD [JOY1_ST],AX
+                JMP     INIT_JOY
+
 FINISHIBM:      MOV     BX,1
                 MOV     DH,[CPU_1]
                 OR      DH,8
@@ -76,15 +137,7 @@ FINISHIBM:      MOV     BX,1
                 CALL    [EXIT_SOUND]
                 CALL    RESTORE_INTR24
                 CALL    RESTORE_INTR23
-
-                MOV     DL,[SAVE_FPATH]   ;RESTORE STARTUP PATH & DRIVE
-                MOV     AH,0EH
-                SUB     DL,'A'
-                INT     21H
-
-                MOV     AH,3BH
-                MOV     DX,SAVE_FPATH
-                INT     21H
+                CALL    RESTORE_PATH
 
                 MOV     AX,3            ;SET TEXT VIDEO MODE
                 INT     10H
@@ -145,55 +198,23 @@ INITIBM:        CLD
                 XOR     EDI,EDI
                 XOR     ECX,ECX
                 XOR     EBP,EBP
-
                 CALL    SEG_CODE2:INIT_VIDEO
-
-                MOV     AX,3D00H
                 MOV     DX,CFGFILE
-                INT     21H
-                JC      .L6
-
-                MOV     BX,AX
-                MOV     AH,3FH
-                MOV     CX,3
-                MOV     DX,KBD_BUF
-                INT     21H
-
-                MOV     AH,3EH
-                INT     21H
-
-                MOV     AX,WORD [KBD_BUF]
-                MOV     [VIDMODE],AL            ;test with - in msg16!!!
-                MOV     [FRAMESKIP],AH
-                MOV     AL,[KBD_BUF+2]
-                OR      [SJCFG],AL
-
-.L6:            MOV     AX,SEG_RAM      ;INIT FS
+                CALL    LOAD_CFG
+                MOV     AX,SEG_RAM      ;INIT FS
                 MOV     FS,AX
 
-                CALL    SET_VMODE       ;SET VIDEO MODE
                 CALL    SET_INTR23
                 CALL    SET_INTR24
                 CALL    SET_INTR9
                 CALL    SET_INTR8
-
-                MOVZX   BX,[SJCFG]
-                AND     BL,3
-                CALL    [SOUND_SRC+EBX*2]
-                CALL    [RESET_SOUND]
-
-                MOV     AL,[SJCFG]
-                MOV     AH,AL
-                SHR     AL,5
-                SHR     AH,2
-                AND     AH,7
-                MOV     WORD [JOY1_ST],AX
-                CALL    INIT_JOY
+                CALL    SET_CFG
 
                 XOR     SI,SI           ;LOAD ROMs
                 MOV     DI,SEG_ROM
 .L2:            MOV     AX,3D00H
-                LEA     DX,[ROMS_FN+SI]
+                IMUL    BX,SI,11
+                LEA     DX,[ROMS_FN+BX]
                 INT     21H
                 JC      .L5
 
@@ -219,26 +240,12 @@ INITIBM:        CLD
                 POP     DS
 .L1:            MOV     AH,3EH
                 INT     21H
-.L5:            ADD     SI,11
+.L5:            INC     SI
                 ADD     DI,400H
-                CMP     SI,11*8
+                CMP     SI,9
                 JNZ     .L2
 
-                MOV     AH,47H          ;SAVE STARTUP PATH & DRIVE
-                MOV     SI,SAVE_FPATH+3
-                XOR     DL,DL
-                INT     21H
-
-                MOV     AH,19H
-                INT     21H
-
-                ADD     AL,41H
-                MOV     [SAVE_FPATH],AL
-                MOV     [FPATH],AL      ;+ SET CURRENT DRIVE LETTER
-                MOV     AX,':\'
-                MOV     WORD [SAVE_FPATH+1],AX
-                MOV     WORD [FPATH+1],AX
-
+                CALL    SAVE_PATH
                 XOR     AX,AX
                 MOV     ES,AX
                 MOV     AL,[ES:417H]
@@ -265,7 +272,7 @@ INITIBM:        CLD
 PARAM:          CMP     [PARAMF],0
                 JNE     .EXIT
 
-                CMP     [RETRACE_COUNT],5    ;1/10sec
+                CMP     [RETRACE_COUNT],7    ;7/50sec
                 JB      .EXIT
 
                 PUSHA
@@ -372,8 +379,8 @@ PARAM:          CMP     [PARAMF],0
                 POP     BX
                 JMP     .L6
 
-.TAPE:          CALL    PREP1PARAM
-                CALL    ADDTAPE
+.TAPE:          CALL    SEG_CODE2:PREP1PARAM
+                CALL    SEG_CODE2:ADDTAPE
                 JMP     .L3
 
 .D64:           MOV     BP,[DI]
@@ -381,7 +388,7 @@ PARAM:          CMP     [PARAMF],0
                 JNZ     .LD1
 
                 ADD     WORD [DI],2
-                CALL    PREP9PARAM
+                CALL    SEG_CODE2:PREP9PARAM
                 CALL    ADDDISK9
                 JMP     .L3
 
@@ -389,11 +396,11 @@ PARAM:          CMP     [PARAMF],0
                 JNZ     .LD2
 
                 ADD     WORD [DI],2
-.LD2:           CALL    PREP8PARAM
+.LD2:           CALL    SEG_CODE2:PREP8PARAM
                 CALL    ADDDISK8
                 JMP     .L3
 
-.DIR:           CALL    PREPDPARAM
+.DIR:           CALL    SEG_CODE2:PREPDPARAM
                 MOV     DL,[DEVDPATH]
                 SUB     DL,'A'
                 MOV     AH,0EH
@@ -414,72 +421,104 @@ PARAM:          CMP     [PARAMF],0
                 POPA
 .EXIT:          RETN
 
-                PARAMC  1
-                PARAMC  8
-                PARAMC  9
-                PARAMC  D
                 ADDDISC 8
                 ADDDISC 9
 
-ADDTAPE:        MOV     DX,DEV1PATH
-                MOV     AX,3D02H        ;OPEN FILE, R/W
-                CMP     [DEV1FMT],'C'
-                JNZ     .TAP
-
-                MOV     [DEV1WP],0
+ADDROM:         IMUL    SI,BX,400H              ;IN: BX
+                ADD     SI,SEG_ROM
+                MOV     AX,3D00H
+                MOV     DX,[DI]
                 INT     21H
-                JNC     .L2
+                JC      .L2
 
-                INC     [DEV1WP]
-                MOV     AX,3D00H        ;TRY R/O
-                INT     21H
-                JC      .FAIL
-
-.L2:            MOV     [DEV1FH],AX
                 MOV     BX,AX
-                MOV     AH,3FH
-                MOV     CX,6
-                MOV     DX,DS_FVER
-                INT     21H
-
-.L4:            MOV     AX,4202H
+                MOV     AX,4202H
                 XOR     CX,CX
                 XOR     DX,DX
                 INT     21H
 
-                MOV     WORD [DEV1SZ],AX
-                MOV     WORD [DEV1SZ+2],DX
-                RETN
+                OR      DX,DX
+                JNZ     .L1
 
-.TAP:           MOV     [DEV1WP],1      ;ALWAYS R/O!
+                CMP     AX,16*1024
+                JNZ     .L1
+
+                MOV     AX,4200H
                 INT     21H
-                JNC     .L3
 
-                MOV     AX,3D00H        ;TRY R/O
-                INT     21H
-                JC      .FAIL
-
-.L3:            MOV     [DEV1FH],AX
-                MOV     BX,AX
+                PUSH    DS
+                MOV     DS,SI
                 MOV     AH,3FH
-                MOV     CX,20
-                MOV     DX,DS_TAP
+                MOV     CX,16*1024
+                XOR     DX,DX
                 INT     21H
 
-                XOR     EAX,EAX
-                MOV     [DS_TAPSUM],EAX
-                MOV     [DS_TAPEB],AX
-                MOV     [DS_BUF_PTR],AX
-                MOV     [DS_TAPPM],10H
-                MOV     [DS_TAPF],AL
-                CMP     WORD [DS_TAP+13],2      ;C16 & PAL
-                JZ      .L4
+                POP     DS
+.L1:            MOV     AH,3EH
+                INT     21H
+.L2:            RETN
 
-                MOV     AH,3EH
+PARAM0:         MOV     DI,IOBUF+1
+                MOV     AL,[IOBUF]
+                PUSH    AX
+.L1:            CMP     [IOBUF],0
+                JE      .EXIT
+
+                MOV     BX,[DI+2]
+                MOV     EAX,[BX-4]
+                CMP     EAX,'ROM'
+                JZ      .ROM
+
+                CMP     EAX,'CFG'
+                JZ      .CFG
+
+                SHR     EAX,16
+                CMP     AX,'\'
+                JZ      .DIR
+
+                JMP     .L3
+
+.CFG:           MOV     DX,[DI]
+                CALL    LOAD_CFG
+                PUSH    DI
+                CALL    SET_CFG
+                POP     DI
+.L3:            ADD     DI,2
+                DEC     [IOBUF]
+                JMP     .L1
+
+.ROM:           MOV     BP,[DI]
+                MOV     BX,4
+                CMP     BYTE [DS:BP],'/'
+                JNZ     .LR2
+
+                MOV     BL,BYTE [DS:BP+1]
+                SUB     BL,'0'
+                JS      .L3
+
+                CMP     BL,8
+                JA      .L3
+
+                ADD     WORD [DI],2
+.LR2:           CALL    ADDROM
+                JMP     .L3
+
+.DIR:           CALL    SEG_CODE2:PREPDPARAM
+                MOV     DL,[DEVDPATH]
+                SUB     DL,'A'
+                MOV     AH,0EH
                 INT     21H
 
-.FAIL:          MOV     BX,[DEV1FNP]
-                MOV     BYTE [BX],0
-                RETN
+                MOV     BX,[DEVDFNP]
+                MOV     BYTE [BX-1],0
+                PUSH    DI
+                CALL    SET_FPATH
+                CALL    FILL_IBM_FLIST
+                POP     DI
+                JMP     .L3
 
+.EXIT:          CALL    RESTORE_PATH
+                POP     AX
+                MOV     [IOBUF],AL
+                JMP     GET_FPATH
 

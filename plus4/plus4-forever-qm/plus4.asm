@@ -43,6 +43,7 @@ START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
                 MOV     [RESET_SP],SP
                 CALL    SEG_CODE2:SPARAM
                 CALL    INITIBM
+                CALL    PARAM0
 
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
@@ -90,14 +91,14 @@ SEGMENT         SEG_ROM USE16
                 FILE    '../KERNAL.ROM'
                 FILE    '../3P1.ROM'
 
-SEGMENT         SEG_1551 USE16
-                FILE    '../1551.ROM'
-
 SEGMENT         SEG_CART USE16
 TIMES   16*1024 DB      'F'             ;C1-LOW
 TIMES   16*1024 DB      'G'             ;C1-HIGH
 TIMES   16*1024 DB      'H'             ;C2-LOW
 TIMES   16*1024 DB      'I'             ;C2-HIGH
+
+SEGMENT         SEG_1551 USE16
+                FILE    '../1551.ROM'
 
 SEGMENT         SEG_VRAM1 USE16
 TIMES   16*1024 DD      'VBE2'

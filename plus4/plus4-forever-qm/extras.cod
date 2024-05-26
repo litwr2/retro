@@ -555,3 +555,69 @@ IEC_DIRM64:     XOR     SI,SI                   ;IN: BX,CX; USE: SI,DX,AX
 .MATCH:         XOR     CX,CX
                 RETF
 
+ADDTAPE:        MOV     DX,DEV1PATH
+                MOV     AX,3D02H        ;OPEN FILE, R/W
+                CMP     [DEV1FMT],'C'
+                JNZ     .TAP
+
+                MOV     [DEV1WP],0
+                INT     21H
+                JNC     .L2
+
+                INC     [DEV1WP]
+                MOV     AX,3D00H        ;TRY R/O
+                INT     21H
+                JC      .FAIL
+
+.L2:            MOV     [DEV1FH],AX
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,6
+                MOV     DX,DS_FVER
+                INT     21H
+
+.L4:            MOV     AX,4202H
+                XOR     CX,CX
+                XOR     DX,DX
+                INT     21H
+
+                MOV     WORD [DEV1SZ],AX
+                MOV     WORD [DEV1SZ+2],DX
+                RETF
+
+.TAP:           MOV     [DEV1WP],1      ;ALWAYS R/O!
+                INT     21H
+                JNC     .L3
+
+                MOV     AX,3D00H        ;TRY R/O
+                INT     21H
+                JC      .FAIL
+
+.L3:            MOV     [DEV1FH],AX
+                MOV     BX,AX
+                MOV     AH,3FH
+                MOV     CX,20
+                MOV     DX,DS_TAP
+                INT     21H
+
+                XOR     EAX,EAX
+                MOV     [DS_TAPSUM],EAX
+                MOV     [DS_TAPEB],AX
+                MOV     [DS_BUF_PTR],AX
+                MOV     [DS_TAPPM],10H
+                MOV     [DS_TAPF],AL
+                CMP     WORD [DS_TAP+13],2      ;C16 & PAL
+                JZ      .L4
+
+                MOV     AH,3EH
+                INT     21H
+
+.FAIL:          MOV     BX,[DEV1FNP]
+                MOV     BYTE [BX],0
+                RETF
+
+                PARAMC  1
+                PARAMC  8
+                PARAMC  9
+                PARAMC  D
+

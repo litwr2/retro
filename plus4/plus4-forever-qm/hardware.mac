@@ -110,8 +110,7 @@ PREP#D#PARAM:   MOV     BP,[DI]
                 OR      AL,AL
                 JNZ     .LT10
 
-                RETN
-
+                RETF
 }
 
 MACRO           ADDDISC D
