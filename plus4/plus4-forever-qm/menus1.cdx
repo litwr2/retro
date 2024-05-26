@@ -1730,7 +1730,7 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 ;JMP     MD1_ENTER.L8A
                 JMP     MD1_CONFIG
 
-.L3:            CMP     [CP_IN_WIN8],3
+.L3:            CMP     [CP_IN_WIN8],4
                 JA      MD1_ENTER.L8A
 
                 MOV     AL,[VIDMODE]    ;SAVE
