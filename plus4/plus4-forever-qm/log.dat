@@ -1,0 +1,3 @@
+LOGF    DB      'LOG0',0
+LOGB    DD      ?
+LOGS    DD      ?
