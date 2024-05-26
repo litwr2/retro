@@ -3,7 +3,7 @@
 FILE *fi, *fo;
 
 void out1 (unsigned char c, unsigned char prev) {
-  if (c < 33 || c > 128 || prev < 0x83)
+  if (c < 33 || c > 128 || prev < 0x83 || prev < 0x93 && prev >= 0x90)
     fprintf(fo, " %02x", c);
   else
     fprintf(fo, " %c", c);
