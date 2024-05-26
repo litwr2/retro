@@ -2208,12 +2208,3 @@ OUT_AL:         CALL    BIN2HEX
                 INT     21H
                 RETN
 
-;SHOW_EAX:       CALL    HEX2DEC
-;                XOR     BX,BX
-;.L1:            MOV     AL,[D_BUF1+BX]
-;                MOV     [FS:0C00H+BX],AL
-;                INC     BX
-;                CMP     BL,10
-;                JNZ     .L1
-;                RETN
-

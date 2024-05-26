@@ -1,4 +1,9 @@
 FIRST
+ - reset & menus (!) break disk io!!!
+ - show HP, VP in debuger R command!
+ - p00 ERROR! terminating zeros.
+ - improve timer sound!!!
+ - "ASSIGN FILE FOR THE CBM DEVICE" in debugger!
  - SEQ-viewer
  - F5 doesn't function in the debugger!
  - CSB
@@ -6,7 +11,6 @@ FIRST
  - load new PRG, P00, ... after forced reset
  - debugger & menus conflict
  - dynamic memory distribution
- - hold full path to io-file (not name only!)
  - PLUS4.CFG FILE!
  - raster interrupt is performed in screen blank mode!
  - mouse -> joy
@@ -26,7 +30,7 @@ TAPE
  - REAL TAPE
  - HUFFMAN and/or LZ coder for tape format
  - TEST TAPE FORMAT VERSION
- - REAL TAPE (.WAV/.TAP OR .VOC FILES)
+ - REAL TAPE (.WAV/.TAP)
  - DATASETTE NOISE TO PC SPEAKER!!!???...
  - DATASETTE WRITE LINE TIMEOUT TRACE???
 
@@ -59,10 +63,8 @@ GENERAL:
 
 MENUS:
  - OUTPUT SUMMARY INFORMATION IN MENUS2
- - FAIL ON BAD D64!!!??? NOT HANGS!!!
  - output start address for .p00 and .prg files (rec. size for .r00???)
  - FFLPD -> uni FLPD
- - special mode for "assign a file for the CBM device!!!" mode
  - HARDWARE OPTIONS (ON F7?)
  - print screen... (ON F6)
 

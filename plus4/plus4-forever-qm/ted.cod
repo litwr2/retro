@@ -218,7 +218,7 @@ TED:            CMP     [TICKS2TED],0
                 CMP     AX,BX                   ;RASTER INTERRUPT?
                 JNZ     .L8
 
-                OR      [TED_9],82H
+                OR      [TED_9],2
                 MOV     BL,[TICKS]
                 ADD     [TICKS],4       ;***WRONG!
                 ;SUB     [TICKS],3       ;***WRONG!
@@ -267,26 +267,33 @@ TED:            CMP     [TICKS2TED],0
                 JZ      .L23
 
                 MOV     [CLADDR],LDMAS
+.L23:           MOV     AX,WORD [TED_9]
+                AND     AL,5AH
+                AND     AH,AL
+                JZ      .L70
 
-.L23:           DEC     WORD [TED_0]            ;TIMERS INTERRUPT?
+                OR      AL,80H
+.L70:           MOV     [TED_9],AL
+                DEC     WORD [TED_0]            ;TIMERS INTERRUPT?
                 JNZ     .L20
+
                 MOV     AX,[TIMER1_RELOAD]
                 MOV     WORD [TED_0],AX
-                OR      [TED_9],88H
+                OR      [TED_9],8
                 MOV     AL,[TICKS]
                 NEG     AL
                 OR      [IRQTICKS],AL
 .L20:           DEC     WORD [TED_2]
                 JNZ     .L21
 
-                OR      [TED_9],90H
+                OR      [TED_9],10H
                 MOV     AL,[TICKS]
                 NEG     AL
                 OR      [IRQTICKS],AL
 .L21:           DEC     WORD [TED_4]
                 JNZ     .L11
 
-                OR      [TED_9],0C0H
+                OR      [TED_9],40H
                 MOV     AL,[TICKS]
                 NEG     AL
                 OR      [IRQTICKS],AL

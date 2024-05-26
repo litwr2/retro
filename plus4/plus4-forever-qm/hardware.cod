@@ -93,7 +93,20 @@ SET_VMODE:      MOV     AX,13H
                 STI
                 RETN
 
-FINISHIBM:      XOR     AX,AX           ;RESTORE LED
+FINISHIBM:      CALL    RESET_DS
+
+        IF IEC8DEBUG > 0
+                MOV AH,3EH
+                MOV BX,[XXXFH]
+                INT 21H
+        END IF
+                CALL    IEC8FLUSH
+                CALL    IEC9FLUSH
+                CALL    DEV1DETACH
+                CALL    DEV8DETACH
+                CALL    DEV9DETACH
+
+                XOR     AX,AX           ;RESTORE LED
                 MOV     ES,AX
                 MOV     AL,[ES:417H]
                 AND     AL,0CFH
@@ -109,12 +122,11 @@ FINISHIBM:      XOR     AX,AX           ;RESTORE LED
                 CALL    RESTORE_INTR24
                 CALL    RESTORE_INTR23
 
-                CALL    RESET_DS
-
                 MOV     DL,[SAVE_FPATH]   ;RESTORE STARTUP PATH & DRIVE
                 MOV     AH,0EH
                 SUB     DL,'A'
                 INT     21H
+
                 MOV     AH,3BH
                 MOV     DX,SAVE_FPATH
                 INT     21H
@@ -129,9 +141,10 @@ FINISHIBM:      XOR     AX,AX           ;RESTORE LED
                 SHL     EDX,1
                 CMP     EDX,[SYNCHRO_TICKS]
                 JB      .L1
+
                 INC     EAX
 .L1:            CALL    HEX2DEC
-                MOV     EAX,DWORD [D_BUF1+6]
+                MOV     EAX,DWORD [HEX2DECBUF+6]
                 MOV     WORD [FMSG+44],AX
                 SHR     EAX,16
                 MOV     [FMSG+46],AL
@@ -144,7 +157,6 @@ FINISHIBM:      XOR     AX,AX           ;RESTORE LED
                 MOV     DX,FMSG         ;OUTPUT AUTHOR'S MESSAGE
                 MOV     AH,9
                 INT     21H
-
                 RETN
 
 INITIBM:        CLD
@@ -155,6 +167,7 @@ INITIBM:        CLD
                 XCHG    AL,AH
                 CMP     AX,31EH         ; DOS >= 3.30
                 JNC     .L3
+
                 MOV     DX,ERROR1
                 MOV     AH,9
                 INT     21H
@@ -164,6 +177,14 @@ INITIBM:        CLD
 .L3:            XOR     AX,AX           ;TEST MOUSE PRESENCE
                 INT     33H
                 MOV     [ISMOUSE],AL
+
+        IF IEC8DEBUG > 0
+                MOV AH,3CH
+                MOV CX,20H
+                MOV DX,XXXFN
+                INT 21H
+                MOV [XXXFH],AX
+        END IF
 
                 XOR     EBX,EBX         ;INIT 32-BIT REGISTERS
                 XOR     ESI,ESI
@@ -208,6 +229,7 @@ INITIBM:        CLD
                 LEA     DX,[ROMS_FN+SI]
                 INT     21H
                 JC      .L5
+
                 MOV     BX,AX
                 MOV     AX,4202H
                 XOR     CX,CX
@@ -215,8 +237,10 @@ INITIBM:        CLD
                 INT     21H
                 OR      DX,DX
                 JNZ     .L1
+
                 CMP     AX,16*1024
                 JNZ     .L1
+
                 MOV     AX,4200H
                 INT     21H
                 PUSH    DS
@@ -246,10 +270,6 @@ INITIBM:        CLD
                 MOV     WORD [SAVE_FPATH+1],AX
                 MOV     WORD [FPATH+1],AX
 
-                CALL    GET_DRVS        ;INIT MENUS
-                CALL    GET_FPATH
-                CALL    INIT_WIN1
-
                 XOR     AX,AX
                 MOV     ES,AX
                 MOV     AL,[ES:417H]
@@ -258,6 +278,7 @@ INITIBM:        CLD
                 AND     BYTE [ES:417H],0CFH
                 AND     AL,40H
                 JZ      .L4
+
                 AND     [KMATRIX+1],7FH
 .L4:            MOV     [LED],AL
                 CALL    SET_LED
@@ -266,5 +287,9 @@ INITIBM:        CLD
                 MOV     ES,AX
 
                 MOV     [TOTALTICKS],0
-                RETN
+
+                CALL    GET_DRVS        ;INIT MENUS
+                CALL    GET_FPATH
+                CALL    INIT_WIN1
+                JMP     FILL_IBM_FLIST
 

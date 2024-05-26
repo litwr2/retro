@@ -145,10 +145,10 @@ GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
                 RETN
 
 HEX2DEC:        MOV     EBX,1000000000  ;IN: EAX - HEX 
-                PUSH    CX              ;OUT: ->D_BUF1
+                PUSH    CX              ;OUT: ->HEX2DECBUF
                 PUSH    SI              ;USED: BX, EDX
                 XOR     EDX,EDX
-                MOV     SI,D_BUF1
+                MOV     SI,HEX2DECBUF
                 DIV     EBX
                 OR      AL,30H
                 MOV     [SI],AL
@@ -378,35 +378,41 @@ WAIT_ACTIVITY:  CALL    SHOWM
 .L1:            JMP     HIDEM
 
 MAKE_FNAME:     PUSH    ES                      ;INPUT: BX - FLIST POINTER
-                PUSH    DS
+                PUSH    DS                      ;PUT FN TO FILENAMEBUF
                 POP     ES                      
                 LEA     SI,[IBM_FN_LIST+EBX*8]  
-                MOV     DI,D_BUF1               
+                MOV     DI,FILENAMEBUF
                 MOV     CX,8
 .L2:            MOVSB
                 CMP     BYTE [SI],' '
                 JZ      .L1
+
                 LOOP    .L2
+
 .L1:            LEA     SI,[IBM_EX_LIST+EBX*2+EBX]
                 CMP     BYTE [SI],' '
                 JZ      .L3
+
                 MOV     BYTE [DI],'.'
                 INC     DI
                 MOV     CL,3
 .L4:            CMP     BYTE [SI],' '
                 JZ      .L3
+
                 MOVSB
                 LOOP    .L4
+
 .L3:            MOV     BYTE [DI],CH    ;ASCIIZ!
                 POP     ES
                 RETN
 
 SAV_FPATH:      XOR     SI,SI
 .L1:            MOV     AL,[FPATH+SI]
-                MOV     [D_BUF2+SI],AL
+                MOV     [SAVED_FPATH+SI],AL
                 INC     SI
                 OR      AL,AL
                 JNZ     .L1
+
                 RETN
 
 INIT_WIN1:      MOV     AX,[TOT_DRVS]

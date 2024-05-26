@@ -1,11 +1,10 @@
-<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Frameset//EN">
-
 <HTML>
 
 <HEAD>
-  <META NAME="keywords" lang="en" CONTENT="Lidovski, Commodore, +4, plus/4, Emulator, DOS, Forever?">
-  <META NAME="author" CONTENT="Lidovski Vladimir">
-  <META NAME="copyright" CONTENT="&copy; 2004 Lidovski V">
+  <META NAME="keywords" lang="en" 
+      CONTENT="Lidovski, Commodore, +4, plus/4, Emulator, DOS, Forever?">
+  <META NAME="author" CONTENT="Vladimir Lidovski">
+  <META NAME="copyright" CONTENT="&copy; 2005 Lidovski V">
   <TITLE>Commodore +4 Emulator Forever?</TITLE>
 </HEAD>
 
@@ -19,6 +18,7 @@
 
 <p><a href="#0">Preview</a>
 <p><a href="#1">OS</a>
+<p><a href="#DOS">Why Assembler &amp; DOS?!</a>
 <p><a href="#2">Used IBM PC hardware resources</a>
 <p><a href="#3">Keyboard</a>
 <p><a href="#4">Joysticks</a>
@@ -39,17 +39,19 @@
 <p><a href="#18">C2F Format</a>
 <p><a href="#19">Compilation</a>
 <p><a href="#20">(C) Copyright</a>
-<p><a href="#21">Changes List</a>
+<p><a href="#BUG">Bugs reports</a>
+<p><a href="#21">History and the last updates</a>
 </div>
 
 
 <a name="0"></a><h2 align=center>Preview</h2>
 
 <p>I think I've created an unique emulator, because I've never seen any
-Commodore plus/4 (16 or 116) since March 1991... This version of the
+Commodore plus/4 (16 or 116) since March 1991... I've also never been an
+owner of Commodore disk drive. This version of the
 emulator has created only from some my old and found in Internet
 documentation (e.g., `c64doc' by John West and Marko Makela, `Extra
-Instructions Of The 65XX Series CPU' by Adam Vardy) and some advices
+Instructions Of The 65XX Series CPU' by Adam Vardy) and some advice
 from Attila Grosz. It's written only in 100% 80486 assembler (16-bit mode).
 
 
@@ -57,10 +59,39 @@ from Attila Grosz. It's written only in 100% 80486 assembler (16-bit mode).
 <a name="1"></a><h2 align=center>OS</h2>
 
 <p>Reprogramming the timer hardware made impossible to run the
-emulator from Microsoft Windows GUI environment - use DOS or Windows
-95/98/Me DOS mode. For NT/2000/XP, Linux, FreeBSD users: creation a DOS boot
-disk (or CD-ROM) is a possibility to run this program.
+emulator from Microsoft Windows GUI environment &mdash; use DOS or Windows
+95/98/Me DOS mode. For NT/2000/XP, Linux, FreeBSD users &mdash; creation a
+DOS boot disk (or CD-ROM) is a possibility to run this program.
 
+
+
+<a name="DOS"></a><h2 align=center>Why Assembler &amp; DOS?!</h2>
+
+<p>Why this old nearly completely forgotten OS is used as base for 2005
+software? There are several reasons.
+
+<ol>
+<li>The skeleton of the emulator was created in 1996/97
+in the existing DOS atmosphere, work was stopped at the beginning of 1998 and
+resumed only at the end of 2002. So the emulator skeleton like Ancient mummy
+contains the spirit of other years which is still strong enough to defend
+itself!
+
+<li>Author had found that translation
+to other OS and from assembler to higher level programming language is
+too difficult now. He has a choice. He can either continue to develop the
+emulator or begin big work to transfer its code to other systems.
+
+<li>The emulators the same quality exist for Linux now (Vice, Xmess). The
+best emulator is only available for Microsoft Windows (Yape). Presented 
+emulator is the best for DOS forever!
+
+<li>Author's computer of the middle of 90s was 486DX-120 and Assembler was the
+only choice to reach 100% performance with it.
+
+<li>The programming in Assembler under DOS is very difficult and time 
+consumptive &mdash; this makes the pleasure of emulator creation longer.
+</ol>
 
 
 
@@ -69,9 +100,9 @@ disk (or CD-ROM) is a possibility to run this program.
 <p>The emulator completely takes-over interrupt 9 (keyboard) and intercepts
 interrupt 8. The emulator uses only base DOS memory. Screen size is 320x207.
 It has direct access to the following ports: 20-21 (programmable interrupt
-controller); 40, 43 (timer hardware -- to set IRQ0 frequency to 37288Hz);
-60, 64 (keyboard); 61 (speaker); 201 (joysticks); 388-389 (Ad Lib);
-3CE-3CF (VGA).
+controller); 40, 43 (timer hardware &mdash; to set IRQ0 frequency to
+37288Hz); 60, 64 (keyboard); 61 (speaker); 201 (joysticks); 388-389 (Ad
+Lib); 3CE-3CF (VGA).
 
 <p>ATTENTION! Video memory at address range A0000-B02C0 is used. If the
 emulator runs with UMB managers like EMM386 then be sure that range
@@ -100,6 +131,7 @@ interrupt any operation, e.g. with file)
 </table>
 
 
+
 <a name="4"></a><h2 align=center>Joysticks</h2>
 
 <p>You can use any combination of real analog joysticks and the keyboard keys
@@ -111,16 +143,51 @@ for joystick emulation. There are two keys sets for the emulation:
 </ul>
 
 
+
 <a name="DD"></a><h2 align=center>Disk Drives</h2>
 
-<p>You can assign any D64 image or current directory (place cursor on .. and
-then press F7) to the disk device #8.
+<p>You can use units 8 and 9. There two kinds of emulation of Commodore DOS:
 
-<p>You can load any program via LOAD, DLOAD, or monitor L commands. The special
-file `$' (directory) is supported.
+<ol>
+<li>for D64-images;
+<li>for IBM PC directory (FAT or CD-ROM).
+</ol>
 
-<p>You can't use DIRECTORY, DSAVE, OPEN, etc. commands. You can't assign root
-directory to the disk drive device.
+<p>The both emulations allow to use the next BASIC DOS commands and variables:
+DIRECTORY, DLOAD, LOAD, INPUT#, GET#, OPEN, CLOSE, DS, DS$, ST. Commands
+HEADER and COLLECT may also be used but without any effect. DOS commands
+U9/UI and U:/UJ are partially supported &mdash; they return DOS version for
+the DS$.
+
+<p>So you can load programs, read the PRG, SEQ, USR, DEL files, get drive
+status and see directory in the any kind of emulation.
+
+<p>The emulation on the D64 images doesn't support write commands via CBM
+filesystems but it supports direct access U1/UA, U2/UB, # and B-P DOS
+commands that allows to use such programs as <em>Zork</em>, <em>Hitchhiker's 
+Guide</em>, <em>Blazin Forth</em>, etc. The relative files aren't supported
+even for read. The # command ignores possible argument &mdash; it always uses
+default sector buffer. The U1 can use the sectors map from D64 images which
+provide it that allows to use the programs (e.g. <em>Typing Professor</em>)
+from copy-protected disk.
+
+<p>The emulation on the IBM PC filesystems provides support for all types of
+standard files and some DOS commands (C, R, S, P) that allows to use the
+rest of BASIC DOS commands &mdash; COPY, RENAME, SCRATCH, DSAVE, SAVE and
+PRINT#. It doesn't support direct access commands like U1, B-A, M-W, etc.
+The relative files are fully supported!
+
+<p>You can use pattern (like A??B*=P) in any command which allows it
+(SCRATCH, DIRECTORY, ...). The SAVE command supports usage of @ replacement
+prefix.
+
+<p>The both units are assigned to the current PC directory at the start of
+the emulator. Use F7 in the menus to reassignments of the units.
+
+<p>Usage of IBM PC filesystems emulation gives more space and flexibility
+especially for such programs like <em>Austrospeed Basic Compiler</em> or 
+<em>SVS B.A.L. System</em>. So extract files from D64 and get some benefit!
+
 
 
 <a name="5"></a><h2 align=center>Mouse</h2>
@@ -153,9 +220,10 @@ files are missed then standard (build-in in the emulator program body) ROM
 contents will be used instead.
 
 <p>Some ROM images in the Internet have 16386 bytes length (for unknown for
-me reason 2 bytes added to theirs start) - remove first 2 bytes from them.
+me reason 2 bytes added to theirs start) &mdash; remove first 2 bytes from
+them.
 
-<p>Make the separate directory for every cartrige ROM and then run the
+<p>Make the separate directory for every cartridge ROM and then run the
 emulator from the appropriate directory.
 
 
@@ -187,8 +255,8 @@ emulator from the appropriate directory.
 <tr><td>-<td>Joysticks                     <td>+
 <tr><td>-<td>Serial Bus                    <td>-
 <tr><td>-<td>Serial Bus devices            <td>-
-<tr><td>-<td>Disk drive emulation          <td>%[6]
-<tr><td>-<td>C-1551 disk drives            <td>-
+<tr><td>-<td>Disk drive emulation          <td>+[6]
+<tr><td>-<td>C-1551 disk drives            <td>%[6]
 <tr><td>-<td>Datasette                     <td>+
 <tr><td>-<td>ROM cartridges (up to 64K)    <td>+
 </table>
@@ -200,8 +268,7 @@ Blaster). It's nearly impossible to produce digital sound effects on the
 Adlib-cards family -- use Speaker sound to hear them.<br>
 [4] - according general 6502 family standard.<br>
 [5] - only Cassette Sense line.<br>
-[6] - drive on the device #8 is supported for the current directory or any D64
-image for LOAD command only.<br>
+[6] - Turbo-Loaders and some operations are still not supported.<br>
 
 <p>Internal features of the emulator:
 
@@ -211,7 +278,6 @@ image for LOAD command only.<br>
 <li>support D64, PRG, P0n (S0n, D0n, R0n, U0n) and CTF (description see below)
 formats;
 <li>speed regulation;
-<li>fast load of programs from device #8;
 <li>build-in debugger with assembler/disassembler.
 </ul>
 
@@ -230,17 +296,16 @@ JAM type instruction then after reset the emulator begins meditation.
 <a name="9"></a><h2 align=center>I/O Ports Emulation</h2>
 
 <table align=center>
-<tr><td>FC00-FCFF<td>KERNAL ROM FIX          <td>%[1]
+<tr><td>FC00-FCFF<td>KERNAL ROM FIX          <td>+
 <tr><td>FD00-FD0F<td>ACIA                    <td>-
-<tr><td>FD10-FD1F<td>PIO                     <td>%[2]
+<tr><td>FD10-FD1F<td>PIO                     <td>%[1]
 <tr><td>FD30-FD3F<td>KEYBOARD MATRIX         <td>+
 <tr><td>FDD0-FDDF<td>ROM CHIPS SELECTION PORT<td>+
-<tr><td>FEC0-FEDF<td>IEC9/C1551              <td>-
-<tr><td>FEE0-FEFF<td>IEC8/C1551              <td>-
+<tr><td>FEC0-FEDF<td>IEC9/C1551              <td>+
+<tr><td>FEE0-FEFF<td>IEC8/C1551              <td>+
 </table>
 
-<p>[1] - only for CPU access.<br>
-[2] - only Cassette Sense line.<br>
+<p>[1] - only Cassette Sense line.<br>
 
 
 
@@ -416,10 +481,9 @@ Who has won this data competition?...</p>
                                             blank case C+4 is faster
   RAM
    Total                    64K     64K
-   I/O holes size, byte     4098    578     C+4: CPU=2,IO=576(ACIA=16,PIO=16,
+   Holes, byte              4098    548     C+4: CPU=2,IO=512(ACIA=16,PIO=16,
                                                  KBD=16,MAGIC VOICE SOUND=16,
-                                                 ROMSEL=16,IEC8=32,IEC9=32,
-                                                 TED=34).
+                                                 ROMSEL=16),TED=34.
                                             C64: CPU=2,VIC=1024,SID=1024,
                                                  VRAM=1024,CIA1=256,CIA2=256,
                                                  EXP1/Z80=256,EXP2/DISK=256
@@ -431,8 +495,8 @@ Who has won this data competition?...</p>
                             =20K    =64K    Kernal ROM and use other 3 16K
                                             ROM slots in any manner (e.g. to
                                             view/save any ROM chip content)
-   Max                      3*8K+4K 8*16K
-                            =28K    =128K
+   Max                      3*8K+4K 8*16K-3*802-546
+                            =28K    =128K-2952=125.1171875K
   Keyboard
    Total keys               66      67+Reset
    Reset button             -       +
@@ -461,7 +525,7 @@ Who has won this data competition?...</p>
                                             for keeping color information)
    Hardware sprites         +       -       C64 can manage up to 8 24x21
                                             sprites, automatically detects
-                                            there collisions, etc.
+                                            their collisions, etc.
    
   Sound
    Channels                 3       2       C+4's second channel can produce
@@ -489,10 +553,9 @@ Who has won this data competition?...</p>
     RTC                     1       -       and 4 from CIA2 - VIC (IRQ),
     Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can
     Sprite's                2       -       produce only one interrupt signal;
-    Synchro Serial Port     2       -       each C+4 has 6 types of interrupt
-    Light Pen               1       1       sources: 5 from TED and 1 from
-    RS-232C                 1       1       ACIA - TED and ACIA can each
-                                            produce only one IRQ signal
+    Synchro Serial Port     2       -       C+4 has 6 types of internal
+    Light Pen               1       1       interrupt sources: 5 from TED and 
+    RS-232C                 1       1       1 from ACIA
 
   Serial Bus                +       +       C+4 doesn't support SRQ line
 
@@ -514,6 +577,7 @@ Who has won this data competition?...</p>
                                             the CPU bus, C64 theoretically can
                                             use similar drives...
 </pre>
+
 
 
 <a name="13"></a><h2 align=center>Debugger</h2>
@@ -757,6 +821,9 @@ searching.
 when you write something on the cassette. After writing the head is placed on
 the start of first block on tape.
 
+<P>WARNING!!! Read-only CTF-files can't be normally accessed from the
+emulator. So it's impossible to use any command like LOAD or PRINT with them.
+
 <p>WARNING!!! Activation of the tape motor not for i/o operation and then
 making attempt to access to the Commodore serial bus may produce a block of
 garbage on the tape (this situation is fully adequate the real one: press play
@@ -796,7 +863,7 @@ doesn't reflect the block nature of CBM method used for
 writing on the tape. For example, it can't work with data file (via OPEN,
 PRINT# and CLOSE) and turbo loaders and savers.
 
-<p>It's easy to convert T64 to CTF or CTF to TAP. Backward convertion is not
+<p>It's easy to convert T64 to CTF or CTF to TAP. Backward conversion is not
 formal and requires some AI. It's nearly impossible to convert general CTF or
 TAP data to T64 format. Conversion from TAP to CTF is much easier.
 CTF size is usually several times smaller than for the same data in TAP format.
@@ -918,6 +985,7 @@ OFFSET  AREA NAME       LENGTH  COMMENTS
 </pre>
 
 
+
 <a name="19"></a><h2 align=center>Compilation</h2>
 
 <p>You need <a href=http://fasm.sourceforge.net/>FASM</a> V1.50 or newer for
@@ -927,15 +995,19 @@ sources compilation.
 executable file. Use FASM under the pure DOS (without memory managers like 
 EMM386 or with DPMI services) or under any Linux.
 
+<p>You must have C+4 ROM images files BASIC.ROM (16K), KERNAL.ROM (16K), and
+3P1.ROM (32K) in the directory which contains CV subdirectory during
+compilation. The third file is unnecessary and may contain zeros.
+
 
 
 <a name="20"></a><h2 align=center>(C) Copyright</h2> 
 
 <p>Almost all data and program files of this package are written by Lidovski V.
 in the X/1996 - IV/1997, VI-VIII,XII/1998, IV/2000, XI/2002, III-VIII/2003,
-II,V-VIII,X,XII/2004.
+II,V-VIII,X,XII/2004,VI-VIII/2005.
 
-<p>All source code is Copyright (C) 1997-2004 Vladimir Lidovski. This program
+<p>All source code is Copyright (C) 1997-2005 Vladimir Lidovski. This program
 is distributed under the GNU General Public License, Version 2, or, at your
 discretion, any later version. The GNU General Public License is available
 via the Web <a href=http://www.gnu.org/copyleft/gpl.html>here</a>. The GPL is 
@@ -944,162 +1016,25 @@ do not remove that freedom from others.
 
 
 
-<a name="21"></a><h2 align=center>Changes List</h2>
+<a name="BUG"></a><h2 align=center>BUGS REPORTS</h2>
 
-<p>The next bugs fixed and features added since version 1.00 of this emulator:
+<p>Please send messages about any discovered bugs to author's email
+(litwr@yandex.ru).
 
-<ul>
-<li>debugger can't hang computer after g or p command in long execution
-sequence
-<li>q debugger command returns to the non-debugger mode of execution and
-G debugger command turns emulator in the debugger mode
-<li>button End correctly works in menus
-<li>added analog joysticks support
-<li>screen size set to 320x207
-<li>TED algorithm slightly modified
-</ul>
 
-<p>bugs fixed in v1.12 (XI-2002)
 
-<ul>
-<li>made correct kernal $FCxx page fix
-<li>made correct loading of PRG-files with tape origin, like PACMANIA
-</ul>
+<a name="21"></a><h2 align=center>History and the last updates</h2>
 
-<p>features of v1.14
+<p>The first version of this emulator was finally compiled at the 9th of April
+of 1997. It was uploaded to ftp.funet.fi at the 30th of June of 1997.
+
+<p>The <em>changes list</em> is <a href=plus4chl.htm>here</a>.
+
+<p>v1.31 (VIII-2005)
 
 <ul>
-<li>added full range of joysticks emulation options
-<li>vertical synchronization set to 50.1Hz (early it was 54.6Hz)
-<li>added possibility to use the underscore symbol in the filenames in the
-menus
-</ul>
-
-<p>features of v1.15
-
-<ul>
-<li>it's the last version of emulator which can run at 100% speed at P100
-</ul>
-
-<p>features of v1.16 (III-2003)
-
-<ul>
-<li>improved interrupts handling - it does possible to run Icicle Works
-without problems
-<li>added poor digital sound effects support (that reached by reducing delays
-after writing to AdLib ports and may create problems with very old cards)
-<li>it's the last version of the emulator which can run at 100% speed at P133
-</ul>
-
-<p>features of v1.17 (IV-2003)
-
-<ul>
-<li>added PC speaker sound support - this does possible to hear digital sound
-    effects (use F5 to change sound hardware) and does impossible to run the
-    emulator from Microsoft Windows
-<li>added O (watchpOint) command to the debugger
-<li>added speed regulation to the menus
-<li>completly rewritten synchronization codes (now it based on the timer
-    37.3KHz interrupt)
-<li>added support for mouse buttons to the emulator
-<li>fixed some minor bugs
-</ul>
-
-<p>features of v1.18 (V-2003)
-
-<ul>
-<li>first version for free assembler (FASM) under GNU GPL
-<li>fixed some bugs
-</ul>
-
-<p>features of v1.19 (VII-2003)
-
-<ul>
-<li>better hardware interrupts handling algorithm (old one could cause crash
-of menus subsystem and hanging of computer with DR-DOS, Free-DOS, and
-PTS-DOS, but worked good on Microsoft MS-DOS!)
-<li>better synchronization code
-<li>renamed KERNEL.ROM to KERNAL.ROM
-<li>fixed several bugs in the debugger
-<li>added some little improvements to the TED subroutine (that cause better
-look of the games SQUIRM, JAILBREAK, ...)
-<li>menus: added DELETE command (it can't remove read-only files) and one
-navigation bug fixed
-<li>it's first named version of the emulator (`Navsegda?' in Russian)
-<li>slightly improved PC speaker sound code
-<li>better drive letters handling
-<li>CD-ROMs support added
-<li>improved LED (lock keys indicators) handling
-</ul>
-
-<p>features of v1.20 (VII-2003)
-
-<ul>
-<li>joysticks and sound states saved now in C2F
-</ul>
-
-<p>features of v1.21 (VIII-2003)
-
-<ul>
-<li>fixed some bugs, added some minor improvements
-<li>added <a href="#17">tape</a> utilities CTF2WAV, CTF2TAP, and WAV2CTF
-</ul>
-
-<p>features of v1.22 (IX-2003)
-
-<ul>
-<li>fixed some bugs, added some minor improvements
-</ul>
-
-<p>features of v1.23 (XI-2003)
-
-<ul>
-<li>fixed BRK instruction, BASIC 7.0 cartridge is now supported
-</ul>
-
-<p>features of v1.24 (II-2004)
-
-<ul>
-<li>added hardware reset function
-<li>fixed some bugs
-</ul>
-
-<p>features of v1.25 (VI-2004)
-
-<ul>
-<li>added nearly exact timing
-<li>fixed some bugs
-</ul>
-
-<p>features of v1.26 (VII-2004)
-
-<ul>
-<li>added several minor improvements
-<li>fixed some bugs
-</ul>
-
-<p>features of v1.27 (VIII-2004)
-
-<ul>
-<li>fixed bug which caused impossibility to load read-only files from 
-menu - this did files from boot diskette (cbm264c) unloadable
-</ul>
-
-<p>features of v1.28 (X-2004)
-
-<ul>
-<li>added poor disk drive (device #8 only) support by interception of
-$FFD5 calls. It becomes possible to use LOAD and DLOAD. This makes more than
-1/3 of D64-images usable
-<li>the file deletion is intercepted by "Are you sure?" question now
-<li>fixed some minor bugs
-</ul>
-
-<p>features of v1.29 (XII-2004)
-
-<ul>
-<li>slightly improved <a href="#dd">disk drive support</a> (this makes more than
-40% of D64-images usable)
+<li>added nearly full support for <a href="#DD">disk drives</a> (this makes
+more than 90% of D64-images usable), but evade turbo-loaders!
 <li>added some minor improvements
 </ul>
 

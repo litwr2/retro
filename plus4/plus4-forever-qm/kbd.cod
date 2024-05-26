@@ -143,6 +143,7 @@ INTR9:          PUSH    AX
 .L1:            BTS     WORD [KMATRIX+BX],AX
                 TEST    [LED],40H
                 JZ      .L3
+
                 AND     [KMATRIX+1],07FH
 .L3:            MOV     [KBUFA],AH
                 MOV     WORD [KBUFS],DX
@@ -271,22 +272,28 @@ INTR9:          PUSH    AX
 
 .J18:           CMP     AL,36H          ;JOY2 FIRE P
                 JNZ     .J19
+
                 AND     DL, 07FH
                 RETN
 
 .J19:           CMP     AL,0B6H         ;JOY2 FIRE R
                 JNZ     .J20
+
                 OR      DL, 080H
                 RETN
+
 .J20:           INC     DH
                 RETN
 
 .LX:            CMP     AL,046H         ;ScrollLock?
                 JZ      .LE
+
                 CMP     AL,054H         ;SysReq (Alt+PrintScreen)?
                 JZ      .SR
+
                 CMP     AL,045H         ;NumLock?
                 JZ      .LE
+
 .LX1:           POP     DX
                 POP     BX
                 POP     DS

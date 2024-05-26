@@ -1,3 +1,162 @@
+DEV1DETACH:     PUSH    SI              ;USE: BX
+                MOV     SI,[DEV1FNP]    ;CLOSE ASSO FILES
+                MOV     BX,[DEV1FH]
+.L0:            CMP     BYTE [SI],0
+                JE      .L1
+
+                MOV     BYTE [SI],0
+                MOV     AH,3EH
+                INT     21H
+.L1:            POP     SI
+                RETN
+
+DEV8DETACH:     PUSH    SI
+                MOV     SI,[DEV8FNP]
+                MOV     BX,[DEV8FH]
+                JMP     DEV1DETACH.L0
+
+DEV9DETACH:     PUSH    SI
+                MOV     SI,[DEV9FNP]
+                MOV     BX,[DEV9FH]
+                JMP     DEV1DETACH.L0
+
+DEV1ATTACH:     XOR     BX,BX                   ;IN: SI
+                MOVZX   CX,[FPATH_LEN]          ;USE: EAX,BX,CX,DX,DI
+.L1:            MOV     AL,[FPATH+BX]           ;CY = ERROR! - NOT ATTACHED
+                MOV     [DEV1PATH+BX],AL
+                INC     BX
+                LOOP    .L1
+
+                LEA     DI,[DEV1PATH+BX]
+                MOV     [DEV1FNP],DI
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8]
+                MOV     [DI],EAX
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8+4]
+                MOV     [DI+4],EAX
+                MOV     DWORD [DI+8],'.CTF'
+                MOV     BYTE [DI+12],0
+                MOV     DX,DI
+                MOV     AX,3D02H        ;OPEN FILE, R/W
+                INT     21H
+                JC      DEV8ATTACH.FAIL
+
+                MOV     [DEV1FH],AX
+                MOV     EAX,[DS:IBM_SZ_LIST+ESI*4]
+                MOV     [DEV1SZ],EAX
+                RETN
+
+DEV8ATTACH:     XOR     BX,BX                   ;IN: SI
+                MOVZX   CX,[FPATH_LEN]          ;USE: EAX,BX,CX,DX,DI
+.L1:            MOV     AL,[FPATH+BX]           ;CY = ERROR! - NOT ATTACHED
+                MOV     [DEV8PATH+BX],AL
+                INC     BX
+                LOOP    .L1
+
+                LEA     DI,[DEV8PATH+BX]
+                MOV     [DEV8FNP],DI
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8]
+                MOV     [DI],EAX
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8+4]
+                MOV     [DI+4],EAX
+                MOV     DWORD [DI+8],'.D64'
+                MOV     BYTE [DI+12],0
+                MOV     DX,DI
+                MOV     [DEV8WP],0
+                MOV     AX,3D02H        ;OPEN FILE, R/W
+                INT     21H
+                JNC     .L2
+
+                INC     [DEV8WP]
+                MOV     AX,3D00H        ;TRY R/O
+                INT     21H
+                JC      .FAIL
+
+.L2:            MOV     [DEV8FH],AX
+                MOV     [D64_POS],12H   ;READ BAM
+                MOV     BX,AX
+                CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     CX,256
+                MOV     DX,DEV8BAM
+                INT     21H
+
+                XOR     DI,DI           ;CLEAR SECTORS MAP
+.L4:            MOV     BYTE [DEV8ES+DI],1
+                INC     DI
+                CMP     DI,683
+                JB      .L4
+
+                CMP     [IBM_SZ_LIST+ESI*4],175531
+                CLC
+                JNZ     .L5
+
+                MOV     AX,4200H        ;READ SECTORS MAP
+                MOV     CX,174848/65536
+                MOV     DX,174848 MOD 65536
+                INT     21H
+
+                MOV     DX,DEV8ES
+.L7:            MOV     AH,3FH
+                MOV     CX,683
+                INT     21H
+.L5:            RETN
+
+.FAIL:          MOV     BYTE [DI],0
+                RETN
+
+DEV9ATTACH:     XOR     BX,BX                   ;IN: SI
+                MOVZX   CX,[FPATH_LEN]          ;USE: EAX,BX,CX,DX,DI
+.L1:            MOV     AL,[FPATH+BX]           ;CY = ERROR! - NOT ATTACHED
+                MOV     [DEV9PATH+BX],AL
+                INC     BX
+                LOOP    .L1
+
+                LEA     DI,[DEV9PATH+BX]
+                MOV     [DEV9FNP],DI
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8]
+                MOV     [DI],EAX
+                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8+4]
+                MOV     [DI+4],EAX
+                MOV     DWORD [DI+8],'.D64'
+                MOV     BYTE [DI+12],0
+                MOV     DX,DI
+                MOV     [DEV9WP],0
+                MOV     AX,3D02H        ;OPEN FILE, R/W
+                INT     21H
+                JNC     .L2
+
+                INC     [DEV9WP]
+                MOV     AX,3D00H        ;TRY R/O
+                INT     21H
+                JC      DEV8ATTACH.FAIL
+
+.L2:            MOV     [DEV9FH],AX
+                MOV     [D64_POS],12H   ;READ BAM
+                MOV     BX,AX
+                CALL    SEEK_D64_POS
+                MOV     AH,3FH
+                MOV     CX,256
+                MOV     DX,DEV9BAM
+                INT     21H
+
+                XOR     DI,DI           ;CLEAR SECTORS MAP
+.L4:            MOV     BYTE [DEV9ES+DI],1
+                INC     DI
+                CMP     DI,683
+                JB      .L4
+
+                CMP     [IBM_SZ_LIST+ESI*4],175531
+                CLC
+                JNZ     DEV8ATTACH.L5
+
+                MOV     AX,4200H        ;READ SECTORS MAP
+                MOV     CX,174848/65536
+                MOV     DX,174848 MOD 65536
+                INT     21H
+
+                MOV     DX,DEV9ES
+                JMP     DEV8ATTACH.L7
+
 FC_AUX1:        MOV     AX,3D00H
                 PUSH    DS
                 PUSH    ES
@@ -25,13 +184,45 @@ FC_D64:         CALL    FC_AUX1
                 MOV     DX,6590H
                 JMP     FC_AUX2
 
-FC_X00:         CALL    FC_AUX1
+FC_X00:         MOV     DWORD [DI+16],'    '
+                MOV     DWORD [DI+20],'    '
+                CMP     BL,4
+                JNZ     .L1
+
+                MOV     DWORD [DI+18],'PRG '
+.L1:            CMP     BL,5
+                JNZ     .L2
+
+                MOV     DWORD [DI+18],'SEQ '
+.L2:            CMP     BL,6
+                JNZ     .L3
+
+                MOV     DWORD [DI+18],'USR '
+.L3:            CMP     BL,7
+                JNZ     .L4
+
+                MOV     DWORD [DI+18],'REL '
+.L4:            CMP     BL,8
+                JNZ     .L5
+
+                MOV     DWORD [DI+18],'DEL '
+.L5:            TEST    BYTE [ES:95H],1         ;R/O?
+                JZ      .L6
+
+                MOV     BYTE [DI+21],'<'
+.L6:            CALL    FC_AUX1
                 MOV     DX,8
                 PUSH    16
-                MOV     DWORD [DI+16],'    '
-                MOV     DWORD [DI+20],'    '
                 JMP     FC_AUX2
 
+FC_PRG:         CALL    FC_XX
+                MOV     DWORD [DI+18-100H-24],'PRG '
+                TEST    BYTE [ES:95H],1         ;R/O?
+                JZ      .L1
+
+                MOV     BYTE [DI+21-100H-24],'<'
+.L1:            RETN
+                
 FC_XX:          ADD     DI,100H
                 MOV     AX,'  '
                 MOV     CX,12
@@ -42,7 +233,7 @@ OUT_DEC1:       PUSH    CX              ;DI - SCR.POINTER
                 PUSH    SI
                 MOV     AH,7
                 MOV     CX,10
-                MOV     SI,D_BUF1
+                MOV     SI,HEX2DECBUF
 .L1:            LODSB
                 STOSW
                 LOOP    .L1
@@ -153,7 +344,7 @@ IBM_SORT:       MOV     SI,BP           ;IN: BP=LIST_CAP1,CH=0,DX=START_LIST1
 FILL_FLP:       MOV     DI,[LIST_CAP1]          ;FILL FILENAMES' LIST
                 MOV     SI,9EH
                 CMP     DI,IBM_FLIST_CAP
-                JE      .L4
+                JAE     .L4
 
                 MOV     BP,DI
                 SHL     DI,3
@@ -166,6 +357,7 @@ FILL_FLP:       MOV     DI,[LIST_CAP1]          ;FILL FILENAMES' LIST
 .L3:            LODS    BYTE [ES:SI]
                 CMP     AL,'.'
                 JZ      .L2
+
                 STOSB
                 LOOP    .L3
                 INC     SI
@@ -204,7 +396,7 @@ FILL_FLP:       MOV     DI,[LIST_CAP1]          ;FILL FILENAMES' LIST
 
 FILL_FLPD:      MOV     DI,[LIST_CAP1]          ;FILL DIRS' LIST
                 CMP     DI,IBM_FLIST_CAP
-                JZ      .L4
+                JAE     .L4
 
                 MOV     SI,9EH
                 MOV     BP,DI
@@ -274,8 +466,17 @@ FILL_FLPD:      MOV     DI,[LIST_CAP1]          ;FILL DIRS' LIST
                 INC     [LIST_CAP1]
 .L4:            RETN
 
+FILL_IBM_FLIST: MOV     BX,[DEV8FNP]
+                CMP     BYTE [BX],0
+                JNE     .LF1
 
-FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
+                CALL    IEC8FLUSH
+.LF1:           MOV     BX,[DEV9FNP]
+                CMP     BYTE [BX],0
+                JNE     .LF2
+
+                CALL    IEC9FLUSH
+.LF2:           MOV     AX,[TOT_DRVS]
                 MOV     [LIST_CAP1],AX
                 PUSH    ES
                 MOV     AX,DS
@@ -311,13 +512,16 @@ FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
 
                 CMP     [EXTS_DET+BX],0
                 JE      .L1
+
                 MOV     SI,9EH
 .L4B:           INC     SI
                 CMP     BYTE [ES:SI],'.'
                 JNZ     .L4B
+
                 MOV     AL,[ES:SI+3]
                 CMP     AL,'0'
                 JB      .L6
+
                 CMP     AL,'9'
                 JA      .L6
 
@@ -329,39 +533,65 @@ FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
 .L5:            INC     BX
                 CMP     BL,IBM_EXTS_CAP
                 JNZ     .L2
+
                 PUSH    DS              ;ADJUST DEVICES
                 POP     ES
-                MOV     DX,DEV1-12
-.L9:            MOV     BX,[TOT_DRVS]
-                ADD     DX,12
-.L8:            MOV     SI,DX
-                MOV     DI,BX
-                SHL     DI,3
+                MOV     BP,DEV1FNP
+.L9:            MOV     DX,[DS:BP]
+                MOV     BX,[TOT_DRVS]
+.L8:            CMP     BX,[LIST_CAP1]
+                JAE     .L10
+
+                MOV     SI,DX
                 MOV     CX,4
-                ADD     DI,IBM_FN_LIST
+                LEA     DI,[IBM_FN_LIST+EBX*8]
                 REPZ    CMPSW
                 JNZ     .L7
-                IMUL    DI,BX,3
+
                 MOV     CL,3
-                ADD     DI,IBM_EX_LIST
+                INC     SI              ;DOT SKIP
+                LEA     DI,[IBM_EX_LIST+EBX*2+EBX]
                 REPZ    CMPSB
                 JNZ     .L7
-                MOV     AX,'01'
-                CMP     DX,DEV1
-                JZ      .L11
+
+                MOV     CX,DX
+                MOV     SI,DEV8PATH
                 MOV     AX,'08'
-                CMP     DX,DEV8
-                JZ      .L11
-                MOV     AX,'09'
-.L11:           MOV     WORD [IBM_DV_LIST+EBX*2],AX
-                JMP     .L10
-.L7:            INC     BX
-                CMP     BX,[LIST_CAP1]
-                JNZ     .L8
-.L10:           CMP     DX,DEV9
-                JNZ     .L9
+                CMP     CX,SI
+                JA      .L15
+
+                MOV     SI,DEV1PATH
+                MOV     AH,'1'
+                JMP     .L12
+
+.L15:           CMP     CX,DEV9PATH
+                JB      .L12
+
+                MOV     SI,DEV9PATH
+                MOV     AH,'9'
+.L12:           SUB     CX,SI
+                CMP     CL,[FPATH_LEN]
+                JNZ     .L7
+
+                MOV     DI,FPATH
+                REPZ    CMPSB
+                JNZ     .L7
+
+                MOV     WORD [IBM_DV_LIST+EBX*2],AX
+.L10:           ADD     BP,2
+                CMP     BP,DEV9FNP
+                JBE     .L9
+
                 POP     ES
-                RETN
+                MOV     [DIROVERST],0
+                CMP     [LIST_CAP1],IBM_FLIST_CAP
+                JB      .L14
+
+                INC     [DIROVERST]
+.L14:           RETN
+
+.L7:            INC     BX
+                JMP     .L8
 
 TRAN_CBM_SCR1:  MOV     DI,160*(SCR1_TOP_Y+2)+SCR1_TOP_X*2+56
                 MOV     SI,160-48
@@ -435,8 +665,8 @@ FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 ADD     DI,160-6
                 DEC     BX
                 JNZ     .L4A
-                POP     BX
 
+                POP     BX
                 MOV     SI,DX
                 MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2+54
                 IMUL    SI,24
@@ -450,8 +680,8 @@ FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 ADD     DI,160-48
                 DEC     BX
                 JNZ     .L4D
-                POP     BX
 
+                POP     BX
                 MOV     SI,DX
                 MOV     CX,BX
                 MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2+32
@@ -474,7 +704,17 @@ PLOT_SCR1:      CALL    OUT_FRAME1
                 CALL    FILL_SCR_IBM
                 CALL    SHOW_RSPEED
                 CALL    SHOW_SPEEDL
-                JMP     TOGG_CUR1
+                CMP     [DIROVERST],0
+                JE      TOGG_CUR1
+
+                MOV     DI,160*7+10*2
+                MOV     CX,44
+                MOV     BX,1
+                MOV     SI,DS_MSG2
+                CALL    OUT_MSG
+                CALL    WAIT_ACTIVITY
+                MOV     [DIROVERST],0
+                JMP     PLOT_SCR1
 
 OUT_FRAME1:     MOV     DI,SCR1_TOP_Y*160+SCR1_TOP_X*2
                 MOV     AH,7
@@ -505,16 +745,22 @@ OUT_FRAME1:     MOV     DI,SCR1_TOP_Y*160+SCR1_TOP_X*2
                 STOSW
                 LOOP    .L6
 
-                MOV     CL,[FPATH_LEN]
-                XOR     CH,CH
-                MOV     DI,SCR1_TOP_X*2+SCR1_LEN+SCR1_TOP_Y*160
+                MOVZX   CX,[FPATH_LEN]
+                MOV     DI,SCR1_TOP_X*2+SCR1_LEN+SCR1_TOP_Y*160+4
                 MOV     AH,70H
                 SUB     DI,CX
                 MOV     SI,FPATH
-                AND     DI,-2           ;0FFFEH
+                AND     DI,0FFFEH
+                PUSH    DI
 .L1HE:          LODSB
                 STOSW
                 LOOP    .L1HE
+                POP     DI
+                SUB     DI,6
+                MOV     AL,'U'
+                STOSW
+                MOV     AL,[DEV4SCR]
+                STOSW
                 MOV     DI,(SCR1_TOP_Y+1)*160+(SCR1_TOP_X+1)*2+1
                 MOV     AL,3
                 STOSB
@@ -765,12 +1011,14 @@ MD1_DOWN:       CALL    TOGG_CUR1
                 INC     [CP_IN_WIN1]
                 MOV     AL,[CP_MAX_WIN1]
                 CMP     [CP_IN_WIN1],AL
-                JNZ     .L1
+                JB      .L1
+
                 DEC     [CP_IN_WIN1]
                 XOR     AH,AH
                 ADD     AX,[WIN_POS1]
                 CMP     AX,[LIST_CAP1]
                 JZ      .L1
+
                 INC     [WIN_POS1]
                 CALL    FILL_SCR_IBM
 .L1:            CALL    TOGG_CUR1
@@ -779,12 +1027,15 @@ MD1_DOWN:       CALL    TOGG_CUR1
 MD1_PGUP:       CALL    TOGG_CUR1
                 SUB     [WIN_POS1],21
                 JGE     .L1
+
                 ADD     [WIN_POS1],21
                 MOV     [WIN_POS1],0
                 JZ      .L3
+
 .L1:            CALL    FILL_SCR_IBM
 .L2:            CALL    TOGG_CUR1
                 JMP     MENU_DISP1
+
 .L3:            MOV     [CP_IN_WIN1],0
                 JMP     .L2
 
@@ -793,6 +1044,7 @@ MD1_END:        CALL    TOGG_CUR1
                 MOV     BX,21
                 SUB     AX,BX
                 JNS     .L1
+
                 XOR     AX,AX
                 MOV     BL,BYTE [LIST_CAP1]
 
@@ -808,17 +1060,21 @@ MD1_PGDN:       CALL    TOGG_CUR1
                 ADD     AX,21*2
                 CMP     AX,[LIST_CAP1]
                 JA      .L1
+
                 ADD     [WIN_POS1],21
 .L3:            CALL    FILL_SCR_IBM
 .L2:            CALL    TOGG_CUR1
                 JMP     MENU_DISP1
+
 .L1:            SUB     AX,21
                 CMP     AX,[LIST_CAP1]
                 JAE     .L4
+
                 MOV     AX,[LIST_CAP1]
                 SUB     AX,21
                 MOV     [WIN_POS1],AX
                 JMP     .L3
+
 .L4:            MOV     AL,[CP_MAX_WIN1]
                 DEC     AX
                 MOV     [CP_IN_WIN1],AL
@@ -867,9 +1123,6 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
 .L6:            MOV     BYTE [SI],0
                 CALL    SAV_FPATH
                 CALL    SET_FPATH
-.L8C:           MOV     [DEV1],0
-                MOV     [DEV8],0
-                MOV     [DEV9],0
 .L8B:           CALL    FILL_IBM_FLIST
                 CMP     [DIRECTION],0
                 JZ      .L8D
@@ -877,7 +1130,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
                 XOR     BX,BX                   ;OUT=1
 .L8E:           INC     BX
                 CMP     BX,[LIST_CAP1]
-                JA      .L8D
+                JAE     .L8D
 
                 MOV     EAX,[IBM_SZ_LIST+EBX*4]
                 OR      EAX,EAX
@@ -885,8 +1138,8 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
 
                 CALL    MAKE_FNAME
                 MOVZX   SI,[FPATH_LEN]
-                ADD     SI,D_BUF2
-                MOV     DI,D_BUF1
+                ADD     SI,SAVED_FPATH
+                MOV     DI,FILENAMEBUF
 .L8F:           PUSH    ES
                 PUSH    DS
                 POP     ES
@@ -921,7 +1174,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
 .L8D:           CALL    INIT_WIN1               ;IN=0
                 JMP     .L8A
 
-.L2:            MOV     SI,BX
+.L2:            MOV     SI,BX                   ;FILE!
                 XOR     DI,DI
                 IMUL    BX,3
                 MOV     AX,WORD [IBM_EX_LIST+BX]
@@ -944,7 +1197,6 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
 .L9:            MOV     [DIRECTION],0
                 SHL     BX,3
                 MOV     AL,[IBM_FN_LIST+BX+1]
-
                 MOV     [TEST_DRV],AL
                 PUSH    AX
                 MOV     DWORD [IBM_MASK+2],'???'
@@ -955,6 +1207,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
                 POP     AX
                 MOV     DL,AL
                 JNC     .L17
+
                 PUSHA
                 MOV     AH,36H
                 SUB     DL,'@'
@@ -968,7 +1221,7 @@ MD1_ENTER:      MOVZX   BX,[CP_IN_WIN1]
                 MOV     AH,0EH
                 INT     21H
                 CALL    GET_FPATH
-                JMP     .L8C
+                JMP     .L8B
 
 MD1_HELP:       MOV     DI,HELP1_TOP_Y*160+HELP1_TOP_X*2
                 MOV     CX,HELP1_LEN
@@ -982,12 +1235,14 @@ MD1_SAVEBS:     XOR     BP,BP
                 CALL    MAIN_ISCR
                 OR      BX,BX
                 JZ      MD1_ENTER.L8A
-                MOV     DWORD [D_BUF2+BX],'PRG'
+
+                MOV     DWORD [FILENAMEBUF+BX],'PRG'
                 MOV     AH,3CH
                 MOV     CX,20H
-                MOV     DX,D_BUF2
+                MOV     DX,FILENAMEBUF
                 INT     21H
                 JC      MD1_ENTER.L8A
+
                 MOV     BX,AX
                 MOV     AH,40H
                 MOV     CX,2
@@ -1001,10 +1256,11 @@ MD1_SAVEBS:     XOR     BP,BP
                 MOV     CX,[2DH]
                 SUB     CX,DX
                 INT     21H
+
                 POP     DS
                 MOV     AH,3EH
                 INT     21H
-                CALL    FILL_IBM_FLIST
+.L0:            CALL    FILL_IBM_FLIST
                 JMP     MD1_ENTER.L8A
 
 MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
@@ -1013,9 +1269,11 @@ MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
                 XOR     SI,SI
                 CMP     AX,'C2'
                 JNZ     .L7
+
 .L8:            MOV     CL,[IBM_FN_LIST+EBX*8+ESI]
                 CMP     CL,' '
                 JZ      .L7
+
                 MOV     AH,5
                 MOV     CH,16
                 INT     16H     ;PUT SYMBOL TO KEYBOARD BUFFER
@@ -1027,31 +1285,35 @@ MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
                 CALL    MAIN_ISCR
                 OR      BX,BX
                 JZ      MD1_ENTER.L8A
-                MOV     DWORD [D_BUF2+BX],'C2F'
+                MOV     DWORD [FILENAMEBUF+BX],'C2F'
                 MOV     AH,3CH
                 XOR     CX,CX
-                MOV     DX,D_BUF2
+                MOV     DX,FILENAMEBUF
                 INT     21H
                 JC      MD1_ENTER.L8A
+
                 MOV     BX,AX
                 MOV     AH,40H
                 MOV     CX,FREEZE_LEN
                 MOV     DX,FREEZE_VER
                 INT     21H
+
                 PUSH    BX
                 MOV     BX,0FF00H
-                MOV     SI,KBD_BUF
+                MOV     SI,IOBUF
 .L1:            CALL    MREAD_DH
                 MOV     [SI],DH
                 INC     SI
                 INC     BX
                 CMP     BX,0FF20H
                 JNZ     .L1
+
                 POP     BX
                 MOV     AH,40H
-                MOV     DX,KBD_BUF
+                MOV     DX,IOBUF
                 MOV     CX,32
                 INT     21H
+
                 PUSH    DS              ; SAVE 64K-2 RAM
                 PUSH    FS
                 POP     DS
@@ -1059,137 +1321,183 @@ MD1_FREEZE:     MOVZX   BX,[CP_IN_WIN1]
                 MOV     CX,0FFFEH
                 MOV     DX,2
                 INT     21H
+
                 POP     DS
                 MOV     AH,3EH
                 INT     21H
                 CALL    FILL_IBM_FLIST
                 JMP     MD1_ENTER.L8A
 
-CHECK_DEV:      XOR     SI,SI
-                MOV     CX,WORD [DEV]
-.L2:            CMP     CX,WORD [IBM_DV_LIST+ESI*2]
-                JNZ     .L1
-                MOV     WORD [IBM_DV_LIST+ESI*2],'**'
-.L1:            INC     SI
-                CMP     SI,[LIST_CAP1]
-                JNZ     .L2
-                RETN
-
 MD1_ASSO:       MOVZX   SI,[CP_IN_WIN1]
                 MOV     AX,[TOT_DRVS]
                 ADD     SI,[WIN_POS1]
-                MOV     BP,SI
                 CMP     AX,SI
                 JA      MENU_DISP1              ; DISK
 
                 CMP     [IBM_SZ_LIST+ESI*4],0
-                JNE     .L9                     ; DIR
+                JE      MENU_DISP1              ; DIR
 
-                CMP     [IBM_FN_LIST+ESI*8],'.'
-                JZ      .L6
-                JMP     MENU_DISP1
-
-.L9:            XOR     BX,BX
                 MOV     AX,WORD [IBM_EX_LIST+ESI*2+ESI]
-.L3:            CMP     AX,WORD [IBM_EXTS+BX]
-                JZ      .L2
+                MOV     DL,[IBM_EX_LIST+2+ESI*2+ESI]
+                MOV     CL,[IBM_DV_LIST+ESI*2+1]
+                CMP     AX,'CT'
+                JZ      .CTF
 
-                ADD     BX,4
-                JMP     .L3
-
-.L2:            CMP     AX,'CT'
-                JNZ     .L5                     ; TAPE
-
-                MOV     AX,'**'
-                CMP     AX,WORD [IBM_DV_LIST+ESI*2]
-                JNZ     .L7
-
-                MOV     AX,'01'
-.L7:            MOV     WORD [DEV],AX
-                JMP     .L4
-
-.L5:            CMP     AX,'D6'
+                CMP     AX,'D6'
                 JNZ     MENU_DISP1
 
-.L6:            ;CALL    MAIN_DSCR
-                ;OR      SI,SI
-                ;JNZ     .L8
+                CMP     DL,'4'
+                JNZ     MENU_DISP1
 
-                MOV     AX,'**'
-                CMP     AX,WORD [IBM_DV_LIST+ESI*2]
-                JNZ     .L7A
+                PUSH    CX
+                PUSH    SI
+                CALL    MAIN_SCR7
+                OR      SI,SI
+                POP     SI
+                POP     CX
+                JNZ     MD1_ENTER.L8A
 
-                MOV     AX,'08'
-.L7A:           MOV     WORD [DEV],AX
+                MOVZX   BX,[CP_IN_WIN7]
+                MOV     CH,[DVTR+BX]
+                CMP     CL,CH
+                JE      MD1_ENTER.L8A
 
-.L4:            MOV     SI,BP
-                MOV     AL,[IBM_DV_LIST+ESI*2+1]
-                CMP     AL,'*'
-                JZ      .L12
+                CMP     CX,'*8'         ;* -> 8
+                JNZ     .LD1
 
-                MOV     BX,DEV1
-                CMP     AL,'1'
-                JZ      .L14
+                CALL    IEC8FLUSH
+                MOV     BX,[DEV8FNP]
+                CMP     BYTE [BX],0
+                JE      .LD2
 
-                ADD     BX,12
-                CMP     AL,'8'
-                JZ      .L14
+                CALL    DEV8DETACH      ;98*
+                CALL    DEV8ATTACH
+                JNC     MD1_SAVEBS.L0
 
-                ADD     BX,12
-.L14:           MOV     BYTE [BX],0
-.L12:           CALL    CHECK_DEV
-                MOV     SI,BP
+                MOV     [DEV4SCR],'8'
+                JMP     MD1_SAVEBS.L0
+
+.LD2:           CALL    DEV8ATTACH      ;8?*
+                JC      MD1_ENTER.L8A
+
+                MOV     BX,[DEV9FNP]
+                MOV     [DEV4SCR],'9'
+                CMP     BYTE [BX],0
+                JE      MD1_SAVEBS.L0
+
+                MOV     [DEV4SCR],'*'
+                JMP     MD1_SAVEBS.L0
+
+.LD1:           CMP     CX,'*9'         ;* -> 9
+                JNZ     .LD3
+
+                CALL    IEC9FLUSH
+                MOV     BX,[DEV9FNP]
+                CMP     BYTE [BX],0
+                JE      .LD4
+
+                CALL    DEV9DETACH      ;89*
+                CALL    DEV9ATTACH
+                JMP     MD1_SAVEBS.L0
+
+.LD4:           CALL    DEV9ATTACH      ;98* OR 8**
+                JC      MD1_ENTER.L8A
+
+                MOV     BX,[DEV8FNP]
+                CMP     BYTE [BX],0
+                JE      MD1_SAVEBS.L0
+
+                MOV     [DEV4SCR],'*'
+                JMP     MD1_SAVEBS.L0
+
+.LD3:           CMP     CX,'8*'         ;8 -> *
+                JNZ     .LD5
+
+                CALL    IEC8FLUSH
+                CALL    DEV8DETACH
+                MOV     [DEV4SCR],'8'
+                JMP     MD1_SAVEBS.L0
+
+.LD5:           CMP     CX,'9*'         ;9 -> *
+                JNZ     .LD7
+
+                CALL    IEC9FLUSH
+                CALL    DEV9DETACH
+                CMP     [DEV4SCR],'8'
+                JE      MD1_SAVEBS.L0
+
+                MOV     [DEV4SCR],'9'
+                JMP     MD1_SAVEBS.L0
+
+.LD7:           CMP     CX,'89'         ;8 -> 9
+                JNZ     .LD6
+
+                CALL    IEC8FLUSH
+                CALL    IEC9FLUSH
+                CALL    DEV8DETACH
+                MOV     [DEV4SCR],'8'
+                CALL    DEV9DETACH
+                CALL    DEV9ATTACH
+                JMP     MD1_SAVEBS.L0
+
+.LD6:           CALL    IEC8FLUSH       ;9 -> 8
+                CALL    IEC9FLUSH
+                CALL    DEV8DETACH
+                CALL    DEV9DETACH
+                MOV     [DEV4SCR],'8'
+                CALL    DEV8ATTACH
+                JC      MD1_SAVEBS.L0
+
+                INC     [DEV4SCR]
+                JMP     MD1_SAVEBS.L0
+
+.CTF:           CMP     DL,'F'
+                JNZ     MENU_DISP1
+
                 CMP     CL,'*'
-                JZ      .L10
+                JZ      .L8
 
-                MOV     BX,DEV1
-                CMP     CH,'1'
-                JZ      .L11
+                CALL    DEV1DETACH
+                JMP     MD1_SAVEBS.L0
 
-                ADD     BX,12
-                CMP     CH,'8'
-                JZ      .L11
-
-                ADD     BX,12
-.L11:           MOV     EAX,DWORD [IBM_FN_LIST+ESI*8]
-                MOV     [BX],EAX
-                MOV     EAX,DWORD [IBM_FN_LIST+ESI*8+4]
-                MOV     [BX+4],EAX
-                IMUL    DI,SI,3
-                MOV     EAX,DWORD [IBM_EX_LIST+DI]
-                MOV     [BX+8],EAX
-.L10:           MOV     WORD [IBM_DV_LIST+ESI*2],CX
-.L8:            JMP     MD1_ENTER.L8A
+.L8:            CALL    DEV1ATTACH
+                JMP     MD1_SAVEBS.L0
 
 MD1_NEWM:       XOR     BP,BP
                 CALL    MAIN_ISCR
                 OR      BX,BX
                 JZ      MD1_ENTER.L8A
+
                 PUSH    BX
                 CALL    MAIN_SCR4
                 POP     BX
                 OR      SI,SI
                 JNZ     MD1_ENTER.L8A
+
                 MOV     AH,3CH
                 XOR     CX,CX
-                MOV     DX,D_BUF2
+                MOV     DX,FILENAMEBUF
                 CMP     [CP_IN_WIN4],1
                 JNZ     .L1
-                MOV     DWORD [D_BUF2+BX],'CTF'
+
+                MOV     DWORD [FILENAMEBUF+BX],'CTF'
                 MOV     [DS_HPOSN],1
                 MOV     [DS_QENTR],1
                 INT     21H
                 JC      MD1_ENTER.L8A
+
                 MOV     BX,AX
                 MOV     CL,6
                 MOV     AH,40H
                 MOV     DX,DS_FVER
                 INT     21H
+
 .L2:            MOV     AH,3EH
                 INT     21H
                 CALL    FILL_IBM_FLIST
                 JMP     MD1_ENTER.L8A
-.L1:            MOV     DWORD [D_BUF2+BX],'D64'
+
+.L1:            MOV     DWORD [FILENAMEBUF+BX],'D64'
                 INT     21H
                 JC      MD1_ENTER.L8A
 
@@ -1197,14 +1505,14 @@ MD1_NEWM:       XOR     BP,BP
                 MOV     CX,128
                 PUSH    ES
                 PUSH    DS
-                MOV     DI,KBD_BUF
+                MOV     DI,IOBUF
                 POP     ES
                 XOR     AX,AX
-                REP     STOSW
+                REP     STOSW           ;ZERO FILL
                 POP     ES
                 MOV     SI,683
                 INC     CH
-                MOV     DX,KBD_BUF
+                MOV     DX,IOBUF
 .L3:            MOV     AH,40H
                 INT     21H
                 DEC     SI
@@ -1221,6 +1529,10 @@ MD1_DELETE:     MOVZX   BX,[CP_IN_WIN1]
                 CMP     [IBM_SZ_LIST+EBX*4],0
                 JE      MENU_DISP1              ;DIR
 
+                CMP     [IBM_DV_LIST+EBX*2],'*'
+                JNZ     MENU_DISP1
+
+                CALL    MAKE_FNAME
                 CALL    MAIN_SCR6
                 OR      SI,SI
                 JNZ     MD1_ENTER.L8A
@@ -1228,9 +1540,8 @@ MD1_DELETE:     MOVZX   BX,[CP_IN_WIN1]
                 CMP     [CP_IN_WIN6],0
                 JNZ     MD1_ENTER.L8A
 
-                CALL    MAKE_FNAME
                 MOV     AH,41H
-                MOV     DX,D_BUF1
+                MOV     DX,FILENAMEBUF
                 INT     21H
                 JC      MD1_ENTER.L8A
 
@@ -1278,13 +1589,13 @@ MD1_ISL:        MOVZX   EAX,[SPEED_LIMIT]
                 INC     AX
 .L1:            CALL    HEX2DEC
                 XOR     BX,BX
-.L2:            MOV     AL,[D_BUF1+5+BX]
+.L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [SPEEDL+7+BX],AL
                 INC     BX
                 CMP     BL,4
                 JNZ     .L2
 
-                MOV     AL,[D_BUF1+9]
+                MOV     AL,[HEX2DECBUF+9]
                 MOV     [SPEEDL+12],AL
                 CALL    SHOW_SPEEDL
                 CALL    ADJUST_TICKS
@@ -1335,13 +1646,13 @@ GET_SPEED:      XOR     EAX,EAX
                 INC     AX
 .L1:            CALL    HEX2DEC
                 XOR     BX,BX
-.L2:            MOV     AL,[D_BUF1+5+BX]
+.L2:            MOV     AL,[HEX2DECBUF+5+BX]
                 MOV     [RSPEED+7+BX],AL
                 INC     BX
                 CMP     BL,4
                 JNZ     .L2
 
-                MOV     AL,[D_BUF1+9]
+                MOV     AL,[HEX2DECBUF+9]
                 MOV     [RSPEED+12],AL
                 RETN
 

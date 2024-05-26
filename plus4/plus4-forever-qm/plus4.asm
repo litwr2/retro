@@ -1,9 +1,10 @@
 format MZ
 
                 INCLUDE 'fasm.mac'
+                INCLUDE 'const.mac'
                 INCLUDE '8501.mac'
                 INCLUDE 'adlib.mac'
-                INCLUDE 'const.mac'
+                INCLUDE 'iec.mac'
 
 ENTRY SEG_CODE:START                    ;program entry point
 STACK 2000H                             ;stack size
@@ -15,7 +16,7 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'romfn.dat'
                 INCLUDE '8501.dat'
                 INCLUDE 'cds.dat'
-                INCLUDE 'fdisk.dat'
+                INCLUDE 'iec.dat'
                 INCLUDE 'debugger.dat'
                 INCLUDE 'kbd.dat'
                 INCLUDE 'joy.dat'
@@ -41,8 +42,8 @@ START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
 
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
-;MAIN_ENTRY:     MOV     [MAINJUMP],DEBUG_ENTRY
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
+                ;MOV     [MAINJUMP],DEBUG_ENTRY
 
 MAINLOOP:       CALL    CPU8501
                 CALL    TED
@@ -58,7 +59,7 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE '8501.cod'
                 INCLUDE 'cpu_io.cod'
                 INCLUDE 'cds.cod'
-                INCLUDE 'fdisk.cod'
+                INCLUDE 'iec.cod'
                 INCLUDE 'csb.cod'
 ;                INCLUDE 'acia.inc'
 ;                INCLUDE 'c1551.inc'

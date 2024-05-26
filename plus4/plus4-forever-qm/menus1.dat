@@ -35,34 +35,48 @@ CP_MAX_WIN1     DB      21
 DIRECTION       DB      0       ;0-IN, 1-OUT
 WIN_POS1        DW      0
 LIST_CAP1       DW      0
-START_POS1      EQU     LIST_CAP2
+START_POS1      DW      0       ;for sort
+DIROVERST       DB      0       ;DIRECTORY OVERFLOW? 0 - NO
 FPATH_LEN       DB      0
 FPATH           RB      67
-DEV1            RB      12
-DEV8            RB      12
-DEV9            RB      12      
+SAVED_FPATH     RB      67
+DEV4SCR         DB      '8'
+DEV1PATH        DB      0
+                RB      66
+DEV8PATH        DB      0
+                RB      66
+DEV9PATH        DB      0
+                RB      66
+DEV1FNP         DW      DEV1PATH        ;POINTER
+DEV8FNP         DW      DEV8PATH        ;POINTER
+DEV9FNP         DW      DEV9PATH        ;POINTER
+DEV1FH          DW      ?
+DEV8FH          DW      ?
+DEV9FH          DW      ?
+DEV1SZ          DD      ?
+DEV8BAM         RB      256
+DEV8ES          RB      683     ;SECTORS MAP
+DEV8WP          DB      ?       ;DISK WRITE PROTECTION
+DEV9BAM         RB      256
+DEV9ES          RB      683     ;SECTORS MAP
+DEV9WP          DB      ?       ;DISK WRITE PROTECTION
 TEST_DRV        DB      'A:'
 IBM_MASK        DB      '*.???',0
 IBM_EXTS_CAP    EQU     9
-IBM_EXTS        DD      'C2F','CTF','D64','PRG','D0?','P0?','R0?','S0?','U0?'
+IBM_EXTS        DD      'C2F','CTF','D64','PRG','P0?','S0?','U0?','R0?','D0?'
 EXTS_DET        DB      0,0,0,0,1,1,1,1,1
-IBM_FLIST_CAP   EQU     515
-LABEL           IBM_FN_LIST BYTE
-TIMES   8*IBM_FLIST_CAP DB ' '
-LABEL           IBM_EX_LIST BYTE
-TIMES   3*IBM_FLIST_CAP DB ' '
-LABEL           IBM_DV_LIST BYTE
-TIMES   2*IBM_FLIST_CAP DB '*'
-LABEL           IBM_CI_LIST BYTE
-TIMES   24*IBM_FLIST_CAP DB ' '
-LABEL           IBM_SZ_LIST DWORD
-TIMES   IBM_FLIST_CAP   DD 0
-TT2             DW      ENT_C2F,ENT_CTF,ENT_D64
-                DW      ENT_PRG,MENU_DISP1,ENT_P00
+TT2             DW      ENT_C2F,ENT_CTF,ENT_D64,ENT_PRG,ENT_P00,MENU_DISP1
                 DW      MENU_DISP1,MENU_DISP1,MENU_DISP1
-TT4             DW      FC_XX,FC_XX,FC_D64,FC_XX
-                DW      FC_X00,FC_X00,FC_X00
+TT4             DW      FC_XX,FC_XX,FC_D64,FC_PRG,FC_X00,FC_X00,FC_X00
                 DW      FC_X00,FC_X00
+IBM_FLIST_CAP   EQU     416
+IBM_FN_LIST     RB      8*IBM_FLIST_CAP
+IBM_EX_LIST     RB      3*IBM_FLIST_CAP
+IBM_DV_LIST     RB      2*IBM_FLIST_CAP
+IBM_CI_LIST     RB      24*IBM_FLIST_CAP
+IBM_SZ_LIST     RD      IBM_FLIST_CAP
 RSPEED          DB      'SPEED   000.0%'
 SPEEDL          DB      'LIMIT < 100.0%>'
+IOBUF           RB      1024
+DVTR            DB      '*89'
 

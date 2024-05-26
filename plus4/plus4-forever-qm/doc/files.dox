@@ -3,8 +3,7 @@ plus4.exe       - main program (packed by DIET)
 files.dox       - this quick files reference
 colscn.prg      - 121 colours palette
 testape.ctf     - test datasette's casette image
-
-  Extras
-eule.p00        - bubis demo FLI
-storm.d64       - STORM game
+seqreade.p00    - SEQ files reader
+drives.s00      - information about disk drives support
+ascii.s00       - all visible ASCII symbols for +4
 

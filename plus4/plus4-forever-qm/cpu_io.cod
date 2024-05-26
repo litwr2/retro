@@ -1,7 +1,9 @@
-CPU_IO_WR:      TEST    [CPU1_XOR],4AH  ;bit 6 not finished
+CPU_IO_WR:      TEST    [CPU1_XOR],0AH  ;bit 6 not implemented
                 JNZ     CDS_IO_WR
-                TEST    [CPU1_XOR],0C7H ;bits 1 and 6 intersect with DATASETTE
+
+                TEST    [CPU1_XOR],0C4H ;bits 0,1?
                 JNZ     CSB_IO_WR
+
                 RETN
 
 CPU_IO_RD:      CALL    CDS_IO_RD

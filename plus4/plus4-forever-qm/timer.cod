@@ -44,6 +44,7 @@ INTR8SND:       PUSH    AX
         
                 CMP     [TIMER_ST],0
                 JNE     .L22
+
                 INC     [SYNCHRO_TICKS]
 
 .L22:           IN      AL,61H

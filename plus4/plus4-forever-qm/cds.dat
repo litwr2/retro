@@ -1,7 +1,6 @@
 CPU1_OLD        DB      0
 CPU1_XOR        DB      0
 DS_MODE         DB      0               ; 0-?, 1-READ, 2-WRITE
-DS_CNAME        DB      '????????.CTF',0
 DS_SBUF         DB      ?               ;USED IN MENUS
 DS_LBC          DB      ?               ;USED IN MENUS
 DS_LBQ          DB      ?               ;USED IN MENUS
@@ -10,12 +9,11 @@ DS_TIMER        DD      ?               ;USED IN MENUS
 DS_MSUM         DD      ?               ;USED IN MENUS
 DS_MCOUNT       DD      ?
 DS_MVAL2        DW      ?
-DS_MINDEX       DW      ?               ;USED IN MENUS
+DS_TEMP         DW      ?               ;USED IN MENUS
 DS_BUF_PTR      DW      ?               ;USED IN MENUS
                 DW      SEG SEG_AUX +500
 DS_RPOSBY       DD      ?               ;POS OF BREAK
 DS_SPOS         DD      ?               ;FILE SIZE
-DS_FH           DW      ?               ;FILE HANDLE
 DS_FVER         DW      0               ;CURRENT FORMAT VERSION!!!
 DS_HPOSN        DW      ?               ;CURRENT TAPE HEAD POSITION NUMBER
 DS_QENTR        DW      ?               ;QUANTITY OF CURRENT TAPE ENTRIES +1

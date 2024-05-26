@@ -40,6 +40,7 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
                 JNZ     .L4
 .L9:            XOR     BX,BX           ;Esc
                 RETN
+
 .L4:            MOV     BX,CHR_TRT1
                 CMP     AL,12
                 JA      .L2
@@ -51,6 +52,7 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
                 POP     AX
                 MOV     BX,CHR_TRT2
                 JNZ     .L8
+
                 MOV     BX,CHR_TRT1
 .L8:            PUSH    DI
                 SUB     DI,SI
@@ -67,8 +69,10 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
 
 .L2:            CMP     AL,14           ;BackSpace?
                 JNZ     .L3
+
                 CMP     SI,DI           
                 JZ      .L1
+
                 DEC     DX
                 SUB     DI,2
                 MOV     AL,' '
@@ -80,12 +84,14 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
 
 .L3:            CMP     AL,16           ;Tab?
                 JB      .L1
+
                 CMP     AL,25
                 JBE     .L8
+
                 CMP     AL,28           ;Enter?
                 JNZ     .L6
 
-                MOV     BX,D_BUF2
+                MOV     BX,FILENAMEBUF
 .L7:            MOV     AL,[ES:SI]
                 MOV     [BX],AL
                 ADD     SI,2
@@ -93,17 +99,21 @@ IFN_ISCR:       MOV     DI,160*6+28*2   ;OUT: BX, IN:BP
                 CMP     SI,DI
                 JBE     .L7
                 MOV     BYTE [BX-1],'.'
-                SUB     BX,D_BUF2
+                SUB     BX,FILENAMEBUF
                 RETN
 
 .L6:            CMP     AL,30
                 JB      .L1
+
                 CMP     AL,38
                 JBE     .L8
+
                 CMP     AL,44
                 JB      .L1A
+
                 CMP     AL,50
                 JA      .L1A
+
                 JMP     .L8
 
 TOGG_CUR4:      MOVZX   SI,[CP_IN_WIN4]
@@ -440,4 +450,99 @@ MOUSE_DISP6:    CALL    HIDEM
                 SHR     CX,2
                 MOV     [CP_IN_WIN6],CL
                 RETN
+
+TOGG_CUR7:      MOVZX   SI,[CP_IN_WIN7]
+                MOV     CX,3
+                IMUL    SI,6
+                ADD     SI,160*6+57
+.L1:            ROL     BYTE [ES:SI],4
+                ADD     SI,2
+                LOOP    .L1
+                RETN
+
+MAIN_SCR7:      MOV     DI,160*5+54     ;* 8 9
+                MOV     [CP_IN_WIN7],1
+                MOV     SI,M3_MSG12
+                MOV     CX,8
+                MOV     BX,1
+                CALL    OUT_MSG
+                MOV     DI,160*5+58
+                MOV     SI,M3_MSG14
+                MOV     CX,7
+                CALL    OUT_MSG1
+                CALL    TOGG_CUR7
+
+MENU_DISP7:     CALL    SHOWM           ; OUT: SI=0 - OK, SI!=0 - ESC
+.L1:            XOR     SI,SI
+                CALL    WAITM
+                MOV     AX,DX
+                INC     SI
+                TEST    BX,2
+                JNZ     HIDEM
+
+                DEC     SI
+                TEST    BX,1
+                JNZ     MOUSE_DISP7
+
+                MOV     AH,1
+                INT     16H
+                JZ      .L1
+
+                XOR     AH,AH
+                INT     16H
+                CALL    HIDEM
+
+                CMP     AH,4BH          ;LEFT?
+                JZ      MD7_LEFT
+
+                CMP     AH,4DH          ;RIGHT?
+                JZ      MD7_RIGHT
+
+                CMP     AH,1CH          ;ENTER?
+                JZ      MD7_ENTER
+
+                INC     SI
+                CMP     AH,1            ;ESC?
+                JNZ     MENU_DISP7
+
+MD7_ENTER:      RETN
+
+MD7_LEFT:       CALL    TOGG_CUR7
+                DEC     [CP_IN_WIN7]
+                JNS     .L1
+
+                INC     [CP_IN_WIN7]
+.L1:            CALL    TOGG_CUR7
+                JMP     MENU_DISP7
+
+MD7_RIGHT:      CALL    TOGG_CUR7
+                CMP     [CP_IN_WIN7],2
+                JZ      .L1
+
+                INC     [CP_IN_WIN7]
+.L1:            CALL    TOGG_CUR7
+                JMP     MENU_DISP7
+
+MOUSE_DISP7:    CALL    HIDEM
+                SHR     AX,3
+                SHR     CX,3
+                CMP     AL,6
+                JNZ     MENU_DISP7
+
+                SUB     CL,28
+                JS      MENU_DISP7
+
+                CMP     CL,8
+                JA      MENU_DISP7
+
+                MOV     [CP_IN_WIN7],CH
+                SUB     CL,3
+                JS      .EXIT
+
+                INC     [CP_IN_WIN7]
+                SUB     CL,3
+                JS      .EXIT
+
+                INC     [CP_IN_WIN7]
+.EXIT:          RETN
 

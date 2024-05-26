@@ -1,0 +1,42 @@
+FDFI:           MOV     AH,36H          ;FREE DISK SPACE
+                MOV     DL,[FPATH]      ;OUT: AX; USED: DX,BX,CX
+                SUB     DL,64
+                INT     21H
+                SHR     CX,8
+                MUL     BX
+                OR      DX,DX
+                JNZ     .L1
+
+                MUL     CX
+                OR      DX,DX
+                JZ      .L2
+
+.L1:            MOV     AX,0FFFFH
+.L2:            RETN
+
+CBM2IBMCNV:     CMP     AH,128          ;IN & OUT: AH
+                JB      .L1
+
+                SUB     AH,128
+.L1:            CMP     AH,32
+                JA      .L2
+
+                MOV     AH,'_'
+                JMP     .L5
+
+.L2:            PUSH    SI
+                MOV     SI,NOTDOSCHARS-1
+.L4:            INC     SI
+                CMP     BYTE [SI],0
+                JE      .L3
+
+                CMP     AH,[SI]
+                JNZ     .L4
+
+                MOV     AH,'_'
+.L3:            POP     SI
+.L5:            RETN
+                                     
+                DRIVEC  8
+                DRIVEC  9
+
