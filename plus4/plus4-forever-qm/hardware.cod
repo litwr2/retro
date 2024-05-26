@@ -2,28 +2,62 @@ INTR23:         PUSH    DS
                 PUSH    AX
                 MOV     AX,SEG SEG_DATA
                 MOV     DS,AX
-                INC     BREAK_FLAG
+                INC     [BREAK_FLAG]
                 POP     AX
                 POP     DS
                 IRET
 
-SET_INTR23:     MOV     AX,3523H        ;SAVE/SET INTR23 VECTOR
+INTR24:         MOV     AL,3
+                IRET
+
+SET_INTR24:     MOV     AX,3524H        ;SAVE/SET INTR24 VECTOR
                 INT     21H
-                MOV     SAVE23LO,BX
-                MOV     SAVE23HI,ES
+                MOV     [SAVE24LO],BX
+                MOV     [SAVE24HI],ES
                 PUSH    DS
                 PUSH    CS
                 POP     DS
-                LEA     DX,CS:INTR23
-SI23_L1:        MOV     AX,2523H
+                MOV     DX,INTR24
+.L1:            MOV     AX,2524H
                 INT     21H
                 POP     DS
                 RETN
 
-RESTORE_INTR23: MOV     DX,SAVE23LO      ;RESTORE INTR23 VECTOR
+RESTORE_INTR24: MOV     DX,[SAVE24LO]   ;RESTORE INTR24 VECTOR
                 PUSH    DS
-                MOV     DS,SAVE23HI
-                JMP     SHORT SI23_L1
+                MOV     DS,[SAVE24HI]
+                JMP     SET_INTR24.L1
+
+
+SET_INTR23:     MOV     AX,3523H        ;SAVE/SET INTR23 VECTOR
+                INT     21H
+                MOV     [SAVE23LO],BX
+                MOV     [SAVE23HI],ES
+                PUSH    DS
+                PUSH    CS
+                POP     DS
+                MOV     DX,INTR23
+.L1:            MOV     AX,2523H
+                INT     21H
+                POP     DS
+                RETN
+
+RESTORE_INTR23: MOV     DX,[SAVE23LO]   ;RESTORE INTR23 VECTOR
+                PUSH    DS
+                MOV     DS,[SAVE23HI]
+                JMP     SET_INTR23.L1
+
+GET_DELAYCONST: XOR     EDX,EDX         ;approx. 50mks for 37kHz timer
+                MOV     EAX,[SYNCHRO_TICKS]
+.L2:            CMP     EAX,[SYNCHRO_TICKS]
+                JZ      .L2
+                INC     EAX
+.L1:            INC     EDX
+                CMP     EAX,[SYNCHRO_TICKS]
+                JZ      .L1
+                SHL     EDX,1
+                MOV     [DELAYCONST],EDX
+                RETN
 
 SET_VMODE:      MOV     AX,13H
                 INT     10H
@@ -40,7 +74,7 @@ SET_VMODE:      MOV     AX,13H
                 OUT     DX,AX
                 XOR     AX,AX   ;PROVIDE ACCESS TO THE CRTC REGISTERS
                 MOV     ES,AX
-                MOV     DX,ES:463H
+                MOV     DX,[ES:463H]
                 MOV     AL,11H
                 OUT     DX,AL
                 MOV     AH,AL
@@ -73,89 +107,81 @@ SET_VMODE:      MOV     AX,13H
 
 FINISHIBM:      XOR     AX,AX           ;RESTORE LED
                 MOV     ES,AX
-                MOV     AL,ES:[417H]
+                MOV     AL,[ES:417H]
                 AND     AL,0CFH
-                OR      AL,KBD_FLAGS
-                MOV     ES:[417H],AL
+                OR      AL,[KBD_FLAGS]
+                MOV     [ES:417H],AL
                 AND     AL,70H
-                MOV     LED,AL
+                MOV     [LED],AL
                 CALL    SET_LED
 
                 CALL    RESTORE_INTR9
                 CALL    RESTORE_INTR8
+                CALL    [EXIT_SOUND]
+                CALL    RESTORE_INTR24
                 CALL    RESTORE_INTR23
 
                 CALL    RESET_DS
-                CALL    [RESET_SOUND]
 
-                MOV     DL,SAVE_FPATH   ;RESTORE STARTUP PATH & DRIVE
+                MOV     DL,[SAVE_FPATH]   ;RESTORE STARTUP PATH & DRIVE
                 MOV     AH,0EH
                 SUB     DL,'A'
                 INT     21H
                 MOV     AH,3BH
-                LEA     DX,SAVE_FPATH
+                MOV     DX,SAVE_FPATH
                 INT     21H
 
                 MOV     AX,3            ;SET TEXT VIDEO MODE
                 INT     10H
 
-                MOV     EAX,RETRACE_COUNT
-                XOR     EDX,EDX
-                IMUL    EAX,182
-                DIV     CS:TIMER_TICKS
+                MOV     EAX,[RETRACE_COUNT]
+                MOV     EDX,11931800/TIMERV
+                MUL     EDX
+                DIV     [SYNCHRO_TICKS]
                 SHL     EDX,1
-                CMP     EDX,CS:TIMER_TICKS
-                JB      SHORT X_ML1
+                CMP     EDX,[SYNCHRO_TICKS]
+                JB      .L1
                 INC     EAX
-X_ML1:          CALL    HEX2DEC
-                MOV     EAX,DWORD PTR D_BUF1 +7
-                MOV     WORD PTR FMSG +44,AX
+.L1:            CALL    HEX2DEC
+                MOV     EAX,DWORD [D_BUF1+6]
+                MOV     WORD [FMSG+44],AX
                 SHR     EAX,16
-                MOV     FMSG +47,AL
+                MOV     [FMSG+46],AL
+                MOV     [FMSG+48],AH
 
-                LEA     DX,FMSG         ; OUTPUT AUTHOR'S MESSAGE
+                MOV     DX,AMSG         ;OUTPUT AUTHOR'S MESSAGE
                 MOV     AH,9
                 INT     21H
+
+                MOV     DX,FMSG         ;OUTPUT AUTHOR'S MESSAGE
+                MOV     AH,9
+                INT     21H
+
                 RETN
 
 INITIBM:        CLD
                 MOV     AX,SEG SEG_RAM  ; INIT FS
                 MOV     FS,AX
-
-                LEA     DX,AMSG         ; OUTPUT AUTHOR'S MESSAGE
-                MOV     AH,9
-                INT     21H
-
                 MOV     AH,30H          ; TEST DOS VERSION
                 INT     21H
                 XCHG    AL,AH
                 CMP     AX,31EH         ; DOS >= 3.30
-                JNC     SHORT LT_3
-                LEA     DX,ERROR1
-LYY6:           MOV     AH,9
+                JNC     .L3
+                MOV     DX,ERROR1
+                MOV     AH,9
                 INT     21H
                 POP     AX              ;EXIT!!!
                 RETF
 
-LT_3:           XOR     AX,AX           ;TEST MOUSE PRESENCE
+.L3:            XOR     AX,AX           ;TEST MOUSE PRESENCE
                 INT     33H
-                MOV     ISMOUSE,AL
+                MOV     [ISMOUSE],AL
 
-                CALL    SET_INTR9
-                CALL    SET_INTR8
-                CALL    SET_INTR23
-
-                XOR     AX,AX
-                MOV     ES,AX
-                MOV     AL,ES:[417H]
-                MOV     KBD_FLAGS,AL
-                AND     KBD_FLAGS,30H
-                AND     BYTE PTR ES:[417H],0CFH
-                AND     AL,40H
-                JZ      SHORT LT_4
-                AND     KMATRIX+1,7FH
-LT_4:           MOV     LED,AL
-                CALL    SET_LED
+                XOR     EBX,EBX         ;INIT 32-BIT REGISTERS
+                XOR     ESI,ESI
+                XOR     ECX,ECX
+                XOR     EDI,EDI
+                XOR     ECX,ECX
 
                 CALL    SET_VMODE       ;SET VIDEO MODE
 
@@ -164,37 +190,38 @@ LT_4:           MOV     LED,AL
                 XOR     BX,BX
                 MOV     CX,128
                 MOV     AX,1012H
-                LEA     DX,DAC_T
+                MOV     DX,DAC_T
                 INT     10H
                 MOV     BX,CX
                 MOV     AX,1012H
                 INT     10H
 
-                XOR     EBX,EBX         ;INIT TED
-                XOR     ESI,ESI
-                XOR     ECX,ECX
-                XOR     EDI,EDI
-                MOV     AX,0A000H
-                XOR     ECX,ECX
-                MOV     ES,AX
+                CALL    SET_INTR23
+                CALL    SET_INTR24
+                CALL    SET_INTR9
+
+                CALL    SET_INTR8
+;                CALL    SET_ADLIBSND
+                CALL    SET_TIMERSND
+                CALL    [RESET_SOUND]
 
                 CALL    INIT_JOY
 
                 XOR     SI,SI           ;LOAD ROMs
                 MOV     DI,SEG SEG_ROM
-LT_2:           MOV     AX,3D00H
-                LEA     DX,ROMS_FN[SI]
+.L2:            MOV     AX,3D00H
+                LEA     DX,[ROMS_FN+SI]
                 INT     21H
-                JC      SHORT LT_5
+                JC      .L5
                 MOV     BX,AX
                 MOV     AX,4202H
                 XOR     CX,CX
                 XOR     DX,DX
                 INT     21H
                 OR      DX,DX
-                JNZ     SHORT LT_1
+                JNZ     .L1
                 CMP     AX,16*1024
-                JNZ     SHORT LT_1
+                JNZ     .L1
                 MOV     AX,4200H
                 INT     21H
                 PUSH    DS
@@ -204,36 +231,45 @@ LT_2:           MOV     AX,3D00H
                 MOV     DS,DI
                 INT     21H
                 POP     DS
-LT_1:           MOV     AH,3EH
+.L1:            MOV     AH,3EH
                 INT     21H
-LT_5:           ADD     SI,11
+.L5:            ADD     SI,11
                 ADD     DI,400H
                 CMP     SI,11*8
-                JNZ     SHORT LT_2
+                JNZ     .L2
 
-                MOV     AH,47H          ; SAVE STARTUP PATH & DRIVE
-                LEA     SI,SAVE_FPATH+3
+                MOV     AH,47H          ;SAVE STARTUP PATH & DRIVE
+                MOV     SI,SAVE_FPATH+3
                 XOR     DL,DL
                 INT     21H
                 MOV     AH,19H
                 INT     21H
                 ADD     AL,41H
-                MOV     SAVE_FPATH,AL
-                MOV     FPATH,AL        ; + SET CURRENT DRIVE LETTER
-                MOV     AX,'\:'
-                MOV     WORD PTR SAVE_FPATH+1,AX
-                MOV     WORD PTR FPATH+1,AX
+                MOV     [SAVE_FPATH],AL
+                MOV     [FPATH],AL      ;+ SET CURRENT DRIVE LETTER
+                MOV     AX,':\'
+                MOV     WORD [SAVE_FPATH+1],AX
+                MOV     WORD [FPATH+1],AX
 
-                CALL    [RESET_SOUND]
-                CALL    GET_DRVS        ; INIT MENUS
+                CALL    GET_DRVS        ;INIT MENUS
                 CALL    GET_FPATH
-INIT_WIN1:      MOV     AX,TOT_DRVS
-                CMP     AX,LIST_CAP1
-                JB      SHORT INIT_WIN1_L1
-                DEC     AX
-INIT_WIN1_L1:   MOV     CP_IN_WIN1,AL
+                CALL    INIT_WIN1
+
+                CALL    GET_DELAYCONST
+
                 XOR     AX,AX
-                MOV     WIN_POS1,AX
+                MOV     ES,AX
+                MOV     AL,[ES:417H]
+                MOV     [KBD_FLAGS],AL
+                AND     [KBD_FLAGS],30H
+                AND     BYTE [ES:417H],0CFH
+                AND     AL,40H
+                JZ      .L4
+                AND     [KMATRIX+1],7FH
+.L4:            MOV     [LED],AL
+                CALL    SET_LED
+
+                MOV     AX,0A000H       ;Init ES For TED
+                MOV     ES,AX
                 RETN
 
-                

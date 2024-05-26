@@ -1,21 +1,12 @@
-RESET_ADLIB:    IRP     VAL,<1,8,20H,23H,31H,34H,1040H,43H,1051H,54H,0F060H,0F063H>
-                MOV     AX,VAL
-                CALL    OUT_ADLIB
-                ENDM
-                IRP     VAL,<0F071H,0F074H,1F80H,1F83H,1F91H,1F94H,0B0H,0B7H>
-                MOV     AX,VAL
-                CALL    OUT_ADLIB
-                ENDM
-                IRP     VAL,<0BDH,0C0H,0C7H>
-                MOV     AX,VAL
-                CALL    OUT_ADLIB
-                ENDM
+RESET_ADLIB:    IRPA     1,8,20H,23H,31H,34H,1040H,43H,1051H,54H,0F060H,0F063H
+                IRPA     0F071H,0F074H,1F80H,1F83H,1F91H,1F94H,0B0H,0B7H
+                IRPA     0BDH,0C0H,0C7H
                 RETN
 
 ADLIB_0E:       PUSH    DX
                 PUSH    BX
                 PUSH    AX
-                MOV     DL,TED_12
+                MOV     DL,[TED_12]
                 XCHG    DL,DH
                 CALL    ADLIB_SFREQ
                 MOV     BH,AH
@@ -23,9 +14,9 @@ ADLIB_0E:       PUSH    DX
                 MOV     AH,0A0H
                 XCHG    AL,AH
                 CALL    OUT_ADLIB
-                MOV     AH,TED_11
+                MOV     AH,[TED_11]
                 AND     AH,10H
-                MOV     ADLIB_HI1,BH
+                MOV     [ADLIB_HI1],BH
                 SHL     AH,1
                 OR      AH,BH
                 MOV     AL,0B0H
@@ -44,7 +35,7 @@ ADLIB_0E:       PUSH    DX
 ADLIB_0F:       PUSH    DX
                 PUSH    BX
                 PUSH    AX
-                MOV     DL,TED_10
+                MOV     DL,[TED_10]
                 XCHG    DL,DH
                 CALL    ADLIB_SFREQ
                 MOV     BH,AH
@@ -52,8 +43,8 @@ ADLIB_0F:       PUSH    DX
                 MOV     AH,0A7H
                 XCHG    AL,AH
                 CALL    OUT_ADLIB
-                MOV     AH,TED_11
-                MOV     ADLIB_HI2,BH
+                MOV     AH,[TED_11]
+                MOV     [ADLIB_HI2],BH
                 AND     AH,20H
                 OR      AH,BH
                 MOV     AL,0B7H
@@ -72,15 +63,15 @@ ADLIB_0F:       PUSH    DX
 ADLIB_10:       PUSH    DX
                 PUSH    BX
                 PUSH    AX
-                MOV     DL,TED_F
+                MOV     DL,[TED_F]
                 CALL    ADLIB_SFREQ
                 MOV     BH,AH
                 MOV     BL,DL
                 MOV     AH,0A7H
                 XCHG    AL,AH
                 CALL    OUT_ADLIB
-                MOV     AH,TED_11
-                MOV     ADLIB_HI2,BH
+                MOV     AH,[TED_11]
+                MOV     [ADLIB_HI2],BH
                 AND     AH,20H
                 OR      AH,BH
                 MOV     AL,0B7H
@@ -100,8 +91,11 @@ ADLIB_11:       PUSH    DX
                 PUSH    AX
                 MOV     BL,DH
                 AND     BX,0FH
-                MOV     AH,ADLIB_VOL[BX]
-                MOV     BH,AH
+                MOV     AH,[ADLIB_VOL+BX]
+                TEST    DH,80H
+                JZ      .L1
+                MOV     AH,3FH          ;63
+.L1:            MOV     BH,AH
                 XCHG    BL,DH
                 MOV     AL,43H
                 CALL    OUT_ADLIB
@@ -109,31 +103,31 @@ ADLIB_11:       PUSH    DX
                 MOV     AH,BH
                 CALL    OUT_ADLIB
                 
-                MOV     AH,ADLIB_HI1
+                MOV     AH,[ADLIB_HI1]
                 MOV     AL,0B0H
                 TEST    BL,10H
-                JZ      SHORT ADLIB11_L14
+                JZ      .L2
 
                 OR      AH,020H
-ADLIB11_L14:    CALL    OUT_ADLIB
+.L2:            CALL    OUT_ADLIB
 
-                MOV     AH,ADLIB_HI2
+                MOV     AH,[ADLIB_HI2]
                 MOV     AL,0B7H
                 TEST    BL,20H
-                JZ      SHORT ADLIB11_L16
+                JZ      .L3
 
                 OR      AH,20H
                 CALL    OUT_ADLIB
                 MOV     AX,0BDH
-                JMP     SHORT ADLIB11_L17
+                JMP     .L4
 
-ADLIB11_L16:    CALL    OUT_ADLIB
+.L3:            CALL    OUT_ADLIB
                 MOV     AX,28BDH
                 TEST    BL,40H
-                JNZ     SHORT ADLIB11_L17
+                JNZ     .L4
 
                 XOR     AH,AH
-ADLIB11_L17:    CALL    OUT_ADLIB
+.L4:            CALL    OUT_ADLIB
                 POP     AX
                 POP     DX
                 MOV     BX,0FF11H
@@ -142,16 +136,16 @@ ADLIB11_L17:    CALL    OUT_ADLIB
 ADLIB_12:       PUSH    DX
                 PUSH    BX
                 PUSH    AX
-                MOV     DL,TED_E
+                MOV     DL,[TED_E]
                 CALL    ADLIB_SFREQ
                 MOV     BH,AH
                 MOV     BL,DL
                 MOV     AH,0A0H
                 XCHG    AL,AH
                 CALL    OUT_ADLIB
-                MOV     AH,TED_11
+                MOV     AH,[TED_11]
                 AND     AH,10H
-                MOV     ADLIB_HI1,BH
+                MOV     [ADLIB_HI1],BH
                 SHL     AH,1
                 OR      AH,BH
                 MOV     AL,0B0H
@@ -167,55 +161,65 @@ ADLIB_12:       PUSH    DX
                 POP     DX
                 RETN
 
-OUT_ADLIB:      MOV     DX,388H         ; AL-INDEX,AH-VALUE
+OUT_ADLIB:      MOV     DX,388H         ;AL-INDEX,AH-VALUE
+                CLI
                 OUT     DX,AL
                 PUSH    AX
-                MOV     AH,7
-OA_L1:          IN      AL,DX
+                MOV     AH,2    ;6
+.L1:            IN      AL,DX
                 DEC     AH
-                JNZ     SHORT OA_L1
+                JNZ     .L1
                 POP     AX
                 MOV     AL,AH
                 INC     DX
                 OUT     DX,AL
-                MOV     AH,37
+                MOV     AH,6     ;36
                 DEC     DX
-OA_L2:          IN      AL,DX
+.L2:            IN      AL,DX
                 DEC     AH
-                JNZ     SHORT OA_L2
+                JNZ     .L2
+                STI
                 RETN
 
-ADLIB_SFREQ:    AND     DH,3            ; DX - COMMODORE SOUND FREQ DETERMINANT
+ADLIB_SFREQ:;    INC     DX
+                AND     DH,3            ;DX - COMMODORE SOUND FREQ DETERMINANT
+
+                cmp     dx,3fdh
+                jb      .l9
+                mov     ax,1fffh
+                mov     dl,15
+                retn
+.l9:
                 MOV     BX,1024
                 SUB     BX,DX
-                MOV     EAX,110500
+                MOV     EAX,SOUND_CONST
                 XOR     EDX,EDX
                 DIV     EBX
                 SHL     DX,1
                 CMP     BX,DX
-                JA      SHORT ASF_L1
+                JA      .L1
 
                 INC     EAX
-ASF_L1:         IMUL    EAX,675
+.L1:            IMUL    EAX,675
                 XOR     DX,DX
                 SHR     EAX,5
-ASF_L2:         INC     DH
+.L2:            INC     DH
                 SHR     EAX,1
                 CMP     EAX,1024
-                JAE     SHORT ASF_L2
+                JAE     .L2
 
                 INC     DL
-ASF_L4:         CMP     DH,7
-                JBE     SHORT ASF_L3
+.L4:            CMP     DH,7
+                JBE     .L3
 
                 DEC     DH
                 SHL     DL,1
-                JMP     SHORT ASF_L4
+                JMP     .L4
 
-ASF_L3:         CMP     DL,8
-                JBE     SHORT ASF_L5
+.L3:            CMP     DL,8
+                JBE     .L5
 
                 MOV     DL,15
-ASF_L5:         SHL     DH,2
+.L5:            SHL     DH,2
                 OR      AH,DH
                 RETN                    ; AX-FNUM&BLOCK, DL-MULTIPLIER

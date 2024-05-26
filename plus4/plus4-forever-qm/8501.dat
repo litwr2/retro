@@ -1,14 +1,5 @@
-ZEF             EQU     2
-CAF             EQU     1
-SIF             EQU     80H
-OVF             EQU     40H
-
                 ALIGN   4
-TOTALTICKS_O    DD      0
-TOTALTICKS_LO   DD      0
-TOTALTICKS_HI   DB      0
-
-FREEZE_LEN      EQU     LED-FREEZE_VER+1
+TOTALTICKS      DD      0
 
 FREEZE_VER      DW      1
 TICKS           DB      0
@@ -32,12 +23,8 @@ SA_ROM_HI       DW      ?
 TSA_ROM         DW      SEG SEG_ROM -800H, SEG SEG_ROM
                 DW      SEG SEG_CART-800H, SEG SEG_CART
 
-OPP             LABEL   WORD
-                IRPC    HIB,0123456789ABCDEF
-                IRPC    LOB,0123456789ABCDEF
-                DW      OFFSET O&HIB&&LOB
-                ENDM
-                ENDM
+LABEL           OPP     BYTE
+                IRPC2   O,0,1,2,3,4,5,6,7,8,9,A,B,C,D,E,F
 
                 ;TIMER1
 TED_0           DB      0FFH    ; $FF00

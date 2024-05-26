@@ -1,42 +1,41 @@
-RESTORE_INTR9:  MOV     DX,CS:SAVE9LO    ;RESTORE INTR9 VECTOR
+RESTORE_INTR9:  MOV     DX,[CS:SAVE9LO] ;RESTORE INTR9 VECTOR
                 PUSH    DS
-                MOV     DS,CS:SAVE9HI
-                JMP     SHORT SI9_L1
+                MOV     DS,[CS:SAVE9HI]
+                JMP     SET_INTR9.L1
 
 SET_INTR9:      MOV     AX,3509H        ;SAVE/SET INTR9 VECTOR
                 INT     21H
-                MOV     CS:SAVE9LO,BX
-                MOV     CS:SAVE9HI,ES
+                MOV     [CS:SAVE9LO],BX
+                MOV     [CS:SAVE9HI],ES
                 PUSH    DS
                 PUSH    CS
                 POP     DS
-                LEA     DX,CS:INTR9
-SI9_L1:         MOV     AX,2509H
+                MOV     DX,INTR9
+.L1:            MOV     AX,2509H
                 INT     21H
                 POP     DS
                 RETN
 
-PREP8042:       MOV     AL,0EDH
-                OUT     60H,AL
-                MOV     AH,AL
-P8042_L1:       IODELAY
-                DEC     AX
-                JNZ     SHORT P8042_L1
+WAIT50MKS:      PUSH    EAX
+                MOV     EAX,[DELAYCONST]
+.L1:            DEC     [DELAYCONST]
+                JNZ     .L1
+                MOV     [DELAYCONST],EAX
+                POP     EAX
                 RETN
 
-SET_LED:        PUSHF
-                CLI
-                CALL    PREP8042
-                MOV     AL,LED
+SET_LED:        MOV     AL,0EDH
+                OUT     60H,AL
+                MOV     AL,[LED]
                 PUSH    DS
                 PUSH    0
                 POP     DS
-                AND     BYTE PTR DS:[417H],8FH
-                OR      DS:[417H],AL
+                AND     BYTE [DS:417H],8FH
+                OR      [DS:417H],AL
                 POP     DS
                 SHR     AL,4
+                CALL    WAIT50MKS
                 OUT     60H,AL
-                POPF
                 RETN
 
 INTR9:          PUSH    AX
@@ -45,140 +44,313 @@ INTR9:          PUSH    AX
                 MOV     DS,AX
                 IN      AL,60H
                 MOV     AH,AL
-                XCHG    AH,PREV_KEY
+                XCHG    AH,[PREV_KEY]
 
                 CMP     AL,0E0H
-                JAE     I9_LEZ
+                JAE     .LEZ
 
                 CMP     AH,0E0H
-                JNZ     SHORT I9_L2
+                JNZ     .L2
+
                 MOV     AH,AL
                 AND     AH,7FH
                 CMP     AH,2AH
-                JZ      I9_LEZ
+                JZ      .LEZ
                 CMP     AH,36H
-                JZ      I9_LEZ
+                JZ      .LEZ
 
-I9_L2:          PUSH    BX
+.L2:            PUSH    BX
                 PUSH    DX
-                CMP     AL,0C6H         ;ScrollLock?
-                JNZ     SHORT I9_L4
-                XOR     LED,10H
-                TEST    LED,10H
-                JNZ     SHORT I9_L7
-                AND     LED,0DFH
-I9_L7:          CALL    SET_LED
-                JMP     SHORT I9_LE
 
-I9_L4:          CMP     AL,0D4H         ;SysReq (Alt+PrintScreen)?
-                JZ      I9_SR
+                CMP     AL,0C6H         ;ScrollLock?
+                JNZ     .L4
+                XOR     [LED],10H
+                TEST    [LED],10H
+                JNZ     .L7
+                AND     [LED],0DFH
+.L7:            CALL    SET_LED
+                JMP     .LE
+
+.L4:            CMP     AL,0D4H         ;SysReq (Alt+PrintScreen)?
+                JZ      .SR
 
                 CMP     AL,0C5H         ;NumLock?
-                JZ      SHORT I9_LNL
+                JZ      .LNL
 
                 CMP     AL,0BAH         ;CapsLock?
-                JZ      SHORT I9_LCL
+                JZ      .LCL
 
-                CMP     INTR9_ST,'X'    ;debugger mode?
-                JZ      SHORT I9_LX
+                CMP     [TIMER_ST],0      ;debugger mode?
+                JNE     .LX
 
                 CMP     AL,3AH          ;CapsLock Pressed?
-                JZ      SHORT I9_LX1
+                JZ      .LX1
 
-                MOV     DL,AL
+                CMP     [JOY1_ST],1
+                MOVZX   DX,BYTE [JOY_MASK]
+                JA      .JE_L2
+                JZ      .JE_L8
+                CALL    .JE1          ;J1 AT K1
+                JMP     .JE_L7
+
+.JE_L8:         CALL    I9_JSB        ;J1 AT K2
+                CALL    .JE2
+                CALL    I9_JSB
+.JE_L7:         OR      DH,DH
+                JNZ     .JE_L2
+.JE_L9:         MOV     BYTE [JOY_MASK],DL
+                JMP     .LE
+
+.JE_L2:         CMP     [JOY2_ST],1
+                MOVZX   DX,BYTE [JOY_MASK+1]
+                JA      .NJE
+                JZ      .JE_L1
+                CALL    I9_JSB        ;J2 AT K1
+                CALL    .JE1
+                CALL    I9_JSB
+.JE_L5:         OR      DH,DH
+                JNZ     .NJE
+                MOV     BYTE [JOY_MASK+1],DL
+                JMP     .LE
+
+.JE_L1:         CALL    .JE2          ;J2 AT K2
+                JMP     .JE_L5
+
+.NJE:           MOV     DL,AL
                 AND     AX,7FH
                 MOV     BX,AX
                 MOV     DH,AL
-                OR      AH,KT1[BX]
-                JS      SHORT I9_L3
+                OR      AH,[KT1+BX]
+                JS      .L3
 
                 MOV     BL,AH
                 MOV     AL,AH
                 SHR     BL,3
                 AND     AX,7
                 OR      DL,DL
-                JS      SHORT I9_L1
+                JS      .L1
 
-                BTR     WORD PTR KMATRIX[BX],AX
-                JMP     SHORT I9_LE
+                BTR     WORD [KMATRIX+BX],AX
+                JMP     .LE
 
-I9_L1:          BTS     WORD PTR KMATRIX[BX],AX
-                TEST    LED,40H
-                JZ      SHORT I9_L3
-                AND     KMATRIX+1,07FH
-I9_L3:          MOV     KBUFA,AH
-                MOV     WORD PTR KBUFS,DX
+.L1:            BTS     WORD [KMATRIX+BX],AX
+                TEST    [LED],40H
+                JZ      .L3
+                AND     [KMATRIX+1],07FH
+.L3:            MOV     [KBUFA],AH
+                MOV     WORD [KBUFS],DX
 
-I9_LE:          POP     DX
+.LE:            POP     DX
                 POP     BX
-I9_LEZ:         POP     DS
+.LEZ:           POP     DS
                 MOV     AL,20H
                 OUT     20H,AL
-                POP     AX
+.LEZ1:          POP     AX
                 IRET
 
-I9_LNL:         XOR     LED,20H
-                MOV     AL,LED
+.LNL:           XOR     [LED],20H
+                MOV     AL,[LED]
                 AND     AL,20H
                 SHR     AL,1
-                AND     LED,0EFH
-                OR      LED,AL
+                AND     [LED],0EFH
+                OR      [LED],AL
                 CALL    SET_LED
-                JMP     SHORT I9_LE
+                JMP     .LE
 
-I9_LCL:         XOR     LED,40H
-                XOR     KMATRIX+1,80H
-                JMP     SHORT I9_LX1
+.LCL:           XOR     [LED],40H
+                XOR     [KMATRIX+1],80H
+                JMP     .LX1
 
-I9_LX:          CMP     AL,046H         ;ScrollLock?
-                JZ      SHORT I9_LE
+.SR:            XCHG    BP,SP
+                CMP     WORD [BP+10],SEG SEG_CODE
+                JNZ     .L4B
+                MOV     WORD [BP+8],END_EMU
+                MOV     DWORD [FMSG+12],' abo'
+                MOV     WORD [FMSG+16],'rt'
+.L4B:           XCHG    BP,SP
+                JMP     .LE
+
+.JE1:           CMP     AL,12H          ;JOY1 UP P
+                JNZ     .J1
+                AND     DL, 0FEH
+                RETN
+
+.J1:            CMP     AL,92H          ;JOY1 UP R
+                JNZ     .J2
+                OR      DL, 1
+                RETN
+
+.J2:            CMP     AL,1FH          ;JOY1 LEFT P
+                JNZ     .J3
+                AND     DL, 0FBH
+                RETN
+
+.J3:            CMP     AL,9FH          ;JOY1 LEFT R
+                JNZ     .J4
+                OR      DL, 4
+                RETN
+
+.J4:            CMP     AL,20H          ;JOY1 RIGHT P
+                JNZ     .J5
+                AND     DL, 0F7H
+                RETN
+
+.J5:            CMP     AL,0A0H         ;JOY1 RIGHT R
+                JNZ     .J6
+                OR      DL, 8
+                RETN
+
+.J6:            CMP     AL,2DH          ;JOY1 DOWN P
+                JNZ     .J7
+                AND     DL, 0FDH
+                RETN
+
+.J7:            CMP     AL,0ADH         ;JOY1 DOWN R
+                JNZ     .J8
+                OR      DL, 2
+                RETN
+
+.J8:            CMP     AL,35H          ;JOY1 FIRE P
+                JNZ     .J9
+                AND     DL, 0BFH
+                RETN
+
+.J9:            CMP     AL,0B5H         ;JOY1 FIRE R
+                JNZ     .J10
+                OR      DL, 040H
+                RETN
+.J10:           INC     DH
+                RETN
+
+.JE2:           CMP     AL,48H          ;JOY2 UP P
+                JNZ     .J11
+                AND     DL, 0FEH
+                RETN
+
+.J11:           CMP     AL,0C8H         ;JOY2 UP R
+                JNZ     .J12
+                OR      DL, 1
+                RETN
+
+.J12:           CMP     AL,4BH          ;JOY2 LEFT P
+                JNZ     .J13
+                AND     DL, 0FBH
+                RETN
+
+.J13:           CMP     AL,0CBH         ;JOY2 LEFT R
+                JNZ     .J14
+                OR      DL, 4
+                RETN
+
+.J14:           CMP     AL,4DH          ;JOY2 RIGHT P
+                JNZ     .J15
+                AND     DL, 0F7H
+                RETN
+
+.J15:           CMP     AL,0CDH         ;JOY2 RIGHT R
+                JNZ     .J16
+                OR      DL, 8
+                RETN
+
+.J16:           CMP     AL,50H          ;JOY2 DOWN P
+                JNZ     .J17
+                AND     DL, 0FDH
+                RETN
+
+.J17:           CMP     AL,0D0H         ;JOY2 DOWN R
+                JNZ     .J18
+                OR      DL, 2
+                RETN
+
+.J18:           CMP     AL,36H          ;JOY2 FIRE P
+                JNZ     .J19
+                AND     DL, 07FH
+                RETN
+
+.J19:           CMP     AL,0B6H         ;JOY2 FIRE R
+                JNZ     .J20
+                OR      DL, 080H
+                RETN
+.J20:           INC     DH
+                RETN
+
+.LX:            CMP     AL,046H         ;ScrollLock?
+                JZ      .LE
                 CMP     AL,054H         ;SysReq (Alt+PrintScreen)?
-                JZ      SHORT I9_SR
+                JZ      .SR
                 CMP     AL,045H         ;NumLock?
-                JZ      SHORT I9_LE
-I9_LX1:         POP     DX
+                JZ      .LE
+.LX1:           POP     DX
                 POP     BX
                 POP     DS
-                POP     AX
-                DB      0EAH
+
+                IN      AL,21H          ;mask timer interrupt
+                OR      AL,1
+                OUT     21H,AL
+
+                PUSHF
+                DB      9AH
 SAVE9LO         DW      ?
 SAVE9HI         DW      ?
 
-I9_SR:          XCHG    BP,SP
-                CMP     WORD PTR [BP+10],SEG SEG_CODE
-                JNZ     SHORT I9_L4B
-                MOV     WORD PTR [BP+8],OFFSET END_EMU
-                MOV     DWORD PTR FMSG+12,'oba '
-                MOV     WORD PTR FMSG+16,'tr'
-I9_L4B:         XCHG    BP,SP
-                JMP     SHORT I9_LE
+                AND     AL,0FEH         ;unmask timer interrupt
+                OUT     21H,AL
+                JMP     INTR9.LEZ1
 
-SYS_KEYS:       TEST    KBUFA,40H
-                JZ      SHORT SKS_L4
+I9_JSB:         XOR     DL,0C0H
+                TEST    DL,0C0H
+                JNZ     .L1
+                XOR     DL,0C0H
+.L1:            RETN
+
+SYS_KEYS:       CMP     [ISMOUSE],0
+                JE      .L8
+                MOV     AX,3
+                INT     33H
+                TEST    BL,1
+                JNZ     .L9
+                TEST    BL,2
+                JNZ     .L10
+
+.L8:            TEST    [KBUFA],40H
+                JZ      .L4
 
                 XOR     AX,AX
-                TEST    INTR9_ST,AL
-                JNZ     SHORT SKS_L4
-                XCHG    AX,WORD PTR KBUFS
+                XCHG    AX,WORD [KBUFS]
 
-                CMP     AL,0C3H         ;F9=DEBUGGER
-                JNZ     SHORT SKS_L1
-                MOV     MAINJUMP,OFFSET DEBUG_ENTRY
+                CMP     AL,0BFH         ;F5=CHOOSE SOUND
+                JNZ     .L7
+                CALL    [EXIT_SOUND]
+                MOVZX   BX,[CURRENT_SND]
+                INC     BX
+                CMP     BL,3
+                JNZ     .L6
+                XOR     BX,BX
+.L6:            MOV     [CURRENT_SND],BL
+                SHL     BX,1
+                CALL    [SOUND_SRC+BX]
+                CALL    [RESET_SOUND]
+                JMP     RELOAD_SND
 
-SKS_L1:         CMP     AL,0D7H         ;F11=RESET
-                JNZ     SHORT SKS_L2
-                MOV     MAINJUMP,OFFSET RESET
+.L7:            CMP     AL,0C3H         ;F9=DEBUGGER
+                JNZ     .L1
+                MOV     [MAINJUMP],DEBUG_ENTRY
 
-SKS_L2:         CMP     AL,0D8H         ;F12=MENUS
-                JNZ     SHORT SKS_L3
+.L1:            CMP     AL,0D7H         ;F11=RESET
+                JNZ     .L2
+                MOV     [MAINJUMP],RESET
 
-                TEST    CPU_1,8
-                JNZ     SHORT SKS_L5
-                TEST    LED,10H
-                JNZ     SHORT SKS_L4
-SKS_L5:         MOV     MAINJUMP,OFFSET MENUS_ENTRY
+.L2:            CMP     AL,0D8H         ;F12=MENUS
+                JNZ     .L3
 
-SKS_L3:         CMP     AL,0C4H         ;F10=EXIT
-                JNZ     SHORT SKS_L4
-                MOV     MAINJUMP,OFFSET END_EMU
-SKS_L4:         RETN
+.L9:            TEST    [CPU_1],8
+                JNZ     .L5
+                TEST    [LED],10H
+                JNZ     .L4
+.L5:            MOV     [MAINJUMP],MENUS_ENTRY
+
+.L3:            CMP     AL,0C4H         ;F10=EXIT
+                JNZ     .L4
+.L10:           MOV     [MAINJUMP],END_EMU
+.L4:            RETN
+

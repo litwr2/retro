@@ -1,11 +1,20 @@
                 ALIGN   2
-RESET_SOUND     DW      OFFSET RESET_ADLIB
-SOUND_0E        DW      OFFSET ADLIB_0E
-SOUND_0F        DW      OFFSET ADLIB_0F
-SOUND_10        DW      OFFSET ADLIB_10
-SOUND_11        DW      OFFSET ADLIB_11
-SOUND_12        DW      OFFSET ADLIB_12
+RESET_SOUND     DW      0
+EXIT_SOUND      DW      0
+SOUND_0E        DW      0
+SOUND_0F        DW      0
+SOUND_10        DW      0
+SOUND_11        DW      0
+SOUND_12        DW      0
+SPEAKER_VECS    DW      INIT_SPEAKER, EXIT_SPEAKER
+                DW      SPEAKER_0E, SPEAKER_0F
+                DW      SPEAKER_10, SPEAKER_11
+                DW      SPEAKER_12
+ADLIB_VECS      DW      RESET_ADLIB, RESET_ADLIB
+                DW      ADLIB_0E, ADLIB_0F
+                DW      ADLIB_10, ADLIB_11
+                DW      ADLIB_12
+SOUND_SRC       DW      SET_TIMERSND, SET_ADLIBSND
+                DW      SET_NOSND
+CURRENT_SND     DB      0
 
-ADLIB_VOL       DB      63,42,36,30,24,18,12,6,0,0,0,0,0,0,0,0
-ADLIB_HI1       DB      0
-ADLIB_HI2       DB      0

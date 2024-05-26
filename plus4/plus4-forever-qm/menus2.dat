@@ -26,11 +26,13 @@ WIN_POS2        DW      0
 LIST_CAP2       DW      ?
 DEV             DB      '--'
 CBM_FLIST_CAP   EQU     144
-CBM_FN_LIST     DB      16*CBM_FLIST_CAP DUP(' ')
-CBM_TY_LIST     DB      4*CBM_FLIST_CAP DUP(' ')
-CBM_SZ_LIST     DW      CBM_FLIST_CAP DUP(0)
-CBM_FP_LIST     DW      CBM_FLIST_CAP DUP(0)
-CBM_RL_LIST     DB      CBM_FLIST_CAP DUP(0)
+LABEL           CBM_FN_LIST BYTE
+TIMES   16*CBM_FLIST_CAP DB ' '
+LABEL           CBM_TY_LIST BYTE
+TIMES   4*CBM_FLIST_CAP DB ' '
+CBM_SZ_LIST     RW      CBM_FLIST_CAP
+CBM_FP_LIST     RW      CBM_FLIST_CAP
+CBM_RL_LIST     RB      CBM_FLIST_CAP
 CBM_FH          DW      ?
 IBM_FH          DW      ?
 D64_POS         DW      ?

@@ -1,25 +1,29 @@
-  Commodore Plus/4 Emulator v1.12 information
+  Commodore Plus/4 Emulator `Forever' v1.19 information
 
 
 
    CONTENTS        
 
 +  Preview
-+  Commodore +4 main specifications
-+  Main Features Of The Emulator
++  OS
 +  Used IBM hardware resources
-+  C+4 vs C64
 +  Keyboard
-+  Debugger
-+  CPU Emulation
++  Joysticks
++  Mouse
++  ROMs
++  Main Features Of The Emulator
++  CPU JAM instructions
 +  I/O Ports Emulation
 +  TED Emulation
++  Commodore +4 main specifications
++  C+4 vs C64
++  Debugger
 +  CPU and TED Timing
-+  ROMs
 +  Datasette Emulation
 +  Menus
 +  CTF Format
 +  C2F Format
++  Compilation
 +  (C) Copyright
 +  Changes List
 
@@ -27,10 +31,319 @@
 
   Preview
 
-  I think I create an unique emulator, becase I have never seen any Commodore
-plus/4 (16 or 116) since March 1991... This version of the emulator has 
-created only from some my old documentation and Internet ROM-images and
-documentation. It is written only in 100% 80386 assember (16-bit mode).
+  I think I've created an unique emulator, because I've never seen any
+Commodore plus/4 (16 or 116) since March 1991... This version of the
+emulator has created only from some my old and found in Internet
+documentation (`c64doc' v1.8 by John West and Marko Makela, `Extra
+Instructions Of The 65XX Series CPU' by Adam Vardy...) and some advices
+from Attila Grosz. It's written only in 100% 80486 assembler (16-bit mode).
+
+
+
+  OS
+
+  Reprogramming the timer hardware made impossible to run the
+emulator from Microsoft Windows environment - use DOS or Windows 95/98/Me
+DOS mode. For NT/2000/XP users: creation a DOS boot disk (or CD-ROM) is
+only a possibility to run this program.
+
+
+
+
+  Used IBM hardware resources
+
+  The emulator completely takes-over interrupt 9 (keyboard) and intercepts
+interrupt 8. The emulator uses only base DOS memory. Screen size is 320x207.
+It has direct access to the following ports: 20-21 (programmable interrupt
+controller); 40, 43 (timer hardware -- to set IRQ0 frequency to 37287Hz);
+60 (keyboard); 201 (joysticks); 388-389 (Ad Lib); 3CE-3CF (VGA).
+  ATTENTION! Video memory at address range A0000-B02C0 is used. If the
+emulator runs with UMB managers like EMM386 then be sure that range
+B000-B07F is closed for UMB.
+ 
+  
+
+  Keyboard
+
+  Some keys description:
+Alt             - Commodore key
+Tab             - Run/Stop
+F5              - Change sound hardware (beeper, adlib, none)
+F9              - Debugger
+F10             - Exit to DOS (power off button)
+F11             - Reset button
+F12             - Emulator's file system & options
+Scroll Lock     - Button Play on the datasette
+Num Lock        - Button Record on the datasette (press only it when message
+                  "PRESS PLAY & RECORD ON TAPE" appeared)
+SysRq (Alt+PrintScreen) - Immediate exit to DOS (Warning! It can interrupt
+                  any operation, e.g. with file)
+
+  If you want to leave a program which changes Reset vector then you need to
+exit from the emulator or to load a C2F image.
+
+
+
+  Joysticks
+
+  You can use any combination of real analog joysticks and the keyboard keys
+for joystick emulation. There are two keys sets for the emulation:
+  KEYS1 - Word Star like - SEDX/;
+  KEYS2 - cursors and right shift keys.
+
+
+
+  Mouse
+
+  Left button   - Emulator's file system & options
+  Right button  - exit to DOS
+
+
+
+  ROMs
+
+  The emulator can possibility to change/add any ROM-chip. When emulator
+starts it looks for the next ROM-image files in start-up directory:
+  BASIC.ROM     - BASIC ROM;
+  KERNAL.ROM    - KERNAL ROM;
+  3P1_LO.ROM    - 3-PLUS-1 LOW ROM;
+  3P1_HI.ROM    - 3-PLUS-1 HIGH ROM;
+  C1_LO.ROM     - CARTRIDGE #1 LOW ROM;
+  C1_HI.ROM     - CARTRIDGE #1 HIGH ROM;
+  C2_LO.ROM     - CARTRIDGE #2 LOW ROM;
+  C2_HI.ROM     - CARTRIDGE #2 HIGH ROM.
+  Any of these files must have exact 16KB length. If one or more of the such
+files were missed then standard (build-in in the emulator program body) ROM
+contents was used instead.
+  Some ROM images in the Internet have 16386 bytes length (for unknown for
+me reason 2 bytes added to theirs start) - remove first 2 bytes from them.
+  Make the separate directory for every cartrige ROM and then run the
+emulator from the appropriate directory.
+
+
+      
+  Main Features Of The Emulator
+
+  It supports:
+- CPU:
+   all standard opcodes         +
+   exact opcodes timing         +
+   decimal mode                 +[4]
+   extra opcodes support        +
+   RMW instructions algorithm   +
+   build-in port                %[1]
+   interrupts                   +
+- TED:
+   video                        +[2]
+   sound                        +[2][3]
+   timers                       +
+   memory management            +
+   interrupts                   +
+   keyboard                     +
+   double/single clock          +[2]
+- Parallel i/o chip (6529B)     %[5]
+- Serial i/o chip (6551A)       -
+- Keyboard                      +
+- Joysticks                     +
+- Serial Bus                    -
+- Serial Bus devices            -
+- C-1551 disk drives            -
+- Datasette                     +
+- ROM cartridges (up to 64K)    +
+
+[1] - full support of datasette lines only (Cassette Read/Write/Motor).
+[2] - 98% compatible.
+[3] - only for PC speaker or Adlib compatible cards (e.g. any Sound Blaster).
+      It's nearly impossible to produce digital sound effects on the
+      Adlib-cards family -- use Speaker sound to hear them.
+[4] - according general 6502 family standard.
+[5] - only Cassette Sense line.
+
+  Internal features of the emulator:
+- fast freeze/restore computer state (in the C2F format files);
+- fast load/save/export/import programs and data from menus;
+- support D64, PRG, P0n (S0n, D0n, R0n, U0n) and CTF (description see below)
+  formats;
+- speed regulation;
+- build-in powerful debugger with assembler/disassembler.
+
+  It can run only on computer with 80486 compatible CPU (at least P166 is
+required for 100% speed emulation) and VGA compatible card.
+
+
+
+  CPU JAM instructions
+
+  JAM instructions work like hardware reset. If Reset vector points on any
+JAM type instruction then after reset the emulator begins meditation.
+
+
+
+  I/O Ports Emulation
+
+FC00-FCFF       KERNAL ROM FIX          %[1]
+FD00-FD0F       ACIA                    -
+FD10-FD1F       PIO                     %[2]
+FD30-FD3F       KEYBOARD MATRIX         +
+FDD0-FDDF       ROM CHIPS SELECTION
+                PORT                    +
+FEC0-FEDF       IEC9/C1551              -
+FEE0-FEFF       IEC8/C1551              -
+
+[1] - only for CPU access.
+[2] - only Cassette Sense line.
+
+
+
+  TED Emulation
+
+Index   Bit(s)  Function                Emulation  Description
+00      0-7     Timer 1 low byte        +
+01      0-7     Timer 1 high byte       +
+02      0-7     Timer 2 low byte        +
+03      0-7     Timer 2 high byte       +
+04      0-7     Timer 3 low byte        +
+05      0-7     Timer 3 high byte       +
+06      0-2     Screen Vertical
+                Offset                  +
+        3       0/1 - 24/25 rows        +
+        4       0/1 - Screen off/on     +
+        5       0/1 - Bit Map off/on    +
+        6       0/1 - Extended color
+                mode off/on             +
+        7       TEST                    -[2]
+07      0-2     Screen Horizontal
+                offset                  +
+        3       0/1 - 38/40 columns     +
+        4       0/1 - Multicolor mode
+                off/on                  +
+        5       0/1 - Freeze off/on     +
+        6       0/1 - PAL/NTSC          -[2][1]
+        7       0/1 - Hardware
+                reverse on/off          +
+08      0-7     Keyboard/Joysticks      
+                latch                   +
+09      0       unused                  ?[3]
+        1       0/1 - Request for
+                raster interrupt
+                no/yes                  +
+        2       0/1 - Request for
+                light pen interrupt
+                no/yes                  ?[3]
+        3       0/1 - Request for
+                Timer 1 interrupt
+                no/yes                  +
+        4       0/1 - Request for
+                Timer 2 interrupt
+                no/yes                  +
+        5       unused                  ?[3]
+        6       0/1 - Request for
+                Timer 3 interrupt
+                no/yes                  +
+        7       0/1 - any TED
+                interrupt request
+                presents no/yes         +
+0A      0       bit 8 raster
+                interrupt set           +
+        1       0/1 - Mask raster
+                interrupt yes/no        +
+        2       0/1 - Mask light pen
+                interrupt yes/no        ?[2]
+        3       0/1 - Mask Timer 1
+                1 interrupt yes/no      +
+        4       0/1 - Mask Timer 2
+                interrupt no/yes        +
+        5       unused                  ?[2]
+        6       0/1 - Mask Timer 3
+                interrupt no/yes        +
+        7       unused                  ?[2]
+0B      0-7     raster interrupt
+                set, bits 0-7           +
+0C      0-1     bits 8-9 of cursor
+                position                +
+        2-7     unused                  +[4]
+0D      0-7     bits 0-7 of cursor
+                position                +
+0E      0-7     bits 0-7 of voice 2
+                frequency number        +
+0F      0-7     bits 0-7 of voice 1
+                frequency number        +
+10      0-1     bits 8-9 of voice 2
+                frequency number        +
+        2-7     unused                  ?[2]
+11      0-3     Volume control (from
+                0 to 8)                 +
+        4       Voice 1 select          +
+        5       Voice 2 select          +[5]
+        6       Voice 2 noise select    +
+        7       Sound Reload            +[6]
+12      0-1     bits 8-9 of voice 1
+                frequency number        +
+        2       0/1 - Character
+                generator or Bit map
+                in RAM/ROM              +
+        3-5     bits 13-15 (other
+                bits are equal to 0)
+                of Bit map address      +
+        6-7     unused                  ?[2]
+13      0       RAM/ROM status          +
+        1       0/1 - Set CPU single
+                clock for overscan
+                off/on                  +
+        2       bit 10 of Character
+                generator address, it
+                is usable only when
+                bit 7 of register 7
+                (Hardware reverse)
+                is set to 1             +
+        3-7     bits 11-15 (other
+                bits are equal to 0)
+                of Character generator
+                address                 +
+14      0-2     unused                  ?[2]
+        3-7     bits 11-15 (other
+                bits are equal to 0)
+                of Color memory base    +
+15      0-3     Color 1                 +
+        4-6     Luminance 1             +
+        7       unused                  ?[2]
+16      0-3     Color 2                 +
+        4-6     Luminance 2             +
+        7       unused                  ?[2]
+17      0-3     Color 3                 +
+        4-6     Luminance 3             +
+        7       unused                  ?[2]
+18      0-3     Color 4                 +
+        4-6     Luminance 4             +
+        7       unused                  ?[2]
+19      0-3     Overscan Color          +
+        4-6     Overscan Luminance      +
+        7       unused                  ?[2]
+1A      0-1     bits 8-9 of current
+                character position      +
+        2-7     unused                  +[4]
+1B      0-7     bits 0-7 of current
+                character position      +
+1C      0       Vertical line bit 8     +
+        1-7     always are 1            +
+1D      0-7     Vertical line bits 0-7  +
+1E      0-1     bits 1-2 of horizontal
+                dot position            %[3]
+        2-7     bits 3-8 of horizontal
+                dot position            +
+1F      0-3     Blink counter           +
+        4-6     Vertical subaddress     ?
+        7       unused                  ?[3]
+3E      ?       Selects ROM             +
+3F      ?       Selects RAM             +
+
+[1] - always PAL.
+[2] - you may use this bit as ordinal RAM storage.
+[3] - they have pseudo random value.
+[4] - it's always set to one.
+[5] - bit 5 has higher priority than bit 6.
+[6] - its value 1 mutes both sound channels for Adlib - for PC speaker this
+      bit supported properly.
 
 
 
@@ -52,7 +365,7 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 - hardware reverse, extended graphics and multicolor modes extensions for
   text mode;
 - 64KB RAM;
-- 64KB internal ROM and up to 64KB external ROM (cartriges);
+- 64KB internal ROM and up to 64KB external ROM (cartridges);
 - user port (parallel/centronics or serial/RS-232C with TTL logic up to
   19200 bauds!);
 - 67 keys keyboard + reset button;
@@ -60,76 +373,17 @@ documentation. It is written only in 100% 80386 assember (16-bit mode).
 - datasette port (the same logic as for C-1530 but with another, smaller
   connector);
 - Commodore serial bus.
+
 [1] - raster interrupts can make this limitation softer.
 
 
-
-  Main Features Of The Emulator
-
-  It supports:
-- CPU:
-   all standard opcodes         +
-   exact opcodes timing         +
-   decimal mode                 +[5]
-   extra opcodes support        +[1]
-   RMW instructions algorithm   +
-   build-in port                %[2]
-   interrupts                   +
-- TED:
-   video                        +[3]
-   sound                        +[3][4]
-   timers                       +
-   memory management            +
-   interrupts                   +
-   keyboard                     +
-   double/single clock          +[3]
-- Parallel i/o chip (6529B)     %[6]
-- Serial i/o chip (6551A)       -
-- Keyboard                      +
-- Joysticks                     +[7]
-- Serial Bus                    -
-- Serial Bus devices            -
-- C-1551 disk drives            -
-- Datasette                     +
-- ROM cartridges (up to 64K)    +
-[1] - according Internet documentation mostly (64doc rev 1.8, 'Extra
-      Instruction Of The 65XX Series CPU' and some others).
-[2] - full support of datasette lines only (Cassette Read/Write/Motor).
-[3] - 98% compatible.
-[4] - only for Adlib or compatible (e.g. any Sound Blaster).
-[5] - according general 6502 family standard.
-[6] - only Cassette Sense line.
-[7] - can't swap joysticks and emulate them on the keyboard.
-
- 
-  Internal features of the emulator:
-- fast freeze/restore computer state (in the C2F format files);
-- fast load/save/export/import programs and data from menus;
-- support D64, PRG, P0n (S0n, D0n, R0n, U0n) and CTF (description see below)
-  formats;
-- build-in powerful debugger with assembler/disassembler.
-
-  This version of the emulator is something slow (for original plus/4
-perfomance it requires at least Pentium-100) because it very exact emulates
-each chip. It can run only on computer with 80486 compatible CPU and VGA
-compatible card and requires Adlib compatible card for sound effects.
-
-
-
-  Used IBM hardware resources
-
-  The emulator completely takes-over interrupt 9 (keyboard) and intercepts
-(but doesn't take-over) interrupt 8. The emulator uses only base memory.
-Screen size is 320x207.
- 
-  
 
   C+4 vs C64
 
   C+4 and C64 are very similar. Why does success come only for C64?
   I think it is only one answer: C64 is two years elder! Below I place a
 table with quality/quantity comparison of the main features of both machines.
-Who has won this data competion?...
+Who has won this data competition?...
 
                             C64     C+4     Notes
 
@@ -155,9 +409,10 @@ Who has won this data competion?...
                                             blank case C+4 is faster
   RAM
    Total                    64K     64K
-   I/O holes size, byte     4098    180     C+4: CPU=2,ACIA=16,PIO=16,KBD=16,
-                                                 KERNEL=16,ROMSEL=16,IEC8=32,
-                                                 IEC9=32,TED=34.
+   I/O holes size, byte     4098    578     C+4: CPU=2,IO=576(ACIA=16,PIO=16,
+                                                 KBD=16,MAGIC VOICE SOUND=16,
+                                                 ROMSEL=16,IEC8=32,IEC9=32,
+                                                 TED=34).
                                             C64: CPU=2,VIC=1024,SID=1024,
                                                  VRAM=1024,CIA1=256,CIA2=256,
                                                  EXP1/Z80=256,EXP2/DISK=256
@@ -166,7 +421,7 @@ Who has won this data competion?...
 
   ROM
    Total                    2*8K+4K 4*16K   C+4 can work only with one 16K
-                            =20K    =64K    Kernel ROM and use other 3 16K
+                            =20K    =64K    Kernal ROM and use other 3 16K
                                             ROM slots in any manner (e.g. to
                                             view/save any ROM chip content!)
    Max                      3*8K+4K 8*16K
@@ -187,14 +442,15 @@ Who has won this data competion?...
    Hardware reverse         -       +       This allows automatically to
                                             produce inverted characters
                                             saving 2K characters ROM!
-   38/40 colums modes       +       +
+   38/40 columns modes      +       +
    24/25 rows modes         +       +
    X/Y-scrolling            +       +
    Fixed color RAM          +       -       This makes C+4 more flexible
-   Color RAM                0.5K    -       Color RAM helps C64 be some faster
-                                            than C+4 in the text modes, and
-                                            increase free RAM storage for some
-                                            modes (C+4 takes 1K of main memory
+   Color RAM                0.5K    -       Color RAM helps C64 be some 
+                                            faster than C+4 in the text 
+                                            modes, and increases free RAM 
+                                            storage for some modes
+                                            (C+4 takes 1K of main memory
                                             for keeping color information)
    Hardware sprites         +       -       C64 can manage up to 8 24x21
                                             sprites, automatically detects
@@ -205,16 +461,14 @@ Who has won this data competion?...
                                             either white noise or music
    Frequency range          0-      109Hz-
                              3.9KHz  110KHz
-   Wave forms               wide    square  C64 can produce various differrent
-                            range   only    types of special sound effects and
-                                            very high quality music synthesis,
-                                            but I think, plus/4 can better
-                                            play the digital samples!
+   Wave forms               wide    square  C64 can produce various different
+                            range   only    types of special sound effects
+                                            and high quality music synthesis
 
   Time
-   2-byte timers            4       3       C64 timers have wider range of
+   2-bytes timers           4       3       C64 timers have wider range of
                                             working modes than on C+4
-   4-byte RTC               2       -
+   4-bytes RTC              2       -
 
   Interrupts
    NMI                      +       -
@@ -226,9 +480,9 @@ Who has won this data competion?...
      Serial Bus SRQ         1       -       C64 has 13 types of interrupt
     Timers                  4       3       sources: 4 from VIC, 5 from CIA1
     RTC                     1       -       and 4 from CIA2 - VIC (IRQ),
-    Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can each
+    Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can
     Sprite's                2       -       produce only one interrupt signal;
-    Synchro Serial Port     2       -       C+4 has 6 types of interrupt
+    Synchro Serial Port     2       -       each C+4 has 6 types of interrupt
     Light Pen               1       1       sources: 5 from TED and 1 from
     RS-232C                 1       1       ACIA - TED and ACIA can each
                                             produce only one IRQ signal
@@ -239,7 +493,7 @@ Who has won this data competion?...
 
   Paddles                   4       -       This allows to connect to C64
                                             up to 2 4-buttons analog
-                                            joystics (instead 2 digital)
+                                            joysticks (instead 2 digital)
 
   User Port
    Centronics               1       1       C64 and C+4 can use only RS-232C
@@ -251,25 +505,8 @@ Who has won this data competion?...
 
   Fast C1551 drives         -       +       These drives connected directly to
                                             the CPU bus, C64 theoretically can
-                                            use similair drives...
+                                            use similar drives...
 
-
-
-  Keyboard
-
-  Some keys description:
-Alt             - Commodore key
-Tab             - Run/Stop
-F9              - Debugger
-F10             - Exit to DOS
-F11             - Reset button
-F12             - Emulator's file system
-Scroll Lock     - Button Play on datasette
-Num Lock        - Button Record on datasette
-SysRq (Alt+PrintScreen) - Immediate exit to DOS (Warning! It can interrupt any
-                operation, e.g. with file)
-
-  
 
 
   Debugger
@@ -288,11 +525,10 @@ Enter        E         E       +[1]
 Fill         F         F       +[1]
 Go           G         G       +[6]
 Hex          H         H       +
-Input        I       <miss>    -
 Load         L         L       +
 Move         M         M       +
 Name         N         N       +
-Output       O       <miss>    -
+watchpOint   O         O       ![7]
 Proceed      P         P       +[3][6]
 Quit         Q         Q       +[4]
 Register     R         R       +
@@ -310,13 +546,16 @@ Zoom       <miss>      Z       !, selects 25 or 50 rows debugger mode.
       next assembler instruction, it is very useful for fast tracing
       subroutines (JSR) and loops (BNE, BEQ, ...). Using P for trace JMP
       instruction and alike generally has no viewable sense.
-[4] - It returns to the emulator and turns emulator in non-debugger mode.
+[4] - It returns to the emulator and turns emulator in the non-debugger mode.
 [5] - This command outputs time of instruction(s) execution.
 [6] - After these commands emulator turns into debugger mode. In this mode F9
       causes to return to last debugger screen.
+[7] - It has the same syntax as G command but instead of breakpoints it sets
+      watchpoints (they break program execution if any byte at given
+      addresses is rewritten).
 
-  When you have set breakpoint(s) by G (Go) or P (Proceed) commands, the
-emulator will work slower but only on several percent.
+  Breakpoint(s) and watchpoint(s) set by G (Go), P (Proceed), or O
+(Watchpoint) commands slow the emulator but only on several percent.
   It uses the next mnemonics for (un)assemble CPU commands:
 
     BRK               ;00           NOP2    #$nn      ;80
@@ -449,247 +688,57 @@ emulator will work slower but only on several percent.
     RORADC  $nnnn,X   ;7F           INCSBC  $nnnn,X   ;FF
 
   You must enter all 2 or 4 digits in operands: don't miss leading zero(s)!
-This limitation is only appliable for entering 8501 assembler mnemonics, not
+This limitation is only applicable for entering 8501 assembler mnemonics, not
 debugger commands. All spaces are ignored in the entered mnemonics between
 its natural delimiters (comma, brackets, $, #), e.g. you may enter: BNE$0672,
 LDA # $ 01, etc.). Some instructions (NOP1, NOP2, JAM, etc.) have the same
 mnemonics and operands structure: during assembling the minimal appropriate
 opcode is gotten.
-  The debugger has simple editor which is the same as DOS command line editor:
-thus you may use F1, F2, F3, F4, F5, Insert, Delete, Esc and BackSpace keys
-for edit. You may also use ^C (Control-C) and ^S (Control-S) keys during text
-output.
-  If you want to save some debugger disassebler or dump output in a file, you
-may use standard DOS streams redirection technique, e.g. PLUS4 <CMDS >LISTING
+  The debugger has simple editor which is the same as DOS command line
+editor: thus you may use F1, F2, F3, F4, F5, Insert, Delete, Esc and
+BackSpace keys for edit. You may also use ^C (Control-C) and ^S (Control-S)
+keys during text output.
+  If you want to save some debugger disassembler or dump output in a file,
+you may use standard DOS streams redirection technique, e.g.
+    PLUS4 <CMDS >LISTING
 will start normal emulator execution but after F9 all input will get from
 CMDS file and all output will send to LISTING. CMDS file must consists of
 debugger's commands (one command per a line) and last line in it ought to
 be Q.
   The debugger correct works with PRG and supports pure binary formats (with
 some other formats it can work as with pure binaries).
-  The i/o menus are not available from the debugger, i.e. during execution g
-or p commands.
-
-
-
-  CPU Emulation
-
-  JAM instructions work like hardware reset. If Reset vector points on any
-JAM type instruction then after reset the emulator begin meditation...
-
-
-
-  I/O Ports Emulation
-
-FC00-FCFF       KERNEL ROM FIX          %[1]
-FD00-FD0F       ACIA                    -
-FD10-FD1F       PIO                     %[2]
-FD30-FD3F       KEYBOARD MATRIX         +
-FDD0-FDDF       ROM CHIPS SELECTION
-                PORT                    +
-FEC0-FEDF       IEC9/C1551              -
-FEE0-FEFF       IEC8/C1551              -
-
-[1] - only for CPU access.
-[2] - only Cassette Sense line.
-
-
-
-  TED Emulation
-
-Index   Bit(s)  Function                Emulation  Description
-00      0-7     Timer 1 low byte        +
-01      0-7     Timer 1 high byte       +
-02      0-7     Timer 2 low byte        +
-03      0-7     Timer 2 high byte       +
-04      0-7     Timer 3 low byte        +
-05      0-7     Timer 3 high byte       +
-06      0-2     Screen Vertical
-                Offset                  +
-        3       0/1 - 24/25 rows        +
-        4       0/1 - Screen off/on     +
-        5       0/1 - Bit Map off/on    +
-        6       0/1 - Extended color
-                mode off/on             +
-        7       TEST                    -[2]
-07      0-2     Screen Horizontal
-                offset                  +
-        3       0/1 - 38/40 columns     +
-        4       0/1 - Multicolor mode
-                off/on                  +
-        5       0/1 - Freeze off/on     +
-        6       0/1 - PAL/NTSC          -[2][1]
-        7       0/1 - Hardware
-                reverse on/off          +
-08      0-7     Keyboard/Joysticks      
-                latch                   +
-09      0       unused                  ?[3]
-        1       0/1 - Request for
-                raster interrupt
-                no/yes                  +
-        2       0/1 - Request for
-                light pen interrupt
-                no/yes                  ?[3]
-        3       0/1 - Request for
-                Timer 1 interrupt
-                no/yes                  +
-        4       0/1 - Request for
-                Timer 2 interrupt
-                no/yes                  +
-        5       unused                  ?[3]
-        6       0/1 - Request for
-                Timer 3 interrupt
-                no/yes                  +
-        7       0/1 - any TED
-                interrupt request
-                presents no/yes         +
-0A      0       bit 8 raster
-                interrupt set           +
-        1       0/1 - Mask raster
-                interrupt yes/no        +
-        2       0/1 - Mask light pen
-                interrupt yes/no        ?[2]
-        3       0/1 - Mask Timer 1
-                1 interrupt yes/no      +
-        4       0/1 - Mask Timer 2
-                interrupt no/yes        +
-        5       unused                  ?[2]
-        6       0/1 - Mask Timer 3
-                interrupt no/yes        +
-        7       unused                  ?[2]
-0B      0-7     raster interrupt
-                set, bits 0-7           +
-0C      0-1     bits 8-9 of cursor
-                position                +
-        2-7     unused                  +[4]
-0D      0-7     bits 0-7 of cursor
-                position                +
-0E      0-7     bits 0-7 of voice 2
-                frequency number        +
-0F      0-7     bits 0-7 of voice 1
-                frequency number        +
-10      0-1     bits 8-9 of voice 2
-                frequency number        +
-        2-7     unused                  ?[2]
-11      0-3     Volume control (from
-                0 to 8)                 +
-        4       Voice 1 select          +
-        5       Voice 2 select          +[5]
-        6       Voice 2 noise select    +
-        7       Sound Reload            -[2]
-12      0-1     bits 8-9 of voice 1
-                frequency number        +
-        2       0/1 - Character
-                generator or Bit map
-                in RAM/ROM              +
-        3-5     bits 13-15 (other
-                bits are equal to 0)
-                of Bit map address      +
-        6-7     unused                  ?[2]
-13      0       RAM/ROM status          +
-        1       0/1 - Set CPU single
-                clock for overscan
-                off/on                  +
-        2       bit 10 of Character
-                generator address, it
-                is usable only when
-                bit 7 of register 7
-                (Hardware reverse)
-                is set to 1             +
-        3-7     bits 11-15 (other
-                bits are equal to 0)
-                of Character generator
-                address                 +
-14      0-2     unused                  ?[2]
-        3-7     bits 11-15 (other
-                bits are equal to 0)
-                of Color memory base    +
-15      0-3     Color 1                 +
-        4-6     Luminance 1             +
-        7       unused                  ?[2]
-16      0-3     Color 2                 +
-        4-6     Luminance 2             +
-        7       unused                  ?[2]
-17      0-3     Color 3                 +
-        4-6     Luminance 3             +
-        7       unused                  ?[2]
-18      0-3     Color 4                 +
-        4-6     Luminance 4             +
-        7       unused                  ?[2]
-19      0-3     Overscan Color          +
-        4-6     Overscan Luminance      +
-        7       unused                  ?[2]
-1A      0-1     bits 8-9 of current
-                character position      +
-        2-7     unused                  +[4]
-1B      0-7     bits 0-7 of current
-                character position      +
-1C      0       Vertical line bit 8     +
-        1-7     always are 1            +
-1D      0-7     Vertical line bits 0-7  +
-1E      0-1     bits 1-2 of horisontal
-                dot position            -[3]
-        2-7     bits 3-8 of horisontal
-                dot position            +
-1F      0-3     Blink counter           +
-        4-6     Vertical subaddress     +
-        7       unused                  ?[3]
-3E      ?       Selects ROM             +
-3F      ?       Selects RAM             +
-
-[1] - always PAL.
-[2] - you may use this bit as ordinal RAM storage.
-[3] - it's always equal to zero.
-[4] - it's always set to one.
-[5] - bit 5 has higher priority than bit 6.
+  NOTE! The i/o menus are not available from the debugger, i.e. during
+execution G, O, or P commands.
 
 
 
   CPU and TED Timing
 
-  I'm sorry, I can't find exact system timing scheme. Below I describe
+  I'm sorry, I don't implement exact system timing scheme. Below I describe
 the scheme which is used in this emulator.
-  TED screen consists of 312 raster lines which contains 57 character position.
-TED provides for CPU standard single frequency if it operate with character
-screen area and it provides double frequency for CPU when it displays overscan
-area (only if bit 1 of TED 13 register is set to 0).
-  This scheme is not accurate: CPU runs at about 50% faster than it must...
+  TED screen consists of 312 raster lines which contains 57 character
+position. TED provides for CPU standard single frequency if it operate with
+character screen area and it provides double frequency for CPU when it
+displays overscan area (only if bit 1 of TED 13 register is set to 0).
+  This scheme is not accurate.
   The emulator maximum frame rate is limited (for synchronization with the
-real plus/4) to approximately 54.6Hz.
+real plus/4) to approximately 50.3Hz (it's possible to change emulator
+speed).
 
 
 
-  ROMs
-
-  The emulator can possibility to change/add any ROM-chip. When emulator
-starts it looks for the next ROM-image files in start-up directory:
-  BASIC.ROM     - BASIC ROM;
-  KERNEL.ROM    - KERNEL ROM;
-  3P1_LO.ROM    - 3-PLUS-1 LOW ROM;
-  3P1_HI.ROM    - 3-PLUS-1 HIGH ROM;
-  C1_LO.ROM     - CARTRIDGE #1 LOW ROM;
-  C1_HI.ROM     - CARTRIDGE #1 HIGH ROM;
-  C2_LO.ROM     - CARTRIDGE #2 LOW ROM;
-  C2_HI.ROM     - CARTRIDGE #2 HIGH ROM.
-  Any of these files must have exact 16KB length. If one or more of the such
-files were missed then standard (build-in in the emulator program body) ROM
-contents was used instead.
-  Some ROM images on the Internet have 16386 bytes length (for unknown for
-me reason 2 bytes added to theirs start) - remove first 2 bytes from them.
-
-      
   Datasette Emulation
 
   The CTF files are only format supported for the emulated datasette. They
 have some features, which let them to look some better than real cassettes.
-  Before cassette read, you can place datasette's head exactly on disired
+  Before cassette read, you can place datasette's head exactly on desired
 block (using menus). After reading last block on tape, head automatically
 moved to the position of the first block (= auto rewind), that useful during
 searching.
   The datasette automatically moves head to the start of the tape's free space
 when you write something on the cassette. After writing the head is placed on
 the start of first block on tape.
-  WARNING!!! Activization of the tape motor not for i/o operation and then
+  WARNING!!! Activation of the tape motor not for i/o operation and then
 making attempt to access to the Commodore serial bus may produce a block of
 garbage on the tape (this situation is fully adequate the real one: press play
 & record on the real datasette with the tape then try to access to the serial
@@ -707,8 +756,8 @@ breakpoints are off. They provide a lot of the useful features missed on real
 plus/4: freeze/restore current computer state (= save game in any moment!),
 devices manipulation, fast load/save and export/import data and programs, etc.
   'Size' column shows size depend on image file type: in bytes for CTF files
-and in blocks for D64 ones.
-  If in 'Type' column for a block of a CTF file placed '?' (and approriate
+and in the blocks for D64 ones.
+  If in 'Type' column for a block of a CTF file placed '?' (and appropriate
 size is equal to 0) then this means that this block is a turbo-block or
 garbage-block.
   Menus support mouse.
@@ -725,7 +774,7 @@ PRINT# and CLOSE) and turbo loaders and savers. The CTF format is 98% real
 cassette compatible! The table below shows CTF-file structure.
 
 OFFSET  NAME            LENGTH  COMMENTS
-0       FORMAT VERSION   2      0 FOR VERSION 1.00 OF THE EMULATOR
+0       FORMAT VERSION   2      0 FOR VERSION 1.xx OF THE EMULATOR
 2       HEAD POSITION    2      HEAD POINTS ON THE TAPE'S BLOCK WITH THIS
                                 NUMBER
 4       CAPACITY         2      QUANTITY OF BLOCKS+1 ON THE TAPE
@@ -741,8 +790,8 @@ NNNN+4  BLOCK #2 TIME
         CONSTANT         1
         <...>
 
-  Data at offset 0BH consist of bits which are value in CPU datasette port
-through fix time periods (time constant at 0AH is half of this period).
+  Data at offset 0BH consist of bits which are value in the CPU datasette
+port through fix time periods (time constant at 0AH is half of this period).
   Standard Commodore 264 tape block starts and ends with gap from max
 frequency waves. Each byte of the information has the next structure:
         <SM><B1><B2><B3><B4><B5><B6><B7><B8><B9>;
@@ -779,7 +828,7 @@ after 9 marker bytes contains type specification byte, e.g.:
 OFFSET  AREA NAME       LENGTH  COMMENTS
 
 ------- FORMAT SPECIFICATION -----------
-0       VERSION         2       1 FOR VERSION 1.10 OF THE EMULATOR
+0       VERSION         2       1 FOR VERSION 1.1x OF THE EMULATOR
 
 ------- ADDITIONAL INFORMATION ---------
 2       CPU TIME        1       TICKS TO CPU
@@ -815,24 +864,89 @@ OFFSET  AREA NAME       LENGTH  COMMENTS
 
 
 
-  (C) Copyright
+  Compilation
+
+  You need FASM V1.46 or newer (http://fasm.sourceforge.net/) for sources
+compilation.
+  Command `fasm plus4.asm plus4.exe' creates the emulator executable file.
+Use FASM in the pure DOS (without memory managers like EMM386) or in any
+Linux.
+
+
+
+  (C) Copyright 
 
   Almost all data and program files of this package are written by Lidovski V.
-in X-1996 - IV-1997, VI-1998 - VIII-1998, XII-1998, IV-2000. The author thinks
-that this package can't bring any money profit. Therefore he decides that this
-program package may be used without any limitations: anybody may do any
-operation with this package content (to copy, to expand, to disassemble,
-etc...).
+in X/1996 - IV/1997, VI-VIII/1998, XII/1998, IV/2000, XI/2002, III-VII/2003.
+   All source code is Copyright (C) 2003 Lidovski Vladimir. This program is
+distributed under the GNU General Public License, Version 2, or, at your
+discretion, any later version. The GNU General Public License is available
+via the Web at <http://www.gnu.org/copyleft/gpl.html>. The GPL is designed
+to allow you to alter and redistribute the package, as long as you do not
+remove that freedom from others.
+
 
 
   Changes List
 
-  The next bugs fixed since version 1.00 of this emulator:
+  The next bugs fixed and features added since version 1.00 of this emulator:
   * debugger can't hang computer after g or p command in long execution
     sequence
-  * q debugger command returns to non debugger mode of execution and
-    g debugger command turns emulator in debugger mode
+  * q debugger command returns to the non debugger mode of execution and
+    g debugger command turns emulator in the debugger mode
   * button End correctly works in menus
-  * made correct kernel $FCxx page fix
+  * added analog joysticks support
+  * screen size set to 320x207
+  * TED algorithm slightly modified
+
+  bugs fixed in v1.12 (XI-2002)
+  * made correct kernal $FCxx page fix
   * made correct loading of PRG-files with tape origin, like PACMANIA
+
+  features of v1.14
+  * added full range of joysticks emulation options
+  * vertical synchronization set to 50.1Hz (early it was 54.6Hz)
+  * added possibility to use the underscore symbol in the filenames in the
+    menus
+
+  features of v1.15
+  * it's the last version of emulator which can run at 100% speed at P100
+
+  features of v1.16 (III-2003)
+  * improved interrupts handling - it does possible to run Icicle Works
+    without problems
+  * added poor digital sound effects support (that reached by reducing delays
+    after writing to AdLib ports and may create problems with very old cards)
+  * it's the last version of the emulator which can run at 100% speed at P133
+
+  features of v1.17 (IV-2003)
+  * added PC speaker sound support - this does possible to hear digital sound
+    effects (use F5 to change sound hardware) and does impossible to run the
+    emulator from Microsoft Windows
+  * added O (watchpOint) command to the debugger
+  * added speed regulation to the menus
+  * completly rewritten synchronization codes (now it based on the timer
+    37.3KHz interrupt)
+  * added support for mouse buttons to the emulator
+  * fixed some minor bugs
+
+  features of v1.18 (V-2003)
+  * first version for free assembler (FASM) under GNU GPL
+  * fixed some bugs
+
+  features of v1.19 (VII-2003)
+  * better hardware interrupts handling algorithm (old one could cause crash
+    of menus subsystem and hanging of computer with DR-DOS, Free-DOS, and
+    PTS-DOS, but worked good on Microsoft MS-DOS!)
+  * better synchronization code
+  * renamed KERNEL.ROM to KERNAL.ROM
+  * fixed several bugs in the debugger
+  * added some little improvements to the TED subroutine (that cause better
+    look of the games SQUIRM, JAILBREAK, ...)
+  * menus: added DELETE command and one navigation bug fixed
+  * it's first named version of the emulator (`Navsegda' in Russian)
+  * slightly improved PC speaker sound code
+  * better drive letters handling
+  * CD-ROMs support added
+  * improved LED (lock keys indicators) handling
 

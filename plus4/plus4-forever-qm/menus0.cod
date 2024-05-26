@@ -3,46 +3,46 @@ MENUS_ENTRY:    CALL    INIT_MENUS
                 CALL    END_MENUS
                 JMP     MAIN_ENTRY
 
-HIDEM:          CMP     ISMOUSE,0
-                JE      SHORT NOMOUSE1
+HIDEM:          CMP     [ISMOUSE],0
+                JE      NOMOUSE1
                 PUSH    AX
                 MOV     AX,2
                 INT     33H
                 POP     AX
 NOMOUSE1:       RETN
 
-SHOWM:          CMP     ISMOUSE,0
-                JE      SHORT NOMOUSE2
+SHOWM:          CMP     [ISMOUSE],0
+                JE      NOMOUSE2
                 MOV     AX,1
                 INT     33H
 NOMOUSE2:       RETN
 
 WAITM:          XOR     BX,BX
-                CMP     ISMOUSE,BL
+                CMP     [ISMOUSE],BL
                 JE      NOMOUSE3
                 MOV     AX,3
                 INT     33H
                 OR      BX,BX
-                JZ      SHORT NOMOUSE3
+                JZ      NOMOUSE3
                 PUSH    BX
-WAITM_L1:       MOV     AX,3
+.L1:            MOV     AX,3
                 INT     33H
                 OR      BX,BX
-                JNZ     SHORT WAITM_L1
+                JNZ     .L1
                 POP     BX
 NOMOUSE3:       RETN
 
-CUROFF:         MOV     AH,2            ; HIDE CURSOR
+CUROFF:         MOV     AH,2            ;HIDE CURSOR
                 XOR     BH,BH
                 MOV     DX,1900H
                 INT     10H
                 RETN
 
-INIT_MENUS:     NOT     CS:TIMER_ST
-                CALL    SAVE_TED
-                MOV     AX,3            ; SET VIDEO MODE
+INIT_MENUS:     CALL    SAVE_TED
+                CALL    SILENCE
+                MOV     AX,3            ;SET VIDEO MODE
                 INT     10H
-                MOV     ES,DS_BUF_PTR+2 ; LOAD CBM FONTS
+                MOV     ES,[DS_BUF_PTR+2]       ;LOAD CBM FONTS
                 PUSH    DS
                 XOR     DI,DI
                 MOV     AX,SEG SEG_ROM +0500H
@@ -50,10 +50,10 @@ INIT_MENUS:     NOT     CS:TIMER_ST
                 MOV     DS,AX
                 XOR     SI,SI
                 MOV     CX,256*8
-IM_L1:          LODSB
+.L1:            LODSB
                 MOV     AH,AL
                 STOSW
-                LOOP    SHORT IM_L1
+                LOOP    .L1
                 POP     DS
                 MOV     AX,1100H
                 INC     CH
@@ -82,51 +82,73 @@ IM_L1:          LODSB
                 CALL    FILL_IBM_FLIST
                 JMP     PLOT_SCR1
 
-END_MENUS:      NOT     CS:TIMER_ST
-                CALL    RESTORE_TED
-EM_L1:          CMP     PREV_KEY,44H
-                JZ      SHORT EM_L1
-                MOV     KBUFA,0
+END_MENUS:      CALL    RESTORE_TED
+.L1:            CMP     [PREV_KEY],44H
+                JZ      .L1
+                MOV     [KBUFA],0
                 RETN
 
-GET_DRVS:       MOV     AH,19H
+GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
                 INT     21H
                 MOV     DL,AL
+
                 MOV     AH,0EH
                 INT     21H
                 MOVZX   CX,AL
+
                 XOR     SI,SI
-                MOV     EDX,']:A['
+                MOV     EDX,'[A:]'
                 MOV     BX,1
-GD_L3:          MOV     AX,440EH
+.L3:            MOV     AX,440EH        ;PHANTOM DISK?
                 INT     21H
-                JC      SHORT GD_L1
+                JC      .L1
+
                 OR      AL,AL
-                JNZ     SHORT GD_L2
-GD_L4:          MOV     DH,BL
+                JZ      .L1
+                CMP     AL,BL
+                JNZ     .L2
+
+.L1:            MOV     AX,4408H        ;VALIDATE DRIVE
+                INT     21H             ;REMOVABLE MEDIA?
+                JC      .L6
+                OR      AX,AX
+                JZ      .L4
+.L6:            MOV     AH,4EH
+                MOV     [TEST_DRV],BL
+                ADD     [TEST_DRV],'@'
+                PUSH    CX
+                PUSH    DX
+                MOV     CX,3FH
+                MOV     DX,TEST_DRV
+                INT     21H
+                POP     DX
+                POP     CX
+                JNC     .L4
+                CMP     AX,12H
+                JZ      .L4
+.L2:            INC     CH
+                JMP     .L5
+
+.L4:            MOV     DH,BL
                 ADD     DH,64
-                MOV     WORD PTR IBM_DV_LIST[ESI*2],'  '
-                MOV     DWORD PTR IBM_FN_LIST[ESI*8],EDX
-                MOV     DWORD PTR IBM_FN_LIST[ESI*8+4],'    '
-                MOV     IBM_SZ_LIST[ESI*4],-1
+                MOV     WORD [IBM_DV_LIST+ESI*2],'  '
+                MOV     DWORD [IBM_FN_LIST+ESI*8],EDX
+                MOV     DWORD [IBM_FN_LIST+ESI*8+4],'    '
+                MOV     [IBM_SZ_LIST+ESI*4],-1
                 INC     SI
-GD_L5:          INC     BX
+.L5:            INC     BX
                 CMP     BL,CL
-                JBE     SHORT GD_L3
+                JBE     .L3
                 SUB     BL,CH
                 DEC     BX
-                MOV     TOT_DRVS,BX
+                MOV     [TOT_DRVS],BX
                 RETN
-GD_L2:          CMP     AL,BL
-                JZ      SHORT GD_L4
-GD_L1:          INC     CH
-                JMP     SHORT GD_L5
 
-HEX2DEC:        MOV     EBX,1000000000  ; IN: EAX - HEX ; USED: BX, EDX
-                PUSH    CX              ; OUT: ->D_BUF1
-                PUSH    SI
+HEX2DEC:        MOV     EBX,1000000000  ;IN: EAX - HEX 
+                PUSH    CX              ;OUT: ->D_BUF1
+                PUSH    SI              ;USED: BX, EDX
                 XOR     EDX,EDX
-                LEA     SI,D_BUF1
+                MOV     SI,D_BUF1
                 DIV     EBX
                 OR      AL,30H
                 MOV     [SI],AL
@@ -187,118 +209,118 @@ HEX2DEC:        MOV     EBX,1000000000  ; IN: EAX - HEX ; USED: BX, EDX
                 MOV     [SI],AX
                 SUB     SI,8
                 MOV     CX,9
-H2D_L2:         LODSB
+.L2:            LODSB
                 CMP     AL,30H
-                JNZ     SHORT H2D_L1
+                JNZ     .L1
 
                 MOV     AL,20H
                 MOV     [SI-1],AL
-                LOOP    SHORT H2D_L2
-H2D_L1:         POP     SI
+                LOOP    .L2
+.L1:            POP     SI
                 POP     CX
                 RETN
 
 SET_FPATH:      MOV     AH,3BH
-                LEA     DX,FPATH
+                MOV     DX,FPATH
                 INT     21H
 GET_FPATH:      MOV     AH,47H
-                LEA     SI,FPATH+3
+                MOV     SI,FPATH+3
                 XOR     DL,DL
                 INT     21H
-                PUSH    ES              ; SET FPATH LENGTH
+                PUSH    ES              ;SET FPATH LENGTH
                 PUSH    DS
                 POP     ES
                 MOV     CL,68
                 XOR     AX,AX
-                LEA     DI,FPATH
+                MOV     DI,FPATH
                 REPNZ   SCASB
                 MOV     AX,'\'
-                CMP     ES:[DI-2],AL
-                JZ      SHORT GF_L1
+                CMP     [ES:DI-2],AL
+                JZ      .L1
 
                 DEC     DI
                 STOSW
-GF_L1:          SUB     DI,OFFSET FPATH+1
+.L1:            SUB     DI,FPATH+1
                 MOV     AX,DI
-                MOV     FPATH_LEN,AL
+                MOV     [FPATH_LEN],AL
                 POP     ES
                 RETN
 
 CBM_ASCII2:     MOV     BX,21
-CAC1_L4:        MOV     CX,DX
-CAC1_L3:        MOV     AL,ES:[DI]
+.L4:            MOV     CX,DX
+.L3:            MOV     AL,[ES:DI]
                 CMP     AL,20H
-                JB      SHORT CAC1_L1
+                JB      .L1
                 CMP     AL,0FFH
-                JZ      SHORT CAC1_L6
+                JZ      .L6
                 CMP     AL,40H
-                JB      SHORT CAC1_L2
+                JB      .L2
                 CMP     AL,80H
-                JB      SHORT CAC1_L5
+                JB      .L5
                 CMP     AL,0A0H
-                JB      SHORT CAC1_L1
+                JB      .L1
                 CMP     AL,0C0H
-                JAE     SHORT CAC1_L2
-CAC1_L5:        ADD     AL,40H
-CAC1_L2:        STOSB
+                JAE     .L2
+.L5:            ADD     AL,40H
+.L2:            STOSB
                 INC     DI
-                LOOP    SHORT CAC1_L3
+                LOOP    .L3
                 ADD     DI,SI
                 DEC     BX
-                JNZ     SHORT CAC1_L4
+                JNZ     .L4
                 RETN
-CAC1_L1:        MOV     AL,' '
-                JMP     SHORT CAC1_L2
-CAC1_L6:        MOV     AL,0DEH
-                JMP     SHORT CAC1_L2
+.L1:            MOV     AL,' '
+                JMP     .L2
+.L6:            MOV     AL,0DEH
+                JMP     .L2
 
 CBM_ASCII1:     MOV     BX,21
-CAC2_L4:        MOV     CX,DX
-CAC2_L3:        MOV     AL,ES:[DI]
+.L4:            MOV     CX,DX
+.L3:            MOV     AL,[ES:DI]
                 CMP     AL,20H
-                JB      SHORT CAC2_L1
+                JB      .L1
                 CMP     AL,0FFH
-                JZ      SHORT CAC2_L6
+                JZ      .L6
                 CMP     AL,40H
-                JB      SHORT CAC2_L2
+                JB      .L2
                 CMP     AL,60H
-                JB      SHORT CAC2_L5
+                JB      .L5
                 CMP     AL,80H
-                JB      SHORT CAC2_L7
+                JB      .L7
                 CMP     AL,0A0H
-                JB      SHORT CAC2_L1
+                JB      .L1
                 CMP     AL,0C0H
-                JB      SHORT CAC2_L5
+                JB      .L5
                 SUB     AL,40H
-CAC2_L5:        SUB     AL,40H
-CAC2_L2:        STOSB
+.L5:            SUB     AL,40H
+.L2:            STOSB
                 INC     DI
-                LOOP    SHORT CAC2_L3
+                LOOP    .L3
                 ADD     DI,SI
                 DEC     BX
-                JNZ     SHORT CAC2_L4
+                JNZ     .L4
                 RETN
-CAC2_L1:        MOV     AL,' '
-                JMP     SHORT CAC2_L2
-CAC2_L6:        MOV     AL,5EH
-                JMP     SHORT CAC2_L2
-CAC2_L7:        SUB     AL,20H
-                JMP     SHORT CAC2_L2
+.L1:            MOV     AL,' '
+                JMP     .L2
+.L6:            MOV     AL,5EH
+                JMP     .L2
+.L7:            SUB     AL,20H
+                JMP     .L2
 
 INIT_SCROLL:    MOV     DI,SCROLL_TOP_Y*160+SCROLL_TOP_X*2
                 MOV     AH,7
                 MOV     BX,19
-                LEA     SI,SCROLL_TXT
-IN_SC_L1:       MOV     CX,6
-IN_SC_L2:       LODSB
+                MOV     SI,SCROLL_TXT
+.L1:            MOV     CX,6
+.L2:            LODSB
                 STOSW
-                LOOP    SHORT IN_SC_L2
+                LOOP    .L2
                 ADD     DI,160-12
                 DEC     BX
-                JNZ     SHORT IN_SC_L1
+                JNZ     .L1
                 RETN
 
-OUT_MSG:        MOV     AX,'É'+7*256    ; IN: BX,CX,SI,DI  USED: AX
+OUT_MSG:        MOV     AX,'É'+7*256    ;IN: BX,CX,SI,DI  USED: AX
                 STOSW
                 PUSH    CX
                 MOV     AL,'Í'
@@ -306,7 +328,7 @@ OUT_MSG:        MOV     AX,'É'+7*256    ; IN: BX,CX,SI,DI  USED: AX
                 REP     STOSW
                 MOV     AL,'»'
                 STOSW
-O_M_L5:         POP     CX
+.L5:            POP     CX
                 ADD     DI,154
                 SUB     DI,CX
                 SUB     DI,CX
@@ -315,13 +337,13 @@ O_M_L5:         POP     CX
                 STOSW
                 MOV     AL,' '
                 STOSW
-O_M_L2:         LODSB
+.L2:            LODSB
                 STOSW
-                LOOP    SHORT O_M_L2
+                LOOP    .L2
                 MOV     AL,'º'
                 STOSW
                 DEC     BX
-                JNZ     SHORT O_M_L5
+                JNZ     .L5
                 POP     CX
                 ADD     DI,154
                 SUB     DI,CX
@@ -336,44 +358,53 @@ O_M_L2:         LODSB
                 RETN
 
 WAIT_ACTIVITY:  CALL    SHOWM
-W_A_L4:         CALL    WAITM
+.L2:            CALL    WAITM
                 TEST    BX,7
-                JNZ     SHORT W_A_L3
+                JNZ     .L1
 
                 MOV     AH,1
                 INT     16H
-                JZ      SHORT W_A_L4
+                JZ      .L2
                 XOR     AH,AH
                 INT     16H
-W_A_L3:         JMP     HIDEM
+.L1:            JMP     HIDEM
 
-MAKE_FNAME:     PUSH    BX                    ;INPUT: BX - FLIST POINTER
-                LEA     SI,IBM_FN_LIST[EBX*8] ;ES MUST BE EQUAL TO DS!!!
-                LEA     DI,D_BUF1
+MAKE_FNAME:     LEA     SI,[IBM_FN_LIST+EBX*8]  ;ES MUST BE EQUAL TO DS!!!
+                MOV     DI,D_BUF1               ;INPUT: BX - FLIST POINTER
                 MOV     CX,8
-M_FN_L2:        MOVSB
-                CMP     BYTE PTR [SI],' '
-                JZ      SHORT M_FN_L1
-                LOOP    SHORT M_FN_L2
-M_FN_L1:        IMUL    BX,3
-                LEA     SI,IBM_EX_LIST[BX]
-                CMP     BYTE PTR [SI],' '
-                JZ      SHORT M_FN_L3
-                MOV     BYTE PTR [DI],'.'
+.L2:            MOVSB
+                CMP     BYTE [SI],' '
+                JZ      .L1
+                LOOP    .L2
+.L1:            LEA     SI,[IBM_EX_LIST+EBX*2+EBX]
+                CMP     BYTE [SI],' '
+                JZ      .L3
+                MOV     BYTE [DI],'.'
                 INC     DI
                 MOV     CL,3
-M_FN_L4:        CMP     BYTE PTR [SI],' '
-                JZ      SHORT M_FN_L3
+.L4:            CMP     BYTE [SI],' '
+                JZ      .L3
                 MOVSB
-                LOOP    SHORT M_FN_L4
-M_FN_L3:        MOV     BYTE PTR [DI],CH
-                POP     BX
+                LOOP    .L4
+.L3:            MOV     BYTE [DI],CH    ;ASCIIZ!
                 RETN
 
 SAV_FPATH:      XOR     SI,SI
-SAV_FP_L1:      MOV     AL,FPATH[SI]
-                MOV     D_BUF2[SI],AL
+.L1:            MOV     AL,[FPATH+SI]
+                MOV     [D_BUF2+SI],AL
                 INC     SI
                 OR      AL,AL
-                JNZ     SHORT SAV_FP_L1
+                JNZ     .L1
                 RETN
+
+INIT_WIN1:      MOV     AX,[TOT_DRVS]
+                CMP     AL,21
+                JA      .L2
+                CMP     AX,[LIST_CAP1]
+                JB      .L1
+                DEC     AX
+.L1:            MOV     [CP_IN_WIN1],AL
+.L2:            XOR     AX,AX
+                MOV     [WIN_POS1],AX
+                RETN
+

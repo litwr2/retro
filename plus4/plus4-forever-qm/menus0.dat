@@ -1,4 +1,4 @@
-SAVE_FPATH      DB      67 DUP(0)
+SAVE_FPATH      RB      127
 ISMOUSE         DB      0
 TOT_DRVS        DW      ?               ; total drives +1
 DS_MSG1         DB      'ASSIGN A FILE FOR THE CBM DEVICE!!! '

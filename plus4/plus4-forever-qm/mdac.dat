@@ -1,6 +1,5 @@
-DAC_T           LABEL   BYTE
-                LUM=0
-                DB      0,0,0                   ; BLACK         -0  
+;                LUM=0
+DAC_T           DB      0,0,0                   ; BLACK         -0
                 DB      27,27,27                ; WHITE         -1  H=0,S=0
                 DB      45,0,0                  ; RED           -2  H=0,S=1
                 DB      0,45,45                 ; CYAN          -3  H=180,S=1
@@ -17,7 +16,7 @@ DAC_T           LABEL   BYTE
                 DB      13,13,35                ; DARK BLUE     -14 H=240,S=0.5
                 DB      23,45,0                 ; LIGHT GREEN   -15 H=90,S=1
 
-                LUM=1
+;                LUM=1
                 DB      0,0,0                   ; BLACK         -0  
                 DB      30,30,30                ; WHITE         -1
                 DB      53,0,0                  ; RED           -2
@@ -35,7 +34,7 @@ DAC_T           LABEL   BYTE
                 DB      14,14,40                ; DARK BLUE     -14
                 DB      26,52,0                 ; LIGHT GREEN   -15
 
-                LUM=2
+;                LUM=2
                 DB      0,0,0                   ; BLACK         -0  
                 DB      33,33,33                ; WHITE         -1
                 DB      59,0,0                  ; RED           -2
@@ -71,7 +70,7 @@ DAC_T           LABEL   BYTE
                 DB      23,23,49                ; DARK BLUE     -14
                 DB      33,63,3                 ; LIGHT GREEN   -15
 
-                LUM=4
+ ;               LUM=4
                 DB      0,0,0                   ; BLACK         -0  
                 DB      42,42,42                ; WHITE         -1
                 DB      63,28,28                ; RED           -2
@@ -89,7 +88,7 @@ DAC_T           LABEL   BYTE
                 DB      32,32,52                ; DARK BLUE     -14
                 DB      38,63,13                ; LIGHT GREEN   -15
 
-                LUM=5
+;                LUM=5
                 DB      0,0,0                   ; BLACK         -0  
                 DB      47,47,47                ; WHITE         -1
                 DB      63,37,37                ; RED           -2
@@ -125,7 +124,7 @@ DAC_T           LABEL   BYTE
                 DB      48,48,57                ; DARK BLUE     -14
                 DB      54,63,45                ; LIGHT GREEN   -15
 
-                LUM=7
+ ;               LUM=7
                 DB      0,0,0                   ; BLACK         -0  
                 DB      60,60,60                ; WHITE         -1
                 DB      63,53,53                ; RED           -2

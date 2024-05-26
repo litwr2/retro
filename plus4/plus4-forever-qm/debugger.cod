@@ -1,13 +1,12 @@
 DEBUG_ENTRY:    CALL    INIT_DEBUG
                 CALL    D_DISPATCHER
-                CALL    INIT_STD
-                MOV     MAINJUMP,OFFSET MAINLOOP
+                CALL    EXIT_DEBUG
                 JMP     MAIN_ENTRY
 
-INIT_DEBUG:     MOV     AX,PC
-                MOV     APC,AX
-                MOV     DPC,AX
-                MOV     UPC,AX
+INIT_DEBUG:     MOV     AX,[PC]
+                MOV     [APC],AX
+                MOV     [DPC],AX
+                MOV     [UPC],AX
 
                 CALL    SAVE_TED
 
@@ -15,30 +14,32 @@ INIT_DEBUG:     MOV     AX,PC
                 INT     10H
 
                 XOR     BX,BX
-                CMP     ZOOM_MODE,BL
-                JNE     SHORT ID_L1
+                CMP     [ZOOM_MODE],BL
+                JNE     .L1
 
                 MOV     AX,1112H
                 INT     10H
 
-ID_L1:          MOV     CURSOR,BX
-                LEA     DX,SDMSG
+.L1:            MOV     [CURSOR],BX
+                MOV     DX,SDMSG
                 JMP     OUT_STR
 
-INIT_STD:       JMP     RESTORE_TED
+EXIT_DEBUG:     JMP     RESTORE_TED
 
-SAVE_TED:       MOV     AX,BEAM_POS+2           ;SET BEAM SEG
+SILENCE:        MOV     AL,[SAVE_SOUND]
+                MOV     BX,0FF11H
+                XOR     DH,DH
+                CALL    MSTORE_DH
+                MOV     [TED_11],AL
+                RETN
+
+SAVE_TED:       MOV     AX,[BEAM_POS+2]         ;SET BEAM SEG
                 SUB     AX,VIDEO_SEG
                 ADD     AX,SEG SEG_VRAM1
-                MOV     BEAM_POS+2,AX
+                MOV     [BEAM_POS+2],AX
 
-                MOV     BX,0FF11H               ;SAVE & QUIET SOUND
-                CALL    MREAD_DH
-                MOV     SAVE_SOUND,DH
-                MOV     AL,DH
-                AND     DH,80H
-                CALL    MSTORE_DH
-                MOV     TED_11,AL
+                MOV     AL,[TED_11]             ;SAVE SOUND
+                MOV     [SAVE_SOUND],AL
 
                 PUSH    DS
                 MOV     AX,SEG SEG_VRAM1        ;SAVE VRAM
@@ -71,16 +72,16 @@ SAVE_TED:       MOV     AX,BEAM_POS+2           ;SET BEAM SEG
                 MOV     BX,DX
                 SHL     BX,1
                 INT     10H
-                MOV     INTR9_ST,'X'
+                NOT     [TIMER_ST]
                 RETN
 
-RESTORE_TED:    MOV     AX,BEAM_POS+2           ;SET BEAM SEG
+RESTORE_TED:    MOV     AX,[BEAM_POS+2]           ;SET BEAM SEG
                 SUB     AX,SEG SEG_VRAM1
                 ADD     AX,VIDEO_SEG
-                MOV     BEAM_POS+2,AX
+                MOV     [BEAM_POS+2],AX
 
                 MOV     BX,0FF11H               ;RESTORE SOUND
-                MOV     DH,SAVE_SOUND
+                MOV     DH,[SAVE_SOUND]
                 CALL    MSTORE_DH
 
                 MOV     AX,SEG SEG_VRAM2        ;RESTORE VGA REGISTERS
@@ -109,19 +110,19 @@ RESTORE_TED:    MOV     AX,BEAM_POS+2           ;SET BEAM SEG
                 XOR     DI,DI
                 REP     MOVSW
                 POP     DS
-                MOV     INTR9_ST,CL
+                NOT     [TIMER_ST]
                 RETN
 
 SAVE_DEBUG:     MOV     AH,3
                 XOR     BH,BH
                 INT     10H
-                MOV     CURSOR,DX
+                MOV     [CURSOR],DX
 
                 PUSH    DS
                 MOV     AX,0B800H
                 MOV     DS,AX
                 MOV     AX,SEG SEG_AUX
-SD_L1:          MOV     ES,AX
+.L1:            MOV     ES,AX
                 MOV     CX,8000/2
                 XOR     SI,SI
                 XOR     DI,DI
@@ -133,217 +134,217 @@ RESTORE_DEBUG:  MOV     AX,3
                 INT     10H
 
                 XOR     BX,BX
-                CMP     ZOOM_MODE,BH
-                JNE     SHORT RD_L1
+                CMP     [ZOOM_MODE],BH
+                JNE     .L1
                 MOV     AX,1112H
                 INT     10H
 
-RD_L1:          MOV     AH,2            ;PUT CURSOR AT GIVEN POS
-                MOV     DX,CURSOR
+.L1:            MOV     AH,2            ;PUT CURSOR AT GIVEN POS
+                MOV     DX,[CURSOR]
                 INT     10H
 
-RD_L1C:         LEA     DX,EOL
+.L1C:           MOV     DX,EOL
                 CALL    OUT_STR
 
                 MOV     AH,3
                 INT     10H
 
                 MOV     CH,24
-                CMP     ZOOM_MODE,BH
-                JNE     SHORT RD_L1B
+                CMP     [ZOOM_MODE],BH
+                JNE     .L1B
 
                 MOV     CH,49
 
-RD_L1B:         CMP     DH,CH
-                JNZ     SHORT RD_L1C
+.L1B:           CMP     DH,CH
+                JNZ     .L1C
 
-                LEA     DX,EOL
+                MOV     DX,EOL
                 CALL    OUT_STR
 
                 MOV     AH,2            ;PUT CURSOR AT GIVEN POS
-                MOV     DX,CURSOR
+                MOV     DX,[CURSOR]
                 INT     10H
 
                 PUSH    DS
                 MOV     AX,SEG SEG_AUX
                 MOV     DS,AX
                 MOV     AX,0B800H
-                JMP     SHORT SD_L1
+                JMP     SAVE_DEBUG.L1
 
 INPUT_LINE:     MOV     DL,'-'
                 MOV     AH,2
                 INT     21H
 
-IC_L8:          MOV     AH,0AH
-                LEA     DX,KBD_BUF_B
+.L8:            MOV     AH,0AH
+                MOV     DX,KBD_BUF_B
                 INT     21H
-                MOVZX   CX,KBD_BUF_L
+                MOVZX   CX,[KBD_BUF_L]
 
                 XOR     SI,SI
                 XOR     BX,BX
-IC_L7:          CMP     CX,SI
-                JZ      SHORT IC_L5
+.L7:            CMP     CX,SI
+                JZ      .L5
 
-                MOV     AX,WORD PTR KBD_BUF[SI]
+                MOV     AX,WORD [KBD_BUF+SI]
                 INC     SI
 
                 CMP     AL,'a'          ;LOWER TO UPPER CASE CONVERSION
-                JB      SHORT IC_L2
+                JB      .L2
                 CMP     AL,'z'
-                JA      SHORT IC_L2
+                JA      .L2
                 SUB     AL,32
-IC_L2:          CMP     AH,'a'          ;LOWER TO UPPER CASE CONVERSION
-                JB      SHORT IC_L1
+.L2:            CMP     AH,'a'          ;LOWER TO UPPER CASE CONVERSION
+                JB      .L1
                 CMP     AH,'z'
-                JA      SHORT IC_L1
+                JA      .L1
                 SUB     AH,32
 
-IC_L1:          CMP     AL,' '
-                JNZ     SHORT IC_L6
+.L1:            CMP     AL,' '
+                JNZ     .L6
 
                 CMP     BL,2
-                JB      SHORT IC_L7
+                JB      .L7
 
                 CMP     CX,SI
-                JZ      SHORT IC_L5
+                JZ      .L5
 
                 MOV     AL,','
                 CMP     AH,'0'
-                JB      SHORT IC_L7
+                JB      .L7
                 CMP     AH,'9'
-                JBE     SHORT IC_L6A
+                JBE     .L6A
                 CMP     AH,'A'
-                JB      SHORT IC_L7
+                JB      .L7
                 CMP     AH,'F'
-                JBE     SHORT IC_L6A
+                JBE     .L6A
                 CMP     AH,'L'
-                JNZ     SHORT IC_L7
+                JNZ     .L7
 
-IC_L6A:         MOV     AH,INP_BUF[BX-1]
+.L6A:           MOV     AH,[INP_BUF-1+BX]
                 CMP     AH,'0'
-                JB      SHORT IC_L7
+                JB      .L7
                 CMP     AH,'9'
-                JBE     SHORT IC_L6
+                JBE     .L6
                 CMP     AH,'A'
-                JB      SHORT IC_L7
+                JB      .L7
                 CMP     AH,'F'
-                JA      SHORT IC_L7
+                JA      .L7
 
-IC_L6:          MOV     INP_BUF[BX],AL
+.L6:            MOV     [INP_BUF+BX],AL
                 INC     BX
-                JMP     SHORT IC_L7
+                JMP     .L7
 
-IC_L5:          MOV     INP_BUF[BX],0   ; SET EOL MARKER
+.L5:            MOV     [INP_BUF+BX],0  ;SET EOL MARKER
                 INC     BX
-                MOV     LINP_BUF,BX
+                MOV     [LINP_BUF],BX
 
-                LEA     DX,EOL
+                MOV     DX,EOL
                 JMP     OUT_STR
 
-BIN2HEX:        MOV     AH,AL   ; AL -> DX
+BIN2HEX:        MOV     AH,AL           ;AL -> DX
                 AND     AL,0FH
                 ADD     AL,30H
                 CMP     AL,3AH
-                JC      B2H_L1
+                JC      .L1
 
                 ADD     AL,7
 
-B2H_L1:         MOV     DH,AL
+.L1:            MOV     DH,AL
                 MOV     AL,AH
                 SHR     AL,4
                 ADD     AL,30H
                 CMP     AL,3AH
-                JC      B2H_L2
+                JC      .L2
 
                 ADD     AL,7
 
-B2H_L2:         MOV     DL,AL
+.L2:            MOV     DL,AL
                 RETN
 
-HEX2BIN:        SUB     DL,30H  ; DX -> AL
-                JAE     SHORT H2B_L3
+HEX2BIN:        SUB     DL,30H          ;DX -> AL
+                JAE     .L3
 
-H2B_L4:         STC
+.L4:            STC
                 RETN
 
-H2B_L3:         CMP     DL,9
-                JBE     H2B_L1
+.L3:            CMP     DL,9
+                JBE     .L1
 
                 SUB     DL,7
                 CMP     DL,0AH
-                JB      SHORT H2B_L4
+                JB      .L4
                 CMP     DL,0FH
-                JA      SHORT H2B_L4
+                JA      .L4
 
-H2B_L1:         MOV     AL,DL
+.L1:            MOV     AL,DL
                 SUB     DH,30H
-                JC      SHORT H2B_L4
+                JC      .L4
                 CMP     DH,9
-                JBE     H2B_L2
+                JBE     .L2
 
                 SUB     DH,7
                 CMP     DH,0AH
-                JB      SHORT H2B_L4
+                JB      .L4
                 CMP     DH,0FH
-                JA      SHORT H2B_L4
+                JA      .L4
 
-H2B_L2:         SHL     DH,4
+.L2:            SHL     DH,4
                 OR      AL,DH
                 RETN
 
-TRAN_VAL:       MOV     EAX,30303030H   ; IN: SI,DI / OUT: AX / TEMP: EAX,DX
-TV_L2A:         CMP     INP_BUF[SI],0
-                JZ      SHORT TV_L1A
+TRAN_VAL:       MOV     EAX,30303030H   ;IN: SI,DI / OUT: AX / TEMP: EAX,DX
+.L2A:           CMP     [INP_BUF+SI],0
+                JZ      .L1A
 
                 SHL     EAX,8
-                MOV     AL,INP_BUF[SI]
+                MOV     AL,[INP_BUF+SI]
                 INC     SI
                 CMP     SI,DI
-                JNZ     SHORT TV_L2A
+                JNZ     .L2A
                 STC
-                JMP     SHORT TV_L1
+                JMP     .L1
 
-TV_L1A:         MOV     DX,AX
+.L1A:           MOV     DX,AX
                 CALL    HEX2BIN
-                JC      SHORT TV_L1
+                JC      .L1
 
                 MOV     AH,AL
                 ROR     EAX,16
                 MOV     DX,AX
                 CALL    HEX2BIN
-                JC      SHORT TV_L1
+                JC      .L1
 
                 ROL     EAX,8
                 CLC
-TV_L1:          RETN
+.L1:            RETN
 
 OUTSPC:         MOV     AH,2
                 MOV     DL,' '
                 INT     21H
                 DEC     CL
-                JNZ     SHORT OUTSPC
+                JNZ     OUTSPC
                 RETN
 
-SHOW_CLOCKS:    MOV     AL,T_CLOCK_HI
+SHOW_CLOCKS:    MOV     AL,[T_CLOCK_HI]
                 CALL    BIN2HEX
-                MOV     WORD PTR D_O_BUF,DX
-                MOV     BX,T_CLOCK_LO
+                MOV     WORD [D_O_BUF],DX
+                MOV     BX,[T_CLOCK_LO]
                 MOV     AL,BH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_S_BUF,DX
+                MOV     WORD [D_S_BUF],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_S_BUF+2,DX
-                LEA     DX,D_O_BUF
+                MOV     WORD [D_S_BUF+2],DX
+                MOV     DX,D_O_BUF
                 JMP     OUT_STR
 
-OUT_DAS:        MOV     AL,BH           ; IN: BX=BP / OUT: BP
+OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS2,DX
+                MOV     WORD [REGS2],DX
 
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS2+2,DX
+                MOV     WORD [REGS2+2],DX
 
                 CALL    MREAD_DH
                 MOV     DL,DH
@@ -359,7 +360,7 @@ OUT_DAS:        MOV     AL,BH           ; IN: BX=BP / OUT: BP
                 MOV     EAX,EDX
                 SUB     BX,3
                 MOVZX   SI,AL
-                MOV     CL,OPCL[SI]
+                MOV     CL,[OPCL+SI]
                 XOR     CH,CH
                 ADD     BP,CX
                 CMP     CL,3
@@ -368,82 +369,82 @@ OUT_DAS:        MOV     AL,BH           ; IN: BX=BP / OUT: BP
 
                 SHL     EAX,8
                 MOV     SI,5
-OD_L1:          MOV     AL,AH
+.L1:            MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS2[SI],DX
+                MOV     WORD [REGS2+SI],DX
                 SHR     EAX,8
                 ADD     SI,2
                 DEC     CL
-                JNZ     SHORT OD_L1
+                JNZ     .L1
                 MOV     DL,' '
-OD_L2:          MOV     REGS2[SI],DL
+.L2:            MOV     [REGS2+SI],DL
                 INC     SI
                 CMP     SI,11
-                JC      SHORT OD_L2
+                JC      .L2
 
                 POP     EAX
                 POPF
-                JNZ     SHORT OD_L3
+                JNZ     .L3
 
                 ROR     EAX,8
                 XCHG    AL,AH
                 ROL     EAX,8
 
-OD_L3:          XOR     BH,BH
+.L3:            XOR     BH,BH
                 MOV     BL,AL
                 
-                SHL     BX,4            ; BX:=BX*16
+                SHL     BX,4            ;BX:=BX*16
                 MOV     SI,12
-OD_L8:          MOV     AL,MN_T[BX]
+.L8:            MOV     AL,[MN_T+BX]
                 OR      AL,AL
-                JZ      SHORT OD_L5
-                JNS     SHORT OD_L4
+                JZ      .L5
+                JNS     .L4
 
                 CMP     AL,253
                 MOV     AL,AH
-                JZ      SHORT OD_L6
+                JZ      .L6
 
-OD_L7:          CALL    BIN2HEX
-                MOV     WORD PTR REGS2[SI],DX
+.L7:            CALL    BIN2HEX
+                MOV     WORD [REGS2+SI],DX
                 ADD     SI,2
                 ADD     BX,2
                 SHR     EAX,8
-                JMP     SHORT OD_L8
+                JMP     .L8
 
-OD_L6:          XOR     AH,AH
+.L6:            XOR     AH,AH
                 CBW
                 ADD     AX,BP
                 MOV     CL,AL
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS2[SI],DX
+                MOV     WORD [REGS2+SI],DX
                 ADD     SI,2
                 ADD     BX,2
                 MOV     AL,CL
-                JMP     SHORT OD_L7
+                JMP     .L7
 
-OD_L4:          MOV     REGS2[SI],AL
+.L4:            MOV     [REGS2+SI],AL
                 INC     BX
                 INC     SI
-                JMP     SHORT OD_L8
+                JMP     .L8
 
-OD_L5:          LEA     DX,REGS2
+.L5:            MOV     DX,REGS2
                 MOV     AH,40H
                 MOV     BX,1
                 MOV     CX,29
-                CMP     ODM,AL          ; AL=0 !!!
-                JE      OD_L5A
+                CMP     [ODM],AL        ;AL=0 !!!
+                JE      OUT_STR.L1
 
                 MOV     CL,27
                 INT     21H
                 MOV     CL,17
                 CALL    OUTSPC
-                MOV     D_BUF1,'('
-                MOV     WORD PTR D_BUF1+5,'=)'
-                MOV     BX,PC
+                MOV     [D_BUF1],'('
+                MOV     WORD [D_BUF1+5],')='
+                MOV     BX,[PC]
                 CALL    MREAD_DH
                 MOVZX   SI,DH
-                MOV     AL,OCAM[SI]
+                MOV     AL,[OCAM+SI]
                 INC     BX
                 CALL    MREAD_DH
                 MOV     DL,DH
@@ -451,357 +452,419 @@ OD_L5:          LEA     DX,REGS2
                 CALL    MREAD_DH
                 MOVZX   BX,DL
                 OR      AL,AL
-                JNZ     SHORT OD_L5_1
+                JNZ     .L5_1
 
-                LEA     DX,EOL
+                MOV     DX,EOL
                 JMP     OUT_STR
 
-OD_L5_1:        DEC     AL
-                JNZ     SHORT OD_L5_2
+.L5_1:          DEC     AL
+                JNZ     .L5_2
 
-                ADD     BL,BYTE PTR XR          ; (zp,X)
+                ADD     BL,BYTE [XR]          ; (zp,X)
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                JMP     SHORT OD_L9
+                JMP     .L9
 
-OD_L5_2:        DEC     AL
-                JNZ     SHORT OD_L5_3
+.L5_2:          DEC     AL
+                JNZ     .L5_3
 
-                CALL    MREAD_DH                ; (zp),Y
+                CALL    MREAD_DH        ;(zp),Y
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
-                ADD     DX,YR
+                ADD     DX,[YR]
                 MOV     BX,DX
-                JMP     SHORT OD_L9
+                JMP     .L9
 
-OD_L5_3:        DEC     AL
-                JZ      SHORT OD_L9             ; zp
-
-                DEC     AL
-                JNZ     SHORT OD_L5_4
-
-                ADD     BL,BYTE PTR XR          ; zp,X
-                JMP     SHORT OD_L9
-
-OD_L5_4:        DEC     AL
-                JNZ     SHORT OD_L5_5
-
-                ADD     BL,BYTE PTR YR          ; zp,Y
-                JMP     SHORT OD_L9
-
-OD_L5_5:        MOV     BH,DH
-                DEC     AL
-                JZ      SHORT OD_L9             ; abs
+.L5_3:          DEC     AL
+                JZ      .L9       ;zp
 
                 DEC     AL
-                JNZ     SHORT OD_L5_7
+                JNZ     .L5_4
 
-                ADD     BX,YR                   ; abs,Y
-                JMP     SHORT OD_L9
+                ADD     BL,BYTE [XR]        ;zp,X
+                JMP     .L9
 
-OD_L5_7:        DEC     AL
-                JNZ     SHORT OD_L5_8
+.L5_4:          DEC     AL
+                JNZ     .L5_5
 
-                ADD     BX,XR                   ; abs,X
-                JMP     SHORT OD_L9
+                ADD     BL,BYTE [YR]        ;zp,Y
+                JMP     .L9
 
-OD_L5_8:        CALL    MREAD_DH                ; (abs)
+.L5_5:          MOV     BH,DH
+                DEC     AL
+                JZ      .L9       ;abs
+
+                DEC     AL
+                JNZ     .L5_7
+
+                ADD     BX,[YR]         ;abs,Y
+                JMP     .L9
+
+.L5_7:          DEC     AL
+                JNZ     .L5_8
+
+                ADD     BX,[XR]         ;abs,X
+                JMP     .L9
+
+.L5_8:          CALL    MREAD_DH        ;(abs)
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
 
-OD_L9:          MOV     AL,BH
+.L9:            MOV     AL,BH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_BUF1+1,DX
+                MOV     WORD [D_BUF1+1],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_BUF1+3,DX
+                MOV     WORD [D_BUF1+3],DX
                 CALL    MREAD_DH
                 MOV     AL,DH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_BUF1+7,DX
-                MOV     DWORD PTR D_BUF1+9,240A0DH
-                LEA     DX,D_BUF1
+                MOV     WORD [D_BUF1+7],DX
+                MOV     DWORD [D_BUF1+9],240A0DH
+                MOV     DX,D_BUF1
 OUT_STR:        MOV     AH,9
-OD_L5A:         INT     21H
+.L1:            INT     21H
                 RETN
 
 GET_TPARS:      CALL    GET_PARS                
-                JC      SHORT GTP_L2
+                JC      .L2
 
                 MOV     SI,1
-                MOV     VAL1,SI
+                MOV     [VAL1],SI
 
-                CMP     QPARS,0
-                JZ      SHORT GTP_L2
+                CMP     [QPARS],0
+                JZ      .L2
 
-                CMP     QPARS,2
-                JBE     SHORT GTP_L4
+                CMP     [QPARS],2
+                JBE     .L4
 
-GTP_L5:         STC
+.L5:            STC
                 RETN
 
-GTP_L4:         JNZ     SHORT GTP_L1
-                CMP     INP_BUF+1,'='
-                JNZ     SHORT GTP_L5
+.L4:            JNZ     .L1
+                CMP     [INP_BUF+1],'='
+                JNZ     .L5
 
                 INC     SI
                 MOV     DI,7
                 CALL    TRAN_VAL
-                JC      SHORT GTP_L2
+                JC      .L2
 
-                MOV     PC,AX
+                MOV     [PC],AX
 
-                MOV     SI,PPARS+2
-GTP_L3:         MOV     DI,SI
+                MOV     SI,[PPARS+2]
+.L3:            MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT GTP_L2
+                JC      .L2
 
-                MOV     VAL1,AX
+                MOV     [VAL1],AX
 
-                JMP     SHORT GTP_L2
+                JMP     .L2
 
-GTP_L1:         CMP     INP_BUF+1,'='
-                JNZ     SHORT GTP_L3
+.L1:            CMP     [INP_BUF+1],'='
+                JNZ     .L3
 
                 INC     SI
                 MOV     DI,7
                 CALL    TRAN_VAL
-                JC      SHORT GTP_L2
+                JC      .L2
 
-                MOV     PC,AX
+                MOV     [PC],AX
 
-GTP_L2:         RETN
+.L2:            RETN
 
 GET_MPARS:      CALL    GET_PARS
-                JC      SHORT DMP_L1
+                JC      .L1
 
-                CMP     QPARS,3
-                JZ      SHORT DMP_L2
+                CMP     [QPARS],3
+                JZ      .L2
 
-DMP_L5:         STC
+.L5:            STC
                 RETN
 
-DMP_L2:         MOV     SI,1
+.L2:            MOV     SI,1
                 MOV     DI,6
                 CALL    TRAN_VAL
-                JC      SHORT DMP_L1
+                JC      .L1
 
-                MOV     CPC,AX
-                MOV     SI,PPARS+2
-                CMP     INP_BUF[SI],'L'
-                JNZ     SHORT DMP_L4
+                MOV     [CPC],AX
+                MOV     SI,[PPARS+2]
+                CMP     [INP_BUF+SI],'L'
+                JNZ     .L4
 
                 INC     SI
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT DMP_L1
+                JC      .L1
 
                 SUB     DI,5
                 CMP     SI,DI
-                JZ      SHORT DMP_L5
+                JZ      .L5
 
-                ADD     AX,CPC
+                ADD     AX,[CPC]
                 DEC     AX
-                MOV     EPC,AX
-                JMP     SHORT DMP_L3
+                MOV     [EPC],AX
+                JMP     .L3
 
-DMP_L4:         MOV     DI,SI
+.L4:            MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT DMP_L1
+                JC      .L1
 
-                MOV     EPC,AX
-DMP_L3:         MOV     SI,PPARS+4
+                MOV     [EPC],AX
+.L3:            MOV     SI,[PPARS+4]
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT DMP_L1
+                JC      .L1
 
                 MOV     DI,AX
-                MOV     BX,CPC
-                MOV     CX,EPC
+                MOV     BX,[CPC]
+                MOV     CX,[EPC]
                 SUB     CX,BX
                 INC     CX
-DMP_L1:         RETN
+.L1:            RETN
 
 GET_FPARS:      CALL    GET_PARS
-                JC      SHORT GFP_L3
+                JC      .L3
 
-                MOV     CL,QPARS
+                MOV     CL,[QPARS]
 
                 SUB     CL,2
-                JA      SHORT GFP_L4
+                JA      .L4
 
                 STC
                 RETN
 
-GFP_L4:         XOR     BX,BX
+.L4:            XOR     BX,BX
 
                 MOV     SI,1
                 MOV     DI,6
                 CALL    TRAN_VAL
-                JC      SHORT GFP_L3
+                JC      .L3
 
-                MOV     CPC,AX
-                MOV     SI,PPARS+2
-                CMP     INP_BUF[SI],'L'
-                JNZ     SHORT GFP_L2
+                MOV     [CPC],AX
+                MOV     SI,[PPARS+2]
+                CMP     [INP_BUF+SI],'L'
+                JNZ     .L2
 
                 INC     SI
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT GFP_L3
+                JC      .L3
 
-                ADD     AX,CPC
+                ADD     AX,[CPC]
                 DEC     AX
-                MOV     EPC,AX
-                JMP     SHORT GFP_L1
+                MOV     [EPC],AX
+                JMP     .L1
 
-GFP_L2:         MOV     DI,SI
+.L2:            MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
-                JC      SHORT GFP_L3
+                JC      .L3
 
-                MOV     EPC,AX
-GFP_L1:         MOV     SI,PPARS[BX]+4
+                MOV     [EPC],AX
+.L1:            MOV     SI,[PPARS+BX+4]
                 MOV     DI,SI
                 ADD     DI,3
                 CALL    TRAN_VAL
-                JC      SHORT GFP_L3
+                JC      .L3
 
                 SHR     BX,1
-                MOV     D_BUF1[BX],AL
+                MOV     [D_BUF1+BX],AL
                 SHL     BX,1
                 ADD     BL,2
                 DEC     CL
-                JNZ     SHORT GFP_L1
+                JNZ     .L1
 
-                MOV     BX,CPC
-                MOV     CX,EPC
+                MOV     BX,[CPC]
+                MOV     CX,[EPC]
                 SUB     CX,BX
                 INC     CX
-GFP_L3:         RETN
+.L3:            RETN
 
-SHOW_REGS:      MOV     BX,PC
-                MOV     UPC,BX
+SHOW_REGS:      MOV     BX,[PC]
+                MOV     [UPC],BX
                 MOV     AL,BH
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+3,DX
+                MOV     WORD [REGS1+3],DX
 
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+5,DX
+                MOV     WORD [REGS1+5],DX
 
-                MOV     AL,AC
+                MOV     AL,[AC]
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+12,DX
+                MOV     WORD [REGS1+12],DX
 
-                MOV     AL,BYTE PTR XR
+                MOV     AL,BYTE [XR]
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+19,DX
+                MOV     WORD [REGS1+19],DX
 
-                MOV     AL,BYTE PTR YR
+                MOV     AL,BYTE [YR]
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+26,DX
+                MOV     WORD [REGS1+26],DX
 
-                MOV     AL,BYTE PTR SPR
+                MOV     AL,BYTE [SPR]
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+33,DX
+                MOV     WORD [REGS1+33],DX
 
-                MOV     AL,BYTE PTR SR
+                MOV     AL,BYTE [SR]
                 PUSH    AX
                 CALL    BIN2HEX
-                MOV     WORD PTR REGS1+40,DX
+                MOV     WORD [REGS1+40],DX
 
                 POP     AX
-                MOV     REGS1+44,'-'
+                MOV     [REGS1+44],'-'
                 OR      AL,AL
-                JNS     SHORT SR_L1
+                JNS     .L1
 
-                MOV     REGS1+44,'S'
-SR_L1:          MOV     REGS1+45,'-'
+                MOV     [REGS1+44],'S'
+.L1:            MOV     [REGS1+45],'-'
                 TEST    AL,40H
-                JZ      SHORT SR_L2
-                MOV     REGS1+45,'V'
+                JZ      .L2
+                MOV     [REGS1+45],'V'
 
-SR_L2:          MOV     REGS1+47,'-'
+.L2:            MOV     [REGS1+47],'-'
                 TEST    AL,10H
-                JZ      SHORT SR_L3
-                MOV     REGS1+47,'B'
+                JZ      .L3
+                MOV     [REGS1+47],'B'
 
-SR_L3:          MOV     REGS1+48,'-'
+.L3:            MOV     [REGS1+48],'-'
                 TEST    AL,8
-                JZ      SHORT SR_L4
-                MOV     REGS1+48,'D'
+                JZ      .L4
+                MOV     [REGS1+48],'D'
 
-SR_L4:          MOV     REGS1+49,'-'
+.L4:            MOV     [REGS1+49],'-'
                 TEST    AL,4
-                JZ      SHORT SR_L5
-                MOV     REGS1+49,'I'
+                JZ      .L5
+                MOV     [REGS1+49],'I'
 
-SR_L5:          MOV     REGS1+50,'-'
+.L5:            MOV     [REGS1+50],'-'
                 TEST    AL,2
-                JZ      SHORT SR_L6
-                MOV     REGS1+50,'Z'
+                JZ      .L6
+                MOV     [REGS1+50],'Z'
 
-SR_L6:          MOV     REGS1+51,'-'
+.L6:            MOV     [REGS1+51],'-'
                 TEST    AL,1
-                JZ      SHORT SR_L7
-                MOV     REGS1+51,'C'
+                JZ      .L7
+                MOV     [REGS1+51],'C'
 
-SR_L7:          LEA     DX,REGS1
+.L7:            MOV     DX,REGS1
                 CALL    OUT_STR
 
-                MOV     BP,BX           ; BX=PC!
-                MOV     ODM,1
+                MOV     BP,BX           ;BX=PC!
+                MOV     [ODM],1
                 CALL    OUT_DAS
                 RETN
 
-RROUT:          XOR     AL,AL
-                XCHG    AL,TICKS
-                MOV     O_CLOCK,AL
-                CALL    CPU8501
-                MOV     AL,O_CLOCK
-                ADD     TICKS,AL
-                JGE     SHORT RR_L5
+CPU8501T:       MOV     SI,[PC]         ;for T command
+                MOV     BP,[SPR]
+                MOV     AX,WORD [SR]
+                MOV     CX,[XR]
+                MOV     DI,[YR]
+
+                MOV     BX,SI
+                CALL    MREAD_DH
+                MOVZX   BX,DH
+                CALL    WORD [OPP+EBX*2]
+                JMP     CPU8501D.L2
+
+CPU8501D:       MOV     SI,[PC]         ;for G, P, (T-interrupt) command
+                MOV     BP,[SPR]
+                MOV     AX,WORD [SR]
+                MOV     CX,[XR]
+                MOV     DI,[YR]
+
+                MOV     BX,SI
+                CALL    MREAD_DH
+                MOVZX   BX,DH
+                CALL    WORD [OPP+EBX*2]
+                SUB     [TICKS],DL
+
+                TEST    AL,4
+                JNZ     .L2
+
+                MOV     DL,[TED_9]
+                AND     DL,[TED_A]
+                TEST    DL,5AH
+                JZ      .L2
+
+                CALL    CPU8501.IRQ
+                SUB     [TICKS],DL
+
+.L2:            SUB     [TICKS],CH
+
+                MOV     [PC],SI
+                MOV     [SPR],BP
+                MOV     WORD [SR],AX
+                MOV     [XR],CX
+                MOV     [YR],DI
+                RETN
+
+RROUT:          CALL    CPU8501D
+                JGE     .L5
 
                 CALL    TED
 
-RR_L5:          TEST    KBUFA,40H
-                JZ      SHORT RR_L2
+.L5:            TEST    [KBUFA],40H
+                JZ      .L2
 
                 XOR     AX,AX
-                XCHG    AX,WORD PTR KBUFS
+                XCHG    AX,WORD [KBUFS]
 
-                CMP     AL,0C4H        ;F10
+                CMP     AL,0C4H         ;F10
                 JZ      END_EMU
 
-                CMP     AL,0C3H        ;F9
-                JZ      SHORT RR_L3
+                CMP     AL,0C3H         ;F9
+                JZ      .L3
 
-                CMP     AL,0D7H        ;F11
-                JNZ     SHORT RR_L2
+                CMP     AL,0D7H         ;F11
+                JNZ     .L2
                 CALL    XRESET
 
-RR_L2:          PUSH    DS
+.L2:            PUSH    DS
                 POP     ES
-                MOV     AX,PC
-                MOV     CX,WORD PTR D_BUF1
+                MOV     AX,[PC]
+                MOV     CX,WORD [D_BUF1]
                 OR      CX,CX
-                JZ      SHORT RROUT
-                MOV     DI,OFFSET D_BUF1+2
+                JZ      RROUT
+                MOV     DI,D_BUF1+2
                 REPNZ   SCASW
-                JNZ     SHORT RROUT
-RR_L3:          RETN
+                JNZ     RROUT
+.L3:            RETN
+
+OROUT:          CALL    TED
+                CALL    CPU8501
+
+                TEST    [KBUFA],40H
+                JZ      .L2
+
+                XOR     AX,AX
+                XCHG    AX,WORD [KBUFS]
+
+                CMP     AL,0C4H         ;F10
+                JZ      END_EMU
+
+                CMP     AL,0C3H         ;F9
+                JZ      .L3
+
+                CMP     AL,0D7H         ;F11
+                JNZ     .L2
+                CALL    XRESET
+
+.L2:            CMP     [WATCHPOINT_FLAG],0
+                JNE     OROUT
+.L3:            RETN
 
 OUT_CHR:        MOV     AH,3
                 XOR     BH,BH
@@ -809,10 +872,10 @@ OUT_CHR:        MOV     AH,3
 
                 PUSH    SI
                 MOV     DL,32
-                LEA     SI,D_BUF2
+                MOV     SI,D_BUF2
                 MOV     BL,70H
                 MOV     CX,1
-OC_L1:          MOV     AH,2
+.L1:            MOV     AH,2
                 INT     10H
 
                 MOV     AL,[SI]
@@ -822,47 +885,48 @@ OC_L1:          MOV     AH,2
                 INC     SI
 
                 DEC     BP
-                JNZ     SHORT OC_L1
+                JNZ     .L1
                 POP     SI
                 RETN
 
 GET_PARS:       XOR     BX,BX
                 XOR     SI,SI
-GP_L2:          INC     SI
-GP_L2A:         CMP     INP_BUF[SI],BH
-                JE      SHORT GP_L1
+.L2:            INC     SI
+.L2A:           CMP     [INP_BUF+SI],BH
+                JE      .L1
 
-                CMP     INP_BUF[SI],','
-                JNZ     SHORT GP_L2
+                CMP     [INP_BUF+SI],','
+                JNZ     .L2
 
-                MOV     INP_BUF[SI],BH
-                CMP     SI,PPARS[BX]
-                JNZ     SHORT GP_L3
+                MOV     [INP_BUF+SI],BH
+                CMP     SI,[PPARS+BX]
+                JNZ     .L3
 
-GP_L5:          STC
+.L5:            STC
                 RETN
 
-GP_L3:          ADD     BL,2
+.L3:            ADD     BL,2
                 INC     SI
-                MOV     PPARS[BX],SI
-                JMP     SHORT GP_L2A
+                MOV     [PPARS+BX],SI
+                JMP     .L2A
 
-GP_L1:          CMP     SI,PPARS[BX]
-                JNZ     SHORT GP_L4
+.L1:            CMP     SI,[PPARS+BX]
+                JNZ     .L4
                 OR      BL,BL
-                JNZ     SHORT GP_L5
+                JNZ     .L5
 
-                MOV     QPARS,BH
+                MOV     [QPARS],BH
                 RETN
 
-GP_L4:          ADD     BL,2
+.L4:            ADD     BL,2
                 SHR     BX,1
-                MOV     QPARS,BL
+                MOV     [QPARS],BL
                 RETN
 
-D_DISPATCHER:   CALL    INPUT_LINE
-                MOV     BREAK_FLAG,0
-                MOV     AX,WORD PTR INP_BUF
+D_DISPATCHER:   CALL    SILENCE
+                CALL    INPUT_LINE
+                MOV     [BREAK_FLAG],0
+                MOV     AX,WORD [INP_BUF]
                 CMP     AL,'A'
                 JZ      D_A
                 CMP     AL,'C'
@@ -883,6 +947,8 @@ D_DISPATCHER:   CALL    INPUT_LINE
                 JZ      D_M
                 CMP     AL,'N'
                 JZ      D_N
+                CMP     AL,'O'
+                JZ      D_O
                 CMP     AL,'P'
                 JZ      D_P
                 CMP     AL,'Q'
@@ -902,205 +968,203 @@ D_DISPATCHER:   CALL    INPUT_LINE
                 CMP     AL,'Z'
                 JZ      D_Z
                 CMP     AL,'?'
-                JZ      SHORT D_HELP
+                JZ      D_HELP
 
-                LEA     DX,SDMSG
-                JMP     SHORT D_ERRX
+                MOV     DX,SDMSG
+                JMP     D_ERRX
 
-D_HELP:         LEA     DX,D_HELPM      ; HELP
-                JMP     SHORT D_ERRX
+D_HELP:         MOV     DX,D_HELPM      ;HELP
+                JMP     D_ERRX
 
-D_ERR:          LEA     DX,DERR1
+D_ERR:          MOV     DX,DERR1
 D_ERRX:         CALL    OUT_STR
                 JMP     D_DISPATCHER
 
-D_A:            MOV     SI,1            ; ASSEMBLE
+D_A:            MOV     SI,1            ;ASSEMBLE
                 MOV     DI,6
                 CALL    TRAN_VAL
-                JC      SHORT D_ERR
+                JC      D_ERR
 
                 DEC     SI
-                JZ      SHORT D_A_L18
+                JZ      .L18
 
-                MOV     APC,AX
+                MOV     [APC],AX
 
-D_A_L18:        MOV     AX,APC
-                MOV     EPC,AX
+.L18:           MOV     AX,[APC]
+                MOV     [EPC],AX
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_A_BUF,DX
+                MOV     WORD [D_A_BUF],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_A_BUF+2,DX
+                MOV     WORD [D_A_BUF+2],DX
 
-                LEA     DX,D_A_BUF
+                MOV     DX,D_A_BUF
                 CALL    OUT_STR
 
-                CALL    IC_L8           ; =INPUT_LINE
+                CALL    INPUT_LINE.L8           ; =INPUT_LINE
 
-                CMP     INP_BUF,0
+                CMP     [INP_BUF],0
                 JE      D_DISPATCHER
 
                 XOR     SI,SI
-                MOV     SSI,SI
-D_A_L6A:        MOV     AL,INP_BUF[SI]
+                MOV     [SSI],SI
+.L6A:           MOV     AL,[INP_BUF+SI]
                 OR      AL,AL
-                JZ      SHORT D_A_L5A
+                JZ      .L5A
 
                 CMP     AL,'$'
-                JNZ     SHORT D_A_L7A
+                JNZ     .L7A
                 
-                MOV     SSI,SI
-                INC     SSI
+                MOV     [SSI],SI
+                INC     [SSI]
 
-D_A_L7A:        CMP     SSI,0
-                JE      SHORT D_A_L7
+.L7A:           CMP     [SSI],0
+                JE      .L7
 
                 CMP     AL,'0'
-                JB      SHORT D_A_L7
+                JB      .L7
                 CMP     AL,'F'
-                JA      SHORT D_A_L7
+                JA      .L7
                 CMP     AL,'9'
-                JBE     SHORT D_A_L7B
+                JBE     .L7B
                 CMP     AL,'A'
-                JB      SHORT D_A_L7
+                JB      .L7
 
-D_A_L7B:        MOV     AL,'þ'
+.L7B:           MOV     AL,'þ'
 
-D_A_L7:         MOV     D_BUF2[SI],AL
+.L7:            MOV     [D_BUF2+SI],AL
                 INC     SI
-                JMP     SHORT D_A_L6A
+                JMP     .L6A
 
-D_A_L5A:        MOV     D_BUF2[SI],AL
+.L5A:           MOV     [D_BUF2+SI],AL
 
                 XOR     DX,DX
-D_A_L10:        MOV     BX,DX
+.L10:           MOV     BX,DX
                 SHL     BX,4
                 XOR     SI,SI
-D_A_L6:         MOV     AL,MN_T[BX]
+.L6:            MOV     AL,[MN_T+BX]
                 CMP     AL,' '
-                JZ      SHORT D_A_L4
+                JZ      .L4
 
                 OR      AL,AL
-                JZ      SHORT D_A_L5
+                JZ      .L5
 
-                MOV     D_BUF1[SI],AL
+                MOV     [D_BUF1+SI],AL
                 INC     SI
 
-D_A_L4:         INC     BX
-                JMP     SHORT D_A_L6
+.L4:            INC     BX
+                JMP     .L6
 
-D_A_L5:         MOV     D_BUF1[SI],AL
-
+.L5:            MOV     [D_BUF1+SI],AL
                 SHR     BX,4
-                LEA     SI,D_BUF1
-                LEA     DI,D_BUF2
+                MOV     SI,D_BUF1
+                MOV     DI,D_BUF2
                 PUSH    DS
                 POP     ES
-                MOV     CX,LINP_BUF
+                MOV     CX,[LINP_BUF]
 
                 REPZ    CMPSB
-                MOV     DI,SSI
-                JZ      SHORT D_A_L8
+                MOV     DI,[SSI]
+                JZ      .L8
 
-                CMP     BYTE PTR DS:[SI],'ý'
-                JZ      SHORT D_A_L14
+                CMP     BYTE [DS:SI],'ý'
+                JZ      .L14
 
                 INC     DL
-                JNZ     SHORT D_A_L10
+                JNZ     .L10
 
-D_A_L17:        MOV     CL,3
+.L17:           MOV     CL,3
                 CALL    OUTSPC
-                LEA     DX,DERR1
+                MOV     DX,DERR1
                 CALL    OUT_STR
-                JMP     D_A_L18
+                JMP     .L18
 
-D_A_L14:        MOV     SI,APC
-
-                MOV     DX,WORD PTR INP_BUF[DI+2]
+.L14:           MOV     SI,[APC]
+                MOV     DX,WORD [INP_BUF+DI+2]
                 XCHG    DL,DH
                 SHL     EDX,16
-                MOV     DX,WORD PTR INP_BUF[DI]
+                MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
                 CALL    HEX2BIN
-                JC      SHORT D_A_L17
+                JC      .L17
                 MOV     AH,AL
                 SHR     EDX,16
                 CALL    HEX2BIN
-                JC      SHORT D_A_L17
+                JC      .L17
                 MOV     CX,AX
-                SUB     AX,APC
+                SUB     AX,[APC]
                 SUB     AX,2
 
                 PUSH    AX
                 CBW
-                ADD     AX,APC
+                ADD     AX,[APC]
                 ADD     AX,2
                 CMP     AX,CX
                 POP     AX
-                JNZ     SHORT D_A_L17
+                JNZ     .L17
 
-                ADD     APC,2
+                ADD     [APC],2
                 MOV     DH,BL
                 MOV     BX,SI
                 CALL    MSTORE_DH
                 INC     BX
                 MOV     DH,AL
                 CALL    MSTORE_DH
-                JMP     SHORT D_A_L18B
+                JMP     .L18B
 
-D_A_L8:         MOV     CL,OPCL[BX]
-                MOV     SI,APC
+.L8:            MOV     CL,[OPCL+BX]
+                MOV     SI,[APC]
                 MOV     DH,BL
                 MOV     BX,SI
                 CALL    MSTORE_DH
                 CMP     CL,1
-                JZ      SHORT D_A_L18A
+                JZ      .L18A
 
-                MOV     DX,WORD PTR INP_BUF[DI]
+                MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
                 ADD     DI,2
-                CMP     D_BUF2[DI],'þ'
-                JNZ     SHORT D_A_L16
+                CMP     [D_BUF2+DI],'þ'
+                JNZ     .L16
 
                 SHL     EDX,16
-                MOV     DX,WORD PTR INP_BUF[DI]
+                MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
                 ROL     EDX,16
                 CALL    HEX2BIN
-                JC      D_A_L17
+                JC      .L17
                 MOV     DH,AL
                 ADD     BX,2
                 CALL    MSTORE_DH
                 SHR     EDX,16
 
-D_A_L16:        CALL    HEX2BIN
-                JC      D_A_L17
+.L16:           CALL    HEX2BIN
+                JC      .L17
                 MOV     BX,SI
                 INC     BX
                 MOV     DH,AL
                 CALL    MSTORE_DH
-D_A_L18A:       ADD     APC,CX
+.L18A:          ADD     [APC],CX
 
-D_A_L18B:       MOV     AH,3
+.L18B:          MOV     AH,3
                 XOR     BH,BH
                 INT     10H
                 DEC     DH
                 MOV     AH,2
                 INT     10H
 
-                MOV     BX,EPC
+                MOV     BX,[EPC]
                 MOV     BP,BX
-                MOV     ODM,0
+                MOV     [ODM],0
                 CALL    OUT_DAS
-                JMP     D_A_L18
+                JMP     .L18
 
-D_C:            CALL    GET_MPARS       ; COMPARE
+D_C:            CALL    GET_MPARS       ;COMPARE
                 JC      D_ERR
 
                 MOV     SI,BX
-D_C_L1:         MOV     BX,SI
+.L1:            MOV     BX,SI
                 CALL    MREAD_DH
                 MOV     DL,DH
                 XCHG    BX,DI
@@ -1111,83 +1175,83 @@ D_C_L1:         MOV     BX,SI
                 DEC     CX
                 CMP     DL,DH
                 MOV     BP,DX
-                JNZ     SHORT D_C_L1A
+                JNZ     .L1A
 
                 OR      CX,CX
                 JZ      D_DISPATCHER
-                JMP     SHORT D_C_L1
+                JMP     .L1
 
-D_C_L1A:        MOV     AX,SI
+.L1A:           MOV     AX,SI
                 DEC     AX
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF,DX
+                MOV     WORD [D_C_BUF],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF+2,DX
+                MOV     WORD [D_C_BUF+2],DX
 
                 MOV     AX,DI
                 DEC     AX
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF+14,DX
+                MOV     WORD [D_C_BUF+14],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF+16,DX
+                MOV     WORD [D_C_BUF+16],DX
 
                 MOV     AX,BP
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF+6,DX
+                MOV     WORD [D_C_BUF+6],DX
 
                 MOV     AX,BP
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_C_BUF+10,DX
+                MOV     WORD [D_C_BUF+10],DX
 
-                LEA     DX,D_C_BUF
+                MOV     DX,D_C_BUF
                 CALL    OUT_STR
 
                 OR      CX,CX
-                JNZ     SHORT D_C_L1
+                JNZ     .L1
                 JMP     D_DISPATCHER
 
-D_D:            CALL    GET_PARS        ; DUMP
+D_D:            CALL    GET_PARS        ;DUMP
                 JC      D_ERR
 
-                CMP     QPARS,2
+                CMP     [QPARS],2
                 JA      D_ERR
 
                 MOV     SI,1
 
-                CMP     INP_BUF+1,'L'
-                JZ      SHORT D_D_L8
+                CMP     [INP_BUF+1],'L'
+                JZ      .L8
                 
                 MOV     DI,6
                 CALL    TRAN_VAL
                 JC      D_ERR
 
                 DEC     SI
-                JZ      D_D_L18
+                JZ      .L18
 
-                MOV     DPC,AX
+                MOV     [DPC],AX
 
-D_D_L18:        MOV     AX,DPC
-                ADD     AX,63           ; DEFAULT DUMP LENGTH-1
-                JNC     SHORT D_D_L18X
+.L18:           MOV     AX,[DPC]
+                ADD     AX,63           ;DEFAULT DUMP LENGTH-1
+                JNC     .L18X
 
                 MOV     AX,0FFFFH
-D_D_L18X:       MOV     EPC,AX
+.L18X:          MOV     [EPC],AX
 
-                CMP     QPARS,2
-                JNZ     SHORT D_D_L3A
+                CMP     [QPARS],2
+                JNZ     .L3A
 
-                MOV     SI,PPARS+2
-                CMP     INP_BUF[SI],'L'
-                JNZ     SHORT D_D_L4
+                MOV     SI,[PPARS+2]
+                CMP     [INP_BUF+SI],'L'
+                JNZ     .L4
 
-D_D_L8:         INC     SI
+.L8:            INC     SI
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
@@ -1197,80 +1261,80 @@ D_D_L8:         INC     SI
                 CMP     SI,DI
                 JZ      D_ERR
 
-                ADD     AX,DPC
+                ADD     AX,[DPC]
                 DEC     AX
-                MOV     EPC,AX
-                JMP     SHORT D_D_L3A
+                MOV     [EPC],AX
+                JMP     .L3A
 
-D_D_L4:         MOV     DI,SI
+.L4:            MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     EPC,AX
-D_D_L3A:        MOV     SI,DPC
+                MOV     [EPC],AX
+.L3A:           MOV     SI,[DPC]
                 SUB     AX,SI
                 JC      D_ERR
                 
                 INC     AX
                 MOV     CX,AX
                 MOV     DI,SI
-D_D_L7:         ADD     DI,8
+.L7:            ADD     DI,8
                 MOV     AX,SI
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_A_BUF,DX
+                MOV     WORD [D_A_BUF],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_A_BUF+2,DX
+                MOV     WORD [D_A_BUF+2],DX
 
-                LEA     DX,D_A_BUF
+                MOV     DX,D_A_BUF
                 CALL    OUT_STR
 
                 XOR     BX,BX
 
-D_D_L6:         XCHG    SI,BX
+.L6:            XCHG    SI,BX
                 CALL    MREAD_DH
                 MOV     AL,DH
                 XCHG    SI,BX
-                MOV     D_BUF2[BX],AL
+                MOV     [D_BUF2+BX],AL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_D_BUF+1,DX
-                LEA     DX,D_D_BUF
+                MOV     WORD [D_D_BUF+1],DX
+                MOV     DX,D_D_BUF
                 CALL    OUT_STR
 
                 INC     SI
                 INC     BX
 
                 DEC     CX
-                JZ      SHORT D_D_L5
+                JZ      .L5
 
                 CMP     SI,DI
-                JNZ     SHORT D_D_L6
+                JNZ     .L6
 
                 MOV     BP,8
                 PUSH    CX
                 CALL    OUT_CHR
                 POP     CX
-                LEA     DX,EOL
+                MOV     DX,EOL
                 CALL    OUT_STR
-                CMP     BREAK_FLAG,0
+                CMP     [BREAK_FLAG],0
                 JNE     D_DISPATCHER
-                JMP     SHORT D_D_L7
+                JMP     .L7
 
-D_D_L5:         MOV     DPC,SI
+.L5:            MOV     [DPC],SI
                 SUB     SI,DI
                 ADD     SI,8
                 MOV     BP,SI
                 CALL    OUT_CHR
-                LEA     DX,EOL
+                MOV     DX,EOL
                 JMP     D_ERRX
 
-D_E:            CALL    GET_PARS        ; ENTER
+D_E:            CALL    GET_PARS        ;ENTER
                 JC      D_ERR
 
-                MOV     CL,QPARS
+                MOV     CL,[QPARS]
 
                 DEC     CL
                 JS      D_ERR
@@ -1280,56 +1344,56 @@ D_E:            CALL    GET_PARS        ; ENTER
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     CPC,AX
+                MOV     [CPC],AX
 
                 OR      CL,CL
-                JZ      SHORT D_E_L8
+                JZ      .L8
 
                 XOR     BX,BX
-D_E_L1:         MOV     SI,PPARS[BX]+2
+.L1:            MOV     SI,[PPARS+BX+2]
                 MOV     DI,SI
                 ADD     DI,3
                 CALL    TRAN_VAL
                 JC      D_ERR
 
                 SHR     BX,1
-                MOV     D_BUF1[BX],AL
+                MOV     [D_BUF1+BX],AL
                 SHL     BX,1
                 ADD     BL,2
                 DEC     CL
-                JNZ     SHORT D_E_L1
+                JNZ     .L1
 
-                MOV     BX,CPC
-                MOV     CL,QPARS
-                LEA     SI,D_BUF1
-D_E_L2:         DEC     CL
+                MOV     BX,[CPC]
+                MOV     CL,[QPARS]
+                MOV     SI,D_BUF1
+.L2:            DEC     CL
                 JZ      D_DISPATCHER
                 
                 MOV     DH,[SI]
                 CALL    MSTORE_DH
                 INC     BX
                 INC     SI
-                JMP     SHORT D_E_L2
+                JMP     .L2
 
-D_E_L8:         MOV     AX,CPC
+.L8:            MOV     AX,[CPC]
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_E_BUF,DX
+                MOV     WORD [D_E_BUF],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_E_BUF+2,DX
+                MOV     WORD [D_E_BUF+2],DX
                 CALL    MREAD_DH
                 MOV     AL,DH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_E_BUF+6,DX
+                MOV     WORD [D_E_BUF+6],DX
 
-                LEA     DX,D_E_BUF
+                MOV     DX,D_E_BUF
                 CALL    OUT_STR
 
-                CALL    IC_L8           ; =INPUT_LINE
+                CALL    INPUT_LINE.L8           ; =INPUT_LINE
 
-                CMP     INP_BUF,0
+                CMP     [INP_BUF],0
                 JZ      D_DISPATCHER
 
                 XOR     SI,SI
@@ -1337,18 +1401,18 @@ D_E_L8:         MOV     AX,CPC
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     BX,CPC
+                MOV     BX,[CPC]
                 MOV     DH,AL
                 CALL    MSTORE_DH
                 JMP     D_DISPATCHER
 
-D_F:            CALL    GET_FPARS       ; FILL
+D_F:            CALL    GET_FPARS       ;FILL
                 JC      D_ERR
 
-D_F_L6:         MOV     AL,QPARS
-                LEA     DI,D_BUF1
+.L6:            MOV     AL,[QPARS]
+                MOV     DI,D_BUF1
                 SUB     AL,2
-D_F_L5:         MOV     DH,[DI]
+.L5:            MOV     DH,[DI]
                 CALL    MSTORE_DH
                 INC     BX
                 INC     DI
@@ -1356,39 +1420,38 @@ D_F_L5:         MOV     DH,[DI]
                 JZ      D_DISPATCHER
 
                 DEC     AL
-                JNZ     SHORT D_F_L5
-                JMP     SHORT D_F_L6
+                JNZ     .L5
+                JMP     .L6
 
-D_G:            CALL    GET_PARS        ; GO
+D_G:            CALL    GET_PARS        ;GO
                 JC      D_ERR
 
-                MOV     CL,QPARS
+                MOV     CL,[QPARS]
                 XOR     BX,BX
                 XOR     DI,DI
                 XOR     CH,CH
 
                 OR      CL,CL
-                JZ      SHORT D_G_L2
+                JZ      .L2
 
                 MOV     SI,1
-                CMP     INP_BUF+1,'='
-                JNZ     SHORT D_G_L2
+                CMP     [INP_BUF+1],'='
+                JNZ     .L2
 
                 INC     SI
                 MOV     DI,7
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     PC,AX
+                MOV     [PC],AX
                 MOV     DI,2
                 DEC     CX
                 
-D_G_L2:         MOV     WORD PTR D_BUF1,CX
-
+.L2:            MOV     WORD [D_BUF1],CX
                 OR      CL,CL
-                JZ      SHORT D_G_L1
+                JZ      .L1
 
-D_G_L3:         MOV     SI,PPARS[BX+DI]
+.L3:            MOV     SI,[PPARS+BX+DI]
                 PUSH    DI
                 MOV     DI,SI
                 ADD     DI,5
@@ -1397,11 +1460,11 @@ D_G_L3:         MOV     SI,PPARS[BX+DI]
                 JC      D_ERR
 
                 ADD     BL,2
-                MOV     WORD PTR D_BUF1[BX],AX
+                MOV     WORD [D_BUF1+BX],AX
                 DEC     CX
-                JNZ     SHORT D_G_L3
+                JNZ     .L3
 
-D_G_L1:         CALL    SAVE_DEBUG
+.L1:            CALL    SAVE_DEBUG
                 CALL    RESTORE_TED
 
                 CALL    RROUT
@@ -1411,10 +1474,10 @@ D_G_L1:         CALL    SAVE_DEBUG
                 CALL    SHOW_REGS
                 JMP     D_DISPATCHER
 
-D_H:            CALL    GET_PARS        ; HEX
+D_H:            CALL    GET_PARS        ;HEX
                 JC      D_ERR
 
-                CMP     QPARS,2
+                CMP     [QPARS],2
                 JNZ     D_ERR
 
                 MOV     SI,1
@@ -1422,48 +1485,48 @@ D_H:            CALL    GET_PARS        ; HEX
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     VAL1,AX
+                MOV     [VAL1],AX
 
-                MOV     SI,PPARS+2
+                MOV     SI,[PPARS+2]
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     VAL2,AX
+                MOV     [VAL2],AX
 
-                ADD     AX,VAL1
+                ADD     AX,[VAL1]
                 PUSH    AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_H_BUF,DX
+                MOV     WORD [D_H_BUF],DX
                 POP     AX
                 CALL    BIN2HEX
-                MOV     WORD PTR D_H_BUF+2,DX
+                MOV     WORD [D_H_BUF+2],DX
 
-                MOV     AX,VAL1
-                SUB     AX,VAL2
+                MOV     AX,[VAL1]
+                SUB     AX,[VAL2]
                 PUSH    AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_H_BUF+6,DX
+                MOV     WORD [D_H_BUF+6],DX
                 POP     AX
                 CALL    BIN2HEX
-                MOV     WORD PTR D_H_BUF+8,DX
+                MOV     WORD [D_H_BUF+8],DX
 
-                LEA     DX,D_H_BUF
+                MOV     DX,D_H_BUF
                 JMP     D_ERRX
 
-D_L:            CALL    GET_PARS                ; LOAD
+D_L:            CALL    GET_PARS        ;LOAD
                 JC      D_ERR
 
-                CMP     QPARS,1
+                CMP     [QPARS],1
                 JA      D_ERR
 
-                LEA     DX,FNAME
+                MOV     DX,FNAME
                 MOV     AX,3D00H
                 INT     21H
-                LEA     DX,DERR2
+                MOV     DX,DERR2
                 JC      D_ERRX
 
                 MOV     BX,AX
@@ -1471,33 +1534,33 @@ D_L:            CALL    GET_PARS                ; LOAD
                 XOR     CX,CX
                 XOR     DX,DX
                 INT     21H
-                JC      SHORT D_L_L3
+                JC      .L3
 
                 OR      DX,DX
-                JNZ     SHORT D_L_L3
+                JNZ     .L3
 
-                MOV     DI,AX   ;SAVE LENGTH
+                MOV     DI,AX           ;SAVE LENGTH
 
                 MOV     AX,4200H
                 XOR     CX,CX
                 XOR     DX,DX
                 INT     21H
-                JC      SHORT D_L_L3
+                JC      .L3
 
-                CMP     QPARS,1
-                JE      SHORT D_L_L1
+                CMP     [QPARS],1
+                JE      .L1
 
-                LEA     DX,VAL1
+                MOV     DX,VAL1
                 MOV     CX,2
                 MOV     AH,3FH
                 INT     21H
-                JC      SHORT D_L_L3
+                JC      .L3
 
                 SUB     DI,2
-                MOV     DX,VAL1
-                JMP     SHORT D_L_L2
+                MOV     DX,[VAL1]
+                JMP     .L2
 
-D_L_L1:         MOV     SI,1
+.L1:            MOV     SI,1
                 PUSH    DI
                 MOV     DI,6
                 CALL    TRAN_VAL
@@ -1506,71 +1569,125 @@ D_L_L1:         MOV     SI,1
 
                 MOV     DX,AX
 
-D_L_L2:         PUSH    DS
+.L2:            PUSH    DS
                 PUSH    FS
                 POP     DS
                 MOV     AH,3FH
                 MOV     CX,DI
                 INT     21H
                 POP     DS
-                JC      SHORT D_L_L3
+                JC      .L3
                 CMP     AX,DI
-                JNZ     SHORT D_L_L3
+                JNZ     .L3
 
                 MOV     AH,3EH
                 INT     21H
                 JMP     D_DISPATCHER
 
-D_L_L3:         MOV     AH,3EH
+.L3:            MOV     AH,3EH
                 INT     21H
-                LEA     DX,DERR3
+                MOV     DX,DERR3
                 JMP     D_ERRX
 
-D_M:            CALL    GET_MPARS               ; MOVE
+D_M:            CALL    GET_MPARS       ;MOVE
                 JC      D_ERR
                 
-D_M_L1:         CALL    MREAD_DH
+.L1:            CALL    MREAD_DH
                 XCHG    BX,DI
                 CALL    MSTORE_DH
                 XCHG    BX,DI
                 INC     BX
                 INC     DI
                 DEC     CX
-                JNZ     SHORT D_M_L1
+                JNZ     .L1
                 JMP     D_DISPATCHER
 
-D_N:            CALL    GET_PARS                ; NAME
+D_N:            CALL    GET_PARS        ;NAME
                 JC      D_ERR
 
-                CMP     QPARS,1
+                CMP     [QPARS],1
                 JNZ     D_ERR
 
-                MOV     CX,LINP_BUF
+                MOV     CX,[LINP_BUF]
                 DEC     CX
                 PUSH    DS
                 POP     ES
-                LEA     SI,INP_BUF+1
-                LEA     DI,FNAME
+                MOV     SI,INP_BUF+1
+                MOV     DI,FNAME
                 REP     MOVSB
                 JMP     D_DISPATCHER
 
-D_P:            CALL    GET_TPARS               ; TRACE PROC
+D_O:            CALL    GET_PARS        ;WATCHPOINT(S)
+                JC      D_ERR
+
+                MOV     CL,[QPARS]
+                XOR     BX,BX
+                XOR     DI,DI
+                XOR     CH,CH
+
+                OR      CL,CL
+                JZ      .L2
+
+                MOV     SI,1
+                CMP     [INP_BUF+1],'='
+                JNZ     .L2
+
+                INC     SI
+                MOV     DI,7
+                CALL    TRAN_VAL
+                JC      D_ERR
+
+                MOV     [PC],AX
+                MOV     DI,2
+                DEC     CX
+                
+.L2:            MOV     WORD [D_BUF1],CX
+
+                OR      CL,CL
+                JZ      .L1
+
+.L3:            MOV     SI,[PPARS+BX+DI]
+                PUSH    DI
+                MOV     DI,SI
+                ADD     DI,5
+                CALL    TRAN_VAL
+                POP     DI
+                JC      D_ERR
+
+                ADD     BL,2
+                MOV     WORD [D_BUF1+BX],AX
+                DEC     CX
+                JNZ     .L3
+
+.L1:            CALL    SAVE_DEBUG
+                CALL    RESTORE_TED
+
+                INC     [WATCHPOINT_FLAG]
+                CALL    OROUT
+                MOV     [WATCHPOINT_FLAG],0
+
+                CALL    SAVE_TED
+                CALL    RESTORE_DEBUG
+                CALL    SHOW_REGS
+                JMP     D_DISPATCHER
+
+D_P:            CALL    GET_TPARS               ;TRACE PROC
                 JC      D_ERR
 
                 CALL    SAVE_DEBUG
                 CALL    RESTORE_TED
 
-D_P_L2:         MOV     AX,PC
-                MOV     WORD PTR D_BUF1,3
+.L2:            MOV     AX,[PC]
+                MOV     WORD [D_BUF1],3
                 INC     AX
-                MOV     WORD PTR D_BUF1+2,AX
+                MOV     WORD [D_BUF1+2],AX
                 INC     AX
-                MOV     WORD PTR D_BUF1+4,AX
+                MOV     WORD [D_BUF1+4],AX
                 INC     AX
-                MOV     WORD PTR D_BUF1+6,AX
+                MOV     WORD [D_BUF1+6],AX
                 CALL    RROUT
-                DEC     VAL1
-                JNZ     SHORT D_P_L2
+                DEC     [VAL1]
+                JNZ     .L2
 
                 CALL    SAVE_TED
                 CALL    RESTORE_DEBUG
@@ -1579,49 +1696,49 @@ D_P_L2:         MOV     AX,PC
 
 D_Q:            RETN
 
-D_ERR2:         LEA     DX,DERR1+1
+D_ERR2:         MOV     DX,DERR1+1
                 JMP     D_ERRX
 
-D_R:            MOV     AX,WORD PTR INP_BUF+1   ; REGISTER
+D_R:            MOV     AX,WORD [INP_BUF+1]         ;REGISTER
                 OR      AL,AL
-                JNZ     SHORT D_R_L1
+                JNZ     .L1
 
                 CALL    SHOW_REGS
                 JMP     D_DISPATCHER
 
-D_R_L1:         MOV     CX,3
-                CMP     AX,'CA'
-                LEA     DI,AC
-                JZ      SHORT D_R_L2
-                CMP     AX,'RX'
-                LEA     DI,XR
-                JZ      SHORT D_R_L2
-                CMP     AX,'RY'
-                LEA     DI,YR
-                JZ      SHORT D_R_L2
-                CMP     INP_BUF+3,0
-                JNE     SHORT D_ERR2
-                CMP     AX,'PS'
-                LEA     DI,SPR
-                JZ      SHORT D_R_L2
-                CMP     AX,'RS'
-                LEA     DI,SR
-                JZ      SHORT D_R_L2
-                CMP     AX,'CP'
-                LEA     DI,PC
-                JNZ     SHORT D_ERR2
+.L1:            MOV     CX,3
+                CMP     AX,'AC'
+                MOV     DI,AC
+                JZ      .L2
+                CMP     AX,'XR'
+                MOV     DI,XR
+                JZ      .L2
+                CMP     AX,'YR'
+                MOV     DI,YR
+                JZ      .L2
+                CMP     [INP_BUF+3],0
+                JNE     D_ERR2
+                CMP     AX,'SP'
+                MOV     DI,SPR
+                JZ      .L2
+                CMP     AX,'SR'
+                MOV     DI,SR
+                JZ      .L2
+                CMP     AX,'PC'
+                MOV     DI,PC
+                JNZ     D_ERR2
 
                 ADD     CX,2
 
-D_R_L2:         MOV     DL,':'
+.L2:            MOV     DL,':'
                 MOV     AH,2
                 INT     21H
 
                 PUSH    CX
-                CALL    IC_L8           ; =INPUT_LINE
+                CALL    INPUT_LINE.L8           ; =INPUT_LINE
                 POP     CX
 
-                CMP     INP_BUF,0
+                CMP     [INP_BUF],0
                 JZ      D_DISPATCHER
 
                 XOR     SI,SI
@@ -1629,13 +1746,13 @@ D_R_L2:         MOV     DL,':'
                 MOV     DI,CX
                 CALL    TRAN_VAL
                 POP     DI
-                JC      SHORT D_ERR2
+                JC      D_ERR2
 
                 OR      SI,SI
                 JZ      D_DISPATCHER
 
                 MOV     [DI],AL
-                OR      SR,20H
+                OR      [SR],20H
 
                 CMP     CL,5
                 JNZ     D_DISPATCHER
@@ -1643,180 +1760,188 @@ D_R_L2:         MOV     DL,':'
                 MOV     [DI+1],AH
                 JMP     D_DISPATCHER
 
-D_S:            CALL    GET_FPARS       ; SEARCH
+D_S:            CALL    GET_FPARS       ;SEARCH
                 JC      D_ERR
 
-D_S_L6:         MOV     AL,QPARS
-                LEA     DI,D_BUF1
+.L6:            MOV     AL,[QPARS]
+                MOV     DI,D_BUF1
                 SUB     AL,2
                 
                 MOV     SI,BX
-D_S_L1:         CALL    MREAD_DH
+.L1:            CALL    MREAD_DH
                 INC     BX
                 CMP     DH,[DI]
-                JNZ     SHORT D_S_L5
+                JNZ     .L5
                 INC     DI
                 DEC     AL
-                JNZ     SHORT D_S_L1
+                JNZ     .L1
 
                 MOV     AX,SI
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_S_BUF,DX
+                MOV     WORD [D_S_BUF],DX
                 MOV     AX,SI
                 CALL    BIN2HEX
-                MOV     WORD PTR D_S_BUF+2,DX
+                MOV     WORD [D_S_BUF+2],DX
 
-                LEA     DX,D_S_BUF
+                MOV     DX,D_S_BUF
                 CALL    OUT_STR
 
-D_S_L5:         MOV     DI,SI
+.L5:            MOV     DI,SI
                 INC     DI
                 DEC     CX
-                JNZ     SHORT D_S_L6
+                JNZ     .L6
                 JMP     D_DISPATCHER
 
 D_T:            CALL    GET_TPARS               ;TRACE
                 JC      D_ERR
 
-                MOV     DWORD PTR O_CLOCK,0
-D_T_L2:         MOV     AL,TED_9
-                AND     AL,TED_A
+                MOV     DWORD [T_CLOCK_LO],0
+.L2:            MOV     AL,[TED_9]
+                AND     AL,[TED_A]
                 TEST    AL,5AH
-                JZ      SHORT D_T_L3
+                JZ      .L3
 
-                TEST    SR,4
-                JNZ     SHORT D_T_L3
+                TEST    [SR],4
+                JNZ     .L3
 
-                MOV     WORD PTR D_BUF1,1
-                MOV     AX,PC
-                MOV     WORD PTR D_BUF1+2,AX
+                MOV     WORD [D_BUF1],1
+                MOV     AX,[PC]
+                MOV     WORD [D_BUF1+2],AX
                 CALL    RROUT
-                JMP     SHORT D_T_L2
+                JMP     .L2
 
-D_T_L3:         XOR     AL,AL
-                XCHG    AL,TICKS
-                MOV     O_CLOCK,AL
-                CALL    CPU8501
-                MOVSX   AX,TICKS
-                MOV     CL,O_CLOCK
-                SUB     WORD PTR T_CLOCK_LO,AX
-                JC      SHORT D_T_L1
-                INC     T_CLOCK_HI
-D_T_L1:         ADD     TICKS,CL
-                JGE     SHORT D_T_L4
+.L3:            CALL    CPU8501T
+                PUSHF
+                XOR     DH,DH
+                ADD     WORD [T_CLOCK_LO],DX
+                ADC     [T_CLOCK_HI],DH
+.L1:            POPF
+                JGE     .L4
 
                 CALL    TED
-D_T_L4:         DEC     VAL1
-                JNZ     SHORT D_T_L2
+.L4:            DEC     [VAL1]
+                JNZ     .L2
 
                 CALL    SHOW_CLOCKS
                 CALL    SHOW_REGS
                 JMP     D_DISPATCHER
 
-D_U:            CALL    GET_PARS        ; UNASSEMBLE
+D_U:            CALL    GET_PARS        ;UNASSEMBLE
                 JC      D_ERR
 
-                CMP     QPARS,2
+                CMP     [QPARS],2
                 JA      D_ERR
 
                 MOV     SI,1
                 
-                CMP     INP_BUF+1,'L'
-                JZ      SHORT D_U_L8
+                CMP     [INP_BUF+1],'L'
+                JZ      .L8
                 
                 MOV     DI,6
                 CALL    TRAN_VAL
                 JC      D_ERR
 
                 DEC     SI
-                JZ      SHORT D_U_L18
+                JZ      .L18
 
-                MOV     UPC,AX
+                MOV     [UPC],AX
 
-D_U_L18:        MOV     AX,UPC
-                ADD     AX,31           ; DEFAULT DUMP LENGTH-1
-                JNC     SHORT D_U_L18X
+.L18:           MOV     AX,[UPC]
+                ADD     AX,31           ;DEFAULT DUMP LENGTH-1
+                JNC     .L18X
 
                 MOV     AX,0FFFFH
-D_U_L18X:       MOV     EPC,AX
+.L18X:          MOV     [EPC],AX
 
-                CMP     QPARS,2
-                JNZ     D_U_L3A
+                CMP     [QPARS],2
+                JNZ     .L3A
 
-                MOV     SI,PPARS+2
-                CMP     INP_BUF[SI],'L'
-                JNZ     SHORT D_U_L4
+                MOV     SI,[PPARS+2]
+                CMP     [INP_BUF+SI],'L'
+                JNZ     .L4
 
-D_U_L8:         INC     SI
+.L8:            INC     SI
                 MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                ADD     AX,UPC
+                ADD     AX,[UPC]
                 DEC     AX
-                MOV     EPC,AX
-                JMP     SHORT D_U_L3A
+                MOV     [EPC],AX
+                JMP     .L3A
 
-D_U_L4:         MOV     DI,SI
+.L4:            MOV     DI,SI
                 ADD     DI,5
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     EPC,AX
+                MOV     [EPC],AX
 
-D_U_L3A:        SUB     AX,UPC
+.L3A:           SUB     AX,[UPC]
                 JC      D_ERR
 
                 INC     AX
-D_U_L3:         MOV     BX,UPC
+.L3:            MOV     BX,[UPC]
                 MOV     BP,BX
                 PUSH    AX
-                MOV     ODM,0
+                MOV     [ODM],0
                 CALL    OUT_DAS
-                MOV     AX,UPC
-                MOV     UPC,BP
+                MOV     AX,[UPC]
+                MOV     [UPC],BP
                 SUB     BP,AX
                 POP     AX
-D_U_L2:         DEC     AX
+.L2:            DEC     AX
                 JZ      D_DISPATCHER
-                CMP     BREAK_FLAG,0
+                CMP     [BREAK_FLAG],0
                 JNE     D_DISPATCHER
                 DEC     BP
-                JNZ     SHORT D_U_L2
-                JMP     SHORT D_U_L3
+                JNZ     .L2
+                JMP     .L3
 
-D_V:            CALL    SAVE_DEBUG              ; VIEW CBM SCREEN
+D_V:            CALL    SAVE_DEBUG              ;VIEW CBM SCREEN
                 CALL    RESTORE_TED
+                NOT     [TIMER_ST]
+
+                CALL    SILENCE
 
                 MOV     AH,86H  ; DELAY
                 XOR     CX,7
                 INT     15H
 
-                MOV     KBUFN,CH
-D_V_L1:         CMP     KBUFN,CH
-                JE      SHORT D_V_L1
-                MOV     KBUFN,CH
+.L1:            CALL    WAITM
+                TEST    BX,3
+                JNZ     .L2
 
-                CALL    SAVE_TED
+                MOV     AH,1
+                INT     16H
+                JZ      .L1
+.L3:            XOR     AH,AH
+                INT     16H
+                MOV     AH,1
+                INT     16H
+                JNZ     .L3
+
+.L2:            CALL    SAVE_TED
+                NOT     [TIMER_ST]
                 CALL    RESTORE_DEBUG
                 JMP     D_DISPATCHER
 
-D_W:            CALL    GET_PARS                ; WRITE
+D_W:            CALL    GET_PARS                ;WRITE
                 JC      D_ERR
 
-                CMP     QPARS,2
+                CMP     [QPARS],2
                 JA      D_ERR
                 JPO     D_ERR
 
                 XOR     BP,BP
 
-                LEA     DX,FNAME
+                MOV     DX,FNAME
                 MOV     CX,20H
                 MOV     AH,3CH
                 INT     21H
-                JC      D_W_L2
+                JC      .L2
 
                 MOV     BX,AX
 
@@ -1825,44 +1950,44 @@ D_W:            CALL    GET_PARS                ; WRITE
                 CALL    TRAN_VAL
                 JC      D_ERR
 
-                MOV     VAL1,AX
+                MOV     [VAL1],AX
 
-                CMP     QPARS,1
-                JE      SHORT D_W_L1A
+                CMP     [QPARS],1
+                JE      .L1A
 
-                MOV     SI,PPARS+2
+                MOV     SI,[PPARS+2]
                 MOV     DI,SI
                 ADD     DI,2
                 CALL    TRAN_VAL
-                JC      SHORT D_W_L3
+                JC      .L3
 
                 OR      AL,AL
-                JNZ     SHORT D_W_L1
+                JNZ     .L1
 
-D_W_L1A:        MOV     AH,40H
-                LEA     DX,VAL1
+.L1A:           MOV     AH,40H
+                MOV     DX,VAL1
                 MOV     CX,2
                 MOV     BP,CX
                 INT     21H
-                JC      SHORT D_W_L3
+                JC      .L3
 
-D_W_L1:         MOV     CH,BYTE PTR XR
-                MOV     CL,BYTE PTR YR
+.L1:            MOV     CH,BYTE [XR]
+                MOV     CL,BYTE [YR]
                 OR      CX,CX
-                JZ      D_W_L4
+                JZ      .L4
 
-                MOV     DX,VAL1
+                MOV     DX,[VAL1]
                 PUSH    DS
                 PUSH    FS
                 POP     DS
                 MOV     AH,40H
                 INT     21H
                 POP     DS
-                JC      SHORT D_W_L3
+                JC      .L3
                 CMP     AX,CX
-                JNZ     SHORT D_W_L3
+                JNZ     .L3
 
-D_W_L4:         MOV     AH,3EH
+.L4:            MOV     AH,3EH
                 INT     21H
 
                 MOV     AX,CX
@@ -1870,36 +1995,36 @@ D_W_L4:         MOV     AH,3EH
                 MOV     BX,AX
                 MOV     AL,AH
                 CALL    BIN2HEX
-                MOV     WORD PTR D_W_BUF+8,DX
+                MOV     WORD [D_W_BUF+8],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD PTR D_W_BUF+10,DX
+                MOV     WORD [D_W_BUF+10],DX
 
-                LEA     DX,D_W_BUF
+                MOV     DX,D_W_BUF
                 JMP     D_ERRX
 
-D_W_L3:         MOV     AH,3EH
+.L3:            MOV     AH,3EH
                 INT     21H
-D_W_L2:         LEA     DX,DERR4
+.L2:            MOV     DX,DERR4
                 JMP     D_ERRX
 
-D_Z:            MOV     AH,3            ; ZOOM SCREEN ON/OFF
+D_Z:            MOV     AH,3            ;ZOOM SCREEN ON/OFF
                 XOR     BX,BX
                 INT     10H
-                MOV     CURSOR,DX
+                MOV     [CURSOR],DX
 
                 MOV     AX,1130H                
                 INT     10H
 
                 CMP     DL,49
                 MOV     CX,1112H
-                MOV     ZOOM_MODE,BL
-                JNZ     SHORT D_Z_L1
+                MOV     [ZOOM_MODE],BL
+                JNZ     .L1
                 
                 SUB     DH,24
-                JBE     SHORT D_Z_L2
+                JBE     .L2
 
-                MOV     BYTE PTR CURSOR+1,24
+                MOV     BYTE [CURSOR+1],24
                 MOV     AL,DH
                 MOV     AH,6
                 XOR     CX,CX
@@ -1907,16 +2032,26 @@ D_Z:            MOV     AH,3            ; ZOOM SCREEN ON/OFF
                 MOV     DX,314FH
                 INT     10H
                 XOR     BX,BX
-                INC     ZOOM_MODE
+                INC     [ZOOM_MODE]
 
-D_Z_L2:         MOV     CX,1114H
+.L2:            MOV     CX,1114H
 
-D_Z_L1:         MOV     AX,83H
+.L1:            MOV     AX,83H
                 INT     10H
                 MOV     AX,CX
                 INT     10H
 
-                MOV     DX,CURSOR
+                MOV     DX,[CURSOR]
                 MOV     AH,2
                 INT     10H
                 JMP     D_DISPATCHER
+
+;SHOW_EAX:       CALL    HEX2DEC
+;                XOR     BX,BX
+;.L1:            MOV     AL,[D_BUF1+BX]
+;                MOV     [FS:0C00H+BX],AL
+;                INC     BX
+;                CMP     BL,10
+;                JNZ     .L1
+;                RETN
+

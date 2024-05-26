@@ -16,13 +16,14 @@ D_W_BUF         DB      'Writing 0000 byte(s)',0DH,0AH,'$'
 SDMSG           DB      'Enter ? for commands list',0DH,0AH,'$'
 KBD_BUF_B       DB      62
 KBD_BUF_L       DB      0
-KBD_BUF         DB      63 DUP(0)
-INP_BUF         DB      63 DUP(0)
-D_BUF1          DB      63 DUP(0)
-D_BUF2          DB      63 DUP(0)
+KBD_BUF         RB      63
+INP_BUF         RB      63
+D_BUF1          RB      63
+D_BUF2          RB      63
 VAL1            DW      ?
 VAL2            DW      ?
-PPARS           DW      31 DUP(1)
+LABEL		PPARS	WORD
+TIMES	31      DW      1
 QPARS           DB      ?
 APC             DW      ?
 EPC             DW      ?
@@ -30,15 +31,16 @@ DPC             DW      ?
 UPC             DW      ?
 CPC             DW      ?
 SSI             DW      ?
-FNAME           DB      63 DUP(0)
-O_CLOCK         DB      ?       ;4 CLOCK'S BYTES ARE A SINGLE ENTITY!
+FNAME           RB      63
 T_CLOCK_LO      DW      ?
 T_CLOCK_HI      DB      ?
+                DB      ?       ;set to 0 by T command
 ZOOM_MODE       DB      0
 ODM             DB      0
 LINP_BUF        DW      ?
 CURSOR          DW      0
 SAVE_SOUND      DB      ?
+WATCHPOINT_FLAG DB      0
 
 OPCL    DB      1,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
         DB      3,2,1,2,2,2,2,2,1,2,1,2,3,3,3,3,2,2,1,2,2,2,2,2,1,3,1,3,3,3,3,3
@@ -334,6 +336,7 @@ D_HELPM DB      'Assemble       A [address]                           (ex: A1000
         DB      'Trace          T [=address] [number]                    (ex: T4)',0DH,0AH
         DB      'Unassemble     U [range]                             (ex: U L80)',0DH,0AH
         DB      'View +4 screen V                               (any key returns)',0DH,0AH
+        DB      'watchpOint     O [=address] [watchpoints]    (ex: W=3000,1,FF11)',0DH,0AH
         DB      'Write          W address [modus]                   (ex: W1001,1)',0DH,0AH
         DB      'Zoom on/off    Z',0DH,0AH
         DB      '(Range is either: <START ADDRESS>,<END ADDRESS> or <START ADDRESS>,L<LENGTH>)',0DH,0AH

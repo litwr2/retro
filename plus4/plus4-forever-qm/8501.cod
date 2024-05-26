@@ -1,648 +1,704 @@
-XRESET:         MOV     AX,SEG SEG_ROM -800H    ; SET ROM MAP
-                MOV     SA_ROM_LO,AX
-                MOV     SA_ROM_HI,AX
+XRESET:         MOV     AX,SEG SEG_ROM -800H    ;SET ROM MAP
+                MOV     [SA_ROM_LO],AX
+                MOV     [SA_ROM_HI],AX
                 CALL    SET_MDATA_SEG
-                MOV     BX,0FFFCH               ; USE RESET VECTOR
+                MOV     BX,0FFFCH               ;USE RESET VECTOR
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BX
                 CALL    MREAD_DH
-                MOV     PC,DX
+                MOV     [PC],DX
                 JMP     RESET_DS
 
 SET_MDATA_SEG:  PUSH    AX
-                TEST    TED_12,4
+                TEST    [TED_12],4
                 MOV     AX,FS
-                JZ      SHORT TMDS_L1
+                JZ      .L1
 
-                MOV     AX,SA_ROM_HI
-                TEST    MDATA_OFFSET,40H
-                JNZ     SHORT TMDS_L1
+                MOV     AX,[SA_ROM_HI]
+                TEST    [MDATA_OFFSET],40H
+                JNZ     .L1
 
-                MOV     AX,SA_ROM_LO
-TMDS_L1:        MOV     MDATA_SEG,AX
+                MOV     AX,[SA_ROM_LO]
+.L1:            MOV     [MDATA_SEG],AX
                 POP     AX
                 RETN
 
-MSTORE_DH:      CMP     BX,1
-                JA      SHORT MST_L1
-                JZ      SHORT MST_L1A
+MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
+                JE      .L1W
 
-                MOV     CPU_0,DH
+                PUSH    CX
+                XCHG    AX,BX
+                MOV     CX,WORD [D_BUF1]
+                OR      CX,CX
+                JZ      .L1C
+                PUSH    ES
+                PUSH    DS
+                POP     ES
+                PUSH    DI
+                MOV     DI,D_BUF1+2     ;$$$
+                REPNZ   SCASW
+                JNZ     .L1D
+                DEC     [WATCHPOINT_FLAG]
+.L1D:           POP     DI
+                POP     ES
+.L1C:           XCHG    AX,BX
+                POP     CX
+
+.L1W:           CMP     BX,1
+                JA      .L1
+                JZ      .L1A
+
+                MOV     [CPU_0],DH
                 RETN
 
-MST_L1A:        PUSH    DX              ;test: have CPU1 value changed?
-                PUSH    AX              ; yes - goto CPU_IO_WR,
-                MOV     DL,CPU_0        ; no - nothing to do
-                MOV     AL,CPU_1        ;
+.L1A:           PUSH    DX              ;test: have CPU1 value changed?
+                PUSH    AX              ;yes - goto CPU_IO_WR,
+                MOV     DL,[CPU_0]      ;no - nothing to do
+                MOV     AL,[CPU_1]      ;
                 AND     DH,DL           ;
                 NOT     DL              ;
-                AND     CPU_1,DL        ;
-                OR      CPU_1,DH        ;
-                MOV     CPU1_OLD,AL     ;
-                XOR     AL,CPU_1        ;
-                MOV     CPU1_XOR,AL     ;
+                AND     [CPU_1],DL      ;
+                OR      [CPU_1],DH      ;
+                MOV     [CPU1_OLD],AL   ;
+                XOR     AL,[CPU_1]      ;
+                MOV     [CPU1_XOR],AL   ;
                 POP     AX              ;
                 POP     DX              ;
                 JNZ     CPU_IO_WR       ;
                 RETN
 
-MST_L1:         CMP     BH,0FDH
-                JB      MST_LM
-                JNZ     MST_L4
+.L1:            CMP     BH,0FDH
+                JB      .LM
+                JNZ     .L4
 
                 CMP     BL,0FH
-                JA      SHORT MST_L5
+                JA      .L5
 
-               IF      ACIA_PRESENT
-                PUSH    BX              ; ACIA
-                AND     BX,3
-                MOV     ACIA_0[BX],DH
-                POP     BX
-                RETN
-               ELSE
-                JMP     MST_LM
-               ENDIF
+;                PUSH    BX              ;ACIA
+;                AND     BX,3
+;                MOV     [ACIA_0+BX],DH
+;                POP     BX
+;                RETN
+                JMP     .LM
 
-MST_L5:         CMP     BL,1FH
-                JA      SHORT MST_L6
+.L5:            CMP     BL,1FH
+                JA      .L6
 
-                MOV     PIO,DH          ; PIO
+                MOV     [PIO],DH          ;PIO
                 RETN
 
-MST_L6:         CMP     BL,2FH
-                JA      SHORT MST_L7
+.L6:            CMP     BL,2FH
+                JA      .L7
 
                 RETN
 
-MST_L7:         CMP     BL,3FH
-                JA      SHORT MST_L8
+.L7:            CMP     BL,3FH
+                JA      .L8
 
-                MOV     KBD,DH          ; KBD
+                MOV     [KBD],DH        ;KBD
                 RETN
 
-MST_L8:         CMP     BL,0D0H
-                JB      MST_LM
+.L8:            CMP     BL,0D0H
+                JB      .LM
                 CMP     BL,0DFH
-                JA      MST_LM
+                JA      .LM
 
-                PUSH    BX              ; ROMBANK
+                PUSH    BX              ;ROMBANK
                 PUSH    AX
                 AND     BX,0FH
                 PUSH    BX
-                MOV     ROMMAP,BL
+                MOV     [ROMMAP],BL
                 AND     BL,3
                 SHL     BX,1
-                MOV     AX,TSA_ROM[BX]
+                MOV     AX,[TSA_ROM+BX]
                 POP     BX
-                MOV     SA_ROM_LO,AX
+                MOV     [SA_ROM_LO],AX
                 SHR     BX,1
                 AND     BL,6
-                MOV     AX,TSA_ROM[BX]
-                MOV     SA_ROM_HI,AX
+                MOV     AX,[TSA_ROM+BX]
+                MOV     [SA_ROM_HI],AX
                 POP     AX
                 POP     BX
                 JMP     SET_MDATA_SEG
 
-MST_L4:         OR      BH,BH
-                JPO     MST_L9
+.L4:            OR      BH,BH
+                JPO     .L9
 
                 CMP     BL,1FH
-                JA      MST_L10
+                JA      .L10
 
-                CMP     BL,5                    ;TED
-                JA      SHORT MST_TED_L8A
+                CMP     BL,5            ;TED
+                JA      .L8A
 
                 CMP     BL,1
-                JA      SHORT MST_TED_L4A
+                JA      .L4A
 
-                MOV     BYTE PTR TIMER1_RELOAD[BX+100H],DH
-                JMP     MST_L11
+                MOV     BYTE [TIMER1_RELOAD+BX+100H],DH
+                JMP     .L11
 
-MST_TED_L4A:    TEST    BL,1
-                JNZ     MST_L11
+.L4A:           TEST    BL,1
+                JNZ     .L11
 
 ;                PUSH    DX
 ;                ADD     DH,8
-;                MOV     TED_0[BX+100H],DH
-;                ADC     TED_0[BX+101H],0
+;                MOV     [TED_0+BX+100H],DH
+;                ADC     [TED_0+BX+101H],0
 ;                POP     DX
 ;                RETN
-                JMP     MST_L11
+                JMP     .L11
 
-MST_TED_L8A:    CMP     BL,6
-                JNZ     SHORT MST_TED_L8D
+.L8A:           CMP     BL,6
+                JNZ     .L8D
                 PUSH    AX
 
                 MOV     AL,DH
                 AND     AL,7
-                XCHG    BYTE PTR Y_OFFSET,AL
-                SUB     AL,BYTE PTR Y_OFFSET
-                ADD     VSA,AL
-                AND     VSA,7
+                XCHG    BYTE [Y_OFFSET],AL
+                SUB     AL,BYTE [Y_OFFSET]
+                ADD     [VSA],AL
+                AND     [VSA],7
 
-                MOV     EVSA,START_V_SCR+199
-                MOV     SST,0
+                MOV     [EVSA],START_V_SCR+199
+                MOV     [SST],0
                 TEST    DH,8                    ;24 ROWS? (0-24, 1-25)
-                JNZ     SHORT MST_TED_L8B
-                MOV     SST,4
-                MOV     EVSA,START_V_SCR+191
+                JNZ     .L8B
+                MOV     [SST],4
+                MOV     [EVSA],START_V_SCR+191
 
-MST_TED_L8B:    MOV     AL,CG_BASE
+.L8B:           MOV     AL,[CG_BASE]
                 TEST    DH,20H                  ;BMM? (0-TEXT, 1-BMM)
-                JZ      MST_TED_L8H
-                MOV     AL,TED_12
+                JZ      .L8H
+                MOV     AL,[TED_12]
                 AND     AL,38H
                 SHL     AL,2
 
-MST_TED_L8H:    MOV     MDATA_OFFSET,AL
+.L8H:           MOV     [MDATA_OFFSET],AL
                 MOV     AL,DH
                 AND     AL,60H
-                AND     BYTE PTR VMODE,0F9H
+                AND     BYTE [VMODE],0F9H
                 SHR     AL,4
-                OR      BYTE PTR VMODE,AL
+                OR      BYTE [VMODE],AL
                 POP     AX
-                MOV     TED_6,DH
+                MOV     [TED_6],DH
                 JMP     SET_MDATA_SEG
 
-MST_TED_L8D:    CMP     BL,7
-                JNZ     SHORT MST_TED_L8
+.L8D:           CMP     BL,7
+                JNZ     .L8N
 
                 PUSH    AX
-                MOV     AX,X_OFFSET
-                SUB     VD_PTR_FILL,AX
+                MOV     AX,[X_OFFSET]
+                SUB     [VD_PTR_FILL],AX
                 MOV     AL,DH
                 AND     AL,7
-                ADD     VD_PTR_FILL,AX
-                MOV     X_OFFSET,AX
+                ADD     [VD_PTR_FILL],AX
+                MOV     [X_OFFSET],AX
                 POP     AX
 
-                MOV     EHSA,START_H_SCR+39
-                MOV     SHSA,START_H_SCR
+                MOV     [EHSA],START_H_SCR+39
+                MOV     [SHSA],START_H_SCR
                 TEST    DH,8                    ;38 COLUMNS? (0-38, 1-40)
-                JNZ     SHORT MST_TED_L8E
-                INC     SHSA
-                DEC     EHSA
+                JNZ     .L8E
+                INC     [SHSA]
+                DEC     [EHSA]
 
-MST_TED_L8E:    AND     BYTE PTR VMODE,0E7H
-                MOV     TED_7,DH
+.L8E:           AND     BYTE [VMODE],0E7H
+                MOV     [TED_7],DH
                 OR      DH,DH           ;HRM? (1-HARDWARE REVERSE OFF)
-                MOV     DH,TED_13       
-                JNS     SHORT MST_TED_L8F
-                OR      BYTE PTR VMODE,10H
-                AND     DH,0F8H
-MST_TED_L8F:    AND     DH,0FCH
-                MOV     CG_BASE,DH
-                TEST    TED_6,20H       ;BMM? (0-TEXT, 1-BMM)
-                JNZ     SHORT MST_TED_L8I
-                MOV     MDATA_OFFSET,DH
-MST_TED_L8I:    MOV     DH,TED_7
+                MOV     DH,[TED_13]
+                JS      .L8K
+                TEST    [TED_6],40H     ;ECM? (1-ECM ON)
+                JZ      .L8F
+                JMP     .L8L
+.L8K:           OR      BYTE [VMODE],10H
+.L8L:           AND     DH,0F8H
+.L8F:           AND     DH,0FCH
+                MOV     [CG_BASE],DH
+                TEST    [TED_6],20H     ;BMM? (0-TEXT, 1-BMM)
+                JNZ     .L8I
+                MOV     [MDATA_OFFSET],DH
+.L8I:           MOV     DH,[TED_7]
                 
                 TEST    DH,10H          ;MCM? (0-NORMAL, 1-MCM)
-                JZ      SHORT MST_TED_L8J
-                OR      BYTE PTR VMODE,8
-MST_TED_L8J:    RETN
+                JZ      .L8J
+                OR      BYTE [VMODE],8
+.L8J:           RETN
 
-MST_TED_L8:     CMP     BL,8
-                JNZ     SHORT MST_TED_L1
+.L8N:           CMP     BL,8
+                JNZ     .L1N
 
                 PUSH    AX
                 PUSH    BX
-                MOV     AL,KBD
+
+                MOV     AL,[KBD]
                 XOR     BX,BX
                 MOV     AH,0FFH
-MST_TED_L3:     SHR     AL,1
-                JC      SHORT MST_TED_L2
-                AND     AH,KMATRIX[BX]
-MST_TED_L2:     INC     BX
+.L3:            SHR     AL,1
+                JC      .L2C
+                AND     AH,[KMATRIX+BX]
+.L2C:           INC     BX
                 CMP     BL,8
-                JNZ     SHORT MST_TED_L3
+                JNZ     .L3
 
-                MOV     BX,JOY_MASK
+                MOV     BX,[JOY_MASK]
                 TEST    DH,6
-                JNZ     SHORT MST_TED_L2B
+                JNZ     .L2B
                 MOV     AL,BH
                 AND     AL,BL
-                JMP     SHORT MST_TED_L2A
+                JMP     .L2A
 
-MST_TED_L2B:    TEST    DH,2
-                JNZ     SHORT MST_TED_L2D
+.L2B:           TEST    DH,2
+                JNZ     .L2D
                 MOV     AL,BH
-                JMP     SHORT MST_TED_L2A
+                JMP     .L2A
 
-MST_TED_L2D:    TEST    DH,4
-                JNZ     SHORT MST_TED_L2E
+.L2D:           TEST    DH,4
+                JNZ     .L2E
                 MOV     AL,BL
-                JMP     SHORT MST_TED_L2A
+                JMP     .L2A
 
-MST_TED_L2E:    MOV     AL,0FFH
-MST_TED_L2A:    AND     AH,AL
-                MOV     TED_8,AH
-
+.L2E:           MOV     AL,0FFH
+.L2A:           AND     AH,AL
+                MOV     [TED_8],AH
                 POP     BX
                 POP     AX
                 RETN
 
-MST_TED_L1:     CMP     BL,9
-                JNZ     SHORT MST_TED_L4
+.L1N:           CMP     BL,9
+                JNZ     .L4N
 
                 PUSH    DX
                 NOT     DH
-                AND     DH,TED_9
+                AND     DH,[TED_9]
                 OR      DH,80H
                 TEST    DH,5AH
-                JNZ     SHORT MST_L12
+                JNZ     .L12
 
                 AND     DH,7FH
-MST_L12:        MOV     TED_9,DH
+.L12:           MOV     [TED_9],DH
                 POP     DX
                 RETN
 
-MST_TED_L4:     CMP     BL,0CH
-                JNZ     SHORT MST_TED_L5A
+.L4N:           CMP     BL,0CH
+                JNZ     .L5A
 
-                MOV     TED_D,DH
-                AND     TED_D,3
+                MOV     [TED_D],DH
+                AND     [TED_D],3
                 RETN
 
-MST_TED_L5A:    CMP     BL,0DH
-                JNZ     SHORT MST_TED_L5
+.L5A:           CMP     BL,0DH
+                JNZ     .L5N
 
-                MOV     TED_C,DH
+                MOV     [TED_C],DH
                 RETN
 
-MST_TED_L5:     CMP     BL,0EH
-                JNZ     SHORT MST_TED_L9
+.L5N:           CMP     BL,0EH
+                JNZ     .L9A
 
-                MOV     TED_E,DH
+                MOV     [TED_E],DH
                 JMP     [SOUND_0E]
 
-MST_TED_L9:     CMP     BL,0FH
-                JNZ     SHORT MST_TED_L10
+.L9A:           CMP     BL,0FH
+                JNZ     .L10A
 
-                MOV     TED_F,DH
+                MOV     [TED_F],DH
                 JMP     [SOUND_0F]
 
-MST_TED_L10:    CMP     BL,10H
-                JNZ     SHORT MST_TED_L11
+.L10A:          CMP     BL,10H
+                JNZ     .L11N
 
-                MOV     TED_10,DH
+                MOV     [TED_10],DH
                 JMP     [SOUND_10]
 
-MST_TED_L11:    CMP     BL,11H
-                JNZ     SHORT MST_TED_L12
+.L11N:          CMP     BL,11H
+                JNZ     .L12N
 
-                MOV     TED_11,DH
+                MOV     [TED_11],DH
                 JMP     [SOUND_11]
 
-MST_TED_L12:    CMP     BL,12H
-                JNZ     SHORT MST_TED_L6
+.L12N:          CMP     BL,12H
+                JNZ     .L6N
 
-                MOV     TED_12,DH
-                TEST    TED_6,20H       ;BMM?
-                JZ      SHORT MST_TED_L12A
+                MOV     [TED_12],DH
+                TEST    [TED_6],20H     ;BMM?
+                JZ      .L12A
                 AND     DH,38H
                 SHL     DH,2
-                MOV     MDATA_OFFSET,DH
-                MOV     DH,TED_12
-MST_TED_L12A:   CALL    SET_MDATA_SEG
+                MOV     [MDATA_OFFSET],DH
+                MOV     DH,[TED_12]
+.L12A:          CALL    SET_MDATA_SEG
                 JMP     [SOUND_12]
 
-MST_TED_L6:     CMP     BL,13H
-                JNZ     SHORT MST_TED_L7
+.L6N:           CMP     BL,13H
+                JNZ     .L7A
 
                 PUSH    DX
                 AND     DH,0FEH
-                AND     TED_13,1
-                OR      TED_13,DH
-                TEST    TED_7,80H       ;HRM?
-                JZ      SHORT MST_TED_L6A
-                AND     DH,0F8H
-MST_TED_L6A:    AND     DH,0FCH
-                MOV     CG_BASE,DH
-                TEST    TED_6,20H       ;BMM?
-                JNZ     SHORT MST_TED_L6B
-                MOV     MDATA_OFFSET,DH
-MST_TED_L6B:    POP     DX
+                AND     [TED_13],1
+                OR      [TED_13],DH
+                TEST    [TED_7],80H     ;HRM?
+                JNZ     .L6C
+                TEST    [TED_6],40H     ;ECM?
+                JZ      .L6A
+.L6C:           AND     DH,0F8H
+.L6A:           AND     DH,0FCH
+                MOV     [CG_BASE],DH
+                TEST    [TED_6],20H     ;BMM?
+                JNZ     .L6B
+                MOV     [MDATA_OFFSET],DH
+.L6B:           POP     DX
                 JMP     SET_MDATA_SEG
 
-MST_TED_L7:     CMP     BL,14H
-                JNZ     SHORT MST_L11A3
+.L7A:           CMP     BL,14H
+                JNZ     .L11A3
 
                 PUSH    DX
-                MOV     TED_14,DH
+                MOV     [TED_14],DH
                 AND     DH,0F8H
-                MOV     VM_BASE,DH
+                MOV     [VM_BASE],DH
                 POP     DX
                 RETN
 
-MST_L11A3:      CMP     BL,15H
-                JNZ     SHORT MST_L11A5
+.L11A3:         CMP     BL,15H
+                JNZ     .L11A5
 
-                MOV     BYTE PTR COLOR0,DH
-                MOV     BYTE PTR COLOR0+1,DH
-                JMP     MST_L11
+                MOV     BYTE [COLOR0],DH
+                MOV     BYTE [COLOR0+1],DH
+                JMP     .L11
 
-MST_L11A5:      CMP     BL,16H
-                JNZ     SHORT MST_L11A6
+.L11A5:         CMP     BL,16H
+                JNZ     .L11A6
 
-                MOV     BYTE PTR COLOR1,DH
-                MOV     BYTE PTR COLOR1+1,DH
-                JMP     MST_L11
+                MOV     BYTE [COLOR1],DH
+                MOV     BYTE [COLOR1+1],DH
+                JMP     .L11
 
-MST_L11A6:      CMP     BL,17H
-                JNZ     SHORT MST_L11A4
+.L11A6:         CMP     BL,17H
+                JNZ     .L11A4
 
-                MOV     BYTE PTR COLOR2,DH
-                MOV     BYTE PTR COLOR2+1,DH
-                JMP     MST_L11
+                MOV     BYTE [COLOR2],DH
+                MOV     BYTE [COLOR2+1],DH
+                JMP     .L11
 
-MST_L11A4:      CMP     BL,19H
-                JNZ     SHORT MST_L11A1
+.L11A4:         CMP     BL,19H
+                JNZ     .L11A1
 
-                MOV     BYTE PTR BORDER_COLOR,DH
-                MOV     BYTE PTR BORDER_COLOR+1,DH
-                MOV     BYTE PTR BORDER_COLOR+2,DH
-                MOV     BYTE PTR BORDER_COLOR+3,DH
-                JMP     MST_L11
+                MOV     BYTE [BORDER_COLOR],DH
+                MOV     BYTE [BORDER_COLOR+1],DH
+                MOV     BYTE [BORDER_COLOR+2],DH
+                MOV     BYTE [BORDER_COLOR+3],DH
+                JMP     .L11
 
-MST_L11A1:      CMP     BL,1AH
-                JNZ     SHORT MST_L11A2
-                MOV     TED_1B,DH
-                AND     TED_1B,3
+.L11A1:         CMP     BL,1AH
+                JNZ     .L11A2
+                MOV     [TED_1B],DH
+                AND     [TED_1B],3
                 RETN
 
-MST_L11A2:      CMP     BL,1BH
-                JNZ     SHORT MST_L11A
-                MOV     TED_1A,DH
+.L11A2:         CMP     BL,1BH
+                JNZ     .L11A
+                MOV     [TED_1A],DH
                 RETN
 
-MST_L11A:       CMP     BL,1CH
-                JNZ     SHORT MST_L11B
+.L11A:          CMP     BL,1CH
+                JNZ     .L11B
 
-                MOV     TED_1D,DH
-                AND     TED_1D,1
+                MOV     [TED_1D],DH
+                AND     [TED_1D],1
                 RETN
 
-MST_L11B:       CMP     BL,1DH
-                JNZ     SHORT MST_L11C
+.L11B:          CMP     BL,1DH
+                JNZ     .L11C
 
-                MOV     TED_1C,DH
+                MOV     [TED_1C],DH
                 RETN
 
-MST_L11C:       CMP     BL,1EH
-                JNZ     SHORT MST_L11D
+.L11C:          CMP     BL,1EH
+                JNZ     .L11D
                 PUSH    AX
                 MOVZX   AX,DH
                 SHR     AL,2
-                MOV     TED_1E,AL
+                MOV     [TED_1E],AL
                 SUB     AL,SHRA
-                JAE     SHORT MST_L11E
+                JAE     .L11E
                 XOR     AX,AX
-MST_L11E:       INC     AX
+.L11E:          INC     AX
                 PUSH    AX
                 SHL     AX,3
-                ADD     AX,OFFSET VIDEO_DATA
-                MOV     VD_PTR_BEAM,AX
-                ADD     AX,X_OFFSET
-                MOV     VD_PTR_FILL,AX
+                ADD     AX,VIDEO_DATA    ;$$$
+                MOV     [VD_PTR_BEAM],AX
+                ADD     AX,[X_OFFSET]
+                MOV     [VD_PTR_FILL],AX
                 POP     AX
-                ADD     AX,CRP_S
-                MOV     CRP,AX
+                ADD     AX,WORD [TED_1A]
+                MOV     [CRP],AX
                 POP     AX
                 RETN
 
-MST_L11D:       CMP     BL,1FH
-                JNZ     SHORT MST_L11
+.L11D:          CMP     BL,1FH
+                JNZ     .L11
 
                 PUSH    AX
                 MOV     AL,DH
-                AND     AL,70H
-                SHR     AL,4
-                MOV     VSA,AL
-                MOV     AL,DH
-                OR      AL,0F0H
 
-                MOV     BLINK_COUNT,AL
+;                AND     AL,7   ;VSA=0-2
+;                MOV     [VSA],AL 
+;                MOV     AL,DH
+;                AND     AL,78H
+;                SHR     AL,3
+
+                AND     AL,70H  ;VSA=4-6
+                SHR     AL,4
+                MOV     [VSA],AL
+                MOV     AL,DH
+                AND     AL,0FH
+
+                OR      AL,0F0H
+                MOV     [BLINK_COUNT],AL
                 POP     AX
 
-MST_L11:        MOV     TED_0[BX+100H],DH
+.L11:           MOV     [TED_0+BX+100H],DH
                 RETN
 
-MST_L10:        CMP     BL,3EH
-                JNZ     SHORT MST_L14
-                OR      TED_13,1        ; ROM_SELECT
+.L10:           CMP     BL,3EH
+                JNZ     .L14
+                OR      [TED_13],1      ;ROM_SELECT
                 RETN
 
-MST_L14:        CMP     BL,3FH
-                JNZ     SHORT MST_LM
-                AND     TED_13,0FEH     ; RAM_SELECT
+.L14:           CMP     BL,3FH
+                JNZ     .LM
+                AND     [TED_13],0FEH   ;RAM_SELECT
                 RETN
 
-MST_L9:        IF      IEC_PRESENT
-                CMP     BL,0C0H
-                JB      SHORT MST_LM
-                CMP     BL,0DFH
-                JA      SHORT MST_L15
+.L9:                                    ;IF IEC_PRESENT
+;                CMP     BL,0C0H
+;                JB      .LM
+;                CMP     BL,0DFH
+;                JA      .L15
+;
+;                PUSH    BX              ;IEC9
+;                AND     BX,7
+;                MOV     [IEC9_0+BX],DH
+;                POP     BX
+;                RETN
 
-                PUSH    BX              ; IEC9
-                AND     BX,7            
-                MOV     IEC9_0[BX],DH
-                POP     BX
-                RETN
+;.L15:           PUSH    BX              ;IEC8
+;                AND     BX,7
+;                MOV     [IEC8_0+BX],DH
+;                POP     BX
+;                RETN
 
-MST_L15:        PUSH    BX              ; IEC8
-                AND     BX,7            
-                MOV     IEC8_0[BX],DH
-                POP     BX
-                RETN
-               ENDIF
-
-MST_LM:         MOV     FS:[BX],DH
+.LM:            MOV     [FS:BX],DH
                 RETN
 
 MREAD_DH:       CMP     BX,1
-                JA      SHORT MRD_L1
+                JA      .L1
                 JZ      CPU_IO_RD
 
-                MOV     DH,CPU_0
+                MOV     DH,[CPU_0]
                 RETN
 
-MRD_L1:         CMP     BH,0FDH
-                JB      MRD_LM
-                JNZ     SHORT MRD_L4
+.L1:            CMP     BH,0FDH
+                JB      .LM
+                JNZ     .L4
 
                 CMP     BL,0FH
-                JA      SHORT MRD_L5
+                JA      .L5
 
-               IF      ACIA_PRESENT
-                PUSH    BX              ; ACIA
-                AND     BX,3            
-                MOV     DH,ACIA_0[BX]
-                POP     BX
-                RETN
-               ELSE
-                JMP     MRD_LM
-               ENDIF
+;                PUSH    BX              ;ACIA
+;                AND     BX,3
+;                MOV     DH,[ACIA_0+BX]
+;                POP     BX
+;                RETN
+                JMP     .LM
 
-MRD_L5:         CMP     BL,1FH
-                JA      SHORT MRD_L6
+.L5:            CMP     BL,1FH
+                JA      .L6
 
-                MOV     DH,10H          ; PIO
-                AND     DH,LED
+                MOV     DH,10H          ;PIO
+                AND     DH,[LED]
                 SHR     DH,2
                 NOT     DH
-                AND     DH,PIO
+                AND     DH,[PIO]
                 RETN
 
-MRD_L6:         CMP     BL,30H
-                JB      MRD_LM
+.L6:            CMP     BL,30H
+                JB      .LM
                 CMP     BL,3FH
-                JA      MRD_LM
+                JA      .LM
 
-                MOV     DH,KBD          ; KBD
+                MOV     DH,[KBD]        ;KBD
                 RETN
 
-MRD_L4:         OR      BH,BH
-                JPO     MRD_L9
+.L4:            OR      BH,BH
+                JPO     .L9
 
                 CMP     BL,1FH
-                JA      SHORT MRD_LM
+                JA      .LM
 
-                CMP     BL,0CH          ; TED
-                JNZ     SHORT MRD_TED_L3
+                CMP     BL,0CH          ;TED
+                JNZ     .L3
 
-                MOV     DH,TED_D
+                MOV     DH,[TED_D]
                 OR      DH,0FCH
                 RETN
 
-MRD_TED_L3:     CMP     BL,0DH
-                JNZ     SHORT MRD_TED_L4A
+.L3:            CMP     BL,0DH
+                JNZ     .L4A
 
-                MOV     DH,TED_C
+                MOV     DH,[TED_C]
                 RETN
 
-MRD_TED_L4A:    CMP     BL,1AH
-                JNZ     SHORT MRD_TED_L4B
+.L4A:           CMP     BL,1AH
+                JNZ     .L4B
 
-                MOV     DH,TED_1B
+                MOV     DH,[TED_1B]
                 OR      DH,0FCH
                 RETN
 
-MRD_TED_L4B:    CMP     BL,1BH
-                JNZ     SHORT MRD_TED_L4
+.L4B:           CMP     BL,1BH
+                JNZ     .L4N
 
-                MOV     DH,TED_1A
+                MOV     DH,[TED_1A]
                 RETN
 
-MRD_TED_L4:     CMP     BL,1CH
-                JNZ     SHORT MRD_TED_L1A
+.L4N:           CMP     BL,1CH
+                JNZ     .L1A
 
-                MOV     DH,TED_1D
+                MOV     DH,[TED_1D]
                 OR      DH,0FEH
                 RETN
 
-MRD_TED_L1A:    CMP     BL,1DH
-                JNZ     SHORT MRD_TED_L1
+.L1A:           CMP     BL,1DH
+                JNZ     .L1N
 
-                MOV     DH,TED_1C
+                MOV     DH,[TED_1C]
                 RETN
 
-MRD_TED_L1:     CMP     BL,1EH
-                JNZ     SHORT MRD_TED_L2A
+.L1N:           CMP     BL,1EH
+                JNZ     .L2A
 
-                MOV     DH,TED_1E
+                MOV     DH,[TED_1E]
                 SHL     DH,2
+                PUSH    AX
+                MOV     AL,BYTE [TOTALTICKS]
+                AND     AL,3
+                OR      DH,AL
+                POP     AX
                 RETN
 
-MRD_TED_L2A:    CMP     BL,1FH
-                JNZ     SHORT MRD_TED_L2
+.L2A:           CMP     BL,1FH
+                JNZ     .L2C
 
                 PUSH    AX
-                MOV     AL,VSA
+                MOV     AL,[VSA]
                 SHL     AL,4
-                MOV     DH,BLINK_COUNT
+                MOV     DH,[BLINK_COUNT]
                 AND     DH,0FH
+;                SHL     DH,3
                 OR      AL,DH
-                MOV     DH,TED_1F
+                MOV     DH,[TED_1F]
                 AND     DH,80H
                 OR      DH,AL
                 POP     AX
                 RETN
 
-MRD_TED_L2:     MOV     DH,TED_0[BX+100H]
+.L2C:           MOV     DH,[TED_0+BX+100H]
                 RETN
 
-MRD_L9:        IF      IEC_PRESENT
-                CMP     BL,0C0H
-                JB      SHORT MRD_LM
-                CMP     BL,0DFH
-                JA      SHORT MRD_L15
+.L9:                                    ;IF IEC_PRESENT
+;                CMP     BL,0C0H
+;                JB      .LM
+;                CMP     BL,0DFH
+;                JA      .L15
 
-                PUSH    BX              ; IEC9
-                AND     BX,7            
-                MOV     DH,IEC9_0[BX]
-                POP     BX
-                RETN
+;                PUSH    BX              ;IEC9
+;                AND     BX,7
+;                MOV     DH,[IEC9_0+BX]
+;                POP     BX
+;                RETN
 
-MRD_L15:        PUSH    BX              ; IEC8
-                AND     BX,7
-                MOV     DH,IEC8_0[BX]
-                POP     BX
-                RETN
-               ENDIF
+;.L15:           PUSH    BX              ;IEC8
+;                AND     BX,7
+;                MOV     DH,[IEC8_0+BX]
+;                POP     BX
+;                RETN
 
-MRD_LM:         OR      BH,BH
-                JNS     SHORT MRD_LR
+.LM:            OR      BH,BH
+                JNS     .LR
 
-                TEST    TED_13,1
-                JZ      SHORT MRD_LR
+                TEST    [TED_13],1
+                JZ      .LR
 
-                MOV     GS,SA_ROM_LO
+                MOV     GS,[SA_ROM_LO]    ;$$$
                 TEST    BH,40H
-                JZ      SHORT MRD_L16
+                JZ      .L16
 
-                MOV     GS,SA_ROM_HI
+                MOV     GS,[SA_ROM_HI]    ;$$$
 
-                CMP     BH,0FCH         ; KERNEL FIX
-                JNZ     SHORT MRD_L16
+                CMP     BH,0FCH         ;KERNEL FIX
+                JNZ     .L16
 
-                MOV     GS,TSA_ROM
+                MOV     GS,[TSA_ROM]      ;$$$
 
-MRD_L16:        MOV     DH,GS:[BX]
+.L16:           MOV     DH,[GS:BX]
                 RETN
 
-MRD_LR:         MOV     DH,FS:[BX]
+.LR:            MOV     DH,[FS:BX]
                 RETN
 
-CPU8501:        MOV     SI,PC
-                MOV     BP,SPR
-                MOV     AX,WORD PTR SR
-                MOV     CX,XR
-                MOV     DI,YR
+CPU8501:        MOV     SI,[PC]
+                MOV     BP,[SPR]
+                MOV     AX,WORD [SR]
+                MOV     CX,[XR]
+                MOV     DI,[YR]
 
-                IFDEF   XX_D7_47
-                CMP     BYTE PTR FS:[0D7H],47H
-                JNZ     SHORT CPU_L3
-XX_TRACE:       NOP
-                ENDIF
+;                IF DEFINED XX_D7_47
+;                CMP     BYTE [FS:0D7H],47H      ;$$$
+;                JNZ     .LDP
+;.TRACE:         NOP
+;                END IF
 
-CPU_L3:         TEST    AL,4
-                JNZ     SHORT CPU_L1
+.LDP:           MOV     BX,SI
+                CALL    MREAD_DH
+                MOVZX   BX,DH
+                CALL    WORD [OPP+EBX*2]
+                SUB     [TICKS],DL
 
-                MOV     DL,TED_9
-                AND     DL,TED_A
+                TEST    AL,4
+                JNZ     .L1
+
+                MOV     DL,[TED_9]
+                AND     DL,[TED_A]
                 TEST    DL,5AH
-                JZ      SHORT CPU_L1
+                JZ      .L1
 
-                AND     AL,0EFH
-CPU_L2X:        MOV     BX,BP
+                CALL    .IRQ
+                SUB     [TICKS],DL
+
+.L1:            MOV     BX,SI
+                CALL    MREAD_DH
+                MOVZX   BX,DH
+                CALL    WORD [OPP+EBX*2]
+
+                SUB     [TICKS],DL
+                JNS     .L1
+
+                MOV     [PC],SI
+                MOV     [SPR],BP
+                MOV     WORD [SR],AX
+                MOV     [XR],CX
+                MOV     [YR],DI
+                RETN
+
+.IRQ:           AND     AL,0EFH
+.L2X:           MOV     BX,BP
                 MOV     DX,SI
-                MOV     FS:[BX],DH      ; STACK!!!
+                MOV     [FS:BX],DH      ;STACK!!!
                 DEC     BL
-                MOV     FS:[BX],DL
+                MOV     [FS:BX],DL
                 DEC     BL
-                MOV     FS:[BX],AL
+                MOV     [FS:BX],AL
                 DEC     BL
                 MOV     BP,BX
                 MOV     BX,0FFFEH
@@ -652,371 +708,352 @@ CPU_L2X:        MOV     BX,BP
                 CALL    MREAD_DH
                 MOV     SI,DX
                 
-                MOV     DL,7            ; ?IRQ TIMING
-
+                MOV     DL,7           ;IRQ TIMING
                 OR      AL,4
-                JMP     SHORT CPU_L2
-
-CPU_L1:         MOV     BX,SI
-                CALL    MREAD_DH
-                MOV     BL,DH
-                XOR     BH,BH
-                JMP     WORD PTR OPP[EBX*2]
-
-CPU_L3B:        CALL    MSTORE_DH
-
-CPU_L2:         SUB     TICKS,DL
-                JG      SHORT CPU_L3
-
-                MOV     PC,SI
-                MOV     SPR,BP
-                MOV     WORD PTR SR,AX
-                MOV     XR,CX
-                MOV     YR,DI
                 RETN
 
-O00:            INC     SI              ; BRK
-                JMP     CPU_L2X
+O00:            INC     SI              ;BRK
+                JMP     CPU8501.L2X
 
-O01:            ADDR_IZP_X 6            ; ORA (zp,X)
+O01:            ADDR_IZP_X 6            ;ORA (zp,X)
                 LOGIC_OPER OR
 
-O05:            ADDR_ZP 3               ; ORA zp
+O05:            ADDR_ZP 3               ;ORA zp
                 LOGIC_OPER OR
 
-O06:            ADDR_ZP 5               ; ASL zp
+O06:            ADDR_ZP 5               ;ASL zp
                 SHIFT_MEM_L
 
-O08:            ADDR_MISS 3             ; PHP
+O08:            ADDR_MISS 3             ;PHP
                 MOV     BX,BP
                 OR      AL,10H
-                MOV     FS:[BX],AL
+                MOV     [FS:BX],AL
                 DEC     BL
                 MOV     BP,BX
-                JMP     CPU_L2
+                RETN
 
-O09:            ADDR_IM 2               ; ORA im
+O09:            ADDR_IM 2               ;ORA im
                 LOGIC_OPER OR
 
-O0A:            ADDR_MISS 2             ; ASL ac
+O0A:            ADDR_MISS 2             ;ASL ac
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 SHL     AH,1
                 ADC     AL,CH
                 OR      AH,AH
-                JNZ     SHORT O0A_1
+                JNZ     O0A_1
                 OR      AL,ZEF
-O0A_1:          JNS     CPU_L2
+O0A_1:          JNS     O0A_2
                 OR      AL,SIF
-                JMP     CPU_L2
+O0A_2:          RETN
 
-O0D:            ADDR_ABS 4              ; ORA abs
+O0D:            ADDR_ABS 4              ;ORA abs
                 LOGIC_OPER OR
 
-O0E:            ADDR_ABS 6              ; ASL abs
+O0E:            ADDR_ABS 6              ;ASL abs
                 SHIFT_MEM_L
 
-O10:            BRANCH1 JS              ; BPL
+O10:            BRANCH1 JS              ;BPL
 
-O11:            ADDR_IZP_Y 5            ; ORA (zp),Y
+O11:            ADDR_IZP_Y 5            ;ORA (zp),Y
                 LOGIC_OPER OR
 
-O15:            ADDR_ZP_X 4             ; ORA zp,X
+O15:            ADDR_ZP_X 4             ;ORA zp,X
                 LOGIC_OPER OR
 
-O16:            ADDR_ZP_X 6             ; ASL zp,X
+O16:            ADDR_ZP_X 6             ;ASL zp,X
                 SHIFT_MEM_L
 
-O18:            CLRF CAF                ; CLC
+O18:            CLRF CAF                ;CLC
 
-O19:            ADDR_ABS_Y 4            ; ORA abs,Y
+O19:            ADDR_ABS_Y 4            ;ORA abs,Y
                 LOGIC_OPER OR
 
-O1D:            ADDR_ABS_X 4            ; ORA abs,X
+O1D:            ADDR_ABS_X 4            ;ORA abs,X
                 LOGIC_OPER OR
 
-O1E:            ADDR_ABS_X1 7           ; ASL abs,X
+O1E:            ADDR_ABS_X1 7           ;ASL abs,X
                 SHIFT_MEM_L
 
-O20:            GET_WORD NB             ; JSR abs
+O20:            GET_WORD NB             ;JSR abs
                 ADD     SI,2
                 MOV     BX,BP
                 XCHG    DX,SI
-                MOV     FS:[BX],DH
+                MOV     [FS:BX],DH
                 DEC     BL
-                MOV     FS:[BX],DL
+                MOV     [FS:BX],DL
                 DEC     BL
                 MOV     BP,BX
                 MOV     DL,6
-                JMP     CPU_L2
+                RETN
 
-O21:            ADDR_IZP_X 6            ; AND (zp,X)
+O21:            ADDR_IZP_X 6            ;AND (zp,X)
                 LOGIC_OPER AND
 
-O24:            ADDR_ZP 3               ; BIT zp
+O24:            ADDR_ZP 3               ;BIT zp
                 AND     AL,NOT (ZEF OR SIF OR OVF)
                 TEST    AH,DH
-                JNZ     SHORT O24_1
+                JNZ     O24_1
                 OR      AL,ZEF
 O24_1:          OR      DH,DH
-                JNS     SHORT O24_2
+                JNS     O24_2
                 OR      AL,SIF
 O24_2:          TEST    DH,OVF
-                JZ      CPU_L2
+                JZ      O24_3
                 OR      AL,OVF
-                JMP     CPU_L2
+O24_3:          RETN
 
-O25:            ADDR_ZP 3               ; AND zp
+O25:            ADDR_ZP 3               ;AND zp
                 LOGIC_OPER AND
 
-O26:            ADDR_ZP 5               ; ROL zp
+O26:            ADDR_ZP 5               ;ROL zp
                 ROTATE_MEM RCL
 
-O28:            ADDR_MISS 4             ; PLP
+O28:            ADDR_MISS 4             ;PLP
                 MOV     BX,BP           
                 INC     BL
-                MOV     AL,FS:[BX]
+                MOV     AL,[FS:BX]
                 OR      AL,30H
                 MOV     BP,BX
-                JMP     CPU_L2
+                RETN
 
-O29:            ADDR_IM 2               ; AND im
+O29:            ADDR_IM 2               ;AND im
                 LOGIC_OPER AND
 
-O2A:            ADDR_MISS 2             ; ROL ac
+O2A:            ADDR_MISS 2             ;ROL ac
                 ROTATE_AC RCL           
 
-O2C:            ADDR_ABS 4              ; BIT abs
+O2C:            ADDR_ABS 4              ;BIT abs
                 AND     AL,NOT (ZEF OR SIF OR OVF)
                 TEST    AH,DH
-                JNZ     SHORT O2C_1
+                JNZ     O2C_1
                 OR      AL,ZEF
 O2C_1:          OR      DH,DH
-                JNS     SHORT O2C_2
+                JNS     O2C_2
                 OR      AL,SIF
 O2C_2:          TEST    DH,OVF
-                JZ      CPU_L2
+                JZ      O2C_3
                 OR      AL,OVF
-                JMP     CPU_L2
+O2C_3:          RETN
 
-O2D:            ADDR_ABS 4              ; AND abs
+O2D:            ADDR_ABS 4              ;AND abs
                 LOGIC_OPER AND
 
-O2E:            ADDR_ABS 6              ; ROL abs
+O2E:            ADDR_ABS 6              ;ROL abs
                 ROTATE_MEM RCL
 
-O30:            BRANCH1 JNS             ; BMI
+O30:            BRANCH1 JNS             ;BMI
 
-O31:            ADDR_IZP_Y 5            ; AND (zp),Y
+O31:            ADDR_IZP_Y 5            ;AND (zp),Y
                 LOGIC_OPER AND
 
-O35:            ADDR_ZP_X 4             ; AND zp,X
+O35:            ADDR_ZP_X 4             ;AND zp,X
                 LOGIC_OPER AND
 
-O36:            ADDR_ZP_X 6             ; ROL zp,X
+O36:            ADDR_ZP_X 6             ;ROL zp,X
                 ROTATE_MEM RCL
 
-O38:            SETF CAF                ; SEC
+O38:            SETF CAF                ;SEC
 
-O39:            ADDR_ABS_Y 4            ; AND abs,Y
+O39:            ADDR_ABS_Y 4            ;AND abs,Y
                 LOGIC_OPER AND
 
-O3D:            ADDR_ABS_X 4            ; AND abs,X
+O3D:            ADDR_ABS_X 4            ;AND abs,X
                 LOGIC_OPER AND
 
-O3E:            ADDR_ABS_X1 7           ; ROL abs,X
+O3E:            ADDR_ABS_X1 7           ;ROL abs,X
                 ROTATE_MEM RCL
 
-O40:            MOV     BX,BP           ; RTI
+O40:            MOV     BX,BP           ;RTI
                 INC     BL
-                MOV     AL,FS:[BX]
+                MOV     AL,[FS:BX]
                 OR      AL,30H
                 INC     BL
-                MOV     DL,FS:[BX]
+                MOV     DL,[FS:BX]
                 INC     BL
-                MOV     DH,FS:[BX]
+                MOV     DH,[FS:BX]
                 MOV     BP,BX
                 MOV     SI,DX
                 MOV     DL,6
-                JMP     CPU_L2
+                RETN
 
-O41:            ADDR_IZP_X 6            ; EOR (zp,X)
+O41:            ADDR_IZP_X 6            ;EOR (zp,X)
                 LOGIC_OPER XOR
 
-O45:            ADDR_ZP 3               ; EOR zp
+O45:            ADDR_ZP 3               ;EOR zp
                 LOGIC_OPER XOR
 
-O46:            ADDR_ZP 5               ; LSR zp
+O46:            ADDR_ZP 5               ;LSR zp
                 SHIFT_MEM_R
 
-O48:            ADDR_MISS 3             ; PHA
+O48:            ADDR_MISS 3             ;PHA
                 MOV     BX,BP
-                MOV     FS:[BX],AH
+                MOV     [FS:BX],AH
                 DEC     BL
                 MOV     BP,BX
-                JMP     CPU_L2
+                RETN
 
-O49:            ADDR_IM 2               ; EOR im
+O49:            ADDR_IM 2               ;EOR im
                 LOGIC_OPER XOR
 
-O4A:            ADDR_MISS 2             ; LSR ac
+O4A:            ADDR_MISS 2             ;LSR ac
 X_O4A:          AND     AL,NOT (ZEF OR SIF OR CAF)
                 SHR     AH,1
                 ADC     AL,CH
                 OR      AH,AH
-                JNZ     CPU_L2
+                JNZ     O4A_1
                 OR      AL,ZEF
-                JMP     CPU_L2
+O4A_1:          RETN
 
-O4C:            GET_WORD NB             ; JMP abs
+O4C:            GET_WORD NB             ;JMP abs
                 MOV     SI,DX
                 MOV     DL,3
-                JMP     CPU_L2
+                RETN
 
-O4D:            ADDR_ABS 4              ; EOR abs
+O4D:            ADDR_ABS 4              ;EOR abs
                 LOGIC_OPER XOR
 
-O4E:            ADDR_ABS 6              ; LSR abs
+O4E:            ADDR_ABS 6              ;LSR abs
                 SHIFT_MEM_R
 
-O50:            BRANCH2 JNZ,OVF         ; BVC
+O50:            BRANCH2 JNZ,OVF         ;BVC
 
-O51:            ADDR_IZP_Y 5            ; EOR (zp),Y
+O51:            ADDR_IZP_Y 5            ;EOR (zp),Y
                 LOGIC_OPER XOR
 
-O55:            ADDR_ZP_X 4             ; EOR zp,X
+O55:            ADDR_ZP_X 4             ;EOR zp,X
                 LOGIC_OPER XOR
 
-O56:            ADDR_ZP_X 6             ; LSR zp,X
+O56:            ADDR_ZP_X 6             ;LSR zp,X
                 SHIFT_MEM_R
 
-O58:            CLRF 4                  ; CLI
+O58:            CLRF 4                  ;CLI
 
-O59:            ADDR_ABS_Y 4            ; EOR abs,Y
+O59:            ADDR_ABS_Y 4            ;EOR abs,Y
                 LOGIC_OPER XOR
 
-O5D:            ADDR_ABS_X 4            ; EOR abs,X
+O5D:            ADDR_ABS_X 4            ;EOR abs,X
                 LOGIC_OPER XOR
 
-O5E:            ADDR_ABS_X1 7           ; LSR abs,X
+O5E:            ADDR_ABS_X1 7           ;LSR abs,X
                 SHIFT_MEM_R
 
-O60:            MOV     BX,BP           ; RTS
+O60:            MOV     BX,BP           ;RETN
                 INC     BL
-                MOV     DL,FS:[BX]
+                MOV     DL,[FS:BX]
                 INC     BL
-                MOV     DH,FS:[BX]
+                MOV     DH,[FS:BX]
                 MOV     SI,DX
                 MOV     BP,BX
                 INC     SI
                 MOV     DL,6
-                JMP     CPU_L2
+                RETN
 
-O61:            ADDR_IZP_X 6            ; ADC (zp,X)
+O61:            ADDR_IZP_X 6            ;ADC (zp,X)
                 ADDITION
 
-O65:            ADDR_ZP 3               ; ADC zp
+O65:            ADDR_ZP 3               ;ADC zp
                 ADDITION
 
-O66:            ADDR_ZP 5               ; ROR zp
+O66:            ADDR_ZP 5               ;ROR zp
                 ROTATE_MEM RCR
 
-O68:            ADDR_MISS 4             ; PLA
+O68:            ADDR_MISS 4             ;PLA
                 MOV     BX,BP           
                 INC     BL
-                MOV     AH,FS:[BX]
+                MOV     AH,[FS:BX]
                 MOV     BP,BX
                 SETF_L_AC
 
-O69:            ADDR_IM 2               ; ADC im
+O69:            ADDR_IM 2               ;ADC im
                 ADDITION
 
-O6A:            ADDR_MISS 2             ; ROR ac
+O6A:            ADDR_MISS 2             ;ROR ac
                 ROTATE_AC RCR
 
-O6C:            GET_WORD                ; JMP (abs)
+O6C:            GET_WORD                ;JMP (abs)
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     SI,DX
                 MOV     DL,5
-                JMP     CPU_L2
+                RETN
 
-O6D:            ADDR_ABS 4              ; ADC abs
+O6D:            ADDR_ABS 4              ;ADC abs
                 ADDITION
 
-O6E:            ADDR_ABS 6              ; ROR abs
+O6E:            ADDR_ABS 6              ;ROR abs
                 ROTATE_MEM RCR
 
-O70:            BRANCH2 JZ,OVF          ; BVS
+O70:            BRANCH2 JZ,OVF          ;BVS
 
-O71:            ADDR_IZP_Y 5            ; ADC (zp),Y
+O71:            ADDR_IZP_Y 5            ;ADC (zp),Y
                 ADDITION
 
-O75:            ADDR_ZP_X 4             ; ADC zp,X
+O75:            ADDR_ZP_X 4             ;ADC zp,X
                 ADDITION
 
-O76:            ADDR_ZP_X 6             ; ROR zp,X
+O76:            ADDR_ZP_X 6             ;ROR zp,X
                 ROTATE_MEM RCR
 
-O78:            SETF 4                  ; SEI
+O78:            SETF 4                  ;SEI
 
-O79:            ADDR_ABS_Y 4            ; ADC abs,Y
+O79:            ADDR_ABS_Y 4            ;ADC abs,Y
                 ADDITION
 
-O7D:            ADDR_ABS_X 4            ; ADC abs,X
+O7D:            ADDR_ABS_X 4            ;ADC abs,X
                 ADDITION
 
-O7E:            ADDR_ABS_X1 7           ; ROR abs,X
+O7E:            ADDR_ABS_X1 7           ;ROR abs,X
                 ROTATE_MEM RCR
 
-O81:            ADDR_IZP_X 6,NB         ; STA (zp,X)
+O81:            ADDR_IZP_X 6,NB         ;STA (zp,X)
                 STORE_MEM AH
 
-O84:            GET_BYTE                ; STY zp
+O84:            GET_BYTE                ;STY zp
                 ADD     SI,2
                 MOV     DX,DI
                 MOV     DH,DL
                 MOV     DL,3
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O85:            ADDR_ZP 3,NB            ; STA zp
+O85:            ADDR_ZP 3,NB            ;STA zp
                 STORE_MEM AH
 
-O86:            ADDR_ZP 3,NB            ; STX zp
+O86:            ADDR_ZP 3,NB            ;STX zp
                 STORE_MEM CL
 
-O88:            ADDR_MISS 2             ; DEY
+O88:            ADDR_MISS 2             ;DEY
                 AND     AL,NOT (ZEF OR SIF)
                 XCHG    AX,DI
                 DEC     AL
                 XCHG    AX,DI
-                JNZ     SHORT O88_2
+                JNZ     O88_2
                 OR      AL,ZEF
-O88_2:          JNS     CPU_L2
+O88_2:          JNS     O88_3
                 OR      AL,SIF
-                JMP     CPU_L2
+O88_3:          RETN
 
-O8A:            ADDR_MISS 2             ; TXA
+O8A:            ADDR_MISS 2             ;TXA
                 MOV     AH,CL
                 SETF_L_AC
 
-O8C:            GET_WORD                ; STY abs
+O8C:            GET_WORD                ;STY abs
                 ADD     SI,3
                 MOV     DX,DI
                 MOV     DH,DL
                 MOV     DL,4
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O8D:            ADDR_ABS 4,NB           ; STA abs
+O8D:            ADDR_ABS 4,NB           ;STA abs
                 STORE_MEM AH
 
-O8E:            ADDR_ABS 4,NB           ; STX abs
+O8E:            ADDR_ABS 4,NB           ;STX abs
                 STORE_MEM CL
 
-O90:            BRANCH2 JNZ,CAF         ; BCC
+O90:            BRANCH2 JNZ,CAF         ;BCC
 
-O91:            GET_BYTE                ; STA (zp),Y
+O91:            GET_BYTE                ;STA (zp),Y
                 ADD     SI,2
                 CALL    MREAD_DH
                 MOV     DL,DH
@@ -1027,287 +1064,288 @@ O91:            GET_BYTE                ; STA (zp),Y
                 MOV     DL,6
                 STORE_MEM AH
 
-O94:            GET_BYTE                ; STY zp,X
+O94:            GET_BYTE                ;STY zp,X
                 ADD     SI,2
                 ADD     BL,CL
                 MOV     DX,DI
                 MOV     DH,DL
                 MOV     DL,4
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O95:            ADDR_ZP_X 4,NB          ; STA zp,X
+O95:            ADDR_ZP_X 4,NB          ;STA zp,X
                 STORE_MEM AH
 
-O96:            ADDR_ZP_Y 4,NB          ; STX zp,Y
+O96:            ADDR_ZP_Y 4,NB          ;STX zp,Y
                 STORE_MEM CL
 
-O98:            ADDR_MISS 2             ; TYA
+O98:            ADDR_MISS 2             ;TYA
                 MOV     BX,DI
                 MOV     AH,BL
                 SETF_L_AC
 
-O99:            GET_WORD                ; STA abs,Y
+O99:            GET_WORD                ;STA abs,Y
                 ADD     SI,3
                 ADD     BX,DI
                 MOV     DL,5
                 STORE_MEM AH
 
-O9A:            ADDR_MISS 2             ; TXS
+O9A:            ADDR_MISS 2             ;TXS
                 MOV     BP,CX
                 OR      BP,100H
-                JMP     CPU_L2
+                RETN
 
-O9D:            ADDR_ABS_X1 5,NB        ; STA abs,X
+O9D:            ADDR_ABS_X1 5,NB        ;STA abs,X
                 STORE_MEM AH
 
-OA0:            ADDR_IM 2               ; LDY im
+OA0:            ADDR_IM 2               ;LDY im
                 MOV     BL,DH
                 SETF_L_YR
 
-OA1:            ADDR_IZP_X 6            ; LDA (zp,X)
+OA1:            ADDR_IZP_X 6            ;LDA (zp,X)
                 MOV     AH,DH
                 SETF_L_AC
 
-OA2:            ADDR_IM 2               ; LDX im
+OA2:            ADDR_IM 2               ;LDX im
                 MOV     CL,DH
                 SETF_L_XR
                 
-OA4:            ADDR_ZP 3               ; LDY zp
+OA4:            ADDR_ZP 3               ;LDY zp
                 MOV     BL,DH
                 SETF_L_YR
 
-OA5:            ADDR_ZP 3               ; LDA zp
+OA5:            ADDR_ZP 3               ;LDA zp
                 MOV     AH,DH
                 SETF_L_AC
 
-OA6:            ADDR_ZP 3               ; LDX zp
+OA6:            ADDR_ZP 3               ;LDX zp
                 MOV     CL,DH
                 SETF_L_XR
 
-OA8:            ADDR_MISS 2             ; TAY
+OA8:            ADDR_MISS 2             ;TAY
                 MOV     BL,AH
                 SETF_L_YR
 
-OA9:            ADDR_IM 2               ; LDA im
+OA9:            ADDR_IM 2               ;LDA im
                 MOV     AH,DH
                 SETF_L_AC
 
-OAA:            ADDR_MISS 2             ; TAX
+OAA:            ADDR_MISS 2             ;TAX
                 MOV     CL,AH
                 SETF_L_XR
 
-OAC:            ADDR_ABS 4              ; LDY abs
+OAC:            ADDR_ABS 4              ;LDY abs
                 MOV     BL,DH
                 XOR     BH,BH
                 SETF_L_YR
 
-OAD:            ADDR_ABS 4              ; LDA abs
+OAD:            ADDR_ABS 4              ;LDA abs
                 MOV     AH,DH
                 SETF_L_AC
 
-OAE:            ADDR_ABS 4              ; LDX abs
+OAE:            ADDR_ABS 4              ;LDX abs
                 MOV     CL,DH
                 SETF_L_XR
 
-OB0:            BRANCH2 JZ,CAF          ; BCS
+OB0:            BRANCH2 JZ,CAF          ;BCS
 
-OB1:            ADDR_IZP_Y 5            ; LDA (zp),Y
+OB1:            ADDR_IZP_Y 5            ;LDA (zp),Y
                 MOV     AH,DH
                 SETF_L_AC
 
-OB4:            ADDR_ZP_X 4             ; LDY zp,X
+OB4:            ADDR_ZP_X 4             ;LDY zp,X
                 MOV     BL,DH
                 SETF_L_YR
 
-OB5:            ADDR_ZP_X 4             ; LDA zp,X
+OB5:            ADDR_ZP_X 4             ;LDA zp,X
                 MOV     AH,DH
                 SETF_L_AC
 
-OB6:            ADDR_ZP_Y 4             ; LDX zp,Y
+OB6:            ADDR_ZP_Y 4             ;LDX zp,Y
                 MOV     CL,DH
                 SETF_L_XR
 
-OB8:            CLRF OVF                ; CLV
+OB8:            CLRF OVF                ;CLV
 
-OB9:            ADDR_ABS_Y 4            ; LDA abs,Y
+OB9:            ADDR_ABS_Y 4            ;LDA abs,Y
                 MOV     AH,DH
                 SETF_L_AC
 
-OBA:            ADDR_MISS 2             ; TSX
+OBA:            ADDR_MISS 2             ;TSX
                 MOV     BX,BP
                 MOV     CL,BL
                 SETF_L_XR
 
-OBC:            ADDR_ABS_X 4            ; LDY abs,X
+OBC:            ADDR_ABS_X 4            ;LDY abs,X
                 MOV     BL,DH
                 XOR     BH,BH
                 SETF_L_YR
 
-OBD:            ADDR_ABS_X 4            ; LDA abs,X
+OBD:            ADDR_ABS_X 4            ;LDA abs,X
                 MOV     AH,DH
                 SETF_L_AC
 
-OBE:            ADDR_ABS_Y 4            ; LDX abs,Y
+OBE:            ADDR_ABS_Y 4            ;LDX abs,Y
                 MOV     CL,DH
                 SETF_L_XR
 
-OC0:            ADDR_IM 2               ; CPY im
+OC0:            ADDR_IM 2               ;CPY im
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 MOV     BX,DI
                 SUB     BL,DH
                 CMC
                 ADC     AL,CH
                 OR      BL,BL
-                JNZ     SHORT OC0_2
+                JNZ     OC0_2
                 OR      AL,ZEF
-OC0_2:          JNS     CPU_L2
+OC0_2:          JNS     OC0_3
                 OR      AL,SIF
-                JMP     CPU_L2
+OC0_3:          RETN
 
-OC1:            ADDR_IZP_X 6            ; CMP (zp,X)
+OC1:            ADDR_IZP_X 6            ;CMP (zp,X)
                 COMPARE AH
 
-OC4:            ADDR_ZP 3               ; CPY zp
+OC4:            ADDR_ZP 3               ;CPY zp
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 MOV     BX,DI
                 SUB     BL,DH
                 CMC
                 ADC     AL,CH
                 OR      BL,BL
-                JNZ     SHORT OC4_2
+                JNZ     OC4_2
                 OR      AL,ZEF
-OC4_2:          JNS     CPU_L2
+OC4_2:          JNS     OC4_3
                 OR      AL,SIF
-                JMP     CPU_L2
+OC4_3:          RETN
 
-OC5:            ADDR_ZP 3               ; CMP zp
+OC5:            ADDR_ZP 3               ;CMP zp
                 COMPARE AH
 
-OC6:            ADDR_ZP 5               ; DEC zp
+OC6:            ADDR_ZP 5               ;DEC zp
                 DECREMENT
                                         
-OC8:            ADDR_MISS 2             ; INY
+OC8:            ADDR_MISS 2             ;INY
                 AND     AL,NOT (ZEF OR SIF)
                 XCHG    AX,DI
                 INC     AL
                 XCHG    AX,DI
-                JNZ     SHORT OC8_1
+                JNZ     OC8_1
                 OR      AL,ZEF
-OC8_1:          JNS     CPU_L2
+OC8_1:          JNS     OC8_2
                 OR      AL,SIF
-                JMP     CPU_L2
+OC8_2:          RETN
 
-OC9:            ADDR_IM 2               ; CMP im
+OC9:            ADDR_IM 2               ;CMP im
                 COMPARE AH
 
-OCA:            ADDR_MISS 2             ; DEX
+OCA:            ADDR_MISS 2             ;DEX
                 AND     AL,NOT (ZEF OR SIF)
                 DEC     CL
-                JNZ     SHORT OCA_1
+                JNZ     OCA_1
                 OR      AL,ZEF
-OCA_1:          JNS     CPU_L2
+OCA_1:          JNS     OCA_2
                 OR      AL,SIF
-                JMP     CPU_L2
+OCA_2:          RETN
 
-OCC:            ADDR_ABS 4              ; CPY abs
+OCC:            ADDR_ABS 4              ;CPY abs
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 MOV     BX,DI
                 SUB     BL,DH
                 CMC
                 ADC     AL,CH
                 OR      BL,BL
-                JNZ     SHORT OCC_2
+                JNZ     OCC_2
                 OR      AL,ZEF
-OCC_2:          JNS     CPU_L2
+OCC_2:          JNS     OCC_3
                 OR      AL,SIF
-                JMP     CPU_L2
+OCC_3:          RETN
 
-OCD:            ADDR_ABS 4              ; CMP abs
+OCD:            ADDR_ABS 4              ;CMP abs
                 COMPARE AH
 
-OCE:            ADDR_ABS 6              ; DEC abs
+OCE:            ADDR_ABS 6              ;DEC abs
                 DECREMENT
 
-OD0:            BRANCH2 JNZ,ZEF         ; BNE
+OD0:            BRANCH2 JNZ,ZEF         ;BNE
 
-OD1:            ADDR_IZP_Y 5            ; CMP (zp),Y
+OD1:            ADDR_IZP_Y 5            ;CMP (zp),Y
                 COMPARE AH
 
-OD5:            ADDR_ZP_X 4             ; CMP zp,X
+OD5:            ADDR_ZP_X 4             ;CMP zp,X
                 COMPARE AH
 
-OD6:            ADDR_ZP_X 6             ; DEC zp,X
+OD6:            ADDR_ZP_X 6             ;DEC zp,X
                 DECREMENT
 
-OD8:            CLRF 8                  ; CLD
+OD8:            CLRF 8                  ;CLD
 
-OD9:            ADDR_ABS_Y 4            ; CMP abs,Y
+OD9:            ADDR_ABS_Y 4            ;CMP abs,Y
                 COMPARE AH
 
-ODD:            ADDR_ABS_X 4            ; CMP abs,X
+ODD:            ADDR_ABS_X 4            ;CMP abs,X
                 COMPARE AH
 
-ODE:            ADDR_ABS_X1 6           ; DEC abs,X
+ODE:            ADDR_ABS_X1 6           ;DEC abs,X
                 DECREMENT
 
-OE0:            ADDR_IM 2               ; CPX im
+OE0:            ADDR_IM 2               ;CPX im
                 COMPARE CL
 
-OE1:            ADDR_IZP_X 6            ; SBC (zp,X)
+OE1:            ADDR_IZP_X 6            ;SBC (zp,X)
                 SUBTRACTION
 
-OE4:            ADDR_ZP 3               ; CPX zp
+OE4:            ADDR_ZP 3               ;CPX zp
                 COMPARE CL
 
-OE5:            ADDR_ZP 3               ; SBC zp
+OE5:            ADDR_ZP 3               ;SBC zp
                 SUBTRACTION
 
-OE6:            ADDR_ZP 5               ; INC zp
+OE6:            ADDR_ZP 5               ;INC zp
                 INCREMENT
 
-OE8:            ADDR_MISS 2             ; INX
+OE8:            ADDR_MISS 2             ;INX
                 AND     AL,NOT (ZEF OR SIF)
                 INC     CL
-                JNZ     SHORT OE8_1
+                JNZ     OE8_1
                 OR      AL,ZEF
-OE8_1:          JNS     CPU_L2
+OE8_1:          JNS     OE8_2
                 OR      AL,SIF
-                JMP     CPU_L2
+OE8_2:          RETN
 
-OE9:            ADDR_IM 2               ; SBC im
+OEB:                                    ;SBC im *** SUB
+OE9:            ADDR_IM 2               ;SBC im
                 SUBTRACTION
 
-OEA:            XNOP 2                  ; NOP
+OEA:            XNOP 2                  ;NOP
 
-OEC:            ADDR_ABS 4              ; CPX abs
+OEC:            ADDR_ABS 4              ;CPX abs
                 COMPARE CL
 
-OED:            ADDR_ABS 4              ; SBC abs
+OED:            ADDR_ABS 4              ;SBC abs
                 SUBTRACTION
 
-OEE:            ADDR_ABS 6              ; INC abs
+OEE:            ADDR_ABS 6              ;INC abs
                 INCREMENT
 
-OF0:            BRANCH2 JZ,ZEF          ; BEQ
+OF0:            BRANCH2 JZ,ZEF          ;BEQ
 
-OF1:            ADDR_IZP_Y 5            ; SBC (zp),Y
+OF1:            ADDR_IZP_Y 5            ;SBC (zp),Y
                 SUBTRACTION
 
-OF5:            ADDR_ZP_X 4             ; SBC zp,X
+OF5:            ADDR_ZP_X 4             ;SBC zp,X
                 SUBTRACTION
 
-OF6:            ADDR_ZP_X 6             ; INC zp,X
+OF6:            ADDR_ZP_X 6             ;INC zp,X
                 INCREMENT
 
-OF8:            SETF 8                  ; SED
+OF8:            SETF 8                  ;SED
 
-OF9:            ADDR_ABS_Y 4            ; SBC abs,Y
+OF9:            ADDR_ABS_Y 4            ;SBC abs,Y
                 SUBTRACTION
 
-OFD:            ADDR_ABS_X 4            ; SBC abs,X
+OFD:            ADDR_ABS_X 4            ;SBC abs,X
                 SUBTRACTION
 
-OFE:            ADDR_ABS_X 6            ; INC abs,X
+OFE:            ADDR_ABS_X 6            ;INC abs,X
                 INCREMENT
 
 OF2:
@@ -1321,19 +1359,19 @@ O42:
 O32:
 O22:
 O12:
-O02:            JMP     RESET           ; JAM ***
+O02:            JMP     RESET           ;JAM ***
 
-O04:            ADDR_ZP 3,NB            ; SKB zp *** NOP2/NOOP
-                JMP     CPU_L2
+O04:            ADDR_ZP 3,NB            ;SKB zp *** NOP2/NOOP
+                RETN
 
-O03:            GET_BYTE                ; ASL:ORA (zp,X) *** ASO/SLO
+O03:            GET_BYTE                ;ASL:ORA (zp,X) *** ASO/SLO
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1343,8 +1381,8 @@ O03:            GET_BYTE                ; ASL:ORA (zp,X) *** ASO/SLO
                 JMP     O01
 
 
-O07:            GET_BYTE                ; ASL:ORA zp *** ASO/SLO
-                SUB     TICKS,2
+O07:            GET_BYTE                ;ASL:ORA zp *** ASO/SLO
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1353,20 +1391,20 @@ O07:            GET_BYTE                ; ASL:ORA zp *** ASO/SLO
                 CALL    MSTORE_DH
                 JMP     O05
 
-O0B:            ADDR_IM 2               ; ANC im ***
+O0B:            ADDR_IM 2               ;ANC im ***
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 AND     AH,DH
-                JNZ     SHORT O0B_1
+                JNZ     O0B_1
                 OR      AL,ZEF
-O0B_1:          JNS     CPU_L2
+O0B_1:          JNS     O0B_2
                 OR      AL,(SIF OR CAF)
-                JMP     CPU_L2
+O0B_2:          RETN
 
-O0C:            ADDR_ABS 4,NB           ; SKW abs *** NOP3/NOOP
-                JMP     CPU_L2
+O0C:            ADDR_ABS 4,NB           ;SKW abs *** NOP3/NOOP
+                RETN
 
-O0F:            GET_WORD                ; ASL:ORA abs *** ASO/SLO
-                SUB     TICKS,2
+O0F:            GET_WORD                ;ASL:ORA abs *** ASO/SLO
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1375,19 +1413,19 @@ O0F:            GET_WORD                ; ASL:ORA abs *** ASO/SLO
                 CALL    MSTORE_DH
                 JMP     O0D
 
-O13:            GET_BYTE                ; ASL:ORA (zp),Y *** ASO/SLO
+O13:            GET_BYTE                ;ASL:ORA (zp),Y *** ASO/SLO
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O13_1
+                JNC     O13_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O13_1:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1396,12 +1434,12 @@ O13_1:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O11
 
-O14:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+O14:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-O17:            GET_BYTE                ; ASL:ORA zp,X *** ASO/SLO
+O17:            GET_BYTE                ;ASL:ORA zp,X *** ASO/SLO
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1410,16 +1448,16 @@ O17:            GET_BYTE                ; ASL:ORA zp,X *** ASO/SLO
                 CALL    MSTORE_DH
                 JMP     O15
 
-O1A:            XNOP 2                  ; NOP1 *** NOP/NOOP
+O1A:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-O1B:            GET_WORD                ; ASL:ORA abs,Y *** ASO/SLO
+O1B:            GET_WORD                ;ASL:ORA abs,Y *** ASO/SLO
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O1B_1
+                JNC     O1B_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O1B_1:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1428,16 +1466,16 @@ O1B_1:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O19
 
-O1C:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+O1C:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-O1F:            GET_WORD                ; ASL:ORA abs,X *** ASO/SLO
-                SUB     TICKS,3
+O1F:            GET_WORD                ;ASL:ORA abs,X *** ASO/SLO
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT O1F_1
+                JNC     O1F_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O1F_1:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1446,14 +1484,14 @@ O1F_1:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O1D
 
-O23:            GET_BYTE                ; ROL:AND (zp,X) *** RLA
+O23:            GET_BYTE                ;ROL:AND (zp,X) *** RLA
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1462,8 +1500,8 @@ O23:            GET_BYTE                ; ROL:AND (zp,X) *** RLA
                 CALL    MSTORE_DH
                 JMP     O21
 
-O27:            GET_BYTE                ; ROL:AND zp *** RLA
-                SUB     TICKS,2
+O27:            GET_BYTE                ;ROL:AND zp *** RLA
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1472,17 +1510,17 @@ O27:            GET_BYTE                ; ROL:AND zp *** RLA
                 CALL    MSTORE_DH
                 JMP     O25
 
-O2B:            ADDR_IM 2               ; ANC im ***
+O2B:            ADDR_IM 2               ;ANC im ***
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 AND     AH,DH
-                JNZ     SHORT O2B_1
+                JNZ     O2B_1
                 OR      AL,ZEF
-O2B_1:          JNS     CPU_L2
+O2B_1:          JNS     O2B_2
                 OR      AL,(SIF OR CAF)
-                JMP     CPU_L2
+O2B_2:          RETN
 
-O2F:            GET_WORD                ; ROL:AND abs *** RLA
-                SUB     TICKS,2
+O2F:            GET_WORD                ;ROL:AND abs *** RLA
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1491,19 +1529,19 @@ O2F:            GET_WORD                ; ROL:AND abs *** RLA
                 CALL    MSTORE_DH
                 JMP     O2D
 
-O33:            GET_BYTE                ; ROL:AND (zp),Y *** RLA
+O33:            GET_BYTE                ;ROL:AND (zp),Y *** RLA
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O33_1
+                JNC     O33_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O33_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1512,12 +1550,12 @@ O33_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O31
 
-O34:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+O34:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-O37:            GET_BYTE                ; ROL:AND zp,X *** RLA
+O37:            GET_BYTE                ;ROL:AND zp,X *** RLA
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1526,16 +1564,16 @@ O37:            GET_BYTE                ; ROL:AND zp,X *** RLA
                 CALL    MSTORE_DH
                 JMP     O35
 
-O3A:            XNOP 2                  ; NOP1 *** NOP/NOOP
+O3A:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-O3B:            GET_WORD                ; ROL:AND abs,Y *** RLA
+O3B:            GET_WORD                ;ROL:AND abs,Y *** RLA
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O3B_1
+                JNC     O3B_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O3B_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1544,16 +1582,16 @@ O3B_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O39
 
-O3C:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+O3C:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-O3F:            GET_WORD                ; ROL:AND abs,X *** RLA
-                SUB     TICKS,3
+O3F:            GET_WORD                ;ROL:AND abs,X *** RLA
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT O3F_1
+                JNC     O3F_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O3F_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1562,14 +1600,14 @@ O3F_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O3D
 
-O43:            GET_BYTE                ; LSR:EOR (zp,X) *** LSE/LRE/SRE
+O43:            GET_BYTE                ;LSR:EOR (zp,X) *** LSE/LRE/SRE
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1578,11 +1616,11 @@ O43:            GET_BYTE                ; LSR:EOR (zp,X) *** LSE/LRE/SRE
                 CALL    MSTORE_DH
                 JMP     O41
 
-O44:            ADDR_ZP 3,NB            ; SKB zp *** NOP2/NOOP
-                JMP     CPU_L2
+O44:            ADDR_ZP 3,NB            ;SKB zp *** NOP2/NOOP
+                RETN
 
-O47:            GET_BYTE                ; LSR:EOR zp *** LSE/LRE/SRE
-                SUB     TICKS,2
+O47:            GET_BYTE                ;LSR:EOR zp *** LSE/LRE/SRE
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1591,12 +1629,12 @@ O47:            GET_BYTE                ; LSR:EOR zp *** LSE/LRE/SRE
                 CALL    MSTORE_DH
                 JMP     O45
 
-O4B:            ADDR_IM 2               ; AND im:LSR ac *** ALR/ADL/ASR
+O4B:            ADDR_IM 2               ;AND im:LSR ac *** ALR/ADL/ASR
                 AND     AH,DH
                 JMP     X_O4A
 
-O4F:            GET_WORD                ; LSR:EOR abs *** LSE/LRE/SRE
-                SUB     TICKS,2
+O4F:            GET_WORD                ;LSR:EOR abs *** LSE/LRE/SRE
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1605,19 +1643,19 @@ O4F:            GET_WORD                ; LSR:EOR abs *** LSE/LRE/SRE
                 CALL    MSTORE_DH
                 JMP     O4D
 
-O53:            GET_BYTE                ; LSR:EOR (zp),Y *** LSE/LRE/SRE
+O53:            GET_BYTE                ;LSR:EOR (zp),Y *** LSE/LRE/SRE
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O53_3
+                JNC     O53_3
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O53_3:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1626,12 +1664,12 @@ O53_3:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O51
 
-O54:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+O54:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-O57:            GET_BYTE                ; LSR:EOR zp,X *** LSE/LRE/SRE
+O57:            GET_BYTE                ;LSR:EOR zp,X *** LSE/LRE/SRE
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1640,16 +1678,16 @@ O57:            GET_BYTE                ; LSR:EOR zp,X *** LSE/LRE/SRE
                 CALL    MSTORE_DH
                 JMP     O55
 
-O5A:            XNOP 2                  ; NOP1 *** NOP/NOOP
+O5A:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-O5B:            GET_WORD                ; LSR:EOR abs,Y *** LSE/LRE/SRE
+O5B:            GET_WORD                ;LSR:EOR abs,Y *** LSE/LRE/SRE
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O5B_1
+                JNC     O5B_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O5B_1:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1658,16 +1696,16 @@ O5B_1:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O59
 
-O5C:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+O5C:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-O5F:            GET_WORD                ; LSR:EOR abs,X *** LSE/LRE/SRE
-                SUB     TICKS,3
+O5F:            GET_WORD                ;LSR:EOR abs,X *** LSE/LRE/SRE
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT O5F_1
+                JNC     O5F_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O5F_1:          AND     AL,NOT CAF
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
@@ -1676,14 +1714,14 @@ O5F_1:          AND     AL,NOT CAF
                 CALL    MSTORE_DH
                 JMP     O5D
 
-O63:            GET_BYTE                ; ROR:ADC (zp,X) *** RRA
+O63:            GET_BYTE                ;ROR:ADC (zp,X) *** RRA
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1692,11 +1730,11 @@ O63:            GET_BYTE                ; ROR:ADC (zp,X) *** RRA
                 CALL    MSTORE_DH
                 JMP     O61
 
-O64:            ADDR_ZP 3,NB            ; SKB zp *** NOP2/NOOP
-                JMP     CPU_L2
+O64:            ADDR_ZP 3,NB            ;SKB zp *** NOP2/NOOP
+                RETN
 
-O67:            GET_BYTE                ; ROR:ADC zp *** RRA
-                SUB     TICKS,2
+O67:            GET_BYTE                ;ROR:ADC zp *** RRA
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1705,25 +1743,25 @@ O67:            GET_BYTE                ; ROR:ADC zp *** RRA
                 CALL    MSTORE_DH
                 JMP     O65
 
-O6B:            ADDR_IM 2               ; AND im:ROR ac *** ARR/ADR
+O6B:            ADDR_IM 2               ;AND im:ROR ac *** ARR/ADR
                 AND     AL,NOT (ZEF OR SIF OR OVF OR CAF)
-                AND     AH,DH           ; set V and c flags
-                JNS     SHORT O6B_3     ; flags (N, Z, V) depends on 
-                INC     AX              ; D-flag state
+                AND     AH,DH           ;set V and c flags
+                JNS     O6B_3     ;flags (N, Z, V) depends on
+                INC     AX              ;D-flag state
 O6B_3:          TEST    AH,0C0H
-                JPE     SHORT O6B_2
+                JPE     O6B_2
                 OR      AL,OVF
 O6B_2:          BT      AX,0
                 RCR     AH,1
                 OR      AH,AH
-                JNZ     SHORT O6B_1
+                JNZ     O6B_1
                 OR      AL,ZEF
-O6B_1:          JNS     CPU_L2
+O6B_1:          JNS     O6B_4
                 OR      AL,SIF
-                JMP     CPU_L2
+O6B_4:          RETN
 
-O6F:            GET_WORD                ; ROR:ADC abs *** RRA
-                SUB     TICKS,2
+O6F:            GET_WORD                ;ROR:ADC abs *** RRA
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1732,19 +1770,19 @@ O6F:            GET_WORD                ; ROR:ADC abs *** RRA
                 CALL    MSTORE_DH
                 JMP     O6D
 
-O73:            GET_BYTE                ; ROR:ADC (zp),Y *** RRA
+O73:            GET_BYTE                ;ROR:ADC (zp),Y *** RRA
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O73_3
+                JNC     O73_3
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O73_3:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1753,12 +1791,12 @@ O73_3:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O71
 
-O74:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+O74:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-O77:            GET_BYTE                ; ROR:ADC zp,X *** RRA
+O77:            GET_BYTE                ;ROR:ADC zp,X *** RRA
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1767,16 +1805,16 @@ O77:            GET_BYTE                ; ROR:ADC zp,X *** RRA
                 CALL    MSTORE_DH
                 JMP     O75
 
-O7A:            XNOP 2                  ; NOP1 *** NOP/NOOP
+O7A:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-O7B:            GET_WORD                ; ROR:ADC abs,Y *** RRA
+O7B:            GET_WORD                ;ROR:ADC abs,Y *** RRA
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT O7B_1
+                JNC     O7B_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O7B_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1785,16 +1823,16 @@ O7B_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O79
 
-O7C:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+O7C:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-O7F:            GET_WORD                ; ROR:ADC abs,X *** RRA
-                SUB     TICKS,3
+O7F:            GET_WORD                ;ROR:ADC abs,X *** RRA
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT O7F_1
+                JNC     O7F_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 O7F_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 BTR     AX,0
@@ -1803,36 +1841,36 @@ O7F_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 JMP     O7D
 
-O80:            ADDR_IM 2               ; SKB im *** NOP2/NOOP
-                JMP     CPU_L2
+O80:            ADDR_IM 2               ;SKB im *** NOP2/NOOP
+                RETN
                 
-O82:            ADDR_IM 2               ; SKB im *** NOP2/NOOP
-                JMP     CPU_L2
+O82:            ADDR_IM 2               ;SKB im *** NOP2/NOOP
+                RETN
 
-O83:            ADDR_IZP_X 6,NB         ; AXS (zp,X) *** SXS/SAX
-                MOV     DH,AH           ; (X & A) -> M
+O83:            ADDR_IZP_X 6,NB         ;AXS (zp,X) *** SXS/SAX
+                MOV     DH,AH           ;(X & A) -> M
                 AND     DH,CL
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O87:            ADDR_ZP 3,NB            ; AXS zp *** SXS/SAX
-                MOV     DH,AH           ; (X & A) -> M
+O87:            ADDR_ZP 3,NB            ;AXS zp *** SXS/SAX
+                MOV     DH,AH           ;(X & A) -> M
                 AND     DH,CL
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O89:            ADDR_IM 2               ; SKB im *** NOP2/NOOP
-                JMP     CPU_L2
+O89:            ADDR_IM 2               ;SKB im *** NOP2/NOOP
+                RETN
 
-O8B:            ADDR_IM 2               ; TXA:AND im *** TAA/ANE
+O8B:            ADDR_IM 2               ;TXA:AND im *** TAA/ANE
                 MOV     AH,CL
                 LOGIC_OPER AND
 
-O8F:            ADDR_ABS 4,NB           ; AXS abs *** SXS/SAX
-                MOV     DH,AH           ; (X & A) -> M
+O8F:            ADDR_ABS 4,NB           ;AXS abs *** SXS/SAX
+                MOV     DH,AH           ;(X & A) -> M
                 AND     DH,CL
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O93:            GET_BYTE                ; SHA (zp),Y *** AXA
-                ADD     SI,2            ; A & X & (ZP_ADDR+1) ->M
+O93:            GET_BYTE                ;SHA (zp),Y *** AXA
+                ADD     SI,2            ;A & X & (ZP_ADDR+1) ->M
                 MOV     CH,DH
                 CALL    MREAD_DH
                 MOV     DL,DH
@@ -1846,16 +1884,16 @@ O93:            GET_BYTE                ; SHA (zp),Y *** AXA
                 MOV     DH,CH
                 XOR     CH,CH
                 MOV     DL,6
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O97:            ADDR_ZP_Y 4,NB          ; AXS zp,Y *** SXS/SAX
-                MOV     DH,AH           ; (X & A) -> M
+O97:            ADDR_ZP_Y 4,NB          ;AXS zp,Y *** SXS/SAX
+                MOV     DH,AH           ;(X & A) -> M
                 AND     DH,CL
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O9B:            GET_WORD                ; SHS abs,Y *** TAS
-                ADD     SI,3            ; AC & XR -> SPR
-                ADD     BX,DI           ; SPR & (ADDR_HI+1) -> M
+O9B:            GET_WORD                ;SHS abs,Y *** TAS
+                ADD     SI,3            ;AC & XR -> SPR
+                ADD     BX,DI           ;SPR & (ADDR_HI+1) -> M
                 MOV     DL,AH
                 AND     DL,CL
                 XCHG    AX,BP
@@ -1864,286 +1902,285 @@ O9B:            GET_WORD                ; SHS abs,Y *** TAS
                 INC     DH
                 AND     DH,DL
                 MOV     DL,5
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O9C:            GET_WORD                ; SHY abs,X *** SAY
-                ADD     SI,3            ; YR & (ADDR_HI+1) -> M
+O9C:            GET_WORD                ;SHY abs,X *** SAY
+                ADD     SI,3            ;YR & (ADDR_HI+1) -> M
                 ADD     BX,CX
                 XCHG    AX,DI
                 INC     DH
                 AND     DH,AL
                 XCHG    AX,DI
                 MOV     DL,5
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O9E:            GET_WORD                ; SHX abs,Y *** XAS
-                ADD     SI,3            ; XR & (ADDR_HI+1) -> M
+O9E:            GET_WORD                ;SHX abs,Y *** XAS
+                ADD     SI,3            ;XR & (ADDR_HI+1) -> M
                 ADD     BX,DI
                 INC     DH
                 AND     DH,CL
                 MOV     DL,5
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-O9F:            GET_WORD                ; SHA abs,Y *** AXA
-                ADD     SI,3            ; AC & XR & (ADDR_HI+1) -> M
+O9F:            GET_WORD                ;SHA abs,Y *** AXA
+                ADD     SI,3            ;AC & XR & (ADDR_HI+1) -> M
                 ADD     BX,DI
                 INC     DH
                 AND     DH,AH
                 AND     DH,CL
                 MOV     DL,5
-                JMP     CPU_L3B
+                JMP     MSTORE_DH
 
-OA3:            ADDR_IZP_X 6            ; LDA:LDX (zp,X) *** LAX
+OA3:            ADDR_IZP_X 6            ;LDA:LDX (zp,X) *** LAX
                 MOV     AH,DH
                 MOV     CL,AH
                 SETF_L_AC
 
-OA7:            ADDR_ZP 3               ; LDA:LDX zp *** LAX
+OA7:            ADDR_ZP 3               ;LDA:LDX zp *** LAX
                 MOV     AH,DH
                 MOV     CL,AH
                 SETF_L_AC
 
-OAB:            ADDR_IM 2               ; LXA im *** OAL
+OAB:            ADDR_IM 2               ;LXA im *** OAL
                 AND     AH,DH
                 MOV     CL,AH
                 LOGIC_OPER AND
 
-OAF:            ADDR_ABS 4              ; LDA:LDX abs *** LAX
+OAF:            ADDR_ABS 4              ;LDA:LDX abs *** LAX
                 MOV     AH,DH
                 MOV     CL,DH
                 SETF_L_AC
 
-OB3:            ADDR_IZP_Y 5            ; LDA:LDX (zp),Y *** LAX
+OB3:            ADDR_IZP_Y 5            ;LDA:LDX (zp),Y *** LAX
                 MOV     AH,DH
                 MOV     CL,DH
                 SETF_L_AC
 
-OB7:            ADDR_ZP_Y 4             ; LDA:LDX zp,Y *** LAX
+OB7:            ADDR_ZP_Y 4             ;LDA:LDX zp,Y *** LAX
                 MOV     AH,DH
                 MOV     CL,DH
                 SETF_L_AC
 
-OBB:            ADDR_ABS_Y 4            ; LAS ***
+OBB:            ADDR_ABS_Y 4            ;LAS ***
                 AND     AL,NOT (ZEF OR SIF)
-                XCHG    AX,BP           ; M & SPR -> AC,XR,SPR
+                XCHG    AX,BP           ;M & SPR -> AC,XR,SPR
                 AND     AL,DH
                 MOV     CL,AL
                 XCHG    AX,BP
                 MOV     AH,CL
-                JNZ     SHORT OBB_1
+                JNZ     OBB_1
                 OR      AL,ZEF
-OBB_1:          JNS     CPU_L2
+OBB_1:          JNS     OBB_2
                 OR      AL,SIF
-                JMP     CPU_L2
+OBB_2:          RETN
 
-OBF:            ADDR_ABS_Y 4            ; LDA:LDX abs,Y *** LAX
+OBF:            ADDR_ABS_Y 4            ;LDA:LDX abs,Y *** LAX
                 MOV     AH,DH
                 MOV     CL,DH
                 SETF_L_AC
 
-OC2:            ADDR_IM 2               ; SKB im *** NOP2/NOOP
-                JMP     CPU_L2
+OC2:            ADDR_IM 2               ;SKB im *** NOP2/NOOP
+                RETN
 
-OC3:            GET_BYTE                ; DEC:CMP (zp,X) *** DCC/DCP
+OC3:            GET_BYTE                ;DEC:CMP (zp,X) *** DCC/DCP
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OC1
 
-OC7:            GET_BYTE                ; DEC:CMP zp *** DCC/DCP
-                SUB     TICKS,2
+OC7:            GET_BYTE                ;DEC:CMP zp *** DCC/DCP
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OC5
 
-OCB:            ADDR_IM 2               ; SBX im *** SAX
+OCB:            ADDR_IM 2               ;SBX im *** SAX
                 AND     AL,NOT (ZEF OR SIF OR CAF)
-                AND     CL,AH           ; XR & AC - IM -> XR
+                AND     CL,AH           ;XR & AC - IM -> XR
                 SUB     CL,DH
-                JC      SHORT OCB_2
+                JC      OCB_2
                 INC     AX
                 OR      CL,CL
-OCB_2:          JNZ     SHORT OCB_1
+OCB_2:          JNZ     OCB_1
                 OR      AL,ZEF
-OCB_1:          JNS     CPU_L2
+OCB_1:          JNS     OCB_3
                 OR      AL,SIF
-                JMP     CPU_L2
+OCB_3:          RETN
 
-OCF:            GET_WORD                ; DEC:CMP abs *** DCC/DCP
-                SUB     TICKS,2
+OCF:            GET_WORD                ;DEC:CMP abs *** DCC/DCP
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OCD
 
-OD3:            GET_BYTE                ; DEC:CMP (zp),Y *** DCC/DCP
+OD3:            GET_BYTE                ;DEC:CMP (zp),Y *** DCC/DCP
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
                 JNC     OD3_3
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 OD3_3:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OD1
 
-OD4:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+OD4:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-OD7:            GET_BYTE                ; DEC:CMP zp,X *** DCC/DCP
+OD7:            GET_BYTE                ;DEC:CMP zp,X *** DCC/DCP
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OD5
 
-ODA:            XNOP 2                  ; NOP1 *** NOP/NOOP
+ODA:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-ODB:            GET_WORD                ; DEC:CMP abs,Y *** DCC/DCP
+ODB:            GET_WORD                ;DEC:CMP abs,Y *** DCC/DCP
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT ODB_1
+                JNC     ODB_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 ODB_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     OD9
 
-ODC:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+ODC:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-ODF:            GET_WORD                ; DEC:CMP abs,X *** DCC/DCP
-                SUB     TICKS,3
+ODF:            GET_WORD                ;DEC:CMP abs,X *** DCC/DCP
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT ODF_1
+                JNC     ODF_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 ODF_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 DEC     DH
                 CALL    MSTORE_DH
                 JMP     ODD
 
-OE2:            ADDR_IM 2               ; SKB im *** NOP2/NOOP
-                JMP     CPU_L2
+OE2:            ADDR_IM 2               ;SKB im *** NOP2/NOOP
+                RETN
 
-OE3:            GET_BYTE                ; INC:SBC (zp,X) *** INS/ISB
+OE3:            GET_BYTE                ;INC:SBC (zp,X) *** INS/ISB
                 ADD     BL,CL
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OE1
 
-OE7:            GET_BYTE                ; INC:SBC zp *** INS/ISB
-                SUB     TICKS,2
+OE7:            GET_BYTE                ;INC:SBC zp *** INS/ISB
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OE5
 
-OEB             EQU     OE9             ; SBC im *** SUB
-
-OEF:            GET_WORD                ; INC:SBC abs *** INS/ISB
-                SUB     TICKS,2
+OEF:            GET_WORD                ;INC:SBC abs *** INS/ISB
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OED
 
-OF3:            GET_BYTE                ; INC:SBC (zp),Y *** INS/ISB
+OF3:            GET_BYTE                ;INC:SBC (zp),Y *** INS/ISB
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BL
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT OF3_3
+                JNC     OF3_3
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 OF3_3:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OF1
 
-OF4:            ADDR_ZP_X 4,NB          ; SKB zp,X *** NOP2/NOOP
-                JMP     CPU_L2
+OF4:            ADDR_ZP_X 4,NB          ;SKB zp,X *** NOP2/NOOP
+                RETN
 
-OF7:            GET_BYTE                ; INC:SBC zp,X *** INS/ISB
+OF7:            GET_BYTE                ;INC:SBC zp,X *** INS/ISB
                 ADD     BL,CL
-                SUB     TICKS,2
+                SUB     [TICKS],2
                 CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OF5
 
-OFA:            XNOP 2                  ; NOP1 *** NOP/NOOP
+OFA:            XNOP 2                  ;NOP1 *** NOP/NOOP
 
-OFB:            GET_WORD                ; INC:SBC abs,Y *** INS/ISB
+OFB:            GET_WORD                ;INC:SBC abs,Y *** INS/ISB
                 MOV     DX,DI
-                SUB     TICKS,3
+                SUB     [TICKS],3
                 ADD     BL,DL
-                JNC     SHORT OFB_1
+                JNC     OFB_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 OFB_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OF9
 
-OFC:            ADDR_ABS_X 4,NB         ; SKW abs,X *** NOP3/NOOP
-                JMP     CPU_L2
+OFC:            ADDR_ABS_X 4,NB         ;SKW abs,X *** NOP3/NOOP
+                RETN
 
-OFF:            GET_WORD                ; INC:SBC abs,X *** INS/ISB
-                SUB     TICKS,3
+OFF:            GET_WORD                ;INC:SBC abs,X *** INS/ISB
+                SUB     [TICKS],3
                 ADD     BL,CL
-                JNC     SHORT OFF_1
+                JNC     OFF_1
 
                 INC     BH
-                INC     TICKS
+                INC     [TICKS]
 OFF_1:          CALL    MREAD_DH
                 CALL    MSTORE_DH
                 INC     DH
                 CALL    MSTORE_DH
                 JMP     OFD
+

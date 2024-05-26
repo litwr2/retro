@@ -1,21 +1,21 @@
 KBD_FLAGS       DB      0
-INTR9_ST        DB      0
-KMATRIX         DB      8 DUP (0FFH)
+LABEL           KMATRIX BYTE
+TIMES   8       DB      0FFH
 PREV_KEY        DB      0
 KBUFS           DB      0       ;8 bits scan code
 KBUFN           DB      0       ;7 bit scan code
-KBUFA           LABEL   BYTE
-KT1             DB      0,64Q,70Q,73Q,10Q,13Q,20Q,23Q,30Q ;0 ;+1 !!!
-                DB      33Q,40Q,43Q,66Q,56Q,00Q,77Q,76Q ;8
-                DB      11Q,16Q,21Q,26Q,31Q,36Q,41Q,46Q ;16
-                DB      51Q,07Q,02Q,01Q,72Q,12Q,15Q,22Q ;24
-                DB      25Q,32Q,35Q,42Q,45Q,52Q,55Q,62Q ;32
-                DB      61Q,17Q,65Q,14Q,27Q,24Q,37Q,34Q ;40
-                DB      47Q,44Q,57Q,54Q,67Q,17Q,61Q,75Q ;48
-                DB      74Q,17Q,04Q,05Q,06Q,03Q,81H,81H ;56
-                DB      81H,81H,0C0H,0C0H,81H,81H,71Q,53Q ;64
-                DB      81H,56Q,60Q,54Q,63Q,66Q,81H,50Q ;72
-                DB      81H,00Q,00Q,81H,81H,81H,0C0H,0C0H ;80
+LABEL           KBUFA   BYTE
+KT1             DB      0,64O,70O,73O,10O,13O,20O,23O,30O ;0 ;+1 !!!
+                DB      33O,40O,43O,66O,56O,00O,77O,76O ;8
+                DB      11O,16O,21O,26O,31O,36O,41O,46O ;16
+                DB      51O,07O,02O,01O,72O,12O,15O,22O ;24
+                DB      25O,32O,35O,42O,45O,52O,55O,62O ;32
+                DB      61O,17O,65O,14O,27O,24O,37O,34O ;40
+                DB      47O,44O,57O,54O,67O,17O,61O,75O ;48
+                DB      74O,17O,04O,05O,06O,03O,0C0H,81H ;56
+                DB      81H,81H,0C0H,0C0H,81H,81H,71O,53O ;64
+                DB      81H,56O,60O,54O,63O,66O,81H,50O ;72
+                DB      81H,00O,00O,81H,81H,81H,0C0H,0C0H ;80
                 ; 0C0H=System action, 81H=Dummy key
                 ; F9=DEBUGGER/ F10=EXIT/ F11=RESET/ F12=MENUS
                 ; Scroll_Lock=PLAY_ON_TAPE/ SysRq=IMMEDIATE QUIT

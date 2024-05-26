@@ -1,35 +1,46 @@
-GET_BYTE        MACRO   XB
+ZEF             EQU     2
+CAF             EQU     1
+SIF             EQU     80H
+OVF             EQU     40H
+
+FREEZE_LEN      EQU     LED-FREEZE_VER+1
+
+MACRO           GET_BYTE XB
+{
                 MOV     BX,SI
                 INC     BX
                 CALL    MREAD_DH
                 XOR     BH,BH
-                IFB <XB>
+                IF XB EQ
                  MOV     BL,DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-GET_WORD        MACRO   XB
+MACRO           GET_WORD XB
+{
                 MOV     BX,SI
                 INC     BX
                 CALL    MREAD_DH
                 MOV     DL,DH
                 INC     BX
                 CALL    MREAD_DH
-                IFB <XB>
+                IF XB EQ
                  MOV     BX,DX
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ZP         MACRO   ICLOCK,XB
+MACRO           ADDR_ZP ICLOCK,XB
+{
                 GET_BYTE
                 ADD     SI,2
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_IZP_Y      MACRO   ICLOCK,XB
+MACRO           ADDR_IZP_Y ICLOCK,XB
+{
                 LOCAL   CIN
                 GET_BYTE
                 ADD     SI,2
@@ -41,15 +52,16 @@ ADDR_IZP_Y      MACRO   ICLOCK,XB
                 MOV     DX,DI
                 ADD     BL,DL
                 MOV     DL,ICLOCK
-                JNC     SHORT CIN&_3
+                JNC     CIN#_3
                 INC     BH
                 INC     DL
-CIN&_3:         IFB <XB>
+CIN#_3:         IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_IZP_X      MACRO   ICLOCK,XB
+MACRO           ADDR_IZP_X ICLOCK,XB
+{
                 GET_BYTE
                 ADD     SI,2
                 ADD     BL,CL
@@ -59,103 +71,113 @@ ADDR_IZP_X      MACRO   ICLOCK,XB
                 CALL    MREAD_DH
                 MOV     BX,DX
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ABS        MACRO   ICLOCK,XB
+MACRO           ADDR_ABS ICLOCK,XB
+{
                 GET_WORD
                 ADD     SI,3
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ZP_X       MACRO   ICLOCK,XB
+MACRO           ADDR_ZP_X ICLOCK,XB
+{
                 GET_BYTE
                 ADD     SI,2
                 ADD     BL,CL
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ZP_Y       MACRO   ICLOCK,XB
+MACRO           ADDR_ZP_Y ICLOCK,XB
+{
                 GET_BYTE
                 ADD     SI,2
                 ADD     BX,DI
                 XOR     BH,BH
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ABS_Y      MACRO   ICLOCK,XB
+MACRO           ADDR_ABS_Y ICLOCK,XB
+{
                 LOCAL   CIN
                 GET_WORD
                 ADD     SI,3
                 MOV     DX,DI
                 ADD     BL,DL
                 MOV     DL,ICLOCK
-                JNC     SHORT CIN&_3
+                JNC     CIN#_3
                 INC     DL
                 INC     BH
-CIN&_3:         IFB <XB>
+CIN#_3:         IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ABS_X      MACRO   ICLOCK,XB
+MACRO           ADDR_ABS_X ICLOCK,XB
+{
                 LOCAL   CIN
                 GET_WORD
                 ADD     SI,3
                 MOV     DL,ICLOCK
                 ADD     BL,CL
-                JNC     SHORT CIN&_3
+                JNC     CIN#_3
                 INC     DL
                 INC     BH
-CIN&_3:         IFB <XB>
+CIN#_3:         IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_ABS_X1     MACRO   ICLOCK,XB
+MACRO           ADDR_ABS_X1 ICLOCK,XB
+{
                 GET_WORD
                 ADD     SI,3
                 ADD     BX,CX
                 MOV     DL,ICLOCK
-                IFB <XB>
+                IF XB EQ
                  CALL    MREAD_DH
-                ENDIF
-                ENDM
+                END IF
+}
 
-ADDR_MISS       MACRO   ICLOCK
+MACRO           ADDR_MISS ICLOCK
+{
                 INC     SI
                 MOV     DL,ICLOCK
-                ENDM
+}
 
-ADDR_IM         MACRO   ICLOCK
+MACRO           ADDR_IM ICLOCK
+{
                 GET_BYTE NB
                 ADD     SI,2
                 MOV     DL,ICLOCK
-                ENDM
+}
 
-LOGIC_OPER      MACRO   OPER
+MACRO           LOGIC_OPER OPER
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF)
                 OPER    AH,DH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_2
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         RETN
+}
 
-BRANCH1         MACRO   COND
+MACRO           BRANCH1 COND
+{
                 LOCAL   CIN
                 INC     SI
                 MOV     BX,SI
@@ -165,28 +187,29 @@ BRANCH1         MACRO   COND
 
                 MOV     DL,2
                 OR      AL,AL
-                COND    CPU_L2
+                COND    CIN#_4
 
                 INC     DL
                 OR      DH,DH
-                JNS     SHORT CIN&_1
+                JNS     CIN#_1
                 NEG     DH
                 SUB     BL,DH
-                JNC     SHORT CIN&_3
+                JNC     CIN#_3
                 DEC     BH
                 INC     DL
-CIN&_3:         MOV     SI,BX
-                JMP     CPU_L2
+CIN#_3:         MOV     SI,BX
+                RETN
 
-CIN&_1:         ADD     BL,DH
-                JNC     SHORT CIN&_2
+CIN#_1:         ADD     BL,DH
+                JNC     CIN#_2
                 INC     BH
                 INC     DL
-CIN&_2:         MOV     SI,BX
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         MOV     SI,BX
+CIN#_4:         RETN
+}
 
-BRANCH2         MACRO   COND,FLAG
+MACRO           BRANCH2 COND,FLAG
+{
                 LOCAL   CIN
                 INC     SI
                 MOV     BX,SI
@@ -196,109 +219,114 @@ BRANCH2         MACRO   COND,FLAG
 
                 MOV     DL,2
                 TEST    AL,FLAG
-                COND    CPU_L2
+                COND    CIN#_4
 
                 INC     DL
                 OR      DH,DH
-                JNS     SHORT CIN&_1
+                JNS     CIN#_1
                 NEG     DH
                 SUB     BL,DH
-                JNC     SHORT CIN&_3
+                JNC     CIN#_3
                 DEC     BH
                 INC     DL
-CIN&_3:         MOV     SI,BX
-                JMP     CPU_L2
+CIN#_3:         MOV     SI,BX
+                RETN
 
-CIN&_1:         ADD     BL,DH
-                JNC     SHORT CIN&_2
+CIN#_1:         ADD     BL,DH
+                JNC     CIN#_2
                 INC     BH
                 INC     DL
-CIN&_2:         MOV     SI,BX
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         MOV     SI,BX
+CIN#_4:         RETN
+}
 
-CLRF            MACRO   FLAG
+MACRO           CLRF    FLAG
+{
                 INC     SI
                 MOV     DL,2
                 AND     AL,NOT FLAG
-                JMP     CPU_L2
-                ENDM
+                RETN
+}
 
-SETF            MACRO   FLAG
+MACRO           SETF    FLAG
+{
                 INC     SI
                 MOV     DL,2
                 OR      AL,FLAG
-                JMP     CPU_L2
-                ENDM
+                RETN
+}
 
-ADDITION        MACRO
+MACRO           ADDITION
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF OR OVF)
                 TEST    AL,8    ; ?DECIMAL MODE
                 BTR     AX,0
-                JNZ     SHORT CIN&_3
+                JNZ     CIN#_3
                 ADC     AH,DH
 
-                JNO     SHORT CIN&_4
+                JNO     CIN#_4
                 ADC     AL,CH
                 OR      AL,OVF
-CIN&_4:         ADC     AL,CH
+CIN#_4:         ADC     AL,CH
                 OR      AH,AH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_8
                 OR      AL,SIF
-                JMP     CPU_L2
+CIN#_8:         RETN
 
-CIN&_3:         XCHG    AL,AH
+CIN#_3:         XCHG    AL,AH
                 ADC     AL,DH
                 DAA
                 XCHG    AL,AH
                 ADC     AL,CH
                 OR      AH,AH
-                JNZ     SHORT CIN&_7
+                JNZ     CIN#_7
                 OR      AL,ZEF
-CIN&_7:         JNS     CPU_L2
+CIN#_7:         JNS     CIN#_8
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+                RETN
+}
 
-SUBTRACTION     MACRO
+MACRO           SUBTRACTION
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF OR OVF)
                 TEST    AL,8    ; ?DECIMAL MODE
                 BTR     AX,0
                 CMC
-                JNZ     SHORT CIN&_3
+                JNZ     CIN#_3
                 SBB     AH,DH
                 CMC
 
-                JNO     SHORT CIN&_4
+                JNO     CIN#_4
                 ADC     AL,CH
                 OR      AL,OVF
-CIN&_4:         ADC     AL,CH
+CIN#_4:         ADC     AL,CH
                 OR      AH,AH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_8
                 OR      AL,SIF
-                JMP     CPU_L2
+CIN#_8:         RETN
 
-CIN&_3:         XCHG    AL,AH
+CIN#_3:         XCHG    AL,AH
                 SBB     AL,DH
                 DAS
                 XCHG    AL,AH
-                JC      SHORT CIN&_6
+                JC      CIN#_6
                 INC     AX
-CIN&_6:         OR      AH,AH
-                JNZ     SHORT CIN&_7
+CIN#_6:         OR      AH,AH
+                JNZ     CIN#_7
                 OR      AL,ZEF
-CIN&_7:         JNS     CPU_L2
+CIN#_7:         JNS     CIN#_8
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+                RETN
+}
 
-ROTATE_MEM      MACRO   OPER
+MACRO           ROTATE_MEM OPER
+{
                 LOCAL   CIN
                 CALL    MSTORE_DH
                 AND     AL,NOT (ZEF OR SIF)
@@ -306,132 +334,143 @@ ROTATE_MEM      MACRO   OPER
                 OPER    DH,1
                 ADC     AL,CH
                 OR      DH,DH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L3B
+CIN#_1:         JNS     MSTORE_DH
                 OR      AL,SIF
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-ROTATE_AC       MACRO   OPER
+MACRO           ROTATE_AC OPER
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF)
                 BTR     AX,0
                 OPER    AH,1
                 ADC     AL,CH
                 OR      AH,AH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_2
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         RETN
+}
 
-SHIFT_MEM_L     MACRO
+MACRO           SHIFT_MEM_L
+{
                 LOCAL   CIN
                 CALL    MSTORE_DH
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 SHL     DH,1
                 ADC     AL,CH
                 OR      DH,DH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L3B
+CIN#_1:         JNS     MSTORE_DH
                 OR      AL,SIF
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-SHIFT_MEM_R     MACRO
+MACRO           SHIFT_MEM_R
+{
                 LOCAL   CIN
                 CALL    MSTORE_DH
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 SHR     DH,1
                 ADC     AL,CH
                 OR      DH,DH
-                JNZ     CPU_L3B
+                JNZ     MSTORE_DH
                 OR      AL,ZEF
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-SETF_L_AC       MACRO
+MACRO           SETF_L_AC
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF)
                 OR      AH,AH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_2
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         RETN
+}
 
-SETF_L_XR       MACRO
+MACRO           SETF_L_XR
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF)
                 OR      CL,CL
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_2
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         RETN
+}
 
-SETF_L_YR       MACRO
+MACRO           SETF_L_YR
+{
                 LOCAL   CIN
                 MOV     DI,BX
                 AND     AL,NOT (ZEF OR SIF)
                 OR      BL,BL
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L2
+CIN#_1:         JNS     CIN#_2
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_2:         RETN
+}
 
-COMPARE         MACRO   OPRND
+MACRO           COMPARE OPRND
+{
                 LOCAL   CIN
                 AND     AL,NOT (ZEF OR SIF OR CAF)
                 CMP     OPRND,DH
-                JC      SHORT CIN&_1
+                JC      CIN#_1
                 BTS     AX,0
-CIN&_1:         JNZ     SHORT CIN&_2
+CIN#_1:         JNZ     CIN#_2
                 OR      AL,ZEF
-CIN&_2:         JNS     CPU_L2
+CIN#_2:         JNS     CIN#_3
                 OR      AL,SIF
-                JMP     CPU_L2
-                ENDM
+CIN#_3:         RETN
+}
 
-DECREMENT       MACRO
+MACRO           DECREMENT
+{
                 LOCAL   CIN
                 CALL    MSTORE_DH
                 AND     AL,NOT (ZEF OR SIF)
                 DEC     DH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L3B
+CIN#_1:         JNS     MSTORE_DH
                 OR      AL,SIF
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-INCREMENT       MACRO
+MACRO           INCREMENT
+{
                 LOCAL   CIN
                 CALL    MSTORE_DH
                 AND     AL,NOT (ZEF OR SIF)
                 INC     DH
-                JNZ     SHORT CIN&_1
+                JNZ     CIN#_1
                 OR      AL,ZEF
-CIN&_1:         JNS     CPU_L3B
+CIN#_1:         JNS     MSTORE_DH
                 OR      AL,SIF
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-STORE_MEM       MACRO   OPRND
+MACRO           STORE_MEM OPRND
+{
                 MOV     DH,OPRND
-                JMP     CPU_L3B
-                ENDM
+                JMP     MSTORE_DH
+}
 
-XNOP            MACRO   ICLOCK
+MACRO           XNOP    ICLOCK
+{
                 INC     SI
                 MOV     DL,ICLOCK
-                JMP     CPU_L2
-                ENDM
+                RETN
+}
 
