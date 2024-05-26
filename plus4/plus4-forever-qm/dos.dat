@@ -1,4 +1,4 @@
-AMSG            DB      'Commodore Plus/4 Emulator "Forever?" v1.38 IX-2007, by V. Lidovski'
+AMSG            DB      'Commodore Plus/4 Emulator "Forever?" v1.39 XII-2007, by V. Lidovski'
                 DB      0DH,0AH,'$'
 ERROR1          DB      'This program requires MS-DOS version 3.30 or higher'
                 DB      0AH,0Dh,'$'

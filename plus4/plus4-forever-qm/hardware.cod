@@ -472,6 +472,9 @@ PARAM0:         MOV     DI,IOBUF+1
                 CMP     EAX,'CFG'
                 JZ      .CFG
 
+                CMP     EAX,'VID'
+                JZ      .VID
+
                 SHR     EAX,16
                 CMP     AX,'\'
                 JZ      .DIR
@@ -486,6 +489,19 @@ PARAM0:         MOV     DI,IOBUF+1
 .L3:            ADD     DI,2
                 DEC     [IOBUF]
                 JMP     .L1
+
+.VID:           MOV     BX,[DI]
+                MOVZX   DX,BYTE [BX]
+                CALL    SEG_CODE2:HEX2BIN
+                CMP     AL,0AH
+                JA      .L3
+
+                ADD     AL,AL
+                MOV     [VIDMODE],AL
+                PUSH    DI
+                CALL    SET_VMODE
+                POP     DI
+                JMP     .L3
 
 .ROM:           MOV     BP,[DI]
                 MOV     BX,4

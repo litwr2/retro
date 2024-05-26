@@ -241,8 +241,10 @@ IEC#NU#J111:       CMP     [IEC#NU#_0PREV],83H        ;SET FN
 
                 CALL    IEC#NU#PARSEFN
                 CMP     [IEC#NU#GERR],1
-                JBE     IEC#NU#FOPEN
+                JA      .L0
 
+                CALL    IEC#NU#FOPEN
+                MOV     [IEC#NU#BUFL],0
 .L0:            RETN
 
 IEC#NU#COMMAND:    CALL    IEC#NU#PARSECMD
