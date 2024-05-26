@@ -1,4 +1,4 @@
-TED:            CMP     [TICKS2TED],0           ;free .L25, ...
+TED:            CMP     [TICKS2TED],0           ;free .L27, ...
                 JZ      TED
 
                 DEC     [TICKS2TED]
@@ -190,7 +190,7 @@ TED:            CMP     [TICKS2TED],0           ;free .L25, ...
                 CMP     AL,BYTE [Y_OFFSET]
                 JNE     .L12H
 
-.L26:           MOV     [ISDMANOW],1
+                MOV     [ISDMANOW],1
                 JMP     .L10
 
 .L12H:          CMP     [ISDMANOW],1
@@ -259,7 +259,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L25, ...
 .L17A:          MOV     BX,WORD [TED_A]
                 XCHG    BL,BH
                 AND     BH,1
-
                 CMP     AX,BX                   ;RASTER INTERRUPT?
                 JNZ     .L23
 
@@ -268,8 +267,8 @@ TED:            CMP     [TICKS2TED],0           ;free .L25, ...
                 JZ      .L23
 
                 OR      [TED_9],80H
-                MOV     BX,[CPUOP]
-                MOV     [IRQOP],BX
+                MOV     AX,[CPUOP]
+                MOV     [IRQOP],AX
 .L23:           DEC     WORD [TED_0]            ;TIMERS INTERRUPT?
                 JNZ     .L20
 

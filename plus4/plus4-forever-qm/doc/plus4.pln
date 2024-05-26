@@ -1,0 +1,75 @@
+FIRST
+ - test T# debugger command
+ - interrupt algorithm (set bits of $ff0a may cause interrupt!)
+ - no macros for IEC!
+ - splat files for IBM FS
+ - block menus during disk i/o (on IBM FS only?)
+ - reset & menus (!) break disk io!!!
+ - add automatic name generation for export from ctf/d64
+ - debugger add 0 to 1/3 byte operand for A command
+ - bits 7 of ff15,16,17,18,19 and 2-7(?) is always 1
+ - last line attribute (like bubis demo)
+ - TED_A IRQ MASK!
+ - TRAP16 of Test Suite
+ - improve timer sound!!!
+ - "ASSIGN FILE FOR THE CBM DEVICE" in debugger!
+ - SEQ-viewer???
+ - F5 doesn't function in the debugger!
+ - CSB
+ - load new PRG, P00, ... after forced reset
+ - debugger & menus conflict
+ - dynamic memory distribution?
+ - PLUS4.CFG FILE
+ - mouse -> joy
+ - pause key?
+ - total ticks reset & synchronization
+ - safe interrupts (out 21h???)
+ - drive letters via DOS Fn 52H
+ - improving of sort (p00, PRG)
+ - PLAY button
+
+SOUND
+ - PROPER DIGITAL SOUND!!! SB?
+ - detect adlib?
+ - sound options in menus?
+
+TAPE
+ - REAL TAPE
+ - HUFFMAN and/or LZ coder for tape format
+ - TEST TAPE FORMAT VERSION
+ - REAL TAPE (.WAV/.TAP)
+ - DATASETTE NOISE TO PC SPEAKER!!!???...
+ - DATASETTE WRITE LINE TIMEOUT TRACE???
+
+REAL PLUS/4???
+ - PROPER COLORS!!!
+ - MC and EC modes combination (text and graphics) =blank!
+ - BM and EC modes combination
+ - HRV and EC/MC modes combination??? (afl boulder dash, jail break, squirm)
+ - CURSOR & COLORS???
+ - cursor & flash synchronization???
+ - test freeze bit
+ - test pal/ntsc bit
+ - test video dependences
+ - undefined bits in TED test (always 1?)
+ - TED access to IO area test
+ - TED COLLISION RAM & HI_IO ($FDxx-$FFxx)?
+
+GENERAL:
+ - c+4 kbd picture (?on F8 key...)
+ - NTSC bit
+ - 336x207? 400x300?
+ - WRITE TO TED & SIMULTANEOUSLY WRITE TO RAM???
+ - FULL PIO PORT EMULATION (e.g. CASETTE SENSE)!
+ - TEST FREEZE FORMAT VERSION
+ - FULL CPU IO LOGIC...
+ - (ALL) IORESULT CHECK?!!! AFTER INT 21H...
+ - USE nn BYTES at code segment (DAC_T(384B), dosmsg(112B), ROMFN(104B), ...)
+
+MENUS:
+ - OUTPUT SUMMARY INFORMATION IN MENUS2
+ - output start address for .p00 and .prg files (rec. size for .r00???)
+ - FFLPD -> uni FLPD
+ - HARDWARE OPTIONS (ON F7?)
+ - print screen... (ON F6)
+

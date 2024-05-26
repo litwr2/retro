@@ -271,8 +271,11 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 .L1N:           CMP     BL,9
                 JNZ     .L4N
 
-                XOR     [TED_9],DH
-                AND     [TED_9],7FH
+                PUSH    DX
+                NOT     DH
+                AND     DH,7FH
+                AND     [TED_9],DH
+                POP     DX
                 RETN
 
 .L4N:           CMP     BL,0AH

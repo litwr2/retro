@@ -4,5 +4,6 @@ files.dox       - this quick files reference
 colscn.prg      - 121 colours palette
 testape.ctf     - test datasette's casette image
 seqreade.p00    - SEQ files reader
+drives.s00      - information about disk drives support
 ascii.s00       - all visible ASCII symbols for +4
 
