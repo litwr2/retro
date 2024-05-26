@@ -41,6 +41,7 @@ M3_MSG16        DB      '0+ 320x200 VGA '
 M3_MSG17        DB      '0+ SPEAKER  '
                 DB      '1  ADLIB    '
                 DB      '2+ NOTNING  '
+                DB      '3- S.BLASTER'
 M3_MSG18        DB      'NONE  2/3  4/5  6/7 '
 CHR_TRT1        DB      0,0,'1234567890-=',8,0,'QWERTYUIOP',0,0
                 DB      13,0,'ASDFGHJKL;',0,0,0,'\ZXCVBNM,./'

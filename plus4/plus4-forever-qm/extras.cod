@@ -621,3 +621,64 @@ ADDTAPE:        MOV     DX,DEV1PATH
                 PARAMC  9
                 PARAMC  D
 
+SB_ENV:         MOV     AX,[ES:2CH]
+                MOV     GS,AX
+                XOR     SI,SI
+.L3:            CMP     WORD [GS:SI],0
+                JZ      .L1
+
+                CMP     DWORD [GS:SI],'BLAS'
+                JZ      .L2
+
+.L4:            INC     SI
+                JMP     .L3
+
+.L2:            CMP     DWORD [GS:SI+4],'TER='
+                JNZ     .L4
+
+                CMP     WORD [GS:SI+8],'A2'
+                JNZ     .L4
+
+                MOV     AL,[GS:SI+10]
+                SUB     AL,'0'
+                SHL     AL,4
+                ADD     BYTE [DSP_WRITE],AL
+                ;ADD     BYTE [DSP_READ],AL
+                ADD     BYTE [DSP_RESET],AL
+                ;ADD     BYTE [DSP_ST],AL
+                MOV     [M3_MSG17+37],'+'
+                INC     [SB_ST]
+.L1:            RETF
+
+SB_RESET:       CMP     [SB_ST],0
+                JE      .L5
+
+                MOV     DX,[DSP_RESET]
+                MOV     AL,1
+                OUT     DX,AL
+                MOV     AX,WORD [SYNCHRO_TICKS]
+                ADD     AX,2                    ;50microsec
+.L1:            CMP     AX,WORD [SYNCHRO_TICKS]
+                JNE     .L1
+
+                XOR     AX,AX
+                OUT     DX,AL
+                ADD     DL,8
+.L2:            IN      AL,DX
+                TEST    AL,80H
+                JZ      .L2
+
+                SUB     DL,4
+.L3:            IN      AL,DX
+                INC     AH
+                JZ      .L4
+
+                CMP     AL,0AAH
+                JNZ     .L3
+
+.L5:            RETF
+
+.L4:            MOV     [M3_MSG17+37],'-'
+                DEC     [SB_ST]
+                RETF
+

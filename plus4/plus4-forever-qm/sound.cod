@@ -17,15 +17,25 @@ SET_TIMERSND:   XOR     BX,BX
                 RETN
 
 SET_NOSND:      XOR     BX,BX
-.L1:            MOV     AX,NO_SOUND
-                MOV     [RESET_SOUND+BX],AX
+.L0:            MOV     AX,NO_SOUND
+.L1:            MOV     [RESET_SOUND+BX],AX
                 ADD     BX,2
                 CMP     BL,14
                 JNZ     .L1
 
 NO_SOUND:       RETN
 
-SET_SBSND:      JMP     SET_NOSND
+SET_SBSND:      XOR     BX,BX
+                CMP     [SB_ST],BL
+                JE      SET_NOSND.L0
+
+.L1:            MOV     AX,[SB_VECS+BX]
+                MOV     [RESET_SOUND+BX],AX
+                ADD     BX,2
+                CMP     BL,14
+                JNZ     .L1
+
+                RETN
 
 RELOAD_SND:     MOV     BX,0FF0EH
 .L1:            CALL    MREAD_DH
@@ -34,7 +44,7 @@ RELOAD_SND:     MOV     BX,0FF0EH
                 CMP     BL,12H
                 JBE     .L1
 
-                RETN
+.L0:            RETN
 
 SILENCE:        XOR     DH,DH
                 JMP     [SOUND_11]
@@ -42,4 +52,9 @@ SILENCE:        XOR     DH,DH
 RESTSOUND:      MOV     BX,0FF11H
                 MOV     DH,[TED_11]
                 JMP     MSTORE_DH
+
+EXIT_SND_ENTRY: CMP     [EXIT_SOUND],0
+                JE      RELOAD_SND.L0
+
+                JMP     [EXIT_SOUND]
 

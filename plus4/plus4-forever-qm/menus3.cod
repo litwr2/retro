@@ -781,7 +781,7 @@ MAIN_SCR10:     MOV     DI,160*6+52     ;SOUND
                 MOV     [CP_IN_WIN10],AL
                 MOV     SI,M3_MSG17
                 MOV     CX,12
-                MOV     BX,3
+                MOV     BX,4
                 CALL    OUT_MSG
                 CALL    TOGG_CUR10
 
@@ -829,7 +829,7 @@ MD10_UP:        CALL    TOGG_CUR10
                 JMP     MENU_DISP10
 
 MD10_DOWN:      CALL    TOGG_CUR10
-                CMP     [CP_IN_WIN10],2
+                CMP     [CP_IN_WIN10],3
                 JZ      .L1
 
                 INC     [CP_IN_WIN10]
@@ -842,7 +842,7 @@ MOUSE_DISP10:   CALL    HIDEM
                 SUB     AL,7
                 JS      MENU_DISP10
 
-                CMP     AL,3
+                CMP     AL,4
                 JAE     MENU_DISP10
 
                 SUB     CL,27

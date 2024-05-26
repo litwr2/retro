@@ -1719,6 +1719,7 @@ MD1_CONFIG:     CALL    MAIN_SCR8
                 OR      SI,SI
                 JNZ     MD1_CONFIG
 
+                CALL    [EXIT_SOUND]
                 MOVZX   BX,[CP_IN_WIN10]
                 AND     [SJCFG],0FCH
                 OR      [SJCFG],BL

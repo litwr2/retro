@@ -94,11 +94,11 @@ LOAD_CFG:       MOV     AX,3D00H                ;IN: DX
 .L6:            RETN
 
 SET_CFG:        CALL    SET_VMODE       ;SET VIDEO MODE
+                CALL    EXIT_SND_ENTRY
                 MOVZX   BX,[SJCFG]
                 AND     BL,3
                 CALL    [SOUND_SRC+EBX*2]
                 CALL    [RESET_SOUND]
-
                 MOV     AL,[SJCFG]
                 MOV     AH,AL
                 SHR     AL,5
@@ -131,7 +131,6 @@ FINISHIBM:      MOV     BX,1
                 AND     AL,70H
                 MOV     [LED],AL
                 CALL    SET_LED
-
                 CALL    RESTORE_INTR9
                 CALL    RESTORE_INTR8
                 CALL    [EXIT_SOUND]
@@ -208,6 +207,7 @@ INITIBM:        CLD
                 CALL    SET_INTR24
                 CALL    SET_INTR9
                 CALL    SET_INTR8
+                CALL    SEG_CODE2:SB_RESET
                 CALL    SET_CFG
 
                 XOR     SI,SI           ;LOAD ROMs
@@ -267,7 +267,112 @@ INITIBM:        CLD
                 CALL    SEG_CODE2:GET_DRVS      ;INIT MENUS
                 CALL    GET_FPATH
                 CALL    INIT_WIN1
-                JMP     FILL_IBM_FLIST
+                CALL    FILL_IBM_FLIST
+                MOV     DI,IOBUF+1              ;PARAMS
+                MOV     AL,[IOBUF]
+                PUSH    AX
+.LP1:           CMP     [IOBUF],0
+                JE      .EXIT
+
+                MOV     BX,[DI+2]
+                MOV     EAX,[BX-4]
+                CMP     EAX,'ROM'
+                JZ      .ROM
+
+                CMP     EAX,'CFG'
+                JZ      .CFG
+
+                CMP     EAX,'VID'
+                JZ      .VID
+
+                CMP     EAX,'SND'
+                JZ      .SND
+
+                SHR     EAX,16
+                CMP     AX,'\'
+                JZ      .DIR
+
+                JMP     .LP3
+
+.CFG:           MOV     DX,[DI]
+                CALL    LOAD_CFG
+                PUSH    DI
+                CALL    SET_CFG
+                POP     DI
+.LP3:           ADD     DI,2
+                DEC     [IOBUF]
+                JMP     .LP1
+
+.VID:           MOV     BX,[DI]
+                MOVZX   DX,BYTE [BX]
+                CALL    SEG_CODE2:HEX2BIN
+                CMP     AL,0AH
+                JA      .LP3
+
+                ADD     AL,AL
+                MOV     [VIDMODE],AL
+                PUSH    DI
+                CALL    SET_VMODE
+                POP     DI
+                JMP     .LP3
+
+.SND:           MOV     BX,[DI]
+                MOVZX   DX,BYTE [BX]
+                CALL    SEG_CODE2:HEX2BIN
+                CMP     AL,4
+                JA      .LP3
+
+                JNZ     .SND1
+
+                MOV     [SB_FREQ],3
+                MOV     [SB_SHIFT],2
+                DEC     AX
+.SND1:          AND     [SJCFG],0FCH
+                OR      [SJCFG],AL
+                MOVZX   BX,AL
+                PUSH    DI
+                PUSH    BX
+                CALL    EXIT_SND_ENTRY
+                POP     BX
+                CALL    [SOUND_SRC+EBX*2]
+                CALL    [RESET_SOUND]
+                POP     DI
+                JMP     .LP3
+
+.ROM:           MOV     BP,[DI]
+                MOV     BX,4
+                CMP     BYTE [DS:BP],'/'
+                JNZ     .LR2
+
+                MOV     BL,BYTE [DS:BP+1]
+                SUB     BL,'0'
+                JS      .LP3
+
+                CMP     BL,8
+                JA      .LP3
+
+                ADD     WORD [DI],2
+.LR2:           CALL    ADDROM
+                JMP     .LP3
+
+.DIR:           CALL    SEG_CODE2:PREPDPARAM
+                MOV     DL,[DEVDPATH]
+                SUB     DL,'A'
+                MOV     AH,0EH
+                INT     21H
+
+                MOV     BX,[DEVDFNP]
+                MOV     BYTE [BX-1],0
+                PUSH    DI
+                CALL    SET_FPATH
+                CALL    FILL_IBM_FLIST
+                POP     DI
+                JMP     .LP3
+
+.EXIT:          CALL    RESTORE_PATH
+                POP     AX
+                MOV     [IOBUF],AL
+                JMP     GET_FPATH
 
 PARAM:          CMP     [PARAMF],0
                 JNE     .EXIT
@@ -275,12 +380,17 @@ PARAM:          CMP     [PARAMF],0
                 CMP     [RETRACE_COUNT],7    ;7/50sec
                 JB      .EXIT
 
-                PUSHA
-                PUSH    ES
+                
                 INC     [PARAMF]
+                MOV     [MAINJUMP],CMDLNJMP
+.EXIT:          RETN
+
+CMDLNJMP:       PUSHA
+                PUSH    ES
+                CALL    ADJUST_CPU
                 MOV     DI,IOBUF+1
 .L1:            CMP     [IOBUF],0
-                JE      .EXIT1
+                JE      .EXIT
 
                 MOV     BX,[DI+2]
                 MOV     EAX,[BX-4]
@@ -414,12 +524,13 @@ PARAM:          CMP     [PARAMF],0
                 POP     DI
                 JMP     .L3
 
-.EXIT1:         POP     ES
+.EXIT:          POP     ES
                 MOVZX   BX,[FPATH_LEN]
                 MOV     [FPATH-1+BX],0
                 CALL    SET_FPATH
+                CALL    CPUCYCLE
                 POPA
-.EXIT:          RETN
+                JMP     MAIN_ENTRY
 
                 ADDDISC 8
                 ADDDISC 9
@@ -458,83 +569,4 @@ ADDROM:         IMUL    SI,BX,400H              ;IN: BX
                 INT     21H
 .L2:            RETN
 
-PARAM0:         MOV     DI,IOBUF+1
-                MOV     AL,[IOBUF]
-                PUSH    AX
-.L1:            CMP     [IOBUF],0
-                JE      .EXIT
-
-                MOV     BX,[DI+2]
-                MOV     EAX,[BX-4]
-                CMP     EAX,'ROM'
-                JZ      .ROM
-
-                CMP     EAX,'CFG'
-                JZ      .CFG
-
-                CMP     EAX,'VID'
-                JZ      .VID
-
-                SHR     EAX,16
-                CMP     AX,'\'
-                JZ      .DIR
-
-                JMP     .L3
-
-.CFG:           MOV     DX,[DI]
-                CALL    LOAD_CFG
-                PUSH    DI
-                CALL    SET_CFG
-                POP     DI
-.L3:            ADD     DI,2
-                DEC     [IOBUF]
-                JMP     .L1
-
-.VID:           MOV     BX,[DI]
-                MOVZX   DX,BYTE [BX]
-                CALL    SEG_CODE2:HEX2BIN
-                CMP     AL,0AH
-                JA      .L3
-
-                ADD     AL,AL
-                MOV     [VIDMODE],AL
-                PUSH    DI
-                CALL    SET_VMODE
-                POP     DI
-                JMP     .L3
-
-.ROM:           MOV     BP,[DI]
-                MOV     BX,4
-                CMP     BYTE [DS:BP],'/'
-                JNZ     .LR2
-
-                MOV     BL,BYTE [DS:BP+1]
-                SUB     BL,'0'
-                JS      .L3
-
-                CMP     BL,8
-                JA      .L3
-
-                ADD     WORD [DI],2
-.LR2:           CALL    ADDROM
-                JMP     .L3
-
-.DIR:           CALL    SEG_CODE2:PREPDPARAM
-                MOV     DL,[DEVDPATH]
-                SUB     DL,'A'
-                MOV     AH,0EH
-                INT     21H
-
-                MOV     BX,[DEVDFNP]
-                MOV     BYTE [BX-1],0
-                PUSH    DI
-                CALL    SET_FPATH
-                CALL    FILL_IBM_FLIST
-                POP     DI
-                JMP     .L3
-
-.EXIT:          CALL    RESTORE_PATH
-                POP     AX
-                MOV     [IOBUF],AL
-                JMP     GET_FPATH
 

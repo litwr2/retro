@@ -2313,7 +2313,7 @@ D_X:            MOV     BX,[DMA_BASE]
 
 D_B:            XOR     SI,SI
 .L2:            MOV     BX,16                   ;25
-.L1:            MOV     AL,[IEC8BUF+SI]
+.L1:            MOV     AL,[IOBUF+SI]
                 CALL    SEG_CODE2:BIN2HEX
                 MOV     WORD [D_D_BUF+1],DX
                 MOV     DX,D_D_BUF

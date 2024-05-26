@@ -14,6 +14,10 @@ ADLIB_VECS      DW      RESET_ADLIB, RESET_ADLIB
                 DW      ADLIB_0E, ADLIB_0F
                 DW      ADLIB_10, ADLIB_11
                 DW      ADLIB_12
+SB_VECS         DW      INIT_SB, EXIT_SB
+                DW      SPEAKER_0E, SPEAKER_0F
+                DW      SPEAKER_10, SPEAKER_11
+                DW      SPEAKER_12
 SOUND_SRC       DW      SET_TIMERSND, SET_ADLIBSND
                 DW      SET_NOSND, SET_SBSND
 

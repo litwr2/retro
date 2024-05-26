@@ -32,6 +32,7 @@ SEGMENT         SEG_DATA USE16
                 INCLUDE 'sound.dat'
                 INCLUDE 'adlib.dat'
                 INCLUDE 'timer.dat'
+                INCLUDE 'sb.dat'
                 ;INCLUDE 'log.dat'
         db 'xxxx'
 
@@ -41,10 +42,9 @@ START:          PUSH    DS              ;SET RETURN TO DOS ADDRESS
                 MOV     AX,SEG_DATA     ;INIT DS
                 MOV     DS,AX
                 MOV     [RESET_SP],SP
+                CALL    SEG_CODE2:SB_ENV
                 CALL    SEG_CODE2:SPARAM
                 CALL    INITIBM
-                CALL    PARAM0
-
 RESET:          MOV     SP,[RESET_SP]
                 CALL    XRESET
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
@@ -77,6 +77,7 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE 'sound.cod'
                 INCLUDE 'adlib.cod'
                 INCLUDE 'timer.cod'
+                INCLUDE 'sb.cod'
                 ;INCLUDE 'log.cod'
 
 SEGMENT         SEG_CODE2 USE16          ;extra program segment

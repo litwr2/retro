@@ -1,0 +1,105 @@
+SB_WRITE:       MOV     DX,[DSP_WRITE]  ;AH->[DX]
+.L1:            IN      AL,DX           ;USE AX,DX
+                TEST    AL,80H
+                JNZ     .L1
+
+                MOV     AL,AH
+                OUT     DX,AL
+                RETN
+
+SB_SND:         MOV     [SB_CH],0
+                MOV     BX,[SND1POS]
+                TEST    [TED_11],10H
+                JZ      .L8
+
+                TEST    [TED_11],80H
+                JNZ     .L7
+
+                CMP     BX,[POS1SND1]
+                JBE     .L4
+
+.L7:            INC     BX
+                INC     [SB_CH]
+                CMP     BX,[POS2SND1]
+                JBE     .L6
+
+                XOR     BX,BX
+                JMP     .L6
+
+.L4:            INC     BX
+.L6:            MOV     [SND1POS],BX
+.L8:            MOV     BX,[SND2POS]
+                TEST    [TED_11],60H
+                JZ      .L8A
+
+                TEST    [TED_11],20H
+                JNZ     .L9
+
+                MOV     AX,[POS1SND2]
+                ADD     AX,[NOISE_OFFSET]
+                TEST    BYTE [TOTALTICKS],1
+                JZ      .L11
+
+                SHR     AX,1
+.L11:           CMP     AX,[POS2SND2]
+                JB      .L10
+
+                SHR     AX,3
+                JNZ     .L11
+
+.L10:           MOV     [POS1SND2],AX
+.L9:            TEST    [TED_11],80H
+                JNZ     .L7A
+
+                CMP     BX,[POS1SND2]
+                JBE     .L4A
+
+.L7A:           INC     BX
+                INC     [SB_CH]
+                CMP     BX,[POS2SND2]
+                JBE     .L6A
+
+                XOR     BX,BX
+                JMP     .L6A
+
+.L4A:           INC     BX
+.L6A:           MOV     [SND2POS],BX
+.L8A:           MOVZX   AX,[SB_CH]
+.L16:           OR      AL,AL
+                JZ      .L15
+
+                ADD     AH,[VOL]
+                DEC     AX
+                JMP     .L16
+
+.L15:           MOVZX   BX,AH
+                MOVZX   AX,[SB_VOL+BX]
+                ADD     [SB_SUM],AX
+                ;MOV     [SB_SUM],AX
+                INC     [SB_CNT]
+                MOV     AL,[SB_FREQ]
+                AND     [SB_CNT],AL              ;1/3 - 18/9Khz
+                JNZ     INTR8SND.L0
+
+                XCHG    BX,DX
+                MOV     AH,10H
+                CALL    SB_WRITE
+                XOR     AX,AX
+                XCHG    AX,[SB_SUM]
+                PUSH    CX
+                MOV     CL,[SB_SHIFT]
+                SHR     AX,CL                    ;1/2 - 18/9Khz
+                POP     CX
+                MOV     AH,AL
+                CALL    SB_WRITE
+                XCHG    BX,DX
+                JMP     INTR8SND.L0
+
+INIT_SB:        INC     [SB_SOUND]
+                MOV     AH,0D1H
+                JMP     SB_WRITE
+
+EXIT_SB:        MOV     [SB_SOUND],0
+                MOV     AH,0D3H
+                JMP     SB_WRITE
+

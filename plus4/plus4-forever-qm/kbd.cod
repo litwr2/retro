@@ -353,7 +353,7 @@ SYS_KEYS:       CMP     [ISMOUSE],0
                 AND     AL,0FCH
                 AND     BL,3
                 INC     BX
-                CMP     BL,3
+                CMP     BL,4
                 JNZ     .L6
 
                 XOR     BX,BX

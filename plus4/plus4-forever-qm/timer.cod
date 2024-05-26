@@ -46,7 +46,10 @@ INTR8SND:       PUSH    AX
                 JNE     .L22
 
                 INC     [SYNCHRO_TICKS]
-.L22:           IN      AL,61H
+.L22:           CMP     [SB_SOUND],0
+                JNE     SB_SND
+
+                IN      AL,61H
                 AND     AL,0FDH
                 CMP     [TIMER_SOUND],0
                 JE      .L14
@@ -59,17 +62,17 @@ INTR8SND:       PUSH    AX
                 JNZ     .L7
 
                 CMP     BX,[POS1SND1]
-                JA      .L4
+                JBE     .L4
 
 .L7:            INC     BX
                 OR      AL,2
-                JMP     .L6
-
-.L4:            INC     BX
                 CMP     BX,[POS2SND1]
                 JBE     .L6
 
-.L5:            XOR     BX,BX
+                XOR     BX,BX
+                JMP     .L6
+
+.L4:            INC     BX
 .L6:            MOV     [SND1POS],BX
 .L8:            PUSH    AX
                 MOV     BX,[SND2POS]
@@ -102,17 +105,16 @@ INTR8SND:       PUSH    AX
 
 .L7A:           INC     BX
                 OR      AL,2
-                JMP     .L6A
-
-.L4A:           INC     BX
                 CMP     BX,[POS2SND2]
                 JBE     .L6A
 
-.L5A:           XOR     BX,BX
+                XOR     BX,BX
+                JMP     .L6A
+
+.L4A:           INC     BX
 .L6A:           MOV     [SND2POS],BX
 .L8A:           POP     BX
                 OR      AL,BL
-
                 MOVZX   BX,[VOL]
                 SHL     BX,4            ;*16
                 LEA     BX,[TIMER_VOL+BX]
@@ -126,7 +128,7 @@ INTR8SND:       PUSH    AX
 
 .L14:           AND     AL,0FDH
 .L12:           OUT     61H,AL
-                INC     [INTR8COUNT]
+.L0:            INC     [INTR8COUNT]
                 CMP     [INTR8COUNT],65536/TIMERV
                 JA      .L1
 
@@ -179,6 +181,7 @@ SPEAKER_0F:     PUSH    AX
                 SUB     BX,AX
                 SHR     BX,3
                 JNZ     .L1
+
                 INC     BX
 .L1:            MOV     [NOISE_OFFSET],BX
                 MOV     [SND2POS],0
@@ -206,26 +209,27 @@ SPEAKER_11:     PUSH    AX
                 AND     AL,0FH
                 CMP     AL,8
                 JBE     .L1
+
                 MOV     AL,8
 .L1:            MOV     [VOL],AL
-
                 TEST    DH,10H
                 JNZ     .L2
+
                 MOV     [SND1POS],0
 .L2:            TEST    DH,20H
                 JNZ     .L3
+
                 MOV     [SND2POS],0
                 JMP     .L4
 
 .L3:            MOV     AX,[POS2SND2]
                 SHR     AX,1
                 MOV     [POS1SND2],AX
-
 .L4:            TEST    [TED_11],80H
                 JZ      .L5
+
                 MOV     [SND1POS],0
                 MOV     [SND2POS],0
-
 .L5:            POP     AX
                 RETN
 
@@ -254,6 +258,7 @@ SPEAKER_SFREQ:;  INC     DX
                 SHL     DX,1
                 CMP     BX,DX
                 JA      .L1
+
                 INC     EAX
 .L1:            MOV     EBX,EAX
                 XOR     EDX,EDX
@@ -261,6 +266,7 @@ SPEAKER_SFREQ:;  INC     DX
                 DIV     EBX
                 CMP     EBX,EDX
                 JA      .L2
+
                 INC     AX
 .L2:            XOR     EBX,EBX         ;AX - POS2
                 RETN
@@ -268,7 +274,7 @@ SPEAKER_SFREQ:;  INC     DX
 INIT_SPEAKER:   INC     [TIMER_SOUND]
                 RETN
 
-EXIT_SPEAKER:   DEC     [TIMER_SOUND]
+EXIT_SPEAKER:   MOV     [TIMER_SOUND],0
                 IN      AL,61H
                 AND     AL,0FDH
                 OUT     61H,AL
