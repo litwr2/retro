@@ -217,7 +217,7 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
 
                 MOV     [MDATA_OFFSET],DH
 .L8I:           MOV     DH,[TED_7]
-                
+
                 TEST    DH,10H          ;MCM? (0-NORMAL, 1-MCM)
                 JZ      .L8J
 

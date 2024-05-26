@@ -17,7 +17,6 @@ ADJUST_CPU:     MOV     [TICKS],0
 
                 CALL    CPUCYCLE
                 JMP     .L2
-
 .L1:            RETN
 
 DEBUG_ENTRY_F:  CALL    ADJUST_CPU
@@ -52,7 +51,6 @@ SAVE_TED:       MOVZX   SI,[VIDMODE]
                 MOV     AX,[VIDJUMP+(1+MAXVIDMODEN)*2+SI]
                 MOV     [VIDCJMP],AX
                 CALL    SEG_CODE:SAVEVIDJMP_F
-
 .L0:            NOT     [TIMER_ST]
                 RETN
 
@@ -60,7 +58,6 @@ RESTORE_TED:    MOVZX   SI,[VIDMODE]
                 MOV     AX,[VIDJUMP+SI]
                 MOV     [VIDCJMP],AX
                 CALL    SEG_CODE:RESTVIDJMP_F
-
 .L0:            CALL    RESTSOUND
                 MOV     DWORD [KMATRIX],0FFFFFFFFH
                 MOV     DWORD [KMATRIX+4],0FFFFFFFFH
@@ -320,7 +317,7 @@ OUT_DAS:        MOV     AL,BH           ;IN: BX=BP / OUT: BP
 
 .L3:            XOR     BH,BH
                 MOV     BL,AL
-                
+
                 SHL     BX,4            ;BX:=BX*16
                 MOV     SI,12
 .L8:            MOV     AL,[MN_T+BX]
@@ -464,7 +461,7 @@ OUT_STR:        MOV     AH,9
 .L1:            INT     21H
                 RETN
 
-GET_TPARS:      CALL    GET_PARS                
+GET_TPARS:      CALL    GET_PARS
                 JC      .L2
 
                 MOV     SI,1
@@ -1005,7 +1002,7 @@ D_A:            MOV     SI,1            ;ASSEMBLE
 
                 CMP     AL,'$'
                 JNZ     .L7A
-                
+
                 MOV     [SSI],SI
                 INC     [SSI]
 .L7A:           CMP     [SSI],0
@@ -1212,7 +1209,7 @@ D_D:            CALL    GET_PARS        ;DUMP
                 MOV     SI,1
                 CMP     [INP_BUF+1],'L'
                 JZ      .L8
-                
+
                 MOV     DI,6
                 CALL    TRAN_VAL
                 JC      D_ERR
@@ -1258,7 +1255,7 @@ D_D:            CALL    GET_PARS        ;DUMP
 .L3A:           MOV     SI,[DPC]
                 SUB     AX,SI
                 JC      D_ERR
-                
+
                 INC     AX
                 MOV     CX,AX
                 MOV     DI,SI
@@ -1316,7 +1313,7 @@ D_E:            CALL    GET_PARS        ;ENTER
                 MOVZX   CX,[QPARS]
                 DEC     CX
                 JS      D_ERR
-                
+
                 MOV     SI,1
                 MOV     DI,6
                 CALL    TRAN_VAL
@@ -1344,7 +1341,7 @@ D_E:            CALL    GET_PARS        ;ENTER
                 MOV     SI,D_BUF1
 .L2:            DEC     CX
                 JZ      D_DISPATCHER
-                
+
                 MOV     DH,[SI]
                 CALL    SEG_CODE:MSTORE_DH_F
                 INC     BX
@@ -1573,7 +1570,7 @@ D_L:            CALL    GET_PARS        ;LOAD
 
 D_M:            CALL    GET_MPARS       ;MOVE
                 JC      D_ERR
-                
+
 .L1:            CALL    SEG_CODE:MREAD_DH_F
                 XCHG    BX,DI
                 CALL    SEG_CODE:MSTORE_DH_F
@@ -1619,7 +1616,7 @@ D_O:            CALL    GET_PARS        ;WATCHPOINT(S)
                 MOV     [PC],AX
                 MOV     DI,2
                 DEC     CX
-                
+
 .L2:            MOV     WORD [D_BUF1],CX
                 JCXZ    .L1
 
@@ -1826,7 +1823,7 @@ D_U:            CALL    GET_PARS        ;UNASSEMBLE
                 MOV     SI,1
                 CMP     [INP_BUF+1],'L'
                 JZ      .L8
-                
+
                 MOV     DI,6
                 CALL    TRAN_VAL
                 JC      D_ERR
@@ -2056,14 +2053,14 @@ D_Z:            MOV     AH,3            ;ZOOM SCREEN ON/OFF
                 INT     10H
                 MOV     [CURSOR],DX
 
-                MOV     AX,1130H                
+                MOV     AX,1130H
                 INT     10H
 
                 CMP     DL,49
                 MOV     CX,1112H
                 MOV     [ZOOM_MODE],BL
                 JNZ     .L1
-                
+
                 SUB     DH,24
                 JBE     .L2
 
@@ -2247,6 +2244,5 @@ D_B:            XOR     SI,SI
                 CALL    OUT_STR
                 CMP     SI,16*10             ;26*20
                 JB      .L2
-
                 JMP     D_DISPATCHER
 

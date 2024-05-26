@@ -30,7 +30,7 @@ CDS_LED:        XOR     AL,AL
 .PLAYON:        OR      [LED],10H
                 CALL    CDS_INITAPE
                 JMP     SET_LED
-                
+
 .REC:           CMP     [DEV1WP],0
                 JNZ     .EXIT
 
@@ -198,11 +198,11 @@ DS_ENDCTFWR:    CALL    DSW_BIT
                 CMP     EAX,7
                 MOV     AH,40H
                 JBE     .L6             ;TRUNCATE!
-                
+
                 MOV     DX,DS_NPOS
                 MOV     CL,5
                 INT     21H
-                
+
                 INC     [DS_QENTR]
                 MOV     EAX,[DS_NPOS]
                 MOV     [DEV1SZ],EAX
@@ -290,7 +290,6 @@ DSW_BIT:        MOV     EAX,[TOTALTICKS]        ;[SEG_DS]:[DS_BUF_PTR]=
                 CMP     BX,8000
                 MOV     [DS_BUF_PTR],BX
                 JZ      DSW_FLUSH
-
                 RETN
 
 DSW_FLUSH:      PUSH    ES
@@ -354,7 +353,7 @@ DSW_FLUSH:      PUSH    ES
                 MOV     CX,AX
                 SHR     CX,1
                 MOV     [DS_MVAL2],CX
-                
+
                 XOR     BX,BX
                 XOR     DI,DI
 .L15:           MOV     AX,[ES:BX]

@@ -14,7 +14,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 
                 CMP     [ISDMANOW],1
                 JB      .L2
-
                 JA      .L12
 
                 MOV     BX,[DMA_BASE]
@@ -51,7 +50,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 
 .L9:            CMP     [ISDMA],1               ;DMA?
                 JB      .BORDER
-
                 JA      .L2A
 
                 CALL    TEDEXTRA
@@ -66,14 +64,19 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CALL    TEDEXTRA
 .L2C:           MOV     SI,[CP_CURRENT]
                 SUB     SI,WORD [TED_1A]
-                LGS     BX,[MDATA_ADDR]
+                JNC     .L2G
+
+                ADD     SI,0400H
+.L2G:           LGS     BX,[MDATA_ADDR]
                 MOV     DL,[VID_BUF2+SI]        ;DH-ATTR, DL-CHAR
                 MOV     DH,[VID_BUF3+SI]
                 MOV     SI,[VMODE]
                 MOV     DI,[VD_PTR_FILL]
                 CALL    [VMJT+SI]
-                INC     [CP_CURRENT]
-
+                MOV AX,[CP_CURRENT]
+                INC AX
+                AND AH,3
+                MOV [CP_CURRENT],AX
 .L2B:           MOV     AL,[TED_1E]
                 CMP     AL,[EHSA]
                 JNZ     .L2E
@@ -95,13 +98,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 .SHOW8:         CMP     [VISIBLE],0
                 JE      .COUNTERS
 
-        ;cmp [BEAMY],294
-        ;jnz .ll1
-        ;
-        ;mov eax,[TOTALTICKS]
-        ;MOV     [DI],EAX
-        ;MOV     [DI+4],EAX
-;.ll1:
                 ADD     DWORD [VD_PTR_BEAM],80008H
 .COUNTERS:      CMP     [ISDMA],2
                 JNE     .L14
@@ -231,11 +227,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CMP     [VD_PTR_BEAM],VIDEO_DATA
                 JE      .L30
 
-        push es
-        mov ax,0b800h
-        mov es,ax
-        mov byte [es:0],'@'
-        pop es
                 CALL    [VIDCJMP]
 .L30:           MOV     [VD_PTR_BEAM],VIDEO_DATA
                 INC     WORD [TED_1C]
@@ -536,7 +527,6 @@ T00101:         MOV     SI,[CP_CURRENT]         ;*** BMM+ MCM+
 
 .L00:           MOV     [DI],SI         ;00
 .LE:            ADD     DI,2
-
                 LOOP    .L1
                 RETN
 
