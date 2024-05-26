@@ -30,10 +30,13 @@ CBM_FN_LIST     RB      16*CBM_FLIST_CAP
 CBM_TY_LIST     RB      4*CBM_FLIST_CAP
 CBM_SZ_LIST     RW      CBM_FLIST_CAP
 CBM_FP_LIST     RW      CBM_FLIST_CAP
+CBM_DE_LIST     RW      CBM_FLIST_CAP   ;DIR ENTRIES POINTERS (#, SECTOR)
 CBM_RL_LIST     RB      CBM_FLIST_CAP
 CBM_FH          DW      ?
 IBM_FH          DW      ?
 D64_POS         DW      ?
 CBM_FTYPE       DW      ?
-CBM00ID         DB      'C+4File',0
+DETEMP          DB      ?
+CBM00ID         DB      'C64File',0     ;compatibility!
 MENU2_TEMP      DB      ?
+

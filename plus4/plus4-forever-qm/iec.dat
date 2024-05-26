@@ -11,7 +11,7 @@ IECDSIDX        DW      IECDS00,IECDS01,IECDS20
                 DW      IECDS34,IECDS39,IECDS50
                 DW      IECDS51,IECDS52,IECDS60
                 DW      IECDS61,IECDS62,IECDS63
-                DW      IECDS64,IECDS70,IECDS72
+                DW      IECDS64,IECDS65,IECDS66,IECDS70,IECDS72
                 DW      IECDS73,IECDS74,IECDS75
                 DW      NOTDOSCHARS
 
@@ -44,14 +44,19 @@ IECDS61         DB      '61, FILE NOT OPEN'     ;22
 IECDS62         DB      '62, FILE NOT FOUND'    ;23
 IECDS63         DB      '63, FILE EXISTS'       ;24
 IECDS64         DB      '64, FILE TYPE MISMATCH';25
-IECDS70         DB      '70, NO CHANNEL'        ;26
-IECDS72         DB      '72, DISK FULL'         ;27
-IECDS73         DB      '73, CBM DOS V2.6 TDISK';28
-IECDS74         DB      '74, DRIVE NOT READY'   ;29
-IECDS75         DB      '75, CMD NOT SUPPORTED' ;30
+IECDS65         DB      '65, NO BLOCK';26
+IECDS66         DB      '66, ILLEGAL TRACK AND SECTOR'  ;27
+IECDS70         DB      '70, NO CHANNEL'        ;28
+IECDS72         DB      '72, DISK FULL'         ;29
+IECDS73         DB      '73, CBM DOS V2.6 TDISK';30
+IECDS74         DB      '74, DRIVE NOT READY'   ;31
+IECDS75         DB      '75, CMD NOT SUPPORTED' ;32
 
 NOTDOSCHARS     DB      '"+,./:;<=>[\]|',0
 SECERRDECODE    DB      0,2,3,4,5,6,7,8,9,10,11,0,0,0,29
+IECTEMP         DB      ?
+LABEL           INITBAM BYTE
+                FILE    'EBAM.BIN'
 
 IF IEC8DEBUG > 0
 XXXFN           DB      'IECDEBUG.BIN',0

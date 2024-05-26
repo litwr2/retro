@@ -45,8 +45,8 @@ RESET:          MOV     SP,[RESET_SP]
 MAIN_ENTRY:     MOV     [MAINJUMP],MAINLOOP
                 ;MOV     [MAINJUMP],DEBUG_ENTRY
 
-MAINLOOP:       CALL    CPU8501
-                CALL    TED
+MAINLOOP:       CALL    TED
+                CALL    CPU8501
                 JMP     [MAINJUMP]
 
 END_EMU:        MOV     SP,[RESET_SP]
@@ -56,6 +56,7 @@ END_EMU:        MOV     SP,[RESET_SP]
                 INCLUDE 'kbd.cod'
                 INCLUDE 'joy.cod'
                 INCLUDE 'ted.cod'
+                INCLUDE 'memory.cod'
                 INCLUDE '8501.cod'
                 INCLUDE 'cpu_io.cod'
                 INCLUDE 'cds.cod'

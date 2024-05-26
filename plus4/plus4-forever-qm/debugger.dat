@@ -1,5 +1,6 @@
 REGS0           DB      'PrevPC=0000',0DH,0AH,'$'
-REGS1           DB      'PC=0000  AC=00  XR=00  YR=00  SP=00  SR=00  SV1BDIZC'
+REGS1           DB      'PC=0000  AC=00  XR=00  YR=00  SP=00  SR=00  SV1BDIZC '
+                DB      'LINE=000 POS=00 2CPU=0'
 EOL             DB      0DH,0AH,'$'
 REGS2           DB      '0000 000000 *ASLORA ($80),Y',0DH,0AH
 DERR1           DB      '  ^ ERROR',0DH,0AH,'$'
@@ -318,13 +319,14 @@ MN_T            DB      'BRK            ',0      ;00
                 DB      'INC     $þþþþ,X',0      ;FE
                 DB      'INCSBC  $þþþþ,X',0      ;FF
 
-D_HELPM DB      'Assemble       A [address]                           (ex: A1000)',0DH,0AH
+D_HELPM DB      'Help           ?',0DH,0AH
+        DB      'Assemble       A [address]                           (ex: A1000)',0DH,0AH
         DB      'Compare        C range address             (ex: C1000 L200 2000)',0DH,0AH
         DB      'Dump           D [range]                        (ex: D1000,1200)',0DH,0AH
         DB      'Enter          E address [data]              (ex: E100 12 56 AE)',0DH,0AH
         DB      'Fill           F range data                 (ex: F800,LE7,71,AA)',0DH,0AH
         DB      'Go             G [=address] [breakpoints]    (ex: G=300,3E7,371)',0DH,0AH
-        DB      'Help           ?',0DH,0AH
+        DB      'Go Line        GL line#                              (ex: GL AA)',0DH,0AH
         DB      'Hex arithmetic H value1 value2                    (ex: H 77, 17)',0DH,0AH
         DB      'Load           L [address]                          (ex: L 0800)',0DH,0AH
         DB      'Move           M range address             (ex: M1000,1200,2000)',0DH,0AH
@@ -337,13 +339,14 @@ D_HELPM DB      'Assemble       A [address]                           (ex: A1000
         DB      'Unassemble     U [range]                             (ex: U L80)',0DH,0AH
         DB      'View +4 screen V                               (any key returns)',0DH,0AH
         DB      'watchpOint     O [=address] [watchpoints]    (ex: O=3000,1,FF11)',0DH,0AH
-        DB      'Write          W range [modus]                (ex: W1001,3000,1)',0DH,0AH
-        DB      'Zoom on/off    Z',0DH,0AH
-        DB      '(Range is either: <START ADDRESS>,<END ADDRESS> or <START ADDRESS>,L<LENGTH>)',0DH,0AH
-        DB      '(If modus=0 (default) then the parameter (address) will be saved before data)',0DH,0AH
+        DB      'Write          W range [mode]                 (ex: W1001,3000,1)',0DH,0AH
+        DB      'cYcle of TED   Y [number]                      (ex: Y)',0DH,0AH
+        DB      'Zoom on/off    Z',0DH,0AH,0DH,0AH
+        DB      'Range is either: <START ADDRESS>,<END ADDRESS> or <START ADDRESS>,L<LENGTH>',0DH,0AH
+        DB      'If mode=0 (default) then the parameter (address) will be saved before data',0DH,0AH
         DB      'T command hides interrupts',0DH,0Ah,'$'
 
-XVALS   DB      'DMA_B=0000 CP_RELOAD=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 TICKS=00'
-XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 DMA_O=0000'
+XVALS   DB      'DMA_B=0000 CP_RELOAD=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
+XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000'
         DB      0DH,0AH,'$'
 

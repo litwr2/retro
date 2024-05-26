@@ -229,7 +229,6 @@ INITIBM:        CLD
                 LEA     DX,[ROMS_FN+SI]
                 INT     21H
                 JC      .L5
-
                 MOV     BX,AX
                 MOV     AX,4202H
                 XOR     CX,CX
@@ -237,10 +236,8 @@ INITIBM:        CLD
                 INT     21H
                 OR      DX,DX
                 JNZ     .L1
-
                 CMP     AX,16*1024
                 JNZ     .L1
-
                 MOV     AX,4200H
                 INT     21H
                 PUSH    DS
@@ -278,7 +275,6 @@ INITIBM:        CLD
                 AND     BYTE [ES:417H],0CFH
                 AND     AL,40H
                 JZ      .L4
-
                 AND     [KMATRIX+1],7FH
 .L4:            MOV     [LED],AL
                 CALL    SET_LED

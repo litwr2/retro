@@ -1,4 +1,5 @@
-MENUS_ENTRY:    CALL    INIT_MENUS
+MENUS_ENTRY:    CALL    ADJUST_CPU
+                CALL    INIT_MENUS
                 CALL    MENU_DISP1
                 CALL    END_MENUS
                 JMP     MAIN_ENTRY
@@ -85,8 +86,9 @@ INIT_MENUS:     CALL    SAVE_TED
 END_MENUS:      CALL    RESTORE_TED
 .L1:            CMP     [PREV_KEY],44H
                 JZ      .L1
+
                 MOV     [KBUFA],0
-                RETN
+                JMP     CPUCYCLE
 
 GET_DRVS:       MOV     AH,19H  ;GET CURRENT DRIVE
                 INT     21H

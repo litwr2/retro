@@ -17,11 +17,15 @@ TRAN_CBM_SCR2:  MOV     DI,160*(SCR2_TOP_Y+2)+SCR2_TOP_X*2+2
                 JZ      CBM_ASCII2
                 JMP     CBM_ASCII1
 
-SEEK_D64_POS:   MOVZX   AX,BYTE [D64_POS]       ;LOW - TRACK, HIGH - SECTOR
+SEEK_D64_POS:   CALL    PREP_SEEK_D64           ;IN&OUT: BX - CBM FH
+                INT     21H
+                RETN
+
+PREP_SEEK_D64:  MOVZX   AX,BYTE [D64_POS]       ;LOW - TRACK, HIGH - SECTOR
                 DEC     AL                      ;USE: AX,CX,DX
                 JS      RETNR
 
-                CMP     AL,39                   ;IN&OUT: BX - CBM FH
+                CMP     AL,39                   
                 JA      RETNR
 
                 SUB     AL,17
@@ -59,7 +63,6 @@ SEEK_D64_POS:   MOVZX   AX,BYTE [D64_POS]       ;LOW - TRACK, HIGH - SECTOR
                 XCHG    CL,DH           ;*256
                 XCHG    DL,DH
                 MOV     AX,4200H
-                INT     21H
 RETNR:          RETN
 
 READ_DS_SB:     MOV     CX,5            ; SET VARIABLES
@@ -223,6 +226,8 @@ ENT_D64A:       XOR     SI,SI
                 MOV     [D64_POS],112H
                 MOV     [LIST_CAP2],SI
 .L1:            CALL    SEEK_D64_POS
+                MOV     AL,BYTE [D64_POS+1]
+                MOV     [DETEMP],AL
                 MOV     AH,3FH
                 MOV     CX,2
                 MOV     DX,D64_POS
@@ -234,12 +239,12 @@ ENT_D64A:       XOR     SI,SI
                 MOV     DX,IOBUF
                 INT     21H
 
-                MOV     AL,[IOBUF+21]
-                MOV     [CBM_RL_LIST+SI],AL
                 MOV     AL,[IOBUF]
                 OR      AL,AL
                 JZ      .L6
 
+                MOV     DL,[IOBUF+21]
+                MOV     [CBM_RL_LIST+SI],DL
                 MOV     AH,AL
                 AND     AL,7
                 MOV     EDX,'DEL '
@@ -288,7 +293,14 @@ ENT_D64A:       XOR     SI,SI
                 MOV     AX,WORD [IOBUF+28]
                 MOV     WORD [CBM_SZ_LIST+ESI*2],AX
                 MOV     AX,WORD [IOBUF+1]
-                MOV     WORD [CBM_FP_LIST+ESI*2],AX
+                MOV     [CBM_FP_LIST+ESI*2],AX
+
+                MOV     AL,8
+                SUB     AX,BP
+                SHL     AX,5            ;*32
+                ADD     AL,2
+                MOV     AH,[DETEMP]
+                MOV     [CBM_DE_LIST+ESI*2],AX
                 INC     [LIST_CAP2]
                 INC     SI
 .L6:            DEC     BP
@@ -346,7 +358,7 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 MOV     DX,IOBUF
                 INT     21H
                 CMP     WORD [IOBUF],1
-                JNZ     .L3
+                JNZ     MD2_QUIT
 
                 MOVZX   BP,[SJCFG]      ;saves current sound hardware
                 AND     BP,3
@@ -406,7 +418,7 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 CMP     BL,20H
                 JNZ     .L2
 
-                MOV     AL,[IOBUF+9]  ;TED CORRECTION
+                MOV     AL,[IOBUF+9]    ;TED CORRECTION
                 MOV     [TED_9],AL
                 MOV     AL,[TED_11]
                 MOV     BL,3EH
@@ -423,10 +435,10 @@ ENT_C2F:        MOV     AH,3FH          ;RESTORE VERSION NUMBER
                 CALL    SET_LED         ;RESTORE LED & CAPS LOCK STATE
                 TEST    [LED],40H
                 MOV     [KMATRIX+1],0FFH
-                JZ      .L3
+                JZ      MD2_QUIT
 
                 MOV     [KMATRIX+1],7FH
-.L3:            JMP     MD2_QUIT
+                JMP     MD2_QUIT
 
 LD_CTF:         MOV     AX,4200H
                 MOV     BX,[CBM_FH]
@@ -976,18 +988,24 @@ MD2EF_D64:      PUSH    SI
                 MOV     DX,CBM00ID
                 INT     21H
 
-                MOV     DX,SI
-                MOV     CL,16
-                SHL     DX,4
-                MOV     AH,40H
-                ADD     DX,CBM_FN_LIST
-                INT     21H
-                
+                SHL     SI,4
+                MOV     BX,15
+.L5:            MOV     AL,[CBM_FN_LIST+SI+BX]
+                CMP     AL,0A0H
+                JNZ     .L4
+
+                XOR     AL,AL
+.L4:            MOV     [IOBUF+BX],AL
+                DEC     BX
+                JNS     .L5
+
+                SHR     SI,4
+                MOV     BX,[IBM_FH]
                 XOR     AX,AX
                 MOV     AH,[CBM_RL_LIST+SI]
-                MOV     WORD [FILENAMEBUF],AX
-                MOV     CL,2
-                MOV     DX,FILENAMEBUF
+                MOV     WORD [IOBUF+16],AX
+                MOV     CL,18
+                MOV     DX,IOBUF
                 MOV     AH,40H
                 INT     21H
 

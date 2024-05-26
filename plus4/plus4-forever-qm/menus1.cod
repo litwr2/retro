@@ -176,7 +176,14 @@ FC_AUX2:        MOV     AX,4200H
                 INT     21H
                 MOV     AH,3EH
                 INT     21H
-                RETN
+.L2:            CMP     BYTE [DI+15],0
+                JNZ     .L1
+
+                MOV     BYTE [DI+15],0A0H
+                DEC     DI
+                JMP     .L2
+
+.L1:            RETN
 
 FC_D64:         CALL    FC_AUX1
                 INC     CX
@@ -335,10 +342,12 @@ IBM_SORT:       MOV     SI,BP           ;IN: BP=LIST_CAP1,CH=0,DX=START_LIST1
                 MOVSD
                 MOV     [SI-4],EAX
                 LOOP    .L1D
+
                 INC     DX
                 SUB     SI,24
                 CMP     DX,BP
                 JNZ     .L1D2
+
 .L7:            RETN
                
 FILL_FLP:       MOV     DI,[LIST_CAP1]          ;FILL FILENAMES' LIST
@@ -466,17 +475,7 @@ FILL_FLPD:      MOV     DI,[LIST_CAP1]          ;FILL DIRS' LIST
                 INC     [LIST_CAP1]
 .L4:            RETN
 
-FILL_IBM_FLIST: MOV     BX,[DEV8FNP]
-                CMP     BYTE [BX],0
-                JNE     .LF1
-
-                CALL    IEC8FLUSH
-.LF1:           MOV     BX,[DEV9FNP]
-                CMP     BYTE [BX],0
-                JNE     .LF2
-
-                CALL    IEC9FLUSH
-.LF2:           MOV     AX,[TOT_DRVS]
+FILL_IBM_FLIST: MOV     AX,[TOT_DRVS]
                 MOV     [LIST_CAP1],AX
                 PUSH    ES
                 MOV     AX,DS
@@ -627,6 +626,7 @@ FILL_SCR_IBM:   MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 MOV     DI,160*(SCR1_TOP_Y+2)+(SCR1_TOP_X+1)*2
                 CMP     CX,21
                 JBE     .L1
+
                 MOV     CX,21
 .L1:            MOV     AH,7
                 MOV     [CP_MAX_WIN1],CL

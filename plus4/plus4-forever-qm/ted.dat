@@ -1,7 +1,6 @@
 VIDEO_SEG       EQU     0A000H
 
 MAX_VER         EQU     311             ;NTSC=261
-MAX_HOR         EQU     56
 
 SCR_XSIZE       EQU     40
 SCR_YSIZE       EQU     207
@@ -10,15 +9,10 @@ BEAM_CH_POS     EQU     SCR_XSIZE*200*8
 CHAR_VSTART     EQU     4
 CHAR_VSIZE      EQU     200
 
-SHVA            EQU     54
-EHVA            EQU     36
+SHVA            EQU     56
+EHVA            EQU     38
 SVVA            EQU     0
 EVVA            EQU     SVVA+SCR_YSIZE-1
-
-SHRA            EQU     SHVA            ;START HOR. RELOAD AREA
-EHRA            EQU     EHVA
-SVRA            EQU     0
-EVRA            EQU     202
 
                 ALIGN   4
 LABEL           BEAM_ADDR DWORD
@@ -36,8 +30,8 @@ RETRACE_COUNT   DD      0
 
 SVSA            DW      CHAR_VSTART     ;START VER. CHAR SCREEN AREA
 EVSA            DW      CHAR_VSTART+CHAR_VSIZE-1
-SHSA            DB      SHRA
-EHSA            DB      EHRA
+SHSA            DB      56
+EHSA            DB      38
 
 VD_PTR_BEAM     DW      VIDEO_DATA
 VD_PTR_FILL     DW      VIDEO_DATA      ;VD_PTR_BEAM+X_OFFSET
@@ -47,7 +41,6 @@ Y_OFFSET        DW      3
 
 CP_RELOAD       DW      0               ;CHAR. RELOAD POS.
 DMA_BASE        DW      0               ;SCREEN POS. FOR DMA
-DMA_OFF         DW      0               ;DMA OFFSET
 
 VMODE           DW      0  ; (0-0,) 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH
 VMJT            DW      T00000, T00001, T00010, T00xxx
@@ -69,13 +62,11 @@ CLADDR          DW      LNORMF
 
 BLINK_COUNT     DB      0F0H
 ISDMANOW        DB      0               ;0-no, 1-attr, 2-char
-ISDMA           DB      1
+ISDMA           DB      1               ;0-no, 1-no data, 2 - ok
 IRQTICKS        DB      0
 
 LABEL           VIDEO_DATA BYTE
 TIMES   327     DB      'V'
-
-TXX       DW      'XX'
 
 CG_BASE         DB      0D0H
 VM_BASE         DB      8
@@ -87,32 +78,77 @@ TIMES   40      DB      'A'
 LABEL           VID_BUF3 BYTE
 TIMES   40      DB      'C'
 
-TXX1       DW      'XX'
-
-LABEL           LDMAF   BYTE
-TIMES   37      DB      0       ;22+3
+LABEL           LDMAF   BYTE    ;22+3
+TIMES   37      DB      0
 TIMES   5       DB      1
 TIMES   8       DB      2
                 DB      1
-TIMES   6       DB      0
+TIMES   3       DB      90H
+TIMES   3       DB      0
 
-LABEL           LDMAS   BYTE
-TIMES   37      DB      0       ;14+3
+LABEL           LDMAS   BYTE    ;14+3
+TIMES   37      DB      0
 TIMES   14      DB      1
-TIMES   6       DB      0
+TIMES   3       DB      90H
+TIMES   3       DB      0
 
-LABEL           LNORMF  BYTE
-TIMES   42      DB      1       ;65
+LABEL           LNORMF  BYTE    ;65
+TIMES   42      DB      1
 TIMES   8       DB      2
 TIMES   7       DB      1
+
 
 LABEL           LNORMS  BYTE
 LABEL           LBLAS   BYTE
 TIMES   57      DB      1       ;57
 
 
-LABEL           LBLAF   BYTE
-TIMES   37      DB      2       ;109
+LABEL           LBLAF   BYTE    ;109
+TIMES   37      DB      2
 TIMES   5       DB      1
 TIMES   15      DB      2
+
+                ;TIMER1
+TED_0           DB      0FFH    ; $FF00
+TED_1           DB      0FFH    ; $FF01
+                ;TIMER2
+TED_2           DB      0FFH    ; $FF02
+TED_3           DB      0FFH    ; $FF03
+                ;TIMER3
+TED_4           DB      0FFH    ; $FF04
+TED_5           DB      0FFH    ; $FF05
+TED_6           DB      1BH     ; $FF06
+TED_7           DB      8       ; $FF07
+TED_8           DB      0FFH    ; $FF08
+TED_9           DB      0       ; $FF09 =???
+                ;RASTER_LINE
+TED_A           DB      0A2H    ; $FF0A
+TED_B           DB      0CCH    ; $FF0B
+                ;CUR_POS
+TED_C           DB      0       ; $FF0C
+TED_D           DB      0       ; $FF0D
+TED_E           DB      0       ; $FF0E
+TED_F           DB      0       ; $FF0F
+TED_10          DB      07CH    ; $FF10
+TED_11          DB      00100001B       ; $FF11
+TED_12          DB      0CCH    ; $FF12
+TED_13          DB      0D1H    ; $FF13
+TED_14          DB      0FH     ; $FF14
+TED_15          DB      071H    ; $FF15
+TED_16          DB      05BH    ; $FF16
+TED_17          DB      075H    ; $FF17
+TED_18          DB      077H    ; $FF18
+TED_19          DB      06EH    ; $FF19
+                ;CHAR_RELOAD_POS
+TED_1A          DB      0       ; $FF1A
+TED_1B          DB      0       ; $FF1B
+                ;VER_POS
+TED_1C          DB      0       ; $FF1C \
+TED_1D          DB      0       ; $FF1D -- VER. POS.
+                ;HOR_POS
+TED_1E          DB      49       ; $FF1E -- HOR. POS.
+TED_1F          DB      087H    ; $FF1F
+
+;TED_3E          DB      ?       ; $FF3E
+;TED_3F          DB      ?       ; $FF3F
 

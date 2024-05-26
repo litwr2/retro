@@ -444,7 +444,6 @@ CDS_IO_RD.L1A:  MOV     [DS_TIMER],EAX
 
 CDS_IO_RD:      TEST    [CPU_1],8
                 JNZ     CDS_IO_WR.GL2
-
                 CMP     [DS_MODE],1
                 PUSH    EAX
                 PUSH    EDX

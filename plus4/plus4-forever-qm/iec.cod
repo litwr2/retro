@@ -37,6 +37,24 @@ CBM2IBMCNV:     CMP     AH,128          ;IN & OUT: AH
 .L3:            POP     SI
 .L5:            RETN
                                      
+IECDSSET:       MOVZX   EAX,CL
+                CALL    HEX2DEC
+                MOV     AX,WORD [HEX2DECBUF+8]
+                CMP     AL,' '
+                JNZ     .L4
+
+                MOV     AL,'0'
+.L4:            MOV     WORD [IECDS+1],AX
+                MOVZX   EAX,CH
+                CALL    HEX2DEC
+                MOV     AX,WORD [HEX2DECBUF+8]
+                CMP     AL,' '
+                JNZ     .L5
+
+                MOV     AL,'0'
+.L5:            MOV     WORD [IECDS+4],AX
+                RETN
+
                 DRIVEC  8
                 DRIVEC  9
 
