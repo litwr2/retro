@@ -147,14 +147,11 @@ TIMES   43      DB      1
 TIMES   8       DB      2
 TIMES   6       DB      1
 
-
 LABEL           LNORMS  BYTE
 LABEL           LBLAS   BYTE
 TIMES   57      DB      1       ;57
-
 
 LABEL           LBLAF   BYTE    ;109
 TIMES   37      DB      2
 TIMES   5       DB      1
 TIMES   15      DB      2
-

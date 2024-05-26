@@ -584,9 +584,10 @@ Who has won this data competition?...</p>
     Editor, Spreadsheet
     and DataBase            -       +
 
-  Speed                     =       =       In full screen modes C64 is
-                                            slightly faster than C+4, but in
-                                            screen blank case C+4 is faster
+  Speed                     =       =       In full screen modes the C+4 is
+                                            about 23% faster than the C64, in
+                                            screen blank case the C+4 is
+                                            about 73% faster
   RAM
    Total                    64K     64K
    Holes, byte              4098    548     C+4: CPU=2,IO=512(ACIA=16,PIO=16,
@@ -599,7 +600,7 @@ Who has won this data competition?...</p>
                                             RAM/ROM capacity
 
   ROM
-   Total                    2*8K+4K 4*16K   C+4 can work only with one 16K
+   Total                    2*8K+4K 4*16K   The C+4 can work only with one 16K
                             =20K    =64K    Kernal ROM and use other 3 16K
                                             ROM slots in any manner (e.g. to
                                             view/save any ROM chip content)
@@ -624,66 +625,67 @@ Who has won this data competition?...</p>
    38/40 columns modes      +       +
    24/25 rows modes         +       +
    X/Y-scrolling            +       +
-   Fixed color RAM          +       -       This makes C+4 more flexible
-   Color RAM                0.5K    -       Color RAM helps C64 be some 
-                                            faster than C+4 in the text 
-                                            modes, and increases free RAM 
-                                            storage for some modes
-                                            (C+4 takes 1K of main memory
+   Fixed color RAM          +       -       This makes the C+4 more flexible
+   Color RAM                0.5K    -       Color RAM helps the C64 to be some 
+                                            faster (one badline for 8 rows while
+                                            the C+4 needs 2 badlines) and
+                                            increases free RAM storage
+                                            (the C+4 takes 1K of main memory
                                             for keeping color information)
-   Hardware sprites         +       -       C64 can manage up to 8 24x21
+   Hardware sprites         +       -       The C64 can manage up to 8 24x21
                                             sprites, automatically detects
                                             their collisions, etc.
    
   Sound
-   Channels                 3       2       C+4's second channel can produce
+   Channels                 3       2       The C+4's second channel can produce
                                             either white noise or music
    Frequency range          0-      109Hz-
                              3.9KHz  110KHz
-   Wave forms               wide    square  C64 can produce various different
-                            range   only    types of special sound effects
-                                            and high quality music synthesis
+   Wave forms               wide    square  The C64 can produce various
+                            range   only    different types of special sound
+                                            effects and high quality music
+                                            synthesis
 
   Time
-   2-bytes timers           4       3       C64 timers have wider range of
-                                            working modes than on C+4
+   2-bytes timers           4       3       The C64 timers have wider range of
+                                            working modes than on the C+4
    4-bytes RTC              2       -
 
   Interrupts
    NMI                      +       -
    IRQ                      +       +
-   Reset                    worse   better  C64 has no simple user usable
-                                            Reset switch, C+4 has one
+   Reset                    worse   better  The C64 has no simple user usable
+                                            Reset switch, the C+4 has one
    Interrupts sources
     Cassette Read/
-     Serial Bus SRQ         1       -       C64 has 13 types of interrupt
+     Serial Bus SRQ         1       -       The C64 has 13 types of interrupt
     Timers                  4       3       sources: 4 from VIC, 5 from CIA1
     RTC                     1       -       and 4 from CIA2 - VIC (IRQ),
     Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can
     Sprite's                2       -       produce only one interrupt signal;
-    Synchro Serial Port     2       -       C+4 has 6 types of internal
+    Synchro Serial Port     2       -       the C+4 has 6 types of internal
     Light Pen               1       1       interrupt sources: 5 from TED and 
     RS-232C                 1       1       1 from ACIA
 
-  Serial Bus                +       +       C+4 doesn't support SRQ line
+  Serial Bus                +       +       The C+4 doesn't support SRQ line
 
   Digital Joysticks         2       2
 
-  Paddles                   4       -       This allows to connect to C64
+  Paddles                   4       -       This allows to connect to the C64
                                             up to 2 4-buttons analog
                                             joysticks (instead 2 digital)
 
   User Port
-   Centronics               1       1       C64 and C+4 can use only RS-232C
+   Centronics               1       1       The C64 and C+4 can use only RS-232C
    TTL RS-232C              1       1       or Centronics in the same time,
-     Max. speed, bauds      300     19200   but not both
+     Max. speed, bauds      2400    19200   but not both
    Synchro Serial Ports     2       -
 
   Datasette                 1       1
 
   Fast C1551 drives         -       +       These drives connected directly to
-                                            the CPU bus, C64 theoretically can
-                                            use similar drives...
+                                            the CPU bus, the C64 theoretically
+                                            can use similar drives
 </pre>
 
 
