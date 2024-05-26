@@ -1,3 +1,3 @@
 N=plus4
-fasm $N.ASM -s $N.fas && fasm-listing $N.fas $N.lst
+fasm $N.asm -s $N.fas && fasm-listing $N.fas $N.lst
 rm $N.fas

@@ -170,7 +170,6 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     [CLADDR],LBLAS
 .L3:            CMP     AX,203
                 JE      .L22
-
                 JB      .L4
 
                 CMP     AX,204
@@ -228,8 +227,8 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 JE      .L30
 
                 CALL    [VIDCJMP]
-.L30:           MOV     [VD_PTR_BEAM],VIDEO_DATA
-                INC     WORD [TED_1C]
+                MOV     [VD_PTR_BEAM],VIDEO_DATA
+.L30:           INC     WORD [TED_1C]
                 AND     [TED_1D],1
                 INC     [BEAMY]
                 MOV     [RIRQ],0
