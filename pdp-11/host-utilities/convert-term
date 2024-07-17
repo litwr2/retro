@@ -1,6 +1,8 @@
 #send keycodes to your terminal emulator, gawk code
+#USAGE: convert-term WMCTRL-WINDOW-ID FILE
 #disable alternative layouts!!!
-A=`wmctrl -l|awk '/Terminal/{print $1}'`
+#A=`wmctrl -l|awk '/Terminal/{print $1}'`
+A=$1
 awk 'BEGIN {
    T = 50
    for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
@@ -60,4 +62,4 @@ awk 'BEGIN {
 END {
   for (i in er)
      print "#" i, "is not defined (used", er[i], "times)" >"/dev/stderr"
-}' $1
+}' $2
