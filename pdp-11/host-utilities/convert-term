@@ -1,5 +1,5 @@
 #send keycodes to your terminal emulator, gawk code
-#USAGE: convert-term WMCTRL-WINDOW-ID FILE
+#USAGE: convert-term WMCTRL-WINDOW-ID FILE or convert-term WMCTRL-WINDOW-ID <FILE
 #disable alternative layouts!!!
 #A=`wmctrl -l|awk '/Terminal/{print $1}'`
 A=$1

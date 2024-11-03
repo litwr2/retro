@@ -1020,7 +1020,7 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 CMP     AL,'A'
                 JB      .L7
 
-.L7B:           MOV     AL,'þ'
+.L7B:           MOV     AL,0FEh
 .L7:            MOV     [D_BUF2+SI],AL
                 INC     SI
                 JMP     .L6A
@@ -1053,7 +1053,7 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 MOV     DI,[SSI]
                 JZ      .L8
 
-                CMP     BYTE [DS:SI],'ý'
+                CMP     BYTE [DS:SI],0FDh
                 JZ      .L14
 
                 INC     DL
@@ -1110,7 +1110,7 @@ D_A:            MOV     SI,1            ;ASSEMBLE
                 MOV     DX,WORD [INP_BUF+DI]
                 XCHG    DL,DH
                 ADD     DI,2
-                CMP     [D_BUF2+DI],'þ'
+                CMP     [D_BUF2+DI],0FEh
                 JNZ     .L16
 
                 SHL     EDX,16
@@ -2092,13 +2092,13 @@ D_X:            MOV     BX,[DMA_BASE]
                 CALL    BIN2HEX
                 MOV     WORD [XVALS+8],DX
 
-                MOV     BX,[CP_CURRENT]
+                MOV     BX,[CP_CUR]
                 MOV     AL,BH
                 CALL    BIN2HEX
-                MOV     WORD [XVALS+21],DX
+                MOV     WORD [XVALS+18],DX
                 MOV     AL,BL
                 CALL    BIN2HEX
-                MOV     WORD [XVALS+23],DX
+                MOV     WORD [XVALS+20],DX
 
                 MOV     AL,[ISDMANOW]
                 ADD     AL,'0'

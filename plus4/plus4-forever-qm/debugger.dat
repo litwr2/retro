@@ -345,7 +345,7 @@ D_HELPM DB      'Help           ?',0DH,0AH
         DB      'If mode=0 (default) then the parameter (address) will be saved before data',0DH,0AH
         DB      'T command hides interrupts',0DH,0Ah,'$'
 
-XVALS   DB      'DMA_B=0000 CP_CURREN=0000 ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
+XVALS   DB      'DMA_B=0000 CP_CUR=0000    ISDMANOW=0 ISDMA=0 LINE=     EVSA=000 EHSA=00 VMBSE=00'
 XVALS2  DB      'VD_PTR_BEAM=0000 VD_PTR_FILL=0000 VMODE=0000 BEAM_ADDR=0000:0000 BEAMY=000',0DH,0AH
 XVALS3  DB      'IRQ=0000 Reset=0000 BEAMX=00'
         DB      0DH,0AH,'$'

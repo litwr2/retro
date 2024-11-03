@@ -38,7 +38,9 @@ X_OFFSET        DW      0
 Y_OFFSET        DW      3
 BEAMY           DW      0
 
-CP_CURRENT      DW      0               ;CHAR.POS.CURRENT - united with next!
+CP_CUR          DW      0               ;Current char pos - united with the next!
+CP_CUR_BASE     DW      0
+BM_CUR          DW      0               ;BM POS.CURRENT - united with the next!
 DMA_BASE        DW      0               ;SCREEN POS. FOR DMA
 
 VMODE           DW      0  ; (0-0,) 1-BMM, 2-ECM, 3-MCM, 4-HRM, 5-FLASH

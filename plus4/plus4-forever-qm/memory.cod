@@ -448,7 +448,6 @@ MSTORE_DH:      CMP     [WATCHPOINT_FLAG],0
                 PUSH    AX
                 MOV     AL,DH
                 NOT     AL
-                INC     AX
                 SHR     AL,2
                 CMP     AL,38H
                 JBE     .L11E
@@ -752,7 +751,6 @@ MREAD_DH:       CMP     BX,1
                 MOV     DH,[TED_1E]
                 SHL     DH,1
                 SUB     DH,[TICKS]
-                DEC     DH
                 JNS     .L1N2
 
                 ADD     DH,72H

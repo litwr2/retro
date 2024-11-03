@@ -62,8 +62,8 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 JNZ     .BORDER
 
                 CALL    TEDEXTRA
-.L2C:           MOV     SI,[CP_CURRENT]
-                SUB     SI,WORD [TED_1A]
+.L2C:           MOV     SI,[CP_CUR]
+                SUB     SI,[CP_CUR_BASE]
                 JNC     .L2G
 
                 ADD     SI,0400H
@@ -73,10 +73,14 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 MOV     SI,[VMODE]
                 MOV     DI,[VD_PTR_FILL]
                 CALL    [VMJT+SI]
-                MOV AX,[CP_CURRENT]
+                MOV AX,[CP_CUR]
                 INC AX
                 AND AH,3
-                MOV [CP_CURRENT],AX
+                MOV [CP_CUR],AX
+                MOV AX,[BM_CUR]
+                INC AX
+                AND AH,3
+                MOV [BM_CUR],AX
 .L2B:           MOV     AL,[TED_1E]
                 CMP     AL,[EHSA]
                 JNZ     .L2E
@@ -121,7 +125,9 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 JNE     .L6
 
                 MOV     AX,WORD [TED_1A]
-                MOV     [CP_CURRENT],AX
+                MOV     [BM_CUR],AX
+                MOV     AX,[CP_CUR_BASE]
+                MOV     [CP_CUR],AX
                 JMP     .L23
 
 .L6:            CMP     [TED_1E],28H
@@ -140,9 +146,11 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
                 CMP     [VSA],7
                 JNE     .L23
 
-                MOV     AX,[CP_CURRENT]
+                MOV     AX,[BM_CUR]
                 AND     AH,3
                 MOV     WORD [TED_1A],AX
+                MOV     AX,[CP_CUR]
+                MOV     [CP_CUR_BASE],AX
                 JMP     .L23
 
 .L14:           CMP     [TED_1E],29H    ;2F-30?
@@ -288,7 +296,8 @@ TED:            CMP     [TICKS2TED],0           ;free .L16, .L33, ...
 .L18:           XOR     EAX,EAX
                 MOV     [VSA],7
                 MOV     WORD [ISDMANOW],AX
-                MOV     DWORD [CP_CURRENT],EAX
+                MOV     DWORD [BM_CUR],EAX
+                MOV     DWORD [CP_CUR],EAX
                 MOV     DWORD [TED_1A],EAX
                 CALL    SEG_CODEX:NPARAM
                 CALL    SYS_KEYS
@@ -370,7 +379,7 @@ T01100:         MOVZX   SI,DL           ;*** MCM+ HRV+
 
 T01000:         MOVZX   SI,DL           ;*** HRV+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                MOV     SI,[CP_CURRENT]
+                MOV     SI,[CP_CUR]
                 CMP     SI,WORD [TED_C]
                 JNZ     T00000.L0A
 
@@ -382,7 +391,7 @@ T01000:         MOVZX   SI,DL           ;*** HRV+
 T00000:         MOV     SI,DX           ;***
                 AND     SI,7FH
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
-                MOV     SI,[CP_CURRENT]
+                MOV     SI,[CP_CUR]
                 CMP     SI,WORD [TED_C]
                 JNZ     .L9
 
@@ -477,7 +486,7 @@ T00010:         MOV     SI,DX                   ;*** ECM+
                 MOV     CL,[TED_15+BX]          ;BACKGROUND
                 JMP     T00000.L0
 
-T00001:         MOV     SI,[CP_CURRENT]         ;*** BMM+
+T00001:         MOV     SI,[BM_CUR]         ;*** BMM+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 MOV     AL,DH
                 MOV     DH,DL
@@ -491,7 +500,7 @@ T00001:         MOV     SI,[CP_CURRENT]         ;*** BMM+
                 MOV     CL,AL
                 JMP     T00000.L0
 
-T00101:         MOV     SI,[CP_CURRENT]         ;*** BMM+ MCM+
+T00101:         MOV     SI,[BM_CUR]         ;*** BMM+ MCM+
                 MOV     CH,[GS:EBX+ESI*8]       ;MATRIX LINE
                 MOV     AL,DH
                 MOV     DH,DL
@@ -505,7 +514,6 @@ T00101:         MOV     SI,[CP_CURRENT]         ;*** BMM+ MCM+
                 MOV     DL,DH
                 MOV     BX,[COLOR1]     ;SI-0, AX-1, BX-2, DX-3
                 XCHG    BX,DX
-
 .L0:            MOV     SI,WORD [COLOR0]
                 MOV     CL,4
 .L1:            SHL     CH,1
