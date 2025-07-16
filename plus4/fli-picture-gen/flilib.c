@@ -9,7 +9,7 @@ void setbm(int x, int y, int cs) {
     prg[bm + p] = prg[bm + p] & ~(3 << px) | cs << px;
 }
 #define BA 0x1066  //4198
-void setpa(int x, int y, int c, int cs) {
+void setpa(int x, int y, int c, int cs) {  //pixel attributes
 //cs: 0 - multicolor 1, 1 - background, 2 - foreground, 3 - multicolor 2
     int z = cs == 3;
     int p, ba;

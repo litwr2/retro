@@ -239,9 +239,15 @@ irq205:
      rti
 
 main:
-     ;include "stars.s"
-     ;include "supercolors.s"
-     ;include "test1.s"
+  ifdef STARS
+     include "stars.s"
+  endif
+  ifdef SUPERC
+     include "supercolors.s"
+  endif
+  ifdef TEST1
+     include "test1.s"
+  endif
      jmp *
 
      org $2800    ;attr 0-1: 0-23
@@ -255,7 +261,7 @@ init:
      sta $ff07   ;multicolor mode
      rts
 
-delay:    ;delay A frame ticks (50/60 Hz for PAL/NTSC), the actual accuracy is about 1/2 of frame tick
+delay:    ;delay AC frame ticks (50/60 Hz for PAL/NTSC), the actual accuracy is about 1/2 of frame tick
      clc
      adc $a5
      cmp $a5
@@ -335,10 +341,10 @@ setp: ;y - ($d8) y, x - x, cs - a; changes: $d0-d1, $d6-d7
 
      cmp #200/8
      bcc .l2  ;branch if a < 200/8
-     
+
      cpx #96
      bcs .l1  ;branch if x >= 96
-     
+
      cmp #208/8
      bcs .l1
 
@@ -422,10 +428,10 @@ setpbyte: ;y - ($d8) y (0 - 279), x - x (0-159), byte - a; changes: $d0-d1, $d6-
 
      cmp #200/8
      bcc .l2  ;branch if a < 200/8
-     
+
      cpx #96
      bcs .l1  ;branch if x >= 96
-     
+
      cmp #208/8
      bcs .l1
 .l2: lda #$60
@@ -479,10 +485,10 @@ getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6
 
      cmp #200/8
      bcc .l2  ;branch if a < 200/8
-     
+
      cpx #96
      bcs .l1  ;branch if x >= 96
-     
+
      cmp #208/8
      bcs .l1
 .l2: lda #$60
@@ -556,7 +562,7 @@ seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
   else
      tya
      lsr
-  endif 
+  endif
      bcs .l3
 
      cmp #192/2

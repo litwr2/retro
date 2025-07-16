@@ -18,6 +18,7 @@ stars1:
      lda #64  ;delay
      sta $e0
 stars:
+  ifndef CLEAR
      lda $ff1e
      adc $ff1d
      rol
@@ -90,6 +91,7 @@ stars:
      ldy $e2
      lda $e3
      jsr seta
+  endif
      dec $e0
      beq *+5
 .l4: jmp stars
@@ -132,7 +134,7 @@ stars:
 
 spritedown:
      dec $e6
-     
+
 inisprite:
      msetp 81,3,dey
      msetp 79,3,dey
