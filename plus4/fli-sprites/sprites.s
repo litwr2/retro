@@ -23,9 +23,9 @@ scptr_off = 6
     ldy #>s1
     sty $e7
    ;jsr put0
-    ldy #<s6
+    ldy #<s2
     sty $e6
-    ldy #>s6
+    ldy #>s2
     sty $e7
 
    jsr put0
@@ -187,7 +187,7 @@ ymul:   ;y*xsize/4  ;in: y, a;  used: $d6;  xsize = 8, 12, 16, 20, 24
     adc $d6   ;C=0, y*5
 .l4 rts  ;y == 4
 
-
+    org $a000
 put00_hs byte 1
 put0:
     ldy #sdptr_off
@@ -664,16 +664,22 @@ right0:   ;use: $d0-d2,$d6
     lsr
     lsr
     lsr
+    cmp #$a
+    bne *+3
+    lsr
     ora #$a0
-    sta ($d0),y  ;prg[addr] = 0xa0 | prg[addr] >> 4
+    sta ($d0),y  ;prg[addr] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr] >> 4
     iny
     lda ($d0),y
     lsr
     lsr
     lsr
     lsr
+    cmp #$a
+    bne *+3
+    lsr
     ora #$a0
-    sta ($d0),y  ;prg[addr + 1] = 0xa0 | prg[addr + 1] >> 4
+    sta ($d0),y  ;prg[addr+1] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr+1] >> 4
 
     lda #1  ;for (int y = 1; y < ysize; y++)
     sta $d6
@@ -707,16 +713,22 @@ right0:   ;use: $d0-d2,$d6
     lsr
     lsr
     lsr
+    cmp #$a
+    bne *+3
+    lsr
     ora #$a0
-    sta ($d0),y  ;prg[addr] = 0xa0 | prg[addr] >> 4
+    sta ($d0),y  ;prg[addr] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr] >> 4
     iny
     lda ($d0),y
     lsr
     lsr
     lsr
     lsr
+    cmp #$a
+    bne *+3
+    lsr
     ora #$a0
-    sta ($d0),y  ;prg[addr + 1] = 0xa0 | prg[addr + 1] >> 4
+    sta ($d0),y  ;prg[addr+1] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr+1] >> 4
 
     inc $d6
     bne .l50  ;always
@@ -987,16 +999,22 @@ left0:   ;use: $d0-$d3, $d6
     asl
     asl
     asl
+    cmp #$50
+    bne *+3
+    asl
     ora #5
-    sta ($d0),y   ;prg[addr] = prg[addr] << 4 | 5
+    sta ($d0),y   ;prg[addr] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr] << 4
     iny
     lda ($d0),y
     asl
     asl
     asl
     asl
+    cmp #$50
+    bne *+3
+    asl
     ora #5
-    sta ($d0),y  ;prg[addr + 1] = prg[addr + 1] << 4 | 5
+    sta ($d0),y  ;prg[addr+1] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr+1] << 4
 
     lda #1    ;for (int y = 1; y < ysize; y++)
     sta $d6
@@ -1030,16 +1048,22 @@ left0:   ;use: $d0-$d3, $d6
     asl
     asl
     asl
+    cmp #$50
+    bne *+3
+    asl
     ora #5
-    sta ($d0),y  ;prg[addr] = prg[addr] << 4 | 5
+    sta ($d0),y  ;prg[addr] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr] << 4
     iny
     lda ($d0),y
     asl
     asl
     asl
     asl
+    cmp #$50
+    bne *+3
+    asl
     ora #5
-    sta ($d0),y  ;prg[addr + 1] = prg[addr + 1] << 4 | 5
+    sta ($d0),y  ;prg[addr+1] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr+1] << 4
 
     inc $d6
     bne .l50   ;always
@@ -1101,7 +1125,7 @@ left:
     lda #0
     jmp put00
 
-    org $a000
+
     sprite s1,16,16,64,202
 data_s1 
   byte $0f, $ff, $ff, $f0
@@ -1126,22 +1150,22 @@ color_s1
 
     sprite s2,12,16,40,8
 data_s2
-  byte $55, $55, $55
-  byte $55, $55, $55
-  byte $50, $00, $05
-  byte $50, $00, $05
-  byte $50, $aa, $05
-  byte $50, $ff, $05
-  byte $50, $ff, $05
-  byte $50, $ff, $05
-  byte $50, $ff, $05
-  byte $50, $ff, $05
-  byte $50, $ff, $05
-  byte $50, $aa, $05
-  byte $50, $00, $05
-  byte $50, $00, $05
-  byte $55, $55, $55
-  byte $55, $55, $55
+  byte $00, $00, $00
+  byte $00, $00, $00
+  byte $00, $00, $00
+  byte $00, $00, $00
+  byte $00, $aa, $00
+  byte $00, $00, $00
+  byte $00, $00, $00
+  byte $00, $00, $00
+  byte $00, $ff, $00
+  byte $00, $ff, $00
+  byte $00, $00, $00
+  byte $00, $aa, $00
+  byte $f0, $00, $00
+  byte $f0, $00, $00
+  byte $f5, $55, $00
+  byte $00, $ff, $00
 color_s2
   byte $00, $00, $00, $00, $00, $00, $53, $63, $63, $53, $00, $00, $00, $00, $00, $00
   byte $7e, $6e, $5e, $4e, $3e, $2e, $5d, $4d, $4d, $5d, $2e, $3e, $4e, $5e, $6e, $7e
@@ -1170,7 +1194,7 @@ color_s5
   byte $53
 
     sprite s6,16,18,64,202
-data_s6
+data_s6_1
   byte $00,$05,$50,$00
   byte $00,$55,$55,$00
   byte $01,$55,$55,$40
@@ -1189,6 +1213,28 @@ data_s6
   byte $02,$a8,$2a,$80
   byte $02,$a8,$2a,$80
   byte $00,$54,$15,$00
+color_s6_1
+  byte $68,$68,$68,$68,$68,$68,$68,$6d,$6d,$5b,$5b,$5b,$5b,$5b,$00,$00,$00,$00
+  byte $00,$00,$00,$00,$72,$72,$72,$72,$72,$72,$72,$72,$72,$46,$46,$46,$48,$21
+data_s6
+  byte $00,$05,$50,$00
+  byte $00,$55,$55,$00
+  byte $01,$55,$55,$40
+  byte $01,$55,$55,$40
+  byte $05,$95,$55,$50
+  byte $0a,$a9,$55,$a0 ;
+  byte $0a,$aa,$aa,$a0
+  byte $02,$a6,$9a,$80 ;
+  byte $00,$a6,$98,$28
+  byte $0a,$2a,$a9,$a8 ;
+  byte $0a,$95,$55,$80 ;
+  byte $02,$a5,$55,$00
+  byte $00,$15,$5a,$00
+  byte $00,$15,$5a,$00
+  byte $00,$55,$15,$00
+  byte $00,$aa,$15,$00
+  byte $00,$00,$2a,$00
+  byte $00,$00,$2a,$00
 color_s6
   byte $68,$68,$68,$68,$68,$68,$68,$6d,$6d,$5b,$5b,$5b,$5b,$5b,$00,$00,$00,$00
   byte $00,$00,$00,$00,$72,$72,$72,$72,$72,$72,$72,$72,$72,$46,$46,$46,$48,$21
