@@ -23,9 +23,9 @@ scptr_off = 6
     ldy #>s1
     sty $e7
    ;jsr put0
-    ldy #<s2
+    ldy #<s6
     sty $e6
-    ldy #>s2
+    ldy #>s6
     sty $e7
 
    jsr put0
@@ -59,12 +59,24 @@ l4  cmp #$70   ;1
     jsr up
     jmp l0
 l5  cmp #$73   ;2
-    bne l0
+    bne l6
 
     lda #-2
     sta $d4
     jsr down
     jmp l0
+l6  cmp #$21   ;R
+    bne l7
+
+    jsr remove
+    jmp l0
+
+l7  cmp #$51   ;P
+    bne *-5
+    
+    jsr put00
+    jmp l0
+
    ;jsr remove
    ;jsr right
    ;ldy #sxpos_off
@@ -201,18 +213,27 @@ put00:   ;use: $d0-$d3, $d6, $d7, $d9, $da
          ;in: ac - mc output st, $e6,$e7 - sprite addr
 d = $d7
     sta put00_hs
+
+    ldy #sxsize_off
+    lda ($e6),y
+    lsr
+    lsr
+    sta .m2+1
+    sta .m1+1
+
     lda #0
 .l1  ;for (int y = 0; y < ysize; y++)
     pha
     tax
-    asl
+
     ldy #sypos_off
-    adc ($e6),y  ;C=0, ypos
+    clc
+    adc ($e6),y  ;ypos
     sta $d3    ;y+ypos
+
     ldy put00_hs
     beq .l2
 
-    pha   ;ypos+2y
     ldy #scptr_off
     lda ($e6),y
     sta $d0
@@ -230,17 +251,13 @@ d = $d7
     lda ($d0),y
     sta $da
 
-    pla
-    tay
-    jsr setmcl
     ldy $d3
-    iny
     jsr setmcl
 .l2 ldy #sxpos_off
     lda ($e6),y  ;xpos
     tax
     ldy $d3
-    jsr getpaddr  ;addr = getcsaddr2(xpos, ypos + y)
+    jsr getpaddr  ;addr = getcsaddr(xpos, ypos + y)
     ldy #sxsize_off
     lda ($e6),y
     tay
@@ -252,216 +269,124 @@ d = $d7
     lda ($e4),y
     sta d   ;d = data[0][y];
     txa
-    and #2
-    bne *+5  ;if (xpos&2)
+    and #3
+    bne *+5  ;if (z)
     jmp .l3
 
-    lda d
-    rol
-    rol
-    rol
-    and #3
-    tax   ;nd  = d >> 6
-    lda tab5t,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab5t[nd]
-    lda tab5b,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab5b[nd]
-    ldy #sxpos_off
-    lda ($e6),y
+    sta $d9  ;z = xpos&3
+    asl
+    sta $da  ;2z
     tax
-    inx
-    inx
-    ldy $d3
-    jsr getnextx
     lda d
-    and #$3f
     lsr
-    lsr
-    tax           ;nd = (d & 0x3f) >> 2
-    lda tab1,x
+    dex
+    bne *-2
+
+    tax   ;d >> 2*z
+    lda tab1,x  ;tab1[d >> 2*z]
     ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
+    sta ($d0),y  ;prg[addr] = tab1[d >> 2*z]
+
     lda #1  ;for (int x = 1; x < xsize/4; x++)
     sta $d6
-.l8 ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
-    cmp $d6
+.l8 lda $d6 
+.m2 cmp #0
     beq .l7
-    
-    lda d
-    and #3
-    lsr
-    ror
-    ror
-    sta d
-    lda $d6
-    adc $d2  ;C=0
-    tay
-    lda ($e4),y
-    pha
-    lsr
-    lsr
-    ora d
-    sta d  ;d = (d & 3) << 6 | data[x][y] >> 2
 
-    lda $d6
-    asl
-    asl
-    asl
-    ldy #sxpos_off
-    adc ($e6),y ;C=0
-    adc #-2   ;C=0
-    pha
-    tax
-    ldy $d3
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x - 2, ypos + 2*y)
-    lda d
-    lsr
-    lsr
-    lsr
-    lsr
-    tax  ;nd  = d >> 4
-    lda tab1,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
-
-    pla
-    clc
-    adc #4
-    tax
-    ldy $d3
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x + 2, ypos + y)
-    lda d
-    and #$f
-    tax   ;nd = d & 0xf
-    lda tab1,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
-
-    pla
-    sta $d7  ;d = data[x][y]
-
-    inc $d6
-    bne .l8  ;always
-.l7
-    clc
-    lda #30
-    ldy #sxpos_off
-    adc ($e6),y
-    tax
-    ldy $d3
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 30, ypos + 2*y)
-
-    lda d
-    and #3
-    tax    ;nd = d & 3
-    lda tab3t,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab3t[nd]
-    lda tab3b,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab3b[nd]
-    jmp .l6
-.l3
-    lda d
-    lsr
-    lsr
-    lsr
-    lsr
-    tax   ;nd  = d >> 4
-    lda tab1,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
-
-    ldy #sxpos_off
-    lda ($e6),y
-    clc
-    adc #4
-    tax 
-    ldy $d3
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 4, ypos + 2*y)
-
-    lda d
-    and #$f
-    tax
-    lda tab1,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
-
-    lda #1  ;for (int x = 1; x < xsize/4; x++)
-    sta $d6
-.l5 ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
-    cmp $d6
-    beq .l6
-
-    lda $d6
-    asl
     asl
     asl
     ldy #sxpos_off
     adc ($e6),y  ;C=0
-    pha
+    and #$fc
     tax
     ldy $d3
-    jsr getnextx   ;addr = getnextxaddr2(addr, xpos + 4*x, ypos + y)
+    jsr getnextx   ;addr = getnextxaddr(addr, (xpos&0xfc) + 4*x, ypos + y)
+
+    lda #8
+    sec
+    sbc $da
+    tax
+    lda d
+    asl
+    dex
+    bne *-2
+    sta d  ;d << 8 - 2*z
+
+    clc
+    lda $d2
+    adc $d6   ;C=0
+    tay
+    lda ($e4),y
+    tay      ;nd = data[x][y]
+    ldx $da  ;2z
+    lsr
+    dex
+    bne *-2    ;nd >> 2*z
+
+    ora d
+    sty d     ;d = nd
+    tax
+    lda tab1,x
+    ldy #0
+    sta ($d0),y  ;prg[addr] = tab1[(unsigned char)(d << 8 - 2*z | nd >> 2*z)]
+
+    inc $d6  ;x
+    bne .l8   ;always
+.l7
+    ;lda $d6
+    asl
+    asl
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0
+    and #$fc
+    tax
+    ldy $d3
+    jsr getnextx  ;addr = getnextxaddr(addr, (xpos&0xfc) + 4*x, ypos + y)
+
+    lda #8
+    sec
+    sbc $da
+    tax
+    lda d
+    asl
+    dex
+    bne *-2
+
+    tax
+    lda tab1,x
+    ldy #0
+    sta ($d0),y  ;prg[addr] = tab1[(unsigned char)(d << 8 - 2*z)]
+    beq .l6  ;always
+.l3
+    ldx d
+    lda tab1,x
+    ldy #0
+    sta ($d0),y  ;prg[addr] = tab1[d]
+
+
+    lda #1  ;for (int x = 1; x < xsize/4; x++)
+    sta $d6
+.l5 lda $d6 
+.m1 cmp #0
+    beq .l6
+
+    asl
+    asl
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0
+    tax
+    ldy $d3
+    jsr getnextx   ;addr = getnextxaddr(addr, xpos + 4*x, ypos + y)
 
     lda $d6  ;x
     clc
-    adc $d2  ;4*y
+    adc $d2  ;xsize/4*y
     tay
     lda ($e4),y
-    sta d  ;d = data[x][y]
-    
-    lsr
-    lsr
-    lsr
-    lsr
-    tax  ;nd  = d >> 4
+    tax      ;nd = data[x][y]
     lda tab1,x
     ldy #0
     sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
-
-    pla
-    clc
-    adc #4
-    tax
-    ldy $d3
-    jsr getnextx   ;addr = getnextxaddr2(addr, xpos + 4*x + 2, ypos + y)
-
-    lda d
-    and #$f
-    tax     ;nd = d & 0xf
-    lda tab1,x
-    ldy #0
-    sta ($d0),y  ;prg[addr] = tab1[nd]
-    lda tab2,x
-    iny
-    sta ($d0),y  ;prg[addr+1] = tab2[nd]
 
     inc $d6  ;x
     bne .l5   ;always
@@ -476,279 +401,91 @@ d = $d7
     rts
 
 remove:   ;use:$d0-d3, $d6
-    lda #0  ;for (int y = 0; y < ysize; y++)
-.l0 pha
     ldy #sxpos_off
     lda ($e6),y
-    sta $d3
     tax
-    iny  ;sypos_off
-    pla
-    pha
-    asl
-    adc ($e6),y  ;C=0
-    sta $d2
+    and #$fc  ;p = xpos&0xfc
+    sta $d3
+
+    ldy #sxsize_off
+    lda ($e6),y
+    lsr
+    lsr
     tay
-    jsr getpaddr  ;addr = getcsaddr(xpos, ypos + 2*y)
     txa
-    and #2
-    bne *+5
-    jmp .l1   ;long?
-
-    ldy #0
-    lda ($d0),y
-    and #$f0
-    ora #5
-    sta ($d0),y
+    and #3
+    beq *+3
     iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = prg[addr] & 0xf0 | 5
+    sty .m1+1  ;l = xsize/4 + ((xpos&3) != 0)
 
-    ;ldx $d3
-    inx
-    inx
-    ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 2, ypos + 2*y)
+    lda #0  ;for (int y = 0; y < ysize; y++)
+.l0 pha
+    ldy #sypos_off
+    adc ($e6),y  ;C=0
+    sta $d2  ;ypos + y
+    tay
+    ldx $d3
+    jsr getpaddr  ;addr = getcsaddr(xpos, ypos + y)
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
-    lda #1  ;for (int x = 1; x < xsize/4; x++)
+    lda #1  ;for (int x = 1; x < l; x++)
     sta $d6
-.l2 ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
-    cmp $d6
+.l2 lda $d6
+.m1 cmp #0
     beq .l7
 
     lda $d6
     asl
-    asl
-    asl  ;*8
+    asl  ;*4
     adc $d3  ;C=0
-    pha
-    adc #-2  ;C=0
     tax
     ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x - 2, ypos + 2*y)
+    jsr getnextx  ;addr = getnextxaddr(addr, p + 4*x, ypos + y)
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-
-    pla
-    tax
-    inx
-    inx
-    ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x + 2, ypos + 2*y)
-
-    ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
     inc $d6
     bne .l2   ;always
-.l7
-    lda $d3
-    ;clc
-    adc #29  ;C=1
-    tax
-    ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 30, ypos + 2*y);
 
-    ldy #0
-    lda ($d0),y
-    and #$f
-    ora #$a0
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = prg[addr] & 0xf | 0xa0;
-
-.l6 pla
-    clc
-    adc #1
+.l7 pla
+    adc #0  ;C=1
     ldy #sysize_off
     cmp ($e6),y
-    beq *+5
-    jmp .l0
+    bne .l0   ;sets C=0 if the branch is taken
     rts
-
-.l1 ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-
-    ;ldx $d3
-    inx
-    inx
-    inx
-    inx
-    ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 4, ypos + 2*y)
-
-    ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-
-    lda #1  ;for (int x = 1; x < xsize/4; x++)
-    sta $d6
-.l5 ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
-    cmp $d6
-    beq .l6
-
-    lda $d6
-    asl
-    asl
-    asl
-    adc $d3  ;C=0
-    pha
-    tax
-    ldy $d2
-    jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x, ypos + 2*y);
-
-	ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-
-    pla
-    clc
-    adc #4
-    tax
-    ldy $d2
-	jsr getnextx  ;addr = getnextxaddr(addr, xpos + 8*x + 4, ypos + 2*y)
-
-	ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-
-    inc $d6
-    bne .l5  ;always
 
 right0:   ;use: $d0-d2,$d6
     sta $d2
-    adc #2   ;C=0
+    adc #1   ;C=0
     ;ldy #sxpos_off
     sta ($e6),y
+    and #3
+    bne .l0
     
     ldx $d2
     ldy #sypos_off
     lda ($e6),y
     tay
-    jsr getpaddr  ;addr = getcsaddr(xpos - 2, ypos)
-    ldy #sxpos_off
-    lda ($e6),y
-    and #2
-    beq .l1
-
+    jsr getpaddr  ;addr = getcsaddr(xpos - 1, ypos)
     ldy #0
-    lda ($d0),y
-    lsr
-    lsr
-    lsr
-    lsr
-    cmp #$a
-    bne *+3
-    lsr
-    ora #$a0
-    sta ($d0),y  ;prg[addr] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr] >> 4
-    iny
-    lda ($d0),y
-    lsr
-    lsr
-    lsr
-    lsr
-    cmp #$a
-    bne *+3
-    lsr
-    ora #$a0
-    sta ($d0),y  ;prg[addr+1] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr+1] >> 4
+    lda #$a5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
-    lda #1  ;for (int y = 1; y < ysize; y++)
-    sta $d6
-.l50 
     ldy #sysize_off
     lda ($e6),y
-    cmp $d6
-    beq .l70
-
-    lda $d6
-    asl
-    ldy #sypos_off
-    adc ($e6),y  ;C=0
-    tay
-    and #7
-    bne .l20
-
-    ldx $d2
-    jsr getpaddr  ;addr = getcsaddr(xpos - 2, ypos + 2*y)
-    jmp .l30
-
-.l20 lda #2
-    adc $d0  ;C=0
-    sta $d0
-    bcc *+4
-    inc $d1  ;addr += 2
-.l30
-    ldy #0
-    lda ($d0),y
-    lsr
-    lsr
-    lsr
-    lsr
-    cmp #$a
-    bne *+3
-    lsr
-    ora #$a0
-    sta ($d0),y  ;prg[addr] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr] >> 4
-    iny
-    lda ($d0),y
-    lsr
-    lsr
-    lsr
-    lsr
-    cmp #$a
-    bne *+3
-    lsr
-    ora #$a0
-    sta ($d0),y  ;prg[addr+1] = (d == 0xa ? 0x5 : d) | 0xa0; d = prg[addr+1] >> 4
-
-    inc $d6
-    bne .l50  ;always
-.l70
-    rts
-
-.l1 ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
-    lda #1  ;for (int y = 1; y < ysize; y++)
+    sta .m1+1
+    lda #1    ;for (int y = 1; y < ysize; y++)
     sta $d6
-.l5 ldy #sysize_off
-    lda ($e6),y
-    cmp $d6
-    beq .l70
-
-    lda $d6
-    asl
+.l5 lda $d6
+.m1 cmp #0
+    beq .l0
+ 
+    ;lda $d6
     ldy #sypos_off
     adc ($e6),y  ;C=0
     tay
@@ -759,20 +496,17 @@ right0:   ;use: $d0-d2,$d6
     jsr getpaddr  ;addr = getcsaddr(xpos - 2, ypos + 2*y)
     jmp .l3
 
-.l2 lda #2
-    adc $d0  ;C=0
-    sta $d0
-    bcc *+4
+.l2 inc $d0
+    bne *+4
     inc $d1  ;addr += 2
 .l3
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5 
+    sta ($d0),y  ;prg[addr] = 0xa5
 
     inc $d6
-    bne .l5   ;always
+    bne .l5  ;always
+.l0 rts
 
 right:
     ldy #sdptr_off
@@ -784,11 +518,11 @@ right:
 
     ldy #sxsize_off
     lda ($e6),y
-    asl
-    sbc #HSIZE-1  ;C=0
+    sec
+    sbc #HSIZE
     ldy #sxpos_off
     adc ($e6),y  ;C=0, xpos == 160-2*xsize
-    beq right0.l70
+    beq right0.l0
 
     lda ($e6),y
     jsr right0
@@ -827,14 +561,13 @@ rightx:
 
 up0:  ;use:  $d0-d3, $d6, $d7
     clc
-    adc #-2
+    adc #-1
     ;ldy #sypos_off
-    sta ($e6),y
+    sta ($e6),y   ;ypos--
     ldy #sysize_off
     clc
     adc ($e6),y
-    adc ($e6),y
-    sta $d2
+    sta $d2     ;ypos + ysize
 
     ldy #sxpos_off
     lda ($e6),y
@@ -842,25 +575,25 @@ up0:  ;use:  $d0-d3, $d6, $d7
     and #$fc
     sta $d3    ;p = xpos & 0xfc
     txa
-    and #2
-    lsr
-    sta $d7    ;((xpos&2)>>1)
+    and #3
+    sta $d7    ;xpos&3
     ldy $d2
-    jsr getpaddr  ;addr = getcsaddr(xpos, ypos + 2*ysize)
+    jsr getpaddr  ;addr = getcsaddr(xpos, ypos + ysize)
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
     ldy #sxsize_off
     lda ($e6),y
     lsr
-    adc $d7  ;C=0
-    sta $d7  ;xsize/2 + ((xpos&2)>>1)
+    lsr
+    ldx $d7
+    beq *+4
+    adc #1  ;C=0
+    sta $d7  ;l = xsize/4 + ((xpos&3) != 0)
 
-    lda #1    ;for (int x = 1; x < xsize; x++)
+    lda #1    ;for (int x = 1; x < l; x++)
     sta $d6
 .l5 lda $d6
     cmp $d7
@@ -872,13 +605,11 @@ up0:  ;use:  $d0-d3, $d6, $d7
     adc $d3  ;C=0
     tax
     ldy $d2
-    jsr getpaddr  ;addr = getnextxaddr(addr, p + 4*x, ypos + 2*ysize)
+    jsr getpaddr  ;addr = getnextxaddr(addr, p + 4*x, ypos + ysize)
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5 
+    sta ($d0),y  ;prg[addr] = 0xa5 
     inc $d6
     bne .l5  ;always
 .l0 rts
@@ -902,34 +633,34 @@ up:
 down0:  ;use: $d0-d3, $d6, $d7
     sta $d2
     ;clc
-    adc #2  ;C=0
+    adc #1  ;C=0
     ;ldy #sypos_off
-    sta ($e6),y
+    sta ($e6),y   ;ypos++
     ldy #sxpos_off
     lda ($e6),y
     tax
     and #$fc
     sta $d3    ;p = xpos & 0xfc
     txa
-    and #2
-    lsr
-    sta $d7    ;((xpos&2)>>1)
+    and #3
+    sta $d7    ;xpos&3
     ldy $d2
     jsr getpaddr  ;getcsaddr(xpos, ypos)
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
     ldy #sxsize_off
     lda ($e6),y
     lsr
-    adc $d7  ;C=0
-    sta $d7  ;xsize/2 + ((xpos&2)>>1)
+    lsr
+    ldx $d7
+    beq *+4
+    adc #1  ;C=0
+    sta $d7  ;l = xsize/4 + ((xpos&3) != 0)
 
-    lda #1    ;for (int x = 1; x < xsize/2 + ((xpos&2)>>1); x++)
+    lda #1    ;for (int x = 1; x < l; x++)
     sta $d6
 .l5 lda $d6
     cmp $d7
@@ -945,9 +676,7 @@ down0:  ;use: $d0-d3, $d6, $d7
 
     ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5 
+    sta ($d0),y  ;prg[addr] = 0xa5 
 
     inc $d6
     bne .l5  ;always
@@ -962,8 +691,8 @@ down:
 
     ldy #sysize_off
     lda ($e6),y
-    asl
-    sbc #VSIZE-1    ;C=0
+    clc
+    sbc #VSIZE-1
     ldy #sypos_off
     adc ($e6),y     ;C=0
     beq up0.l0
@@ -974,116 +703,37 @@ down:
     jmp put00
 
 left0:   ;use: $d0-$d3, $d6
-    clc
-    adc #-2
+    sec
+    sbc #1
     ;ldy #sxpos_off
-    sta ($e6),y
+    sta ($e6),y   ;xpos--
+    and #3
+    bne .l0
+
+    lda ($e6),y
     ldy #sxsize_off
     clc
     adc ($e6),y
-    adc ($e6),y
-    sta $d2
+    sta $d2     ;xpos + xsize
     tax
     ldy #sypos_off
     lda ($e6),y
     tay
-    jsr getpaddr  ;addr = getcsaddr(xpos + 2*xsize, ypos)
-    ldy #sxpos_off
-    lda ($e6),y
-    and #2
-    beq .l1
-
+    jsr getpaddr  ;addr = getcsaddr(xpos + xsize, ypos)
     ldy #0
-    lda ($d0),y
-    asl
-    asl
-    asl
-    asl
-    cmp #$50
-    bne *+3
-    asl
-    ora #5
-    sta ($d0),y   ;prg[addr] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr] << 4
-    iny
-    lda ($d0),y
-    asl
-    asl
-    asl
-    asl
-    cmp #$50
-    bne *+3
-    asl
-    ora #5
-    sta ($d0),y  ;prg[addr+1] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr+1] << 4
+    lda #$a5
+    sta ($d0),y  ;prg[addr] = 0xa5
 
-    lda #1    ;for (int y = 1; y < ysize; y++)
-    sta $d6
-.l50
     ldy #sysize_off
     lda ($e6),y
-    cmp $d6
-    beq .l0
-
-    lda $d6
-    asl
-    ldy #sypos_off
-    adc ($e6),y  ;C=0
-    tay
-    and #7
-    bne .l20
-
-    ldx $d2
-    jsr getpaddr  ;addr = getcsaddr(xpos + 2*xsize, ypos + 2*y)
-    jmp .l30
-
-.l20 lda #2
-    adc $d0  ;C=0
-    sta $d0
-    bcc *+4
-    inc $d1  ;addr += 2
-.l30
-    ldy #0
-    lda ($d0),y
-    asl
-    asl
-    asl
-    asl
-    cmp #$50
-    bne *+3
-    asl
-    ora #5
-    sta ($d0),y  ;prg[addr] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr] << 4
-    iny
-    lda ($d0),y
-    asl
-    asl
-    asl
-    asl
-    cmp #$50
-    bne *+3
-    asl
-    ora #5
-    sta ($d0),y  ;prg[addr+1] = (d == 0x50 ? 0xa0 : d) | 5; d = prg[addr+1] << 4
-
-    inc $d6
-    bne .l50   ;always
-.l0
-    rts
-
-.l1 ldy #0
-    lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5
+    sta .m1+1
     lda #1    ;for (int y = 1; y < ysize; y++)
     sta $d6
-.l5 ldy #sysize_off
-    lda ($e6),y
-    cmp $d6
+.l5 lda $d6
+.m1 cmp #0
     beq .l0
 
-    lda $d6
-    asl
+    ;lda $d6
     ldy #sypos_off
     adc ($e6),y  ;C=0
     tay
@@ -1091,23 +741,20 @@ left0:   ;use: $d0-$d3, $d6
     bne .l2
 
     ldx $d2
-    jsr getpaddr  ;addr = getcsaddr(xpos + 2*xsize, ypos + 2*y)
+    jsr getpaddr  ;addr = getcsaddr(xpos + xsize, ypos + y)
     jmp .l3
 
-.l2 lda #2
-    adc $d0  ;C=0
-    sta $d0
-    bcc *+4
-    inc $d1  ;addr += 2
+.l2 inc $d0
+    bne *+4
+    inc $d1  ;addr++
 .l3
-    ldy #0
     lda #$a5
-    sta ($d0),y
-    iny
-    sta ($d0),y  ;prg[addr + 1] = prg[addr] = 0xa5 
+    ldy #0
+    sta ($d0),y  ;prg[addr] = 0xa5
 
     inc $d6
-    bne .l5  ;always
+    bne .l5   ;always
+.l0 rts
 
 left:
     ldy #sdptr_off
@@ -1148,29 +795,29 @@ color_s1
   byte $00, $00, $00, $00, $00, $00, $53, $63, $63, $53, $00, $00, $00, $00, $00, $00
   byte $7e, $6e, $5e, $4e, $3e, $2e, $5d, $4d, $4d, $5d, $2e, $3e, $4e, $5e, $6e, $7e
 
-    sprite s2,12,16,40,8
+    sprite s2,12,16,100,190
 data_s2
-  byte $00, $00, $00
-  byte $00, $00, $00
-  byte $00, $00, $00
-  byte $00, $00, $00
-  byte $00, $aa, $00
-  byte $00, $00, $00
-  byte $00, $00, $00
-  byte $00, $00, $00
-  byte $00, $ff, $00
-  byte $00, $ff, $00
-  byte $00, $00, $00
-  byte $00, $aa, $00
-  byte $f0, $00, $00
-  byte $f0, $00, $00
-  byte $f5, $55, $00
-  byte $00, $ff, $00
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $00, $aa
+  byte $aa, $00, $aa
+  byte $aa, $ff, $aa
+  byte $aa, $ff, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
+  byte $aa, $aa, $aa
 color_s2
-  byte $00, $00, $00, $00, $00, $00, $53, $63, $63, $53, $00, $00, $00, $00, $00, $00
+  byte $00, $00, $00, $00, $00, $00, $52, $63, $63, $52, $00, $00, $00, $00, $00, $00
   byte $7e, $6e, $5e, $4e, $3e, $2e, $5d, $4d, $4d, $5d, $2e, $3e, $4e, $5e, $6e, $7e
 
-    sprite s3,8,2,42,8
+    sprite s3,8,2,81,198
 data_s3
   byte $66,$66
   byte $99,$99
@@ -1239,10 +886,21 @@ color_s6
   byte $68,$68,$68,$68,$68,$68,$68,$6d,$6d,$5b,$5b,$5b,$5b,$5b,$00,$00,$00,$00
   byte $00,$00,$00,$00,$72,$72,$72,$72,$72,$72,$72,$72,$72,$46,$46,$46,$48,$21
 
-tab1 byte $a5, $a0, $af, $a3, $5, 0, $f, $3, $f5, $f0, $ff, $f3, $35, $30, $3f, $33
-tab2 byte $a5, $a0, $af, $ac, $5, 0, $f, $c, $f5, $f0, $ff, $fc, $c5, $c0, $cf, $cc
-tab3t byte $a5, 5, $f5, $35
-tab3b byte $a5, 5, $f5, $c5
-tab5t byte $a5, $a0, $af, $a3
-tab5b byte $a5, $a0, $af, $ac
+tab1
+  byte $a5, $a4, $a7, $a6, $a1, $a0, $a3, $a2, $ad, $ac, $af, $ae, $a9, $a8, $ab, $aa
+  byte $85, $84, $87, $86, $81, $80, $83, $82, $8d, $8c, $8f, $8e, $89, $88, $8b, $8a
+  byte $b5, $b4, $b7, $b6, $b1, $b0, $b3, $b2, $bd, $bc, $bf, $be, $b9, $b8, $bb, $ba
+  byte $95, $94, $97, $96, $91, $90, $93, $92, $9d, $9c, $9f, $9e, $99, $98, $9b, $9a
+  byte $25, $24, $27, $26, $21, $20, $23, $22, $2d, $2c, $2f, $2e, $29, $28, $2b, $2a
+  byte $05, $04, $07, $06, $01, $00, $03, $02, $0d, $0c, $0f, $0e, $09, $08, $0b, $0a
+  byte $35, $34, $37, $36, $31, $30, $33, $32, $3d, $3c, $3f, $3e, $39, $38, $3b, $3a
+  byte $15, $14, $17, $16, $11, $10, $13, $12, $1d, $1c, $1f, $1e, $19, $18, $1b, $1a
+  byte $e5, $e4, $e7, $e6, $e1, $e0, $e3, $e2, $ed, $ec, $ef, $ee, $e9, $e8, $eb, $ea
+  byte $c5, $c4, $c7, $c6, $c1, $c0, $c3, $c2, $cd, $cc, $cf, $ce, $c9, $c8, $cb, $ca
+  byte $f5, $f4, $f7, $f6, $f1, $f0, $f3, $f2, $fd, $fc, $ff, $fe, $f9, $f8, $fb, $fa
+  byte $d5, $d4, $d7, $d6, $d1, $d0, $d3, $d2, $dd, $dc, $df, $de, $d9, $d8, $db, $da
+  byte $65, $64, $67, $66, $61, $60, $63, $62, $6d, $6c, $6f, $6e, $69, $68, $6b, $6a
+  byte $45, $44, $47, $46, $41, $40, $43, $42, $4d, $4c, $4f, $4e, $49, $48, $4b, $4a
+  byte $75, $74, $77, $76, $71, $70, $73, $72, $7d, $7c, $7f, $7e, $79, $78, $7b, $7a
+  byte $55, $54, $57, $56, $51, $50, $53, $52, $5d, $5c, $5f, $5e, $59, $58, $5b, $5a
 
