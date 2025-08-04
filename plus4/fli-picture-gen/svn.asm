@@ -2,6 +2,7 @@
 ;bitmap+attr
 ; 0: $4000-413f    $2800-2827  $3000  $3800  $9000
 ; 1: $4140-427f    $2828-284f
+;      ...           ...
 ;23: $5cc0-5dff    $2b98-2bbf
 ;24: $7e00-7f3f    $9bc0-9be7  $7000  $8000  $8800
 ;25: $7f40-7fff    $9be8-9bff
@@ -16,15 +17,16 @@
 ;line 206 gets +30 = 236 interrupt
 ;line 284 gets +26 = 310 interrupt
 
-;the library uses zp locations $d0-d7, $d5 is just reserved
+;the library uses zp locations $d0-d7
 
+   ifndef VSIZE
 VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 200-280
-
-        org $1001
-   byte $b,$10,$a,0,$9e
-   byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
-   byte 0,0,0
+   endif
+HSIZE = 160  ;fixed
+  ifndef DYNAMIC
+DYNAMIC = 1  ;use 0 if you use only static images, this saves some space
+  endif
 
      macro setmc
      lda #\1     ;3x,$9a - 4x,$ca
@@ -49,21 +51,18 @@ VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
      sta $ff14
 
      gap
-
      lda #$3f
      sta $ff06
      lda #\2
      sta $ff14
 
      gap
-
      lda #$39
      sta $ff06
      lda #\3
      sta $ff14
 
      gap
-
      lda #$3b
      sta $ff06
      lda #\4
@@ -74,6 +73,11 @@ VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
      gap
      zline \1,\2,\3,\4
      endm
+
+        org $1001
+   byte $b,$10,$a,0,$9e
+   byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
+   byte 0,0,0
 
 start:
      lda #0
@@ -173,6 +177,9 @@ BA = *+1
      sta $fffe
      lda #>irq205
      sta $ffff
+  if DYNAMIC   
+     sta vrf
+  endif
 .savex:
      ldx #0
 .savey:
@@ -180,7 +187,9 @@ BA = *+1
      pla
      inc $ff09
      rti
-
+  if DYNAMIC
+vrf byte 0
+  endif
 irq276:   ;245
      pha
 .sc:
@@ -247,6 +256,13 @@ main:
   endif
   ifdef TEST1
      include "test1.s"
+     include "aux.s"
+  endif
+  ifdef SPRITES1
+     include "sprites-t1.s"
+  endif
+  ifdef SPRITES2
+     include "sprites-t2.s"
   endif
      jmp *
 
@@ -259,13 +275,6 @@ init:
      lda $ff07
      ora #$10
      sta $ff07   ;multicolor mode
-     rts
-
-delay:    ;delay AC frame ticks (50/60 Hz for PAL/NTSC), the actual accuracy is about 1/2 of frame tick
-     clc
-     adc $a5
-     cmp $a5
-     bne *-2
      rts
 
      org $2c00    ;clrs 0-1: 0-23
@@ -316,6 +325,7 @@ tobasic:
      rept $1e00
      byte $55
      endr   ;$5e00
+  if DYNAMIC
 ;$200-$155
 lo312:  byte $0, $38, $70, $a8, $e0, $18, $50, $88, $c0, $f8, $30, $68, $a0, $d8, $10, $48, $80, $b8, $f0, $28, $60, $98, $d0, $8, $40, $78, $b0, $e8, $20, $58, $90, $c8, $0, $38, $70, $a8
 hi312:  byte $0, $1, $2, $3, $4, $6, $7, $8, $9, $a, $c, $d, $e, $f, $11, $12, $13, $14, $15, $17, $18, $19, $1a, $1c, $1d, $1e, $1f, $20, $22, $23, $24, $25, $27, $28, $29, $2a
@@ -464,7 +474,7 @@ setpbyte: ;y - ($d8) y (0 - 279), x - x (0-159), byte - a; changes: $d0-d1, $d6-
      sta ($d0),y
      rts
 
-getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6-d7
+getpaddr: ;y - ($d8) y (0 - 279), x - x (0-159); changes: a, y; returns $d0-d1
      lda #$40
      sta $d1
      sty $d0
@@ -490,35 +500,136 @@ getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6
      bcs .l1  ;branch if x >= 96
 
      cmp #208/8
-     bcs .l1
+     bcs .l1    ;branch if a >= 208/8
+
 .l2: lda #$60
      sta $d1
 .l1: lda hi312,y   ;y/8*312
-     sta $d6
-     lda lo312,y
      clc
-     adc $d0
-     sta $d0
+     adc $d1
+     sta $d1
+     lda lo312,y
+     adc $d0     ;C=0
+     sta $d0     ;+y
   if VSIZE>256
-     lda $d6
+     lda $d1
      adc $d8
-     sta $d6
+     sta $d1
   else
      bcc *+4
-     inc $d6
+     inc $d1
   endif       ;y/8*312+y
      txa
      and #$fc
      asl    ;x&0xfc << 1
      bcc *+4
-     inc $d6
+     inc $d1
      clc
-     tay
-     lda $d6
-     adc $d1  ;ba + y/8*312+y+(x&0xfc)*2
-     sta $d1
+     adc $d0
+     sta $d0
+     bcc *+4
+     inc $d1
+     rts   ;y/8*312+y+(x&0xfc)*2
+
+getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6-d7
+     jsr getpaddr
      lda ($d0),y
      rts
+
+setmcl:   ;y - ($d8) y , colors - ($d9 $da)
+        ;changes: $d0-d2, $d6-d7
+     tya
+     pha
+     lda #0
+     jsr .setmcl0
+     pla
+     tay
+     lda #1
+
+.setmcl0  ;a - z, y - y ($d8); in: $d9, $da; use: $d0-$d2, $d6, $d7
+     sta $d6   ;z
+     asl
+     sta $d7   ;2z
+     asl
+     adc $d6
+     sta $d2   ;5z
+  if VSIZE>256
+     lda $d8
+     lsr
+     tya
+     ror
+  else
+     tya
+     lsr
+  endif
+     bcs .l3
+
+     cmp #192/2        ;y%2 == 0
+     bne .l4
+
+     lda #<(BA-4)  ;C=0   ;y == 192
+     sta $d0
+     lda #>(BA-4)
+     sta $d1
+     ldy $d7  ;2z
+.l8  ldx $d6
+     lda $d9,x
+     sta ($d0),y
+     rts
+
+.l4  jsr .setmcl00
+     adc #<BA   ;C=0
+     sta $d0
+     txa
+     adc #>BA
+     sta $d1   ;y*17+BA
+     ldy $d2   ;5z+off
+     jmp .l8
+
+.l3: cmp #192/2
+     jsr .setmcl00
+     adc #<(BA-3)  ;C=0
+     sta $d0
+     txa
+     adc #>(BA-3)
+     sta $d1   ;y*17
+     ldy $d2   ;5z+off
+     jmp .l8
+
+.setmcl00
+     lda #1
+     bcs *+4
+     lda #0     ;y<192
+     adc $d2    ;y>192
+     sta $d2    ;5z+off, off = 0 or 2
+  if VSIZE>256
+     lda $d8
+  else
+     lda #0
+  endif
+     sta $d1
+     tya
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1
+     asl
+     rol $d1   ;y*16
+     sty $d0
+     adc $d0
+     tay
+     lda $d1
+  if VSIZE>256
+     adc $d8
+  else
+     adc #0
+  endif
+     tax   ;y*17
+     tya
+     rts
+  endif
 
      org $6000    ;bm 200-207 (24-39), 208-279
   if VSIZE/8 > 25
@@ -535,6 +646,7 @@ getpbyte: ;y - ($d8) y (0 - 279), x - x (0-159); returns a; changes: $d0-d1, $d6
      endr
   endif
 ;$248+ -$227
+  if DYNAMIC
 abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
@@ -958,6 +1070,40 @@ getabyte:   ;y - ($d8) y , x - x, cs - a
      sta $d3
      rts
 
+getnextx:  ;addr - ($d0 $d1), x - x (2 lowest bits must be 0), y - ($d8) y;  returns $d0 d1
+     cpx #96
+     bne .l1
+
+  if VSIZE>256
+     lda $d8
+     bne .l1
+  endif
+
+     cpy #200
+     bcc .l1
+
+     cpy #208
+     bcs .l1
+
+     lda #$60
+     sta $d1
+
+     lda #56   ;-200
+     sta $d0
+     tya
+     adc $d0   ;C=0
+     sta $d0
+     rts
+
+.l1  lda #8
+     clc
+     adc $d0
+     sta $d0
+     bcc .l2
+
+     inc $d1
+.l2  rts
+   endif
      org $73c0    ;attr 2-3: 24, 25 (0-23)
      rept (VSIZE/8/26)*24+40
      byte 0
