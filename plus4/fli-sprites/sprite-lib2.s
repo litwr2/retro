@@ -185,13 +185,6 @@ put_t2:
     bne .l7  ;always
 
 .odd
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
-
     ldy #0
     lda ($d0),y
     sta $d9  ;cl = prg[addr]
@@ -199,7 +192,8 @@ put_t2:
     sta $da  ;cc = prg[addr + 0x400]
 
     lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    adc $67  ;C=0
+    clc
+    adc $67
     sta $e0
     lda $e3
     adc $68
@@ -285,14 +279,7 @@ put_t2:
     lda ($e6),y
     adc $d6  ;C=0
     tay
-    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
+    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
 
     ldy #0
     lda ($d0),y
@@ -347,13 +334,6 @@ put_t2:
     jmp .l12
 
 .main
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
-
     ldy #0
     lda ($d0),y
     sta $d9  ;cl = prg[addr]
@@ -361,7 +341,8 @@ put_t2:
     sta $da  ;cc = prg[addr + 0x400]
 
     lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    adc $67  ;C=0
+    clc
+    adc $67
     sta $e0
     lda $e3
     adc $68
@@ -525,15 +506,9 @@ remove_t2:
     bne .l7  ;always
 
 .odd
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
-
     lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
+    clc
+    adc $67
     sta $e0
     lda $e3
     adc $68
@@ -595,14 +570,7 @@ remove_t2:
     lda ($e6),y
     adc $d6  ;C=0
     tay
-    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
+    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
 
     lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
     adc $67  ;C=0
@@ -624,15 +592,9 @@ remove_t2:
     jmp .l12
 
 .main
-    lda $d0    ;d0  - prg[addr]
-    sta $d2    ;d2  - prg[addr + 0x400]
-    lda $d1
-    clc    ;?remove
-    adc #4
-    sta $d3
-
     lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
+    clc
+    adc $67
     sta $e0
     lda $e3
     adc $68
@@ -756,7 +718,7 @@ up2_t1:
     jmp put00_t1
   endif
 
-getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr in $d0-d1
+getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr in $d0-d1 and $d2-d3, C=0
     lda #0
     sta $d1
     tya
@@ -777,6 +739,7 @@ getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr 
     clc
     adc $d0
     sta $d0
+    sta $d2
     bcc *+4
     inc $d1      ;p = (y >> 2)*40 + (x >> 1) = (y&0xfc)*10 + (x >> 1)
     
@@ -808,10 +771,12 @@ getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr 
 
 .l3 clc
     adc $d1
-    sta $d1
+    sta $d1   ;ba + p
+    adc #4
+    sta $d3
     rts
 
-nextaddr22: ;in :x, y, $d0-d1;  used: ac, yr;  doubled x, y are used;  returns addr in $d0-d1
+nextaddr22: ;in :x, y, $d0-d1;  used: ac, yr;  doubled x, y are used;  returns addr in $d0-d1 and $d2-d3, C=0
     cpx #48
     bne .l1
 
@@ -831,8 +796,15 @@ nextaddr22: ;in :x, y, $d0-d1;  used: ac, yr;  doubled x, y are used;  returns a
     beq .l2   ;always
 .l1
     inc $d0
-    bne *+4
+    bne .l2
+
     inc $d1   ;a = addr + 1
-.l2 rts
+.l2 lda $d1
+    clc
+    adc #4
+    sta $d3
+    lda $d0
+    sta $d2
+    rts
 
 
