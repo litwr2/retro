@@ -11,6 +11,10 @@
 l0
     lda #2
     jsr delay
+    lda #>(l0-1)
+    pha
+    lda #<(l0-1)
+    pha
     ;jsr getkey
     ;cmp #$50  ;curd
     jsr waitkey
@@ -21,68 +25,53 @@ l0
 
     lda #1
     and kmatrix+5   ;curd
-    bne l1
+    bne *+5
+    jmp down_t1
 
-    jsr down_t1
-    jmp l0
-l1  ;cmp #$53  ;curu
     lda #8
     and kmatrix+5  ;curu
-    bne l2
+    bne *+5
+    jmp up_t1
 
-    jsr up_t1
-    jmp l0
-l2  ;cmp #$60  ;curl
     lda #1
     and kmatrix+6  ;curl
-    bne l3
+    bne *+5
+    jmp left_t1
 
-    jsr left_t1
-    jmp l0
-l3  ;cmp #$63  ;curr
     lda #8
     and kmatrix+6  ;curr
-    bne l4
+    bne *+5
+    jmp right_t1
 
-    jsr right_t1
-    jmp l0
-l4  ;cmp #$70   ;1
     lda #1
     and kmatrix+7   ;1
     bne l5
 
     lda #2
     sta $d4
-    jsr up_t1
-    jmp l0
-l5  ;cmp #$73   ;2
+    jmp up_t1
+l5
     lda #8
     and kmatrix+7  ;2
     bne l6
 
     lda #-2
     sta $d4
-    jsr down_t1
-    jmp l0
-l6  ;cmp #$21   ;R
+    jmp down_t1
+l6
     lda #2
     and kmatrix+2   ;R
-    bne l7
+    bne *+5
+    jmp remove_t1
 
-    jsr remove_t1
-    jmp l0
-
-l7  ;cmp #$51   ;P
     lda #2
     and kmatrix+5  ;P
-    bne l8
+    bne *+5
+    jmp put00_t1
 
-    jsr put00_t1
-    jmp l0
-
-l8  lda #16
+    lda #16
     and kmatrix+2  ;C
-    bne *-5
+    bne l0
 
     jsr remove_t1
     ldy #sxpos_off
@@ -91,37 +80,28 @@ l8  lda #16
     iny
     lda #VSIZE/2
     sta ($e6),y
-    jsr put_t1
-    jmp l0
+    jmp put_t1
 
 fastm
     lda #1
     and kmatrix+5   ;curd
-    bne l11
+    bne *+5
+    jmp down2_t1
 
-    jsr down2_t1
-    jmp l0
-l11  ;cmp #$53  ;curu
     lda #8
     and kmatrix+5  ;curu
-    bne l21
+    bne *+5
+    jmp up2_t1
 
-    jsr up2_t1
-    jmp l0
-l21  ;cmp #$60  ;curl
     lda #1
     and kmatrix+6  ;curl
-    bne l31
+    bne *+5
+    jmp left2_t1
 
-    jsr left2_t1
-    jmp l0
-l31  ;cmp #$63  ;curr
     lda #8
     and kmatrix+6  ;curr
     bne *+5
-
-    jsr right2_t1
-    jmp l0
+    jmp right2_t1
    ;jsr remove_t1
    ;jsr right
    ;ldy #sxpos_off
