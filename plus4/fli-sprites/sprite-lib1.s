@@ -59,7 +59,7 @@ ddir = 3
     sta ($e6),y
     endm
 
-ymul_t1:   ;y*xsize/4  ;in: y, a;  used: $d6;  xsize = 8, 12, 16, 20, 24
+ymul_t1:   ;y*xsize/4  ;in: y, a;  used: $d6;  xsize = 4, 8, 12, 16, 20, 24
         ;it sets $d6==AC sometimes (xsize != 24)
     cpy #16
     bne .l1
@@ -100,13 +100,12 @@ ymul_t1:   ;y*xsize/4  ;in: y, a;  used: $d6;  xsize = 8, 12, 16, 20, 24
 
     org $a000
 put_t1:
-    ldy #clrud_off+3
+    ldy #clrud_off+ddir
     lda ($e6),y
-    tax
     asl
     asl
 
-    ldy #olrud_off+3
+    ldy #olrud_off+ddir
     adc ($e6),y  ;C=0
     tay
 
@@ -133,11 +132,11 @@ d = $d7
     sta .m2+1
     sta .m1+1
 
-    lda #0
-    sta vrf
-    ldx vrf
-    beq *-3
+    ;lda $a5
+    ;cmp $a5
+    ;beq *-2
 
+    lda #0
 .l1  ;for (int y = 0; y < ysize; y++)
     pha
     tax

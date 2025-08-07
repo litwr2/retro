@@ -177,9 +177,10 @@ BA = *+1
      sta $fffe
      lda #>irq205
      sta $ffff
-  if DYNAMIC   
-     sta vrf
-  endif
+
+     inc $a5    ;2-byte timer, 50/60 Hz for PAL/NTSC
+     bne *+4
+     inc $a4
 .savex:
      ldx #0
 .savey:
@@ -187,9 +188,7 @@ BA = *+1
      pla
      inc $ff09
      rti
-  if DYNAMIC
-vrf byte 0
-  endif
+
 irq276:   ;245
      pha
 .sc:
@@ -204,10 +203,6 @@ irq276:   ;245
      sta $ff0b
      lda #$a2
      sta $ff0a
-
-     inc $a5    ;2-byte timer, 50/60 Hz for PAL/NTSC
-     bne *+4
-     inc $a4
 
      lda #<irq2
      sta $fffe

@@ -16,7 +16,8 @@ l0
     jsr waitkey
     lda #$80
     and kmatrix+1
-    beq fastm
+    bne *+5
+    jmp fastm
 
     lda #1
     and kmatrix+5   ;curd
@@ -74,9 +75,23 @@ l6  ;cmp #$21   ;R
 l7  ;cmp #$51   ;P
     lda #2
     and kmatrix+5  ;P
-    bne *-5
+    bne l8
 
     jsr put00_t1
+    jmp l0
+
+l8  lda #16
+    and kmatrix+2  ;C
+    bne *-5
+
+    jsr remove_t1
+    ldy #sxpos_off
+    lda #HSIZE/2
+    sta ($e6),y
+    iny
+    lda #VSIZE/2
+    sta ($e6),y
+    jsr put_t1
     jmp l0
 
 fastm
