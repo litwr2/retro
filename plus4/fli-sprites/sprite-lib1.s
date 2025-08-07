@@ -59,45 +59,6 @@ ddir = 3
     sta ($e6),y
     endm
 
-ymul_t1:   ;y*xsize/4  ;in: y, a;  used: $d6;  xsize = 4, 8, 12, 16, 20, 24
-        ;it sets $d6==AC sometimes (xsize != 24)
-    cpy #16
-    bne .l1
-
-    asl
-    asl   ;y*4
-    rts
-.l1
-    cpy #12
-    bne .l2
-
-    sta $d6
-    asl
-    adc $d6  ;C=0, y*3
-    rts
-.l2
-    cpy #8
-    bne .l3
-
-    asl   ;y*2
-    rts
-.l3
-    cpy #20
-    bne .l4
-
-    sta $d6
-    asl
-    asl
-    adc $d6   ;C=0, y*5
-.l4 cpy #24
-    bne .l5
-
-    asl
-    sta $d6
-    asl
-    adc $d6   ;C=0, y*6
-.l5 rts  ;y == 4
-
     org $a000
 put_t1:
     ldy #clrud_off+ddir
@@ -137,6 +98,7 @@ d = $d7
     ;beq *-2
 
     lda #0
+    sta $d5
 .l1  ;for (int y = 0; y < ysize; y++)
     pha
     tax
@@ -164,12 +126,18 @@ d = $d7
     tax
     ldy $d3
     jsr getpaddr  ;addr = getcsaddr(xpos, ypos + y)
+
+    pla
+    pha
+    beq .l11
+
     ldy #sxsize_off
     lda ($e6),y
-    tay
-    pla   ;y
-    pha
-    jsr ymul_t1
+    lsr
+    lsr
+    adc $d5
+    sta $d5
+.l11
     sta $d2
     tay
     lda ($e4),y

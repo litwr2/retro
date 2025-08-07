@@ -66,29 +66,8 @@ saved_off = 18
     endm
 
     ;org $a000
-mul16:   ;in: a * $66 -> $67-68;  byte*byte -> word; used: $66-$6a
-    sta $69
-    ldy #0
-    sty $6a
-    ldx #0
-.l2 lsr $66
-    bcc .l1
-
-    clc
-    txa
-    adc $69
-    tax
-    tya
-    adc $6a
-    tay
-.l1 asl $69
-    rol $6a
-    lda $66
-    bne .l2
-
-    sty $68
-    stx $67
-    rts
+mul16:
+.le rts
 
 put_t2:
     ldy #c2lrud_off+ddir   ;setspr_t2?
@@ -120,7 +99,14 @@ put_t2:
     iny
     sta ($e6),y  ;xindex = yindex = 0;
 
+    sta $67
+    sta $68
+
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcs mul16.le
+    
     lda #0
     sta $d7
 .l1 ldy #s2xpos_off
@@ -133,11 +119,18 @@ put_t2:
     adc $d6
     tay
     jsr getaddr22  ;addr = getaddr22(xpos, y + ypos)
+    lda $d6
+    beq .l11
+
+    clc
     ldy #s2xsize_off
     lda ($e6),y
-    sta $66
-    lda $d6
-    jsr mul16   ;sets C=0
+    adc $67
+    sta $67
+    bcc .l11
+
+    inc $68
+.l11    
     pla
     and #1
     beq *+5
@@ -165,14 +158,11 @@ put_t2:
     ldy #s2xsize_off
     cmp ($e6),y
     bcc .l6
-
+.l12
     ldx $d6
     inx
     txa
-    ldy #s2ysize_off
-    cmp ($e6),y
-    bcc .l7
-    rts
+    bne .l7  ;always
 
 .odd
     lda $d0    ;d0  - prg[addr]
@@ -266,14 +256,6 @@ put_t2:
     bcc .l9
 
     stx $d7
-    ldx $d6   ;duplicated check!
-    inx
-    txa
-    ldy #s2ysize_off
-    cmp ($e6),y
-    bcs *+5
-    jmp .l7
-
     ldy #s2xpos_off
     lda ($e6),y
     clc
@@ -349,7 +331,7 @@ put_t2:
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = cc & 0xf0 | b2 & 0xf
 .l10
-    rts
+    jmp .l12
 
 .main
     lda $d0    ;d0  - prg[addr]
