@@ -61,15 +61,16 @@ l5
 l6
     lda #2
     and kmatrix+2   ;R
-    bne *+5
-    jmp remove_t1
+    bne l7
 
+    jsr remove_t1
+l8  jsr waitkey
     lda #2
     and kmatrix+5  ;P
-    bne *+5
+    bne l8
     jmp put00_t1
 
-    lda #16
+l7  lda #16
     and kmatrix+2  ;C
     bne l0
 

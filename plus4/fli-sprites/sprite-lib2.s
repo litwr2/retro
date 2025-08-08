@@ -153,8 +153,7 @@ put_t2:
 .l11
     pla
     and #1
-    beq *+5
-    jmp .odd
+    bne .odd
 
     jsr .main
     lda #2
@@ -293,7 +292,7 @@ put_t2:
     lda $e3
     adc $68
     sta $e1
-    
+
     lda $da
     and #$f
     sta $d5
@@ -385,7 +384,7 @@ put_t2:
     iny
     lda ($dd),y
     sta $db  ;data[x + 1][y]
-    ora $db
+    ora $dc
     beq .l2  ;if ((data[x][y] | data[x + 1][y]) == 0)
 
     lda $dc  ;if (data[x][y] == 0)
@@ -434,6 +433,294 @@ put_t2:
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .l2 rts
 
+put00_t2:
+    ldy #s2clrud_off+ddir   ;setspr_t2?
+    lda ($e6),y
+    tax
+    asl
+
+    ldy #s2olrud_off+ddir
+    adc ($e6),y  ;C=0
+    tay
+
+    lda ($e6),y
+    sta $e4
+    iny
+    lda ($e6),y
+    sta $e5
+
+    lda #saved_off
+    ;clc
+    adc $e6   ;C=0
+    sta $e2
+    lda $e7
+    adc #0
+    sta $e3
+
+    lda #0
+.l7 sta $d6   ;for (int y = 0; y < ysize; y++)
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcs put_t2.l2
+    
+    lda #0
+    sta $d7
+.l1 ldy #s2xpos_off
+    lda ($e6),y
+    pha
+    tax
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    tay
+    jsr getaddr22  ;addr = getaddr22(xpos, y + ypos)
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta $66
+    ldy #s2yidx_off
+    lda ($e6),y
+    clc
+    adc $d6
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    jsr mul16
+    pla
+    and #1
+    bne .odd
+
+    jsr .main
+    lda #2
+.l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    ldy #s2xpos_off
+    lda ($e6),y
+    clc
+    adc $d7  ;C=0?
+    tax
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    tay
+    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
+    jsr .main
+
+    ldx $d7
+    inx
+    inx
+    txa
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcc .l6
+.l12
+    ldx $d6
+    inx
+    txa
+    bne .l7  ;always
+
+.odd
+    clc
+    lda $e4
+    adc $67
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de  ;dd - data[0][y], e4 - data[0][0]
+    ldy #0
+    lda ($dd),y  ;data[0][y]
+    bne .l8  ;if (data[0][y])
+
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    adc $67  ;C=0
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+    ldy #s2xidx_off
+    lda ($e6),y
+    tay
+    lda ($e0),y  ;saved[xindex][(y + yindex)%ysize]
+.l8
+    sta $d9   ;b1 = 
+
+    lsr
+    lsr
+    lsr
+    lsr
+    sta $d5
+    ldy #0
+    lda ($d0),y
+    and #$f0
+    ora $d5
+    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf0 | b1 >> 4
+
+    lda ($d2),y
+    and #$f
+    sta $d5
+    lda $d9
+    asl
+    asl
+    asl
+    asl
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b2 & 0xf
+
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l9 stx $d7
+    ldy #s2xpos_off
+    lda ($e6),y
+    clc  ;?remove
+    adc $d7
+    tax
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    tay
+    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
+    jsr .main
+
+    ldx $d7
+    inx
+    inx
+    inx
+    txa
+    ldy #s2xsize_off
+    cmp ($e6),y
+    dex
+    bcc .l9
+
+    stx $d7
+    ldy #s2xpos_off
+    lda ($e6),y
+    clc
+    adc $d7
+    tax
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    tay
+    jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
+
+    clc
+    lda $e4  ;dd - data[0][y], e4 - data[0][0]
+    adc $67
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de
+    ldy $d7
+    lda ($dd),y  ;data[x][y]
+    bne .l10   ;if (data[x][y])
+
+    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
+    adc $67  ;C=0
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+    ldy #s2xidx_off
+    lda ($e6),y
+    adc $d7
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    tay
+    lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
+.l10
+    sta $da   ;b2 = 
+
+    and #$f0
+    sta $d5
+    ldy #0
+    lda ($d0),y
+    and #$f
+    ora $d5
+    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf | b2 & 0xf0
+
+    lda $da
+    and #$f
+    sta $d5
+    ldy #0
+    lda ($d2),y
+    and #$f0
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b2 & 0xf
+    jmp .l12
+
+.main
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    clc
+    adc $67
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+
+    lda $e4
+    adc $67  ;C=0
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de  ;dd - data[0][(y], e4 - data[0][0]
+    ldy $d7
+    lda ($dd),y
+    bne .l5  ;if (data[x][y] == 0)
+
+    ldy #s2xidx_off
+    lda ($e6),y
+    adc $d7  ;C=0
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    tay
+    lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
+.l5 sta $d9     ;b1 =
+
+    ldy $d7
+    lda ($dd),y
+    iny
+    lda ($dd),y
+    bne .l3  ;if (data[x + 1][y] == 0)
+
+    ldy #s2xidx_off
+    lda ($e6),y
+    adc $d7  ;C=0
+    adc #1   ;C=0
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    tay
+    lda ($e0),y  ;saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]
+.l3
+    sta $da  ;b2 =
+
+    lsr
+    lsr
+    lsr
+    lsr
+    sta $d5
+    lda $d9
+    and #$f0
+    ora $d5
+    ldy #0
+    sta ($d0),y  ;prg[addr] = b1 & 0xf0 | b2 >> 4
+
+    lda $da
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda $d9
+    and #$f
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
+.le rts
+
 remove_t2:
     lda #saved_off
     clc
@@ -447,7 +734,7 @@ remove_t2:
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
     cmp ($e6),y
-    bcs put_t2.l2
+    bcs put00_t2.le
     
     lda #0
     sta $d7
@@ -513,7 +800,6 @@ remove_t2:
     lda $e3
     adc $68
     sta $e1
-    lda $e0
     ldy #s2xidx_off
     lda ($e6),y
     tay
@@ -578,7 +864,6 @@ remove_t2:
     lda $e3
     adc $68
     sta $e1
-    lda $e0
     ldy #s2xidx_off
     lda ($e6),y
     adc $d7  ;C=0
@@ -643,12 +928,197 @@ remove_t2:
     sta ($d2),y  ;prg[addr + 0x400] = b2 << 4 | b1 & 0xf
     rts
 
-  if 0
-right_t1:
-    setspr_t1 rdir
-    jsr right0_t1
-    jmp put00_t1
+left0_t2
+    ldy #s2xpos_off
+    lda ($e6),y
+    bne *+5
+    pla
+    pla
+    rts  ;if (xpos == 0) return
 
+    sec
+    sbc #1  ;sets C=1
+    sta ($e6),y  ;xpos--
+
+    ldy #s2xidx_off
+    lda ($e6),y
+    bne .l1
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    ldy #s2xidx_off
+.l1
+    sbc #1  ;C=1
+    sta ($e6),y  ;if (xindex == 0) xindex = xsize - 1; else xindex--;
+
+    lda #0  ;for (int y = 0; y < ysize; y++)
+.l2 sta $d6
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta $66
+    ldy #s2yidx_off
+    lda ($e6),y
+    clc
+    adc $d6
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    jsr mul16   ;(y + yindex)%ysize
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    ldy #s2xpos_off
+    clc
+    adc ($e6),y
+    tax   ;xpos + xsize
+
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    sta $d5  ;ypos + y
+
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    adc $67  ;C=0
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+    ldy #s2xidx_off
+    lda ($e6),y
+    pha
+    tay
+    lda ($e0),y  ;saved[xindex][(y + yindex)%ysize]
+    ldy $d5
+    jsr setcolor22  ;setcolor22(xpos + xsize, ypos + y, saved[xindex][(y + yindex)%ysize])
+
+    ldy #s2xpos_off
+    lda ($e6),y
+    tax
+    iny
+    lda ($e6),y
+    clc
+    adc $d6
+    tay
+    jsr getcolor22  ;getcolor22(xpos, ypos + y)
+    tax
+    pla
+    tay
+    txa
+    sta ($e0),y  ;saved[xindex][(y + yindex)%ysize] = getcolor22(xpos, ypos + y)
+
+    ldy $d6
+    iny
+    tya
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcc .l2
+    rts
+
+right0_t2
+    ldy #s2xsize_off
+    lda ($e6),y
+    sec
+    sbc #HSIZE/2
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0, xpos == HSIZE/2-xsize
+    bne *+5
+    pla
+    pla
+    rts  ;if (xpos + xsize == xmax/2) return
+
+    lda #0  ;for (int y = 0; y < ysize; y++)
+.l2 sta $d6
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta $66
+    ldy #s2yidx_off
+    lda ($e6),y
+    clc
+    adc $d6
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcc *+4
+    sbc ($e6),y  ;C=1
+    jsr mul16   ;(y + yindex)%ysize
+
+    ldy #s2xpos_off
+    lda ($e6),y
+    tax   ;xpos
+
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    sta $d5  ;ypos + y
+
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    adc $67  ;C=0
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+    ldy #s2xidx_off
+    lda ($e6),y
+    pha
+    tay
+    lda ($e0),y  ;saved[xindex][(y + yindex)%ysize]
+    ldy $d5
+    jsr setcolor22  ;setcolor22(xpos, ypos + y, saved[xindex][(y + yindex)%ysize])
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    clc
+    ldy #s2xpos_off
+    adc ($e6),y
+    tax  ;xpos + xsize
+
+    iny
+    lda ($e6),y
+    adc $d6  ;C=0
+    tay
+    jsr getcolor22  ;getcolor22(xpos, ypos + y)
+    tax
+    pla
+    tay
+    txa
+    sta ($e0),y  ;saved[xindex][(y + yindex)%ysize] = getcolor22(xpos + xsize, ypos + y)
+
+    ldy $d6
+    iny
+    tya
+    ldy #s2ysize_off
+    cmp ($e6),y
+    bcc .l2
+
+    ldy #s2xpos_off
+    lda ($e6),y
+    adc #0  ;C=1
+    sta ($e6),y  ;xpos++
+
+    ldy #s2xidx_off
+    lda ($e6),y
+    adc #1  ;C=0
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bne *+4
+    lda #0
+    ldy #s2xidx_off
+    sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
+    rts
+
+left_t2:
+    setspr_t2 ldir
+    jsr left0_t2
+    jmp put00_t2
+
+right_t2:
+    setspr_t2 rdir
+    jsr right0_t2
+    jmp put00_t2
+
+  if 0
 right2_t1:
     setspr_t1 rdir
     jsr right0_t1
@@ -807,4 +1277,90 @@ nextaddr22: ;in :x, y, $d0-d1;  used: ac, yr;  doubled x, y are used;  returns a
     sta $d2
     rts
 
+setcolor22: ;in: x, y, a - color;  doubled x, y are used;  used: $d5, $d9, $da, $db
+    sta $db
+    stx $d5
+    jsr getaddr22  ;addr = getaddr22(x, y)
+    ldy #0
+    lda ($d0),y
+    sta $d9  ;cl = prg[addr]
+    lda ($d2),y
+    sta $da  ;cc = prg[addr + 0x400]
+    lda $d5
+    and #1
+    beq .l1
+    
+    lda $d9  ;cs = 1
+    and #$f0
+    sta $d5
+    lda $db
+    lsr
+    lsr
+    lsr
+    lsr
+    ora $d5
+    sta ($d0),y  ;prg[addr] = cl & 0xf0 | c >> 4
+
+    lda $da
+    and #$f
+    sta $d5
+    lda $db
+    asl
+    asl
+    asl
+    asl
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = cc & 0xf | c << 4
+    rts
+.l1
+    lda $d9  ;cs = 2
+    and #$f
+    sta $d5
+    lda $db
+    and #$f0
+    ora $d5
+    sta ($d0),y  ;prg[addr] = cl & 0xf | c & 0xf0
+
+    lda $da
+    and #$f0
+    sta $d5
+    lda $db
+    and #$f
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = cc & 0xf0 | c & 0xf
+    rts
+
+getcolor22:  ;in: x, y;  doubled x, y are used;  used: $d5, $d9, $da;  returns AC
+    stx $d5
+    jsr getaddr22  ;addr = getaddr22(x, y)
+    ldy #0
+    lda ($d0),y
+    sta $d9  ;cl = prg[addr]
+    lda ($d2),y
+    sta $da  ;cc = prg[addr + 0x400]
+    lda $d5
+    and #1
+    beq .l1
+    
+    lda $d9  ;cs = 1
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda $da
+    lsr
+    lsr
+    lsr
+    lsr
+    ora $d5
+    rts   ;return cc >> 4 | cl << 4
+
+.l1 lda $d9
+    and #$f0
+    sta $d5
+    lda $da
+    and #$f
+    ora $d5
+    rts   ;return cc & 0xf | cl & 0xf0;
 
