@@ -1113,18 +1113,46 @@ left_t2:
     jsr left0_t2
     jmp put00_t2
 
+left2_t2:
+    setspr_t2 ldir
+    jsr left0_t2
+    jsr left0_t2
+    jmp put00_t2
+
 right_t2:
     setspr_t2 rdir
     jsr right0_t2
     jmp put00_t2
 
-  if 0
-right2_t1:
-    setspr_t1 rdir
-    jsr right0_t1
-    jsr right0_t1
-    jmp put00_t1
+right2_t2:
+    setspr_t2 rdir
+    jsr right0_t2
+    jsr right0_t2
+    jmp put00_t2
 
+down_t2:
+    setspr_t2 ddir
+    ;jsr down0_t2
+    jmp put00_t2
+
+down2_t2:
+    setspr_t2 ddir
+    ;jsr down0_t2
+    ;jsr down0_t2
+    jmp put00_t2
+
+up_t2:
+    setspr_t2 udir
+    ;jsr up0_t2
+    jmp put00_t2
+
+up2_t2:
+    setspr_t2 udir
+    ;jsr up0_t2
+    ;jsr up0_t2
+    jmp put00_t2
+
+  if 0
 rightx_t1:
     ;ldy #sdptr_off
     lda ($e6),y
@@ -1151,41 +1179,6 @@ rightx_t1:
     sta ($e6),y
     jmp put00_t1
 .l0  rts   ;an excess!!
-  endif
-
-  if 0
-down_t1:
-    setspr_t1 ddir
-    jsr down0_t1
-    jmp put00_t1
-
-down2_t1:
-    setspr_t1 ddir
-    jsr down0_t1
-    jsr down0_t1
-    jmp put00_t1
-
-left_t1:
-    setspr_t1 ldir
-    jsr left0_t1
-    jmp put00_t1
-
-left2_t1:
-    setspr_t1 ldir
-    jsr left0_t1
-    jsr left0_t1
-    jmp put00_t1
-
-up_t1:
-    setspr_t1 udir
-    jsr up0_t1
-    jmp put00_t1
-
-up2_t1:
-    setspr_t1 udir
-    jsr up0_t1
-    jsr up0_t1
-    jmp put00_t1
   endif
 
 getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr in $d0-d1 and $d2-d3, C=0
