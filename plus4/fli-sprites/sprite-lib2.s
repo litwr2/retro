@@ -434,29 +434,6 @@ put_t2:
 .l2 rts
 
 put00_t2:
-    ldy #s2clrud_off+ddir   ;setspr_t2?
-    lda ($e6),y
-    tax
-    asl
-
-    ldy #s2olrud_off+ddir
-    adc ($e6),y  ;C=0
-    tay
-
-    lda ($e6),y
-    sta $e4
-    iny
-    lda ($e6),y
-    sta $e5
-
-    lda #saved_off
-    ;clc
-    adc $e6   ;C=0
-    sta $e2
-    lda $e7
-    adc #0
-    sta $e3
-
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
@@ -465,7 +442,7 @@ put00_t2:
     
     lda #0
     sta $d7
-.l1 ldy #s2xpos_off
+    ldy #s2xpos_off
     lda ($e6),y
     pha
     tax
@@ -487,6 +464,27 @@ put00_t2:
     bcc *+4
     sbc ($e6),y  ;C=1
     jsr mul16
+
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    clc
+    adc $67
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta $66
+    lda $d6
+    jsr mul16   ;remove!
+    lda $e4
+    adc $67  ;C=0
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de  ;dd - data[0][(y], e4 - data[0][0]
+
     pla
     and #1
     bne .odd
@@ -513,36 +511,22 @@ put00_t2:
     ldy #s2xsize_off
     cmp ($e6),y
     bcc .l6
-.l12
+.l1
     ldx $d6
     inx
     txa
-    bne .l7  ;always
+    jmp .l7  ;always
 
 .odd
-    clc
-    lda $e4
-    adc $67
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][y], e4 - data[0][0]
     ldy #0
     lda ($dd),y  ;data[0][y]
     bne .l8  ;if (data[0][y])
 
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
     tay
     lda ($e0),y  ;saved[xindex][(y + yindex)%ysize]
-.l8
-    sta $d9   ;b1 = 
+.l8 sta $d9   ;b1 = 
 
     lsr
     lsr
@@ -602,26 +586,13 @@ put00_t2:
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
 
-    clc
-    lda $e4  ;dd - data[0][y], e4 - data[0][0]
-    adc $67
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de
     ldy $d7
     lda ($dd),y  ;data[x][y]
     bne .l10   ;if (data[x][y])
 
-    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
-    adc $d7
+    adc $d7  ;C=0
     ldy #s2xsize_off
     cmp ($e6),y
     bcc *+4
@@ -647,30 +618,17 @@ put00_t2:
     and #$f0
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b2 & 0xf
-    jmp .l12
+    jmp .l1
 
 .main
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    clc
-    adc $67
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
-
-    lda $e4
-    adc $67  ;C=0
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][(y], e4 - data[0][0]
     ldy $d7
     lda ($dd),y
     bne .l5  ;if (data[x][y] == 0)
 
     ldy #s2xidx_off
     lda ($e6),y
-    adc $d7  ;C=0
+    clc   ;?remove
+    adc $d7
     ldy #s2xsize_off
     cmp ($e6),y
     bcc *+4
@@ -680,7 +638,6 @@ put00_t2:
 .l5 sta $d9     ;b1 =
 
     ldy $d7
-    lda ($dd),y
     iny
     lda ($dd),y
     bne .l3  ;if (data[x + 1][y] == 0)
@@ -695,8 +652,7 @@ put00_t2:
     sbc ($e6),y  ;C=1
     tay
     lda ($e0),y  ;saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]
-.l3
-    sta $da  ;b2 =
+.l3 sta $da  ;b2 =
 
     lsr
     lsr
@@ -738,13 +694,14 @@ remove_t2:
     
     lda #0
     sta $d7
-.l1 ldy #s2xpos_off
+
+    ldy #s2xpos_off
     lda ($e6),y
     pha
     tax
     iny
     lda ($e6),y
-    adc $d6
+    adc $d6  ;C=0
     tay
     jsr getaddr22  ;addr = getaddr22(xpos, y + ypos)
 
@@ -759,7 +716,16 @@ remove_t2:
     cmp ($e6),y
     bcc *+4
     sbc ($e6),y  ;C=1
-    jsr mul16
+    jsr mul16   ;[(y + yindex)%ysize]
+
+    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
+    clc
+    adc $67
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+
     pla
     and #1
     bne .odd  ;if ((xpos&1) == 0)
@@ -786,48 +752,47 @@ remove_t2:
     ldy #s2xsize_off
     cmp ($e6),y
     bcc .l6
-.l12
+.l1
     ldx $d6
     inx
     txa
     bne .l7  ;always
 
 .odd
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    clc
-    adc $67
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
     tay
     lda ($e0),y
-    sta $d9     ;b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize]
+    sta $da     ;b2 = saved[xindex][(y + yindex)%ysize]
 
-    and #$f0
+    lsr
+    lsr
+    lsr
+    lsr
     sta $d5
     ldy #0
     lda ($d0),y
-    and #$f
-    ora $d5
-    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf | b1 & 0xf0
-
-    lda $d9
-    and #$f
-    sta $d5
-    lda ($d2),y
     and #$f0
     ora $d5
-    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf
+    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf0 | b2 >> 4
 
-.l8 ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+    lda $da
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda ($d2),y
+    and #$f
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4
+
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
 .l9 stx $d7
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -858,12 +823,6 @@ remove_t2:
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
 
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
     adc $d7  ;C=0
@@ -873,20 +832,30 @@ remove_t2:
     sbc ($e6),y  ;C=1
     tay
     lda ($e0),y
-    sta $da     ;b2 = saved[(x + xindex)%xsize][(y + yindex)%ysize]
-    jmp .l12
+    sta $d9     ;b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize]
+
+    and #$f0
+    sta $d5
+    ldy #0
+    lda ($d0),y
+    and #$f
+    ora $d5
+    sta ($d0),y   ;prg[addr] = prg[addr] & 0xf | b1 & 0xf0
+
+    lda $d9
+    and #$f
+    sta $d5
+    lda ($d2),y
+    and #$f0
+    ora $d5
+	sta ($d2),y   ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf
+    jmp .l1
 
 .main
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    clc
-    adc $67
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
-    adc $d7  ;C=0
+    clc
+    adc $d7
     ldy #s2xsize_off
     cmp ($e6),y
     bcc *+4
@@ -949,7 +918,7 @@ left0_t2
     ldy #s2xidx_off
 .l1
     sbc #1  ;C=1
-    sta ($e6),y  ;if (xindex == 0) xindex = xsize - 1; else xindex--;
+    sta ($e6),y  ;if (xindex == 0) xindex = xsize - 1; else xindex--
 
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
@@ -1021,7 +990,7 @@ right0_t2
     lda ($e6),y
     sec
     sbc #HSIZE/2
-    ldy #sxpos_off
+    ldy #s2xpos_off
     adc ($e6),y  ;C=0, xpos == HSIZE/2-xsize
     bne *+5
     pla
@@ -1108,6 +1077,344 @@ right0_t2
     sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
     rts
 
+up0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
+    ldy #s2ypos_off
+    lda ($e6),y
+    bne *+5
+    pla
+    pla
+    rts
+
+    sec
+    sbc #1  ;sets C=1
+    sta ($e6),y  ;ypos--
+    sta $d6
+
+    ldy #s2yidx_off
+    lda ($e6),y
+    bne .l1
+
+    ldy #s2ysize_off
+    lda ($e6),y
+    ldy #s2yidx_off
+.l1
+    sbc #1  ;C=1
+    sta ($e6),y  ;if (yindex == 0) yindex = ysize - 1; else yindex--
+
+    ldy #s2xidx_off
+    lda ($e6),y
+    sta $db   ;xindex
+
+    lda #0
+    sta $d7  ;x
+
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta $66
+    sta $dc
+    ldy #s2yidx_off
+    lda ($e6),y
+    jsr mul16   ;yindex
+
+    lda $e2  ;e0 - saved[0][yindex], e2 - saved[0][0]
+    clc
+    adc $67
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+
+    ldy #s2xpos_off
+    lda ($e6),y
+    sta $66  ;xpos
+    tax
+    iny
+    lda ($e6),y
+    ldy #s2ysize_off
+    adc ($e6),y  ;C=0
+    tay
+    sta $68  ;y + ypos
+    jsr getaddr22  ;addr = getaddr22(xpos, ypos + ysize)
+
+    lda $66
+    and #1
+    bne .odd2
+
+    jsr .main2
+    lda #2
+.l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    clc  ;?remove
+    adc $66
+    tax
+    ldy $68
+    jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
+    jsr .main2
+
+    ldx $d7
+    inx
+    inx
+    txa
+    cmp $dc
+    bcc .l6
+    bcs .p2  ;always
+.odd2
+    ldy $db
+    lda ($e0),y
+    sta $da  ;b2 = saved[xindex][yindex]
+
+    lsr
+    lsr
+    lsr
+    lsr
+    sta $d5
+    ldy #0
+    lda ($d0),y
+    and #$f0
+    ora $d5
+    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf0 | b2 >> 4
+
+    lda $da
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda ($d2),y
+    and #$f
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4
+
+    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l2 sta $d7
+    clc  ;?remove
+    adc $66
+    tax
+    ldy $68
+    jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
+    jsr .main2
+
+    ldx $d7
+    inx
+    inx
+    inx
+    txa
+    cmp $dc
+    dex
+    txa
+    bcc .l2
+
+    sta $d7
+    clc  ;?remove
+    adc $66
+    tax
+    ldy $68
+    jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize) sets C=0
+
+    lda $db
+    adc $d7  ;C=0
+    cmp $dc
+    bcc *+4
+    sbc $dc  ;C=1
+    tay
+    lda ($e0),y
+    sta $d9   ;b1 = saved[(x + xindex)%xsize][yindex]
+
+    and #$f0
+    sta $d5
+    ldy #0
+    lda ($d0),y
+    and #$f
+    ora $d5
+    sta ($d0),y  ;prg[addr] = prg[addr] & 0xf | b1 & 0xf0
+
+    lda $d9
+    and #$f
+    sta $d5
+    lda ($d2),y
+    and #$f0
+    ora $d5
+    sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf
+.p2
+    ldx $66  ;xpos
+    ldy $d6  ;ypos
+    jsr getaddr22  ;addr = getaddr22(xpos, ypos)
+
+    lda $66
+    and #1
+    bne .odd1  ; if ((xpos&1) == 0)
+
+    lda #0
+    sta $d7
+    jsr .main1
+    lda #2
+.l5 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    clc  ;?remove
+    adc $66
+    tax
+    ldy $d6
+    jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
+    jsr .main1
+
+    ldx $d7
+    inx
+    inx
+    txa
+    cmp $dc
+    bcc .l5
+    rts
+.odd1
+    ldy #0
+    lda ($d0),y
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda ($d2),y
+    lsr
+    lsr
+    lsr
+    lsr
+    ora $d5
+    ldy $db
+    sta ($e0),y  ;saved[xindex][yindex] = prg[addr + 0x400] >> 4 | prg[addr] << 4
+
+    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l7 sta $d7
+    clc  ;?remove
+    adc $66
+    tax
+    ldy $d6
+    jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
+    jsr .main1
+
+    ldx $d7
+    inx
+    inx
+    inx
+    txa
+    cmp $dc
+    dex
+    txa
+    bcc .l7
+
+    sta $d7
+    clc
+    adc $66
+    tax
+    ldy $d6
+    jsr nextaddr22   ;addr = nextaddr22(addr, x + xpos, ypos)
+
+    ldy #0
+    lda ($d2),y
+    sta $da  ;cc = prg[addr + 0x400]
+
+    lda ($d0),y
+    sta $d9  ;cl = prg[addr]
+
+    and #$f0
+    sta $d5
+    lda $db
+    clc
+    adc $d7
+    cmp $dc
+    bcc *+4
+    sbc $dc
+    tay
+    lda $da
+    and #$f
+    ora $d5
+    sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0
+    rts
+
+.main2
+    lda $db
+    sec
+    adc $d7
+    cmp $dc
+    bcc *+4
+    sbc $dc  ;C=1
+    tay
+    lda ($e0),y
+    sta $da  ;b2 = saved[(xindex + x + 1)%xsize][yindex]
+
+    lda $db
+    clc
+    adc $d7
+    cmp $dc
+    bcc *+4
+    sbc $dc  ;C=1
+    tay
+    lda ($e0),y
+    sta $d9   ;b1 = saved[(x + xindex)%xsize][yindex]
+
+    and #$f0
+    sta $d5
+    lda $da
+    lsr
+    lsr
+    lsr
+    lsr
+    ora $d5
+    ldy #0
+    sta ($d0),y  ;prg[addr] = b1 & 0xf0 | b2 >> 4
+
+    lda $d9
+    and #$f
+    sta $d5
+    lda $da
+    asl
+    asl
+    asl
+    asl
+    ora $d5
+    sta ($d2),y   ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
+    rts
+
+.main1
+    ldy #0
+    lda ($d2),y
+    sta $da  ;cc = prg[addr + 0x400]
+
+    lda ($d0),y
+    sta $d9  ;cl = prg[addr]
+
+    asl
+    asl
+    asl
+    asl
+    sta $d5
+    lda $db
+    sec
+    adc $d7
+    cmp $dc
+    bcc *+4
+    sbc $dc  ;C=1
+    tay
+    lda $da
+    lsr
+    lsr
+    lsr
+    lsr
+    ora $d5
+    sta ($e0),y  ;saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
+
+    lda $d9
+    and #$f0
+    sta $d5
+    lda $db
+    clc
+    adc $d7
+    cmp $dc
+    bcc *+4
+    sbc $dc  ;C=1
+    tay
+    lda $da
+    and #$f
+    ora $d5
+    sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
+    rts
+
 left_t2:
     setspr_t2 ldir
     jsr left0_t2
@@ -1143,13 +1450,16 @@ down2_t2:
 
 up_t2:
     setspr_t2 udir
-    ;jsr up0_t2
+    jsr up0_t2
+    ;lda #5
+    ;jsr delay
+    ;jsr waitkey
     jmp put00_t2
 
 up2_t2:
     setspr_t2 udir
-    ;jsr up0_t2
-    ;jsr up0_t2
+    jsr up0_t2
+    jsr up0_t2
     jmp put00_t2
 
   if 0
@@ -1161,10 +1471,10 @@ rightx_t1:
     lda ($e6),y
     sta $e5
 
-    ldy #sxpos_off
+    ldy #s2xpos_off
     lda ($e6),y
     sta $d6
-    ldy #sxsize_off
+    ldy #s2xsize_off
     lda ($e6),y
     asl
     sbc #HSIZE-1  ;C=0
@@ -1172,7 +1482,7 @@ rightx_t1:
     beq .l0
 
     jsr remove_t1
-    ldy #sxpos_off
+    ldy #s2xpos_off
     lda ($e6),y
     clc
     adc #4
