@@ -159,17 +159,16 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $68
     sta $e1
 
-    pla
-    and #1
-    bne .odd
-
-    clc
     lda $e4
-    adc $67
+    adc $67 ;C=0
     sta $dd
     lda $e5
     adc $68
     sta $de  ;dd - data[0][y], e4 - data[0][0]
+
+    pla
+    and #1
+    bne .odd
 
     jsr .main
     lda #2
@@ -348,13 +347,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     iny
     sta ($e0),y  ;saved[x + 1][y] = cc >> 4 | cl << 4
 
-    clc
-    lda $e4
-    adc $67
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][y], e4 - data[0][0]
     ldy $d7
     lda ($dd),y
     sta $dc   ;data[x][y]
