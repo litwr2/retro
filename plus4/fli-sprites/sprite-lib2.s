@@ -38,7 +38,8 @@ saved_off = 18
     asl
 
     ldy #s2olrud_off+\1
-    adc ($e6),y  ;C=0
+    ;clc
+    adc ($e6),y
     tay
 
     lda ($e6),y
@@ -195,7 +196,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     sta $e0
     lda $e3
     adc $68
-    sta $e1  ;saved[0][y] =
+    sta $e1  ;saved[0][y]
     lda $da
     lsr
     lsr
@@ -209,7 +210,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     asl
     ora $d5
     ldy #0
-    sta ($e0),y  ; = cc >> 4 | cl << 4
+    sta ($e0),y  ; saved[0][y] = cc >> 4 | cl << 4
 
     clc
     lda $e4
@@ -623,7 +624,6 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     lda $da
     and #$f
     sta $d5
-    ldy #0
     lda ($d2),y
     and #$f0
     ora $d5
@@ -901,7 +901,7 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     sta ($d2),y  ;prg[addr + 0x400] = b2 << 4 | b1 & 0xf
     rts
 
-left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
+left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     ldy #s2xpos_off
     lda ($e6),y
     sec
@@ -984,7 +984,7 @@ left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     bcc .l2
     rts
 
-right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
+right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
 
@@ -1065,7 +1065,7 @@ right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
     rts
 
-up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
+up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1310,7 +1310,7 @@ up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0
     rts
 
-down0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
+down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy #s2xidx_off
     lda ($e6),y
     sta $db   ;xindex
@@ -1645,7 +1645,7 @@ cmain1:
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
     rts
 
-left2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+left2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xpos_off
     lda ($e6),y
     cmp #2
@@ -1657,7 +1657,7 @@ left2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr left0_t2
     jmp put00_t2
 
-right_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+right_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1671,7 +1671,7 @@ right_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr right0_t2
     jmp put00_t2
 
-right2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+right2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1686,7 +1686,7 @@ right2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr right0_t2
     jmp put00_t2
 
-down_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+down_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sta $d6
@@ -1701,7 +1701,7 @@ down_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr down0_t2
     jmp put00_t2
 
-down2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+down2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1716,7 +1716,7 @@ down2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr down0_t2
     jmp put00_t2
 
-up_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+up_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     bne *+3
@@ -1726,7 +1726,7 @@ up_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr up0_t2
     jmp put00_t2
 
-up2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+up2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     cmp #2
