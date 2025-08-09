@@ -443,7 +443,12 @@ left_t2:
     jsr left0_t2
     ;jmp put00_t2
 
-put00_t2:
+put00_t2:  ;used: $66-68, $d0-d3, $d5-$d7, $d9-da, $dc
+    lda $e4
+    sta $dd
+    lda $e5
+    sta $de
+
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
@@ -465,6 +470,7 @@ put00_t2:
     ldy #s2xsize_off
     lda ($e6),y
     sta $66
+    sta $dc
     ldy #s2yidx_off
     lda ($e6),y
     clc
@@ -473,7 +479,7 @@ put00_t2:
     cmp ($e6),y
     bcc *+4
     sbc ($e6),y  ;C=1
-    jsr mul16
+    jsr mul16  ;[(y + yindex)%ysize]
 
     lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
     clc
@@ -483,18 +489,16 @@ put00_t2:
     adc $68
     sta $e1
 
-    ldy #s2xsize_off
-    lda ($e6),y
-    sta $66
     lda $d6
-    jsr mul16   ;remove!
-    lda $e4
-    adc $67  ;C=0
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][(y], e4 - data[0][0]
+    beq .l11
 
+    lda $dd
+    adc $dc  ;C=0
+    sta $dd
+    bcc .l11
+
+    inc $de  ;dd - data[0][y], e4 - data[0][0]
+.l11
     pla
     and #1
     bne .odd
@@ -505,7 +509,7 @@ put00_t2:
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -518,8 +522,7 @@ put00_t2:
     inx
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc .l6
 .l1
     ldx $d6
@@ -564,7 +567,7 @@ put00_t2:
 .l9 stx $d7
     ldy #s2xpos_off
     lda ($e6),y
-    clc  ;?remove
+    clc
     adc $d7
     tax
     iny
@@ -579,8 +582,7 @@ put00_t2:
     inx
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     dex
     bcc .l9
 
@@ -603,10 +605,9 @@ put00_t2:
     ldy #s2xidx_off
     lda ($e6),y
     adc $d7  ;C=0
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y  ;C=1
+    sbc $dc  ;C=1
     tay
     lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
 .l10
@@ -639,10 +640,9 @@ put00_t2:
     lda ($e6),y
     clc   ;?remove
     adc $d7
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y  ;C=1
+    sbc $dc  ;C=1
     tay
     lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
 .l5 sta $d9     ;b1 =
@@ -656,10 +656,9 @@ put00_t2:
     lda ($e6),y
     adc $d7  ;C=0
     adc #1   ;C=0
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y  ;C=1
+    sbc $dc  ;C=1
     tay
     lda ($e0),y  ;saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]
 .l3 sta $da  ;b2 =
@@ -687,7 +686,7 @@ put00_t2:
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .le rts
 
-remove_t2:
+remove_t2:  ;used: $d0-d3, $d5-$d7, $d9-da, $dc
     lda #saved_off
     clc
     adc $e6   ;C=0
@@ -718,6 +717,7 @@ remove_t2:
     ldy #s2xsize_off
     lda ($e6),y
     sta $66
+    sta $dc
     ldy #s2yidx_off
     lda ($e6),y
     clc
@@ -746,7 +746,7 @@ remove_t2:
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -759,8 +759,7 @@ remove_t2:
     inx
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc .l6
 .l1
     ldx $d6
@@ -816,8 +815,7 @@ remove_t2:
     inx
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     dex
     bcc .l9
 
@@ -836,10 +834,9 @@ remove_t2:
     ldy #s2xidx_off
     lda ($e6),y
     adc $d7  ;C=0
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y  ;C=1
+    sbc $dc  ;C=1
     tay
     lda ($e0),y
     sta $d9     ;b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize]
@@ -866,20 +863,18 @@ remove_t2:
     lda ($e6),y
     clc
     adc $d7
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y
+    sbc $dc
     tay
     lda ($e0),y
     sta $d9  ;b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize]
 
     iny
     tya
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp $dc
     bcc *+4
-    sbc ($e6),y
+    sbc $dc
     tay
     lda ($e0),y
     sta $da  ;b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]
@@ -907,7 +902,7 @@ remove_t2:
     sta ($d2),y  ;prg[addr + 0x400] = b2 << 4 | b1 & 0xf
     rts
 
-left0_t2
+left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     ldy #s2xpos_off
     lda ($e6),y
     sec
@@ -990,7 +985,7 @@ left0_t2
     bcc .l2
     rts
 
-right0_t2
+right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
 
@@ -1744,35 +1739,6 @@ up2_t2:
     jsr up0_t2
     jmp put00_t2
 
-  if 0
-rightx_t1:
-    ;ldy #sdptr_off
-    lda ($e6),y
-    sta $e4
-    iny
-    lda ($e6),y
-    sta $e5
-
-    ldy #s2xpos_off
-    lda ($e6),y
-    sta $d6
-    ldy #s2xsize_off
-    lda ($e6),y
-    asl
-    sbc #HSIZE-1  ;C=0
-    adc $d6    ;C=0, 160-2*xsize
-    beq .l0
-
-    jsr remove_t1
-    ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc #4
-    sta ($e6),y
-    jmp put00_t1
-.l0  rts   ;an excess!!
-  endif
-
 getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr in $d0-d1 and $d2-d3, C=0
     lda #0
     sta $d1
@@ -1862,7 +1828,7 @@ nextaddr22: ;in :x, y, $d0-d1;  used: ac, yr;  doubled x, y are used;  returns a
     sta $d2
     rts
 
-setcolor22: ;in: x, y, a - color;  doubled x, y are used;  used: $d5, $d9, $da, $db
+setcolor22: ;in: x, y, a - color;  doubled x, y are used;  used: $d0-d3, $d5, $d9-db
     sta $db
     stx $d5
     jsr getaddr22  ;addr = getaddr22(x, y)
