@@ -337,7 +337,7 @@ right0_t1:   ;use: $d0-d2,$d6
     ldy #sxpos_off
     lda ($e6),y
     sta $d2
-    clc  ;remove?
+    clc
     adc #1
     sta ($e6),y
     and #3
@@ -503,7 +503,7 @@ down0_t1:  ;use: $d0-d3, $d6, $d7
     ldy #sypos_off
     lda ($e6),y
     sta $d2
-    clc  ;remove?
+    clc
     adc #1
     sta ($e6),y   ;ypos++
     ldy #sxpos_off

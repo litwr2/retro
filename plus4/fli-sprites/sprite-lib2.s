@@ -90,8 +90,8 @@ mul16:   ;in: a * $66 -> $67-68;  byte*byte -> word; used: $66-$6a
     stx $67
 .le rts
 
-put_t2:
-    ldy #s2clrud_off+ddir   ;setspr_t2?
+put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+    ldy #s2clrud_off+ddir
     lda ($e6),y
     tax
     asl
@@ -107,7 +107,6 @@ put_t2:
     sta $e5
 
     lda #saved_off
-    ;clc
     adc $e6   ;C=0
     sta $e2
     lda $e7
@@ -161,7 +160,7 @@ put_t2:
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -249,7 +248,7 @@ put_t2:
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -272,7 +271,7 @@ put_t2:
     ldy #s2xpos_off
     lda ($e6),y
     clc
-    adc $d7  ;C=0?
+    adc $d7
     tax
     iny
     lda ($e6),y
@@ -419,7 +418,7 @@ put_t2:
     lda $d9
     and #$f0
     ora $d5
-    ldy #0   ;remove?
+    ldy #0
     sta ($d0),y  ;prg[addr] = b1 & 0xf0 | b2 >> 4
     lda $da
     asl
@@ -433,7 +432,7 @@ put_t2:
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .l2 rts
 
-left_t2:
+left_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-db, $e0-e5
     ldy #s2xpos_off
     lda ($e6),y
     bne *+3
@@ -443,7 +442,7 @@ left_t2:
     jsr left0_t2
     ;jmp put00_t2
 
-put00_t2:  ;used: $66-68, $d0-d3, $d5-$d7, $d9-da, $dc
+put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     lda $e4
     sta $dd
     lda $e5
@@ -638,7 +637,7 @@ put00_t2:  ;used: $66-68, $d0-d3, $d5-$d7, $d9-da, $dc
 
     ldy #s2xidx_off
     lda ($e6),y
-    clc   ;?remove
+    clc
     adc $d7
     cmp $dc
     bcc *+4
@@ -686,7 +685,7 @@ put00_t2:  ;used: $66-68, $d0-d3, $d5-$d7, $d9-da, $dc
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .le rts
 
-remove_t2:  ;used: $d0-d3, $d5-$d7, $d9-da, $dc
+remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     lda #saved_off
     clc
     adc $e6   ;C=0
@@ -1066,7 +1065,7 @@ right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
     rts
 
-up0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
+up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1127,7 +1126,7 @@ up0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     jsr cmain2
     lda #2
 .l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
-    clc  ;?remove
+    clc
     adc $66
     tax
     ldy $68
@@ -1232,7 +1231,7 @@ up0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     jsr cmain1
     lda #2  ;for (x = 2; x < xsize; x += 2)
 .l5 sta $d7
-    clc  ;?remove
+    clc
     adc $66
     tax
     ldy $d6
@@ -1311,7 +1310,7 @@ up0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0
     rts
 
-down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
+down0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     ldy #s2xidx_off
     lda ($e6),y
     sta $db   ;xindex
@@ -1352,7 +1351,7 @@ down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     jsr cmain2
     lda #2
 .l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
-    clc  ;?remove
+    clc
     adc $66
     tax
     ldy $d6
@@ -1447,7 +1446,7 @@ down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     ldx $66  ;xpos
     ldy #s2ysize_off
     lda ($e6),y
-    clc  ;?remove
+    clc
     adc $d6
     sta $68
     tay  ;ypos + ysize
@@ -1462,7 +1461,7 @@ down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     jsr cmain1
     lda #2  ;for (x = 2; x < xsize; x += 2)
 .l5 sta $d7
-    clc  ;?remove
+    clc
     adc $66
     tax
     ldy $68
@@ -1477,7 +1476,7 @@ down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
     bcc .l5
 .l12
     lda $d6
-    clc  ;?remove
+    clc
     adc #1
     ldy #s2ypos_off
     sta ($e6),y  ;ypos++
@@ -1512,7 +1511,7 @@ down0_t2:  ;used: $d0-d3, $d5-d7, $d9-dc
 
     lda #1  ;for (x = 1; x < xsize - 1; x += 2)
 .l7 sta $d7
-    clc  ;?remove
+    clc
     adc $66
     tax
     ldy $68
@@ -1646,7 +1645,7 @@ cmain1:
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
     rts
 
-left2_t2:
+left2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xpos_off
     lda ($e6),y
     cmp #2
@@ -1658,7 +1657,7 @@ left2_t2:
     jsr left0_t2
     jmp put00_t2
 
-right_t2:
+right_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1672,7 +1671,7 @@ right_t2:
     jsr right0_t2
     jmp put00_t2
 
-right2_t2:
+right2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1687,7 +1686,7 @@ right2_t2:
     jsr right0_t2
     jmp put00_t2
 
-down_t2:
+down_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sta $d6
@@ -1702,7 +1701,7 @@ down_t2:
     jsr down0_t2
     jmp put00_t2
 
-down2_t2:
+down2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1717,7 +1716,7 @@ down2_t2:
     jsr down0_t2
     jmp put00_t2
 
-up_t2:
+up_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     bne *+3
@@ -1727,7 +1726,7 @@ up_t2:
     jsr up0_t2
     jmp put00_t2
 
-up2_t2:
+up2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     cmp #2
