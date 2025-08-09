@@ -151,9 +151,25 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
 
     inc $68
 .l11
+    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
+    clc
+    adc $67
+    sta $e0
+    lda $e3
+    adc $68
+    sta $e1
+
     pla
     and #1
     bne .odd
+
+    clc
+    lda $e4
+    adc $67
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de  ;dd - data[0][y], e4 - data[0][0]
 
     jsr .main
     lda #2
@@ -190,14 +206,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda ($d2),y
     sta $da  ;cc = prg[addr + 0x400]
 
-    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    clc
-    adc $67
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1  ;saved[0][y]
-    lda $da
     lsr
     lsr
     lsr
@@ -212,13 +220,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #0
     sta ($e0),y  ; saved[0][y] = cc >> 4 | cl << 4
 
-    clc
-    lda $e4
-    adc $67
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][y], e4 - data[0][0]
     lda ($dd),y  ;Y=0
     beq .l8  ;if (data[0][y])
 
@@ -286,14 +287,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda ($d2),y
     sta $da  ;cc = prg[addr + 0x400]
 
-    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
-
-    lda $da
     and #$f
     sta $d5
     lda $d9
@@ -302,13 +295,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy $d7
     sta ($e0),y  ;saved[x][y] = cc & 0xf | cl & 0xf0
 
-    clc
-    lda $e4  ;dd - data[0][y], e4 - data[0][0]
-    adc $67
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de
     ldy $d7
     lda ($dd),y
     beq .l10   ;if (data[x][y])
@@ -339,15 +325,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda ($d2),y
     sta $da  ;cc = prg[addr + 0x400]
 
-    lda $e2  ;e0 - saved[0][y], e2 - saved[0][0]
-    clc
-    adc $67
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
-
-    lda $da
     and #$f
     sta $d5
     lda $d9
