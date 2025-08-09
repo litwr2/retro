@@ -334,21 +334,11 @@ remove_t1:   ;use:$d0-d3, $d6
     rts
 
 right0_t1:   ;use: $d0-d2,$d6
-    ldy #sxsize_off
-    lda ($e6),y
-    sec
-    sbc #HSIZE
     ldy #sxpos_off
-    adc ($e6),y  ;C=0, xpos == 160-xsize
-    bne *+5
-    pla
-    pla
-    rts
-
     lda ($e6),y
     sta $d2
-    adc #1   ;C=0
-    ;ldy #sxpos_off
+    clc  ;remove?
+    adc #1
     sta ($e6),y
     and #3
     bne .l0
@@ -395,11 +385,29 @@ right0_t1:   ;use: $d0-d2,$d6
 .l0 rts
 
 right_t1:
+    ldy #sxsize_off
+    lda ($e6),y
+    sec
+    sbc #HSIZE
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0, xpos == 160-xsize
+    bne *+3
+    rts
+
     setspr_t1 rdir
     jsr right0_t1
     jmp put00_t1
 
 right2_t1:
+    ldy #sxsize_off
+    lda ($e6),y
+    sec
+    sbc #HSIZE-1
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0, xpos + xpos < HSIZE - 1
+    bcc *+3
+    rts
+
     setspr_t1 rdir
     jsr right0_t1
     jsr right0_t1
@@ -437,15 +445,10 @@ rightx_t1:
 up0_t1:  ;use:  $d0-d3, $d6, $d7
     ldy #sypos_off
     lda ($e6),y
-    bne *+5
-    pla
-    pla
-    rts
-
     clc
     adc #-1
-    ;ldy #sypos_off
     sta ($e6),y   ;ypos--
+
     ldy #sysize_off
     clc
     adc ($e6),y
@@ -497,22 +500,11 @@ up0_t1:  ;use:  $d0-d3, $d6, $d7
 .l0 rts
 
 down0_t1:  ;use: $d0-d3, $d6, $d7
-    ldy #sysize_off
-    lda ($e6),y
-    clc
-    sbc #VSIZE-1
     ldy #sypos_off
-    adc ($e6),y     ;C=0
-    bne *+5
-    pla
-    pla
-    rts
-
     lda ($e6),y
     sta $d2
-    ;clc
-    adc #1  ;C=0
-    ;ldy #sypos_off
+    clc  ;remove?
+    adc #1
     sta ($e6),y   ;ypos++
     ldy #sxpos_off
     lda ($e6),y
@@ -560,11 +552,29 @@ down0_t1:  ;use: $d0-d3, $d6, $d7
     bne .l5  ;always
 
 down_t1:
+    ldy #sysize_off
+    lda ($e6),y
+    clc
+    sbc #VSIZE-1
+    ldy #sypos_off
+    adc ($e6),y     ;C=0
+    bne *+3
+    rts
+
     setspr_t1 ddir
     jsr down0_t1
     jmp put00_t1
 
 down2_t1:
+    ldy #sysize_off
+    lda ($e6),y
+    sec
+    sbc #VSIZE-1
+    ldy #sypos_off
+    adc ($e6),y  ;C=0, ypos + ypos < VSIZE - 1
+    bcc *+3
+    rts
+
     setspr_t1 ddir
     jsr down0_t1
     jsr down0_t1
@@ -573,11 +583,6 @@ down2_t1:
 left0_t1:   ;use: $d0-$d3, $d6
     ldy #sxpos_off
     lda ($e6),y
-    bne *+5
-    pla
-    pla
-    rts
-
     sec
     sbc #1
     ;ldy #sxpos_off
@@ -632,22 +637,44 @@ left0_t1:   ;use: $d0-$d3, $d6
 .l0 rts
 
 left_t1:
+    ldy #sxpos_off
+    lda ($e6),y
+    bne *+3
+    rts
+
     setspr_t1 ldir
     jsr left0_t1
     jmp put00_t1
 
 left2_t1:
+    ldy #sxpos_off
+    lda ($e6),y
+    cmp #2
+    bcs *+3
+    rts
+
     setspr_t1 ldir
     jsr left0_t1
     jsr left0_t1
     jmp put00_t1
 
 up_t1:
+    ldy #sypos_off
+    lda ($e6),y
+    bne *+3
+    rts
+
     setspr_t1 udir
     jsr up0_t1
     jmp put00_t1
 
 up2_t1:
+    ldy #sypos_off
+    lda ($e6),y
+    cmp #2
+    bcs *+3
+    rts
+
     setspr_t1 udir
     jsr up0_t1
     jsr up0_t1

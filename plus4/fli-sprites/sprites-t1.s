@@ -2,9 +2,9 @@
 
    ;jsr waitkey
    ;jmp *-3
-    ldy #<s7
+    ldy #<s1
     sty $e6
-    ldy #>s7
+    ldy #>s1
     sty $e7
 
    jsr put_t1
@@ -158,12 +158,12 @@ l2 pha
    org $a000
    include "aux.s"
    include "sprite-lib1.s"
-   ;include "lib/s1.s"
+   include "lib/s1.s"
    ;include "lib/s2.s"
    ;include "lib/s3.s"
    ;include "lib/s4.s"
    ;include "lib/s5.s"
    ;include "lib/s6.s"
-   include "lib/s7.s"
+   ;include "lib/s7.s"
 
 
