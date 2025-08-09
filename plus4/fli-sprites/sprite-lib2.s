@@ -91,7 +91,7 @@ mul16:   ;in: a * $66 -> $67-68;  byte*byte -> word; used: $66-$6a
     stx $67
 .le rts
 
-put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
+put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2clrud_off+ddir
     lda ($e6),y
     tax
@@ -331,6 +331,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ora $d5
     ldy $d7
     sta ($e0),y  ;saved[x][y] = cc & 0xf | cl & 0xf0
+    sta $69
 
     lda $da
     lsr
@@ -346,23 +347,24 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ora $d5
     iny
     sta ($e0),y  ;saved[x + 1][y] = cc >> 4 | cl << 4
+    sta $d5
 
-    ldy $d7
-    lda ($dd),y
-    sta $dc   ;data[x][y]
-    iny
     lda ($dd),y
     sta $db  ;data[x + 1][y]
-    ora $dc
+    dey
+    lda ($dd),y
+    sta $dc   ;data[x][y]
+    ora $db
     beq .l2  ;if ((data[x][y] | data[x + 1][y]) == 0)
 
+    ldy #0
     lda $dc  ;if (data[x][y] == 0)
     bne .l3
 
-    lda ($e0),y  ;Y=0
-    sta $d9    ;b1 = saved[0][y]
+    lda $69
+    sta $d9    ;b1 = saved[x][y]
     lda $db
-    sta $da  ;b2 = data[x][y]
+    sta $da  ;b2 = data[x + 1][y]
     jmp .l4  ;always  ?bvc
 .l3
     lda $db  ;if (data[x + 1][y] == 0)
@@ -370,8 +372,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
 
     lda $dc
     sta $d9   ;b1 = data[x][y]
-    iny
-    lda ($d2),y
+    lda $d5
     sta $da   ;b2 = saved[x + 1][y]
     jmp .l4  ;always  ?bvc
 .l5
@@ -388,7 +389,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $d9
     and #$f0
     ora $d5
-    ldy #0
+    ;ldy #0
     sta ($d0),y  ;prg[addr] = b1 & 0xf0 | b2 >> 4
     lda $da
     asl
@@ -622,8 +623,8 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
 
     ldy #s2xidx_off
     lda ($e6),y
-    adc $d7  ;C=0
-    adc #1   ;C=0
+    sec
+    adc $d7
     cmp $dc
     bcc *+4
     sbc $dc  ;C=1
