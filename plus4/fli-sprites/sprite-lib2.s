@@ -12,7 +12,7 @@ yidx_\id    byte 0      ;after xidx
 nlrud_\id   byte \nls,\nrs,\nus,\nds
 clrud_\id   byte 0,0,0,0
 olrud_\id   byte \id\()_l_sl-\id,\id\()_r_sl-\id,\id\()_u_sl-\id,\id\()_d_sl-\id
-saved_\id   ds \xs*\ys
+asaved_\id   word saved_\id
      endm
 
 s2xsize_off = 0
@@ -26,11 +26,6 @@ s2clrud_off = 10
 s2olrud_off = 14
 saved_off = 18
 
-;ldir = 0
-;rdir = 1
-;udir = 2
-;ddir = 3
-
     macro setspr_t2
     ldy #s2clrud_off+\1
     lda ($e6),y
@@ -38,7 +33,7 @@ saved_off = 18
     asl
 
     ldy #s2olrud_off+\1
-    ;clc
+    ;clc   ;required if n>=128
     adc ($e6),y
     tay
 
@@ -56,13 +51,16 @@ saved_off = 18
     lda #0
     ldy #s2clrud_off+\1
     sta ($e6),y
+    
+    setspr3_t2
+    endm
 
-    lda #saved_off
-    clc
-    adc $e6
+    macro setspr3_t2
+    ldy #saved_off
+    lda ($e6),y
     sta $e2
-    lda $e7
-    adc #0
+    iny
+    lda ($e6),y
     sta $e3
     endm
 
@@ -94,7 +92,6 @@ mul16:   ;in: a * $66 -> $67-68;  byte*byte -> word; used: $66-$6a
 put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2clrud_off+ddir
     lda ($e6),y
-    tax
     asl
 
     ldy #s2olrud_off+ddir
@@ -107,12 +104,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda ($e6),y
     sta $e5
 
-    lda #saved_off
-    adc $e6   ;C=0
-    sta $e2
-    lda $e7
-    adc #0
-    sta $e3
+    setspr3_t2
 
     ldy #s2xidx_off
     lda #0
@@ -656,14 +648,6 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
 .le rts
 
 remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
-    lda #saved_off
-    clc
-    adc $e6   ;C=0
-    sta $e2
-    lda $e7
-    adc #0
-    sta $e3
-
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off

@@ -156,6 +156,7 @@ l2 pha
   endif
 
    org $a000
+   include "common.s"
    include "aux.s"
    include "sprite-lib1.s"
    include "lib/s1.s"

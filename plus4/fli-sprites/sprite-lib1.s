@@ -20,11 +20,6 @@ nlrud_off = 4
 clrud_off = 8
 olrud_off = 12
 
-ldir = 0
-rdir = 1
-udir = 2
-ddir = 3
-
     macro setspr_t1
     ldy #clrud_off+\1
     lda ($e6),y
