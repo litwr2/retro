@@ -1,10 +1,9 @@
 ;for vasm assembler, oldstyle syntax
 
    ;jsr waitkey
-   ;jmp *-3
-    ldy #<s1
+    ldy #<s6
     sty $e6
-    ldy #>s1
+    ldy #>s6
     sty $e7
 
    jsr put_t1
@@ -15,8 +14,6 @@ l0
     pha
     lda #<(l0-1)
     pha
-    ;jsr getkey
-    ;cmp #$50  ;curd
     jsr waitkey
     lda #$80
     and kmatrix+1
@@ -49,7 +46,12 @@ l0
 
     lda #2
     sta $d4
-    jmp up_t1
+    jsr up_t1
+    lda #20
+    jsr delay
+    lda #-2
+    sta $d4
+    jmp down_t1
 l5
     lda #8
     and kmatrix+7  ;2
@@ -57,7 +59,12 @@ l5
 
     lda #-2
     sta $d4
-    jmp down_t1
+    jsr down_t1
+    lda #20
+    jsr delay
+    lda #2
+    sta $d4
+    jmp up_t1
 l6
     lda #2
     and kmatrix+2   ;R
@@ -72,7 +79,8 @@ l8  jsr waitkey
 
 l7  lda #16
     and kmatrix+2  ;C
-    bne l0
+    beq *+5
+    jmp l0
 
     jsr remove_t1
     ldy #sxpos_off
@@ -114,9 +122,6 @@ fastm
   if 0
 l0 lda #200
 l1 pha
-    ;jsr getkey
-   ;lda #5
-   ;jsr delay
     ldy #<s1
     sty $e6
     ldy #>s1
@@ -159,12 +164,7 @@ l2 pha
    include "common.s"
    include "aux.s"
    include "sprite-lib1.s"
-   include "lib/s1.s"
-   ;include "lib/s2.s"
-   ;include "lib/s3.s"
-   ;include "lib/s4.s"
-   ;include "lib/s5.s"
-   ;include "lib/s6.s"
-   ;include "lib/s7.s"
+   ;include "sprite-lib2.s"
+   include "sprlib/s6.s"
 
 
