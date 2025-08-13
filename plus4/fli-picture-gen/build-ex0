@@ -1,0 +1,3 @@
+#test1.s
+build-asm -DTEST1
+mv out.prg ex0.prg

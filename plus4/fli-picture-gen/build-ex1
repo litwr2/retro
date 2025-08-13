@@ -1,0 +1,4 @@
+#test.c
+build-asm
+build-picture test.c
+mv out1.prg ex1.prg

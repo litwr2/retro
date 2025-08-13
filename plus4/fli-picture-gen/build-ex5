@@ -1,0 +1,3 @@
+#stars.s
+build-asm -DSTARS
+mv out.prg ex5.prg

@@ -1,3 +1,4 @@
+;the CLEAR option just sets scrolling only mode, no stars
      lda #0
      sta $d4
      lda #1   ;v. scrolling step

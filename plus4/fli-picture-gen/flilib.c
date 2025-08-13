@@ -52,4 +52,24 @@ void setpa(int x, int y, int c, int cs) {  //pixel attributes
         }
     }
 }
+void setbm22(int x, int y, int cs) {  //set a 2x2 pixel on the bitmap only
+	setbm(2*x, 2*y, cs);
+	setbm(2*x + 1, 2*y, cs);
+	setbm(2*x, 2*y + 1, cs);
+	setbm(2*x + 1, 2*y + 1, cs);
+}
+void setpa22(int x, int y, int c, int cs) {  // for cs = 1 and 2
+    setpa(2*x, 2*y, c, cs);  //set a 2x2 pixel
+    setbm(2*x + 1, 2*y, cs);
+    setpa(2*x, 2*y + 1, c, cs);
+    setbm(2*x + 1, 2*y + 1, cs);
+}
+void setpa22_a5(int x, int y, int c) {  //sets a pixel in A5-world
+     if ((x&1) == 0) setpa22(x, y, c, 2); else setpa22(x, y, c, 1);
+}
+void setbm22_a5(int x, int y) {  //sets a pixel in A5-world, bitmap only
+     int cs = x&1;
+     if (cs == 0) cs = 2;
+     setbm22(x, y, cs);
+}
 

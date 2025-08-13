@@ -1,9 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include"svn.h"
-#include"emu/flilib.c"
-#include"emu/eflilib.c"
-#include"emu/flilib22.c"
+#include"../fli-picture-gen/flilib.c"
 #define START 0x1030
 
 #define xmax 160
@@ -17,13 +15,13 @@
 
 void fillscr() {
     int c = 8;
-    for (int y = 0; y < ymax; y += 2)
-        for (int x = 0; x < xmax; x += 2) {
-            //setpa22(x, y, 0x6e, 2);
-            //setpa22r(x, y, c);
-            c = abs((x - y)/2)%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
-            //c = y%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
-            //c = x%128; if (c < 8) c = (c + 80); setpa22r(x, y, c);
+    for (int y = 0; y < ymax/2; y++)
+        for (int x = 0; x < xmax/2; x++) {
+            //setpa22_a5(x, y, 0x6e, 2);
+            //setpa22_a5(x, y, c);
+            c = abs((x - y))%128; if (c < 8) c = (c + 8); setpa22_a5(x, y, c);
+            //c = y%128; if (c < 8) c = (c + 8); setpa22_a5(x, y, c);
+            //c = x%128; if (c < 8) c = (c + 80); setpa22_a5(x, y, c);
             if (++c > 127) c = 8;
         }
 }

@@ -1,0 +1,4 @@
+#supercolors.c
+build-asm
+build-picture supercolors.c
+mv out1.prg ex3.prg

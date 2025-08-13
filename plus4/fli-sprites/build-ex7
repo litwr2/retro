@@ -1,0 +1,4 @@
+#
+build-asm -DSPRITES2
+build-picture bg.cpp
+mv out1.prg ex7.prg
