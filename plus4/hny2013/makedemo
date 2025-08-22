@@ -1,0 +1,5 @@
+tmpx -a -i 64x4x8.s
+tmpx -a -i demo.asm -l demo.lst && \
+  awk ' /scr[123]$/ {s=1} s==1 {if (NF>5) {s=0;print $2}}' demo.lst >addrs && \
+  gcc -g xwrit3.c && ./a.out <addrs
+rm addrs a.out 64x4x8.prg

@@ -1793,7 +1793,7 @@ setcolor22: ;in: x, y, a - color;  doubled x, y are used;  used: $d0-d3, $d5, $d
     lda $d5
     and #1
     beq .l1
-    
+
     lda $d9  ;cs = 1
     and #$f0
     sta $d5
