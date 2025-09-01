@@ -22,8 +22,8 @@ start:
      lda #>irqS
      sta $ffff
      cli
-     jmp *
-     ;jmp $3000
+     ;jmp *
+     jmp $3000
 
 irqS:
      sta .m1+1
@@ -80,5 +80,5 @@ irqE:
      inc $ff09
      rti
 
-     ;include "count.s"
+     include "count.s"
 
