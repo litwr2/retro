@@ -5,8 +5,44 @@
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
 
-PALSTART = 250
-PALEND = 266
+EXTRALINES = 9
+
+  if EXTRALINES == 9   ;22882 + 9*109 - 54 - 94 = 23715, 33 of 94 for the counter logic, so max 23748 (+866) or approx. 3.78% speedup
+PALPOS1 = 250
+PALPOS2 = 286
+NTSCPOS1 = 198
+NTSCPOS2 = 244
+  endif
+  if EXTRALINES == 8   ;22882 + 8*109 - 54 - 94 = 23606, 33 of 94 for the counter logic, so max 23639 (+757) or approx. 3.31% speedup
+PALPOS1 = 250
+PALPOS2 = 282
+NTSCPOS1 = 204
+NTSCPOS2 = 244
+  endif
+  if EXTRALINES == 7   ;22882 + 7*109 - 54 - 94 = 23497, 33 of 94 for the counter logic, so max 23530 (+648) or approx. 2.83% speedup
+PALPOS1 = 250
+PALPOS2 = 278
+NTSCPOS1 = 210
+NTSCPOS2 = 245
+  endif
+  if EXTRALINES == 6   ;22882 + 6*109 - 54 - 94 = 23388, 33 of 94 for the counter logic, so max 23421 (+539) or approx. 2.36% speedup
+PALPOS1 = 250
+PALPOS2 = 274
+NTSCPOS1 = 216
+NTSCPOS2 = 246
+  endif
+  if EXTRALINES == 5   ;22882 + 5*109 - 54 - 94 = 23279, 33 of 94 for the counter logic, so max 23312 (+430) or approx. 1.88% speedup
+PALPOS1 = 250
+PALPOS2 = 270
+NTSCPOS1 = 221
+NTSCPOS2 = 246
+  endif
+  if EXTRALINES == 4  ;22882 + 4*109 - 54 - 94 = 23170, 33 of 94 for the counter logic, so max 23203 (+321) or approx. 1.40% speedup
+PALPOS1 = 250
+PALPOS2 = 266
+NTSCPOS1 = 225
+NTSCPOS2 = 245
+  endif
 
     assert >irqS == >irqE, wrong alignment!
 start:
@@ -27,7 +63,7 @@ start:
 
      sei
      sta $ff3f
-     lda #PALSTART
+     lda #PALPOS1
      sta $ff0b
      lda #$a2
      sta $ff0a
@@ -43,9 +79,9 @@ irqS:   ;54 cycles
      lda $ff07
      ora #$40
      sta $ff07
-     lda #225
+     lda #NTSCPOS1
      sta $ff1d
-     lda #245
+     lda #NTSCPOS2
      sta $ff0b
      lda #<irqE
      sta $fffe
@@ -55,16 +91,16 @@ irqS:   ;54 cycles
      inc $ff09
      rti
 
-irqE:  ;89 cycles on track
+irqE:  ;94 cycles on track
      pha
      lda $ff07
      and #$bf
      sta $ff07
-     lda #<PALEND
+     lda #<PALPOS2
      sta $ff1d
-     lda #>PALEND
+     lda #>PALPOS2
      sta $ff1c
-     lda #PALSTART
+     lda #PALPOS1
      sta $ff0b
 
   if 0

@@ -5,8 +5,14 @@
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
 
-PALSTART = 260
-PALEND = 268
+EXTRALINES = 2
+
+  if EXTRALINES == 2   ;22882 + 2*109 - 67 - 100 = 22933, 33 of 94 for the counter logic, so max 22966 (+84) or approx. 0.37% speedup
+PALPOS1 = 260
+PALPOS2 = 268
+NTSCPOS1 = 210
+NTSCPOS2 = 220
+  endif
 
     assert >irqS == >irqE, wrong alignment!
 start:
@@ -26,7 +32,7 @@ start:
    bne .m
      sei
      sta $ff3f
-     lda #<PALSTART
+     lda #<PALPOS1
      sta $ff0b
      lda #$a2 + 1
      sta $ff0a
@@ -46,9 +52,9 @@ irqS:   ;67 cycles
      sta $ff07
      lda #0
      sta $ff1c
-     lda #210
+     lda #NTSCPOS1
      sta $ff1d
-     lda #220
+     lda #NTSCPOS2
      sta $ff0b
      lda #$a2
      sta $ff0a
@@ -58,14 +64,14 @@ irqS:   ;67 cycles
      inc $ff09
      rti
 
-irqE:  ;95 cycles on track
+irqE:  ;100 cycles on track
      pha
      lda $ff07
      and #$bf
      sta $ff07
-     lda #<PALEND
+     lda #<PALPOS2
      sta $ff1d
-     lda #>PALEND
+     lda #>PALPOS2
      sta $ff1c
   if 0
           LDA  $FF1E
@@ -92,7 +98,7 @@ irqE:  ;95 cycles on track
      lda #0
      lda $ff1e
   endif
-     lda #<PALSTART
+     lda #<PALPOS1
      sta $ff0b
      lda #$a2 + 1
      sta $ff0a
