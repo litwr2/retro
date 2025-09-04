@@ -34,9 +34,16 @@ irq:    ;60 cycles on track
    tsx
    inc .sw+1
 .sw lda #0
-   and #$0f 
+   and #$f
    bne .l1
 
+   lda $ff02
+   adc $ff03
+   and #$f
+   cmp #$f
+   bne *+4
+   adc #5
+   sta .sw+1
    lda $103,x
    sta cnt
    lda $104,x

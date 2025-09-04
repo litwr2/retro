@@ -5,14 +5,8 @@
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
 
-EXTRALINES = 9
+EXTRALINES = 8
 
-  if EXTRALINES == 9   ;22882 + 9*109 - 54 - 94 = 23715, 33 of 94 for the counter logic, so max 23748 (+866) or approx. 3.78% speedup
-PALPOS1 = 250
-PALPOS2 = 286
-NTSCPOS1 = 198
-NTSCPOS2 = 244
-  endif
   if EXTRALINES == 8   ;22882 + 8*109 - 54 - 94 = 23606, 33 of 94 for the counter logic, so max 23639 (+757) or approx. 3.31% speedup
 PALPOS1 = 250
 PALPOS2 = 282
