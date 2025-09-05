@@ -5,19 +5,18 @@
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
 
-EXTRALINES = 2
+PALPOS1 = 226
+EXTRALINES1 = 6
+PALPOS2 = 260
+EXTRALINES2 = 2
+PALPOS3 = 270
+EXTRALINES3 = 4
+NTSCPOS0 = 110
 
-  if EXTRALINES == 2   ;22882 + 2*109 - 67 - 100 = 22933, 33 of 94 for the counter logic, so max 22966 (+84) or approx. 0.37% speedup
-PALPOS1 = 260
-PALPOS2 = 268
-NTSCPOS1 = 210
-NTSCPOS2 = 220
-  endif
-
-    assert >irqS == >irqE, wrong alignment!
+    assert >irq1 == >irq6, wrong alignment!
 start:
-     ;lda #0
-     ;sta $ff19
+;     lda #0
+;     sta $ff19
 ;   lda #147
 ;   jsr $ffd2  ;clrscr
    lda #$ea  ;nop
@@ -30,56 +29,53 @@ start:
    inc .m+2
    dey
    bne .m
+
      sei
      sta $ff3f
-     lda #<PALPOS1
+     lda #PALPOS1
      sta $ff0b
-     lda #$a2 + 1
+     lda #$a2
      sta $ff0a
-     lda #<irqS
+     lda #<irq1
      sta $fffe
-     lda #>irqS
+     lda #>irq1
      sta $ffff
      cli
      jmp *
 
-irqS:   ;67 cycles
-     pha
-     lda #<irqE
-     sta $fffe
+irq1:   ;? cycles
+     sta .m1+1
+     ;pha
      lda $ff07
      ora #$40
+     ;lda #$48
      sta $ff07
-     lda #0
-     sta $ff1c
-     lda #NTSCPOS1
+     lda #NTSCPOS0
      sta $ff1d
-     lda #NTSCPOS2
+     lda #NTSCPOS0+EXTRALINES1*5
      sta $ff0b
-     lda #$a2
-     sta $ff0a
+     lda #<irq2
+     sta $fffe
      ;lda #>irqE
      ;sta $ffff
-     pla
-     inc $ff09
+.m1  lda #0
+     ;pla
+     inc $ff09     
      rti
 
-irqE:  ;100 cycles on track
-     pha
+irq2:  ;? cycles
+     sta .m1+1
+     ;pha
      lda $ff07
      and #$bf
      sta $ff07
-     lda #<PALPOS2
+     lda #PALPOS1+EXTRALINES1*4
      sta $ff1d
-     lda #>PALPOS2
-     sta $ff1c
-  if 0
-          LDA  $FF1E
-          clc
-          adc #$1c
-          eor #$ff
-          sta $ff1e
-  endif
+     lda #<PALPOS2
+     sta $ff0b
+     lda #$a2 +1
+     sta $ff0a
+
   if 0
      LDA  $FF1E
      AND  #$3E
@@ -97,53 +93,153 @@ irqE:  ;100 cycles on track
      LDA  $EA
      lda #0
      lda $ff1e
-  endif
-     lda #<PALPOS1
-     sta $ff0b
-     lda #$a2 + 1
-     sta $ff0a
-     lda #<irqS
+   endif
+     lda #<irq3
      sta $fffe
-     ;lda #>irqS
+     ;lda #>irq3
      ;sta $ffff
+     ;pla
+.m1  lda #0
+     inc $ff09
+     rti
+
+irq3:   ;? cycles
+     sta .m1+1
+     lda $ff07
+     ora #$40
+     ;lda #$48
+     sta $ff07
+     lda #NTSCPOS0
+     sta $ff1d
+     lda #0
+     sta $ff1c
+     lda #NTSCPOS0+EXTRALINES2*5
+     sta $ff0b
+     lda #$a2+0
+     sta $ff0a
+     lda #<irq4
+     sta $fffe
+     ;lda #>irq4
+     ;sta $ffff
+.m1  lda #0
+     inc $ff09
+     rti
+
+irq4:  ;? cycles on track
+     sta .m1+1
+     ;pha
+     lda $ff07
+     and #$bf
+;     lda #$8
+     sta $ff07
+     lda #<(PALPOS2+EXTRALINES2*4)
+     sta $ff1d
+     lda #>(PALPOS2+EXTRALINES2*4)
+     sta $ff1c
+     lda #<PALPOS3
+     sta $ff0b
+     lda #$a2 + >PALPOS3
+     sta $ff0a
+
+     lda #<irq5
+     sta $fffe
+     ;lda #>irq5
+     ;sta $ffff
+.m1  lda #0
+;     pla
+     inc $ff09
+     rti
+
+irq5:   ;? cycles
+     sta .m1+1
+     lda $ff07
+     ora #$40
+     sta $ff07
+     lda #NTSCPOS0
+     sta $ff1d
+     lda #0
+     sta $ff1c
+     lda #NTSCPOS0+EXTRALINES3*5
+     sta $ff0b
+     lda #$a2+0
+     sta $ff0a
+     lda #<irq6
+     sta $fffe
+     ;lda #>irq6
+     ;sta $ffff
+.m1  lda #0
+     inc $ff09
+     rti
+
+irq6:  ;? cycles on track
+     ;pha
+     sta .m1+1
+     lda $ff07
+     and #$bf
+;     lda #$8
+     sta $ff07
+     lda #<(PALPOS3+EXTRALINES3*4)
+     sta $ff1d
+     lda #>(PALPOS3+EXTRALINES3*4)
+     sta $ff1c
+     lda #PALPOS1
+     sta $ff0b
+     ;lda #$a2 +0
+     ;sta $ff0a
+
+  if 0
+     LDA  $FF1E
+     AND  #$3E
+     lsr
+     LSR
+     STA *+4
+     BPL *
+     LDA  #$A9
+     LDA  #$A9
+     LDA  #$A9
+     LDA  #$A9
+     LDA  #$A9
+     LDA  #$A9
+     LDA  #$A9
+     LDA  $EA
+     lda #0
+     lda $ff1e
+   endif
+     lda #<irq1
+     sta $fffe
+     ;lda #>irq1
+     ;sta $ffff
+   if 1
         stx .m+1
    tsx
    inc .sw+1
 .sw lda #0
-   and #$f 
+   and #$f
    bne .l1
 
-   lda $103,x
+   lda $ff02
+   adc $ff03
+   and #$fb
+   sta .sw+1
+   lda $103-1,x
    sta cnt
-   lda $104,x
+   lda $104-1,x
    sta cnt+1
    lda #<printr
-   sta $103,x
+   sta $103-1,x
    lda #>printr
    bne .l2
 
 .l1 lda #<track
-    sta $103,x
+    sta $103-1,x
     lda #>track
-.l2 sta $104,x
+.l2 sta $104-1,x
 .m ldx #0
-     pla
+   endif
+.m1  lda #0
+     ;pla
      inc $ff09
      rti
-
-printr:
-   lda cnt
-   sec
-   sbc #<track
-   sta cnt
-   lda cnt+1
-   sbc #>track
-   asl cnt
-   rol
-   ldx cnt
-   ;sta cnt+1
-   jsr pr00000
-   jmp *
 
 cnt byte 0,0
 
@@ -203,6 +299,19 @@ outdigi:
         rts
 
 xpos byte 0
+
+printr:
+   lda cnt
+   sec
+   sbc #<track
+   sta cnt
+   lda cnt+1
+   sbc #>track
+   asl cnt
+   rol
+   ldx cnt
+   ;sta cnt+1
+   jsr pr00000
 
 track:
 
