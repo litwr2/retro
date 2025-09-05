@@ -7,6 +7,12 @@
 
 EXTRALINES = 8
 
+  if EXTRALINES == 9   ;doesn't work!
+PALPOS1 = 250
+PALPOS2 = 290
+NTSCPOS1 = 204
+NTSCPOS2 = 254
+  endif
   if EXTRALINES == 8   ;22882 + 8*109 - 54 - 94 = 23606, 33 of 94 for the counter logic, so max 23639 (+757) or approx. 3.31% speedup
 PALPOS1 = 250
 PALPOS2 = 282
@@ -68,7 +74,7 @@ start:
      cli
      jmp *
 
-irqS:   ;54 cycles
+irqS:   ;53 cycles
      sta .m1+1
      lda $ff07
      ora #$40
@@ -85,8 +91,9 @@ irqS:   ;54 cycles
      inc $ff09
      rti
 
-irqE:  ;94 cycles on track
-     pha
+irqE:  ;92 cycles on track
+     ;pha
+     sta .m1+1
      lda $ff07
      and #$bf
      sta $ff07
@@ -126,37 +133,28 @@ irqE:  ;94 cycles on track
    and #$f
    bne .l1
 
-   lda $103,x
+   lda $ff02
+   adc $ff03
+   and #$fb
+   sta .sw+1
+   lda $103-1,x
    sta cnt
-   lda $104,x
+   lda $104-1,x
    sta cnt+1
    lda #<printr
-   sta $103,x
+   sta $103-1,x
    lda #>printr
    bne .l2
 
 .l1 lda #<track
-    sta $103,x
+    sta $103-1,x
     lda #>track
-.l2 sta $104,x
+.l2 sta $104-1,x
 .m ldx #0
-     pla
+.m1  lda #0
+     ;pla
      inc $ff09
      rti
-
-printr:
-   lda cnt
-   sec
-   sbc #<track
-   sta cnt
-   lda cnt+1
-   sbc #>track
-   asl cnt
-   rol
-   ldx cnt
-   ;sta cnt+1
-   jsr pr00000
-   jmp *
 
 cnt byte 0,0
 
@@ -216,6 +214,19 @@ outdigi:
         rts
 
 xpos byte 0
+
+printr:
+   lda cnt
+   sec
+   sbc #<track
+   sta cnt
+   lda cnt+1
+   sbc #>track
+   asl cnt
+   rol
+   ldx cnt
+   ;sta cnt+1
+   jsr pr00000
 
 track:
 

@@ -28,7 +28,7 @@ start:
    cli
    jmp *
 
-irq:    ;60 cycles on track
+irq:    ;59 cycles on track
    pha
    stx .m+1
    tsx
@@ -39,10 +39,7 @@ irq:    ;60 cycles on track
 
    lda $ff02
    adc $ff03
-   and #$f
-   cmp #$f
-   bne *+4
-   adc #5
+   and #$fb
    sta .sw+1
    lda $103,x
    sta cnt
@@ -61,20 +58,6 @@ irq:    ;60 cycles on track
    pla
    inc $ff09
    rti
-
-printr:
-   lda cnt
-   sec
-   sbc #<track
-   sta cnt
-   lda cnt+1
-   sbc #>track
-   asl cnt
-   rol
-   ldx cnt
-   ;sta cnt+1
-   jsr pr00000
-   jmp *
 
 cnt byte 0,0
 
@@ -134,6 +117,19 @@ outdigi:
         rts
 
 xpos byte 0
+
+printr:
+   lda cnt
+   sec
+   sbc #<track
+   sta cnt
+   lda cnt+1
+   sbc #>track
+   asl cnt
+   rol
+   ldx cnt
+   ;sta cnt+1
+   jsr pr00000
 
 track:
 
