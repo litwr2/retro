@@ -43,18 +43,18 @@ start:
    cli
    jmp *
 
-irq:    ;39(code) + 7 (IRQ) = 46 cycles
-   pha
-   stx .m+1
-   tsx
-   lda #<track
-   sta $103,x
-   lda #>track
-   sta $104,x
-.m ldx #0
-   ASL $D019            ; acknowledge the interrupt by clearing the VIC's interrupt flag
-   pla
-   rti
+irq:    ;41(code) + 7 (IRQ) = 48 cycles
+   pha         ;3
+   stx .m+1    ;4
+   tsx         ;2
+   lda #<track ;2
+   sta $103,x  ;5
+   lda #>track ;2
+   sta $104,x  ;5
+.m ldx #0      ;2
+   ASL $D019   ;6     ; acknowledge the interrupt by clearing the VIC's interrupt flag
+   pla         ;4
+   rti         ;6
 
 track:
 

@@ -28,7 +28,7 @@ start:
    cli
    jmp *
 
-irq:    ;59 cycles on track
+irq:    ;54 + 7 = 61 cycles on track
    pha
    stx .m+1
    tsx
