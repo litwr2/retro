@@ -53,7 +53,7 @@ irq:    ;59 cycles on track
    bne .l1
 
    inc .r+1
-.r  lda $800
+.r  lda $800    ;randomizer
    and #$fb
    sta .sw+1
    lda $103,x
