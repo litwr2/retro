@@ -1,5 +1,8 @@
 ;for vasm6502/oldstyle
 
+;23789 + 53 + 59 + 65 + 65 + 65 + 59 (+ 33) = 24155 (+ 33) = 24188; +23822 approx. 4.11%
+;22882 + 12*109 = 24190 - 2 cycles are lost somehow!
+
         org $1001
    byte $b,$10,$a,0,$9e
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
@@ -43,12 +46,11 @@ start:
      cli
      jmp *
 
-irq1:   ;? cycles
+irq1:   ;46+7=53 cycles
      sta .m1+1
      ;pha
      lda $ff07
      ora #$40
-     ;lda #$48
      sta $ff07
      lda #NTSCPOS0
      sta $ff1d
@@ -60,12 +62,11 @@ irq1:   ;? cycles
      ;sta $ffff
 .m1  lda #0
      ;pla
-     inc $ff09     
+     inc $ff09
      rti
 
-irq2:  ;? cycles
+irq2:  ;52+7=59 cycles
      sta .m1+1
-     ;pha
      lda $ff07
      and #$bf
      sta $ff07
@@ -75,39 +76,18 @@ irq2:  ;? cycles
      sta $ff0b
      lda #$a2 +1
      sta $ff0a
-
-  if 0
-     LDA  $FF1E
-     AND  #$3E
-     lsr
-     LSR
-     STA *+4
-     BPL *
-     LDA  #$A9
-     LDA  #$A9
-     LDA  #$A9
-     LDA  #$A9
-     LDA  #$A9
-     LDA  #$A9
-     LDA  #$A9
-     LDA  $EA
-     lda #0
-     lda $ff1e
-   endif
      lda #<irq3
      sta $fffe
      ;lda #>irq3
      ;sta $ffff
-     ;pla
 .m1  lda #0
      inc $ff09
      rti
 
-irq3:   ;? cycles
+irq3:   ;58+7=65 cycles
      sta .m1+1
      lda $ff07
      ora #$40
-     ;lda #$48
      sta $ff07
      lda #NTSCPOS0
      sta $ff1d
@@ -125,12 +105,10 @@ irq3:   ;? cycles
      inc $ff09
      rti
 
-irq4:  ;? cycles on track
+irq4:  ;58+7=65 cycles on track
      sta .m1+1
-     ;pha
      lda $ff07
      and #$bf
-;     lda #$8
      sta $ff07
      lda #<(PALPOS2+EXTRALINES2*4)
      sta $ff1d
@@ -146,11 +124,10 @@ irq4:  ;? cycles on track
      ;lda #>irq5
      ;sta $ffff
 .m1  lda #0
-;     pla
      inc $ff09
      rti
 
-irq5:   ;? cycles
+irq5:   ;58+7=65 cycles
      sta .m1+1
      lda $ff07
      ora #$40
@@ -171,12 +148,10 @@ irq5:   ;? cycles
      inc $ff09
      rti
 
-irq6:  ;? cycles on track
-     ;pha
+irq6:  ;52+7(+33)=59(+33)=(92) cycles on track
      sta .m1+1
      lda $ff07
      and #$bf
-;     lda #$8
      sta $ff07
      lda #<(PALPOS3+EXTRALINES3*4)
      sta $ff1d
@@ -237,7 +212,6 @@ irq6:  ;? cycles on track
 .m ldx #0
    endif
 .m1  lda #0
-     ;pla
      inc $ff09
      rti
 
