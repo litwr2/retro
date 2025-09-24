@@ -1,4 +1,5 @@
 ;for vasm6502/oldstyle
+;it counts cycles per frame
 
         org $801
    byte $d,$10,$a,0,$9e
@@ -35,15 +36,17 @@ start:
            STA $DC0D            ; acknowledge pending interrupts from CIA-1
            STA $DD0D            ; acknowledge pending interrupts from CIA-2
 
-           LDA #210             ; set rasterline where interrupt shall occur
-           STA $D012
+           LDA #255             ; set rasterline where interrupt shall occur
+           STA $D012     ;bad lines are at 51, 59, ...
 
            LDA #%00000001       ; enable raster interrupt signals from VIC
            STA $D01A
    cli
-   jmp *
+   jmp track
 
-irq:    ;54 (code) + 7 (irq) = 61 cycles on track
+irqtime = 61  ;54 (code) + 7 (irq) = 61 cycles on track
+
+irq:
    pha
    stx .m+1
    tsx
@@ -141,9 +144,13 @@ printr:
    lda cnt+1
    sbc #>track
    asl cnt
-   rol
-   ldx cnt
-   ;sta cnt+1
+   rol   ;sets C=0
+   sta cnt+1
+   lda #irqtime
+   adc cnt
+   tax
+   lda #0
+   adc cnt+1
    jsr pr00000
 
 track:

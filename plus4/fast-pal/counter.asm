@@ -1,4 +1,5 @@
 ;for vasm6502/oldstyle
+;it counts cycles per frame
 
         org $1001
    byte $d,$10,$a,0,$9e
@@ -25,10 +26,15 @@ start:
    sta $fffe
    lda #>irq
    sta $ffff
+   lda #250    ;raster irq line
+   sta $ff0b
+   lda #$a2 + 0
+   sta $ff0a
    cli
-   jmp *
+   jmp track
 
-irq:    ;54 + 7 = 61 cycles on track
+irqtime = 61  ;54 (code) + 7 (irq) = 61 cycles on track
+irq:
    pha
    stx .m+1
    tsx
@@ -126,9 +132,13 @@ printr:
    lda cnt+1
    sbc #>track
    asl cnt
-   rol
-   ldx cnt
-   ;sta cnt+1
+   rol   ;sets C=0
+   sta cnt+1
+   lda #irqtime
+   adc cnt
+   tax
+   lda #0
+   adc cnt+1
    jsr pr00000
 
 track:
