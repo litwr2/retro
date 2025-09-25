@@ -1,4 +1,5 @@
 ;for vasm6502/oldstyle
+;skeleton code for cycle-counter.asm for the C64
 
         org $801
    byte $d,$10,$a,0,$9e
@@ -52,8 +53,8 @@ irq:    ;41(code) + 7 (IRQ) = 48 cycles
    lda #>track ;2
    sta $104,x  ;5
 .m ldx #0      ;2
-   ASL $D019   ;6     ; acknowledge the interrupt by clearing the VIC's interrupt flag
    pla         ;4
+   ASL $D019   ;6     ; acknowledge the interrupt by clearing the VIC's interrupt flag
    rti         ;6
 
 track:

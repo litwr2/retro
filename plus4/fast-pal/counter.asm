@@ -3,7 +3,7 @@
 
         org $1001
    byte $d,$10,$a,0,$9e
-   byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48,$3a,$a2
+   byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
 
 start:
@@ -33,39 +33,48 @@ start:
    cli
    jmp track
 
-irqtime = 61  ;54 (code) + 7 (irq) = 61 cycles on track
+irqtime = 71  ;64 (code) + 7 (irq) = 71 cycles on track
 irq:
-   pha
-   stx .m+1
-   tsx
-   inc .sw+1
-.sw lda #0
-   and #$f
-   bne .l1
+   pha			;3
+   stx .m+1		;4
+   tsx			;2
+   inc .sw+1	;6
+.sw lda #0		;2
+   and #$f		;2
+   bne .l1		;3
 
-   lda $ff02
-   adc $ff03
-   and #$fb
-   sta .sw+1
-   lda $103,x
-   sta cnt
-   lda $104,x
-   sta cnt+1
    lda #<printr
    sta $103,x
    lda #>printr
    bne .l2
 
-.l1 lda #<track
-    sta $103,x
-    lda #>track
-.l2 sta $104,x
-.m ldx #0
-   pla
-   inc $ff09
-   rti
+.l1 cmp #2		;2
+    bne .l3		;3
 
-cnt byte 0,0
+   lda $103,x
+   sta cnt
+   lda $104,x
+   sta cnt+1
+   bne .l5
+
+.l3 cmp #6		;2
+    bne .l5		;3
+
+   lda $103,x
+   sta cnt+2
+   lda $104,x
+   sta cnt+3
+.l5
+    lda #<track	;2
+    sta $103,x	;5
+    lda #>track	;2
+.l2 sta $104,x	;5
+.m ldx #0		;2
+   pla			;4
+   inc $ff09	;6
+   rti			;6
+
+cnt byte 0,0,0,0
 
 pr00000 ;prints ac:xr
          sta .d+2
@@ -112,7 +121,7 @@ pr00000 ;prints ac:xr
          sbc .d+1
          sta .d+2
          bcs .prn
-.d byte 0,0,0
+.d = cnt
 
 outdigi:
         stx .m+1
@@ -122,23 +131,21 @@ outdigi:
 .m      ldx #0
         rts
 
-xpos byte 0
+xpos = cnt + 3
 
 printr:
+   clc
    lda cnt
-   sec
-   sbc #<track
-   sta cnt
-   lda cnt+1
-   sbc #>track
-   asl cnt
-   rol   ;sets C=0
-   sta cnt+1
-   lda #irqtime
-   adc cnt
+   adc cnt+2
    tax
-   lda #0
-   adc cnt+1
+   lda cnt+1
+   adc cnt+3  ;sets C=0
+   tay
+   txa
+   sbc #<(2*track-irqtime-1)
+   tax
+   tya
+   sbc #>(2*track-irqtime-1)
    jsr pr00000
 
 track:
