@@ -129,7 +129,7 @@ irq5:   ;42 + 7 = 49 cycles
      inc $ff09
      rti
 
-irqtime = 100  ;93 (code) + 7 (irq) cycles on track
+irqtime = 90  ;83 (code) + 7 (irq) cycles on track
 irq0:
      sta .m1+1		;4
      jsr counter	;6
@@ -141,7 +141,7 @@ irq0:
      sta $ff0a		;4
 .m1  lda #0			;2
      inc $ff09		;6
-     rti			;6
+     rti			;6 =42
 
      org $1100
 counter:
@@ -151,75 +151,36 @@ counter:
    inc .sw+1	;6
 .sw lda #0		;2
    and #7		;2
-   bne .l1		;3
+   bne .l1		;3 =19
 
+   lda $ff02
+   adc $ff03
+   and #5
+   sta .sw+1
+   lda $103+.off,x
+   sta cnt
+   lda $104+.off,x
+   sta cnt+1
    lda #<job
    sta $103+.off,x
    lda #>job
    bne .l2
 
-.l1 cmp #3		;2
-    bne .l3		;3
-
-   sty .my+1
-.sy ldy #0
-   lda $103+.off,x
-   sta cnt,y
-   lda $104+.off,x
-   sta cnt+1,y
-.my ldy #0
-   jmp .l5
-
-.l3 cmp #6		;2
-    bne .l5		;3
-
-.sx lda #0
-   eor #1
-   sta .sx+1
-   beq .lx1
-
-   lda #2
-   sta .sy+1
-   inc .l1+1
-   bne .l5 
-.lx1
-   sta .sy+1
-   dec .l1+1
-.l5
-    lda #<track	;2
+.l1  lda #<track	;2
     sta $103+.off,x	;5
-    lda #>track	;2
+    lda #>track	 ;2
 .l2 sta $104+.off,x	;5
 .m ldx #0		;2
-   rts			;6
+   rts			;6 =22
 
 job:
-   lda counter.l1+1
-   cmp #3
-   beq .l1
-
-   jsr getkmtrix
-   ldx #7
-.l2 lda kmatrix,x
-   sta .rk,x
-   dex
-   bpl .l2
-   bmi *
-
-.l1
-   clc
    lda cnt
-   adc cnt+2
-   tax
-   lda cnt+1
-   adc cnt+3  ;sets C=0
-   tay
-   txa
+   asl
+   rol cnt+1  ;sets C=0
    sbc #<(2*track-irqtime-1)
-   tax
-   tya
+   sta .vl
+   lda cnt+1
    sbc #>(2*track-irqtime-1)
-   stx .vl
    sta .vh
 
    lda $ff07
@@ -236,24 +197,28 @@ job:
    sta showstat.fch+1
    jmp .fin
 .l3
+   lda #0
+   beq *+8
+   dec .l3+1
+   jmp .fin
    jsr getkmtrix
    lda kmatrix+7
    and #$10  ;space
    bne .l8
 
+   inc .l3+1
    lda txtcnt
    and #$80
    eor #$80
    sta txtcnt
    jmp .tx
 
-.l8 jsr getkmtrix
-   lda kmatrix+5
-   and .rk+5
+.l8 lda kmatrix+5
    and #8  ;cu
    beq *+5
    jmp .ncu
 
+   inc .l3+1
    ldx el1
    bne .cu1
 
@@ -323,10 +288,10 @@ job:
    jmp .fin
 
 .ncu lda kmatrix+5
-   and .rk+5
    and #1  ;cd
    bne .ncd
 
+   inc .l3+1
    ldx el1
    bne *+5
    jmp .fin
@@ -370,11 +335,11 @@ job:
    jmp .cu3
 .ncd
    lda kmatrix+6
-   and .rk+6
    and #8  ;cr
    beq *+5
    jmp .ncr
 
+   inc .l3+1
    ldx el2
    bne .cr1
 
@@ -487,11 +452,11 @@ job:
    jmp .fin
 .ncr
    lda kmatrix+6
-   and .rk+6
    and #1  ;cl
    beq *+5
    jmp .fin
 
+   inc .l3+1
    ldx el2
    bne *+5
    jmp .fin
@@ -631,9 +596,8 @@ job:
 
 .vl byte 0
 .vh byte 0
-.rk blk 8
 
-cnt byte 0,0,0,0
+cnt byte 0,0
 
 pr00     sta pr00000.d+2
          sty xpos
@@ -995,7 +959,7 @@ text1 byte 9,8,"The extra cycle meter",9,9
       byte "Big thanks to Luca, siz, and SukkoPera",9,26,"for their help."
       byte "Special thanks to Gaia and IstvanV for",9,25,"their emulators.",0
 text2 byte "This program lets us find the maximum number of extra cycles that we can get for the CPU on a particular monitor. Use the cursor keys. Press the up and right keys to increase the number of extra lines before and after the v-sync signals, respectively. The down and left keys decrease the number of extra lines before and after the v-sync.",9,61
-      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. The last number is the difference between the number of cycles shown and the theoretical value.",9,74
+      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. The last number is the difference between the actual number of cycles and the theoretical value.",9,73
       byte "You may use the additional cycles in your applications as an option! This can give you up to 10% acceleration.",9,60,0
 
 init:
