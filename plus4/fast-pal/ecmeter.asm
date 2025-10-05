@@ -1,8 +1,5 @@
 ;for vasm6502/oldstyle
 
-;23863 + 53 + 59 + 65 + 65 + 49 (+ 33) = 24154 (+ 33) = 24187; +23896 approx. +4.43%
-;22882 + 12*109 = 24190 - 3 cycles are lost somehow!
-
         org $1001
    byte $b,$10,$a,0,$9e
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
@@ -25,13 +22,13 @@ NTSCPOS0 = 80
 start:
     jmp init
 
-irq1:   ;46+7=53 cycles
+irq1time = 53  ;46+7
+irq1:
      sta .m1+1
 ;     lda $ff19
 ;     sta irq2.m2+1
 ;     lda #0
 ;     sta $ff19
-     ;pha
      lda $ff07
      ora #$40
      sta $ff07
@@ -46,12 +43,11 @@ irq1:   ;46+7=53 cycles
      ;lda #>irqE
      ;sta $ffff
 .m1  lda #0
-;     pla
      inc $ff09
      rti
 
-irq2:  ;52+7=59 cycles
-;     pha
+irq2time = 59  ;42+7
+irq2:
      sta .m1+1
      lda $ff07
      and #$bf
@@ -66,14 +62,14 @@ irq2:  ;52+7=59 cycles
      sta $ff0a
 .me1 lda #<irq1
      sta $fffe
-     ;pla
 ;.m2  lda #0
 ;     sta $ff19
 .m1  lda #0
      inc $ff09
      rti
 
-irq3:   ;58+7=65 cycles
+irq3time = 65  ;58+7
+irq3:
      sta .m1+1
      lda $ff07
      ora #$40
@@ -94,7 +90,8 @@ irq3:   ;58+7=65 cycles
      inc $ff09
      rti
 
-irq4:  ;58+7=65 cycles
+irq4time = 65  ;58+7
+irq4:
      sta .m1+1
      lda $ff07
      and #$bf
@@ -115,6 +112,7 @@ irq4:  ;58+7=65 cycles
      inc $ff09
      rti
 
+irq5time = 49  ;42+7
 irq5:   ;42 + 7 = 49 cycles
      sta .m1+1
 .me1 lda #<PALPOS5  ;+ EXTRALINES2*4 - 8
@@ -239,10 +237,22 @@ job:
    jmp .fin
 .l3
    jsr getkmtrix
+   lda kmatrix+7
+   and #$10  ;space
+   bne .l8
+
+   lda txtcnt
+   and #$80
+   eor #$80
+   sta txtcnt
+   jmp .tx
+
+.l8 jsr getkmtrix
    lda kmatrix+5
    and .rk+5
    and #8  ;cu
-   bne .ncu
+   beq *+5
+   jmp .ncu
 
    ldx el1
    bne .cu1
@@ -264,6 +274,8 @@ job:
    sta irq2.me1+1
    lda #NTSCPOS0+5
    sta irq1.me1+1
+   lda #2
+   sta showstat.ph
    jmp .fin
 .cu2
 ;el1 = 0 && el2 > 0
@@ -282,6 +294,9 @@ job:
    sta irq2.me1+1
    lda #NTSCPOS0+5
    sta irq1.me1+1
+   lda showstat.ph
+   ora #2
+   sta showstat.ph
    jmp .fin
 .cu1
    cpx #MAXEL1
@@ -328,6 +343,7 @@ job:
    sta irq0.me1+1
    lda #0
    sta irq0.me2+1
+   sta showstat.ph
    jmp .fin
 .cd2
 ;el1 > 1 && el2 = 0
@@ -344,6 +360,9 @@ job:
    sta irq0.me2+1
    lda #$a3
    sta irq0.me3+1
+   lda showstat.ph
+   and #$c
+   sta showstat.ph
    jmp .fin
 .cd4
 ;el1 > 1 && el2 > 0
@@ -383,6 +402,8 @@ job:
    sta irq4.me5+1
    lda #NTSCPOS0+5
    sta irq3.me1+1
+   lda #4
+   sta showstat.ph
    jmp .fin
 .cr1
    cpx #1
@@ -426,6 +447,9 @@ job:
 .mc2 adc #0  ;sets C=0
    adc #NTSCPOS0-1
    sta irq3.me1+1
+   lda showstat.ph
+   ora #$c
+   sta showstat.ph
    jmp .fin
 .cr2
 ;el1 > 0 && el2 = 0
@@ -448,6 +472,8 @@ job:
    sta irq4.me5+1
    lda #NTSCPOS0+5
    sta irq3.me1+1
+   lda #6
+   sta showstat.ph
    jmp .fin
 .cr4
 ;el1 > 0 && el2 = 1
@@ -489,7 +515,9 @@ job:
    lda #<irq0
    sta irq4.me5+1
    lda #NTSCPOS0+10
-   sta irq3.me1+1  
+   sta irq3.me1+1 
+   lda #4
+   sta showstat.ph 
    jmp .fin 
 .cl2
    cpx #2
@@ -501,8 +529,8 @@ job:
    lda #>(PALPOS3+4)
    sta irq4.me2+1
    lda #NTSCPOS0+5
-   sta irq3.me1+1  
-   bne .fin 
+   sta irq3.me1+1
+   jmp .fin 
 .cl4
    cpx #1
    bne .cl5
@@ -512,6 +540,7 @@ job:
    sta irq0.me1+1
    lda #0
    sta irq0.me2+1
+   sta showstat.ph
    beq .fin
 .cl5
 ;el1 = 0 && el2 > 3
@@ -528,7 +557,7 @@ job:
 .mc3 adc #0  ;sets C=0
    adc #NTSCPOS0-1
    sta irq3.me1+1
-   jmp .fin
+   bne .fin
 .cl3
    cpx #1
    bne .cl6
@@ -540,6 +569,8 @@ job:
    sta irq2.me3+1
    lda #<irq0
    sta irq2.me1+1
+   lda #2
+   sta showstat.ph
    bne .fin
 .cl6
    cpx #2
@@ -566,6 +597,8 @@ job:
    sta irq4.me5+1
    lda #NTSCPOS0+10
    sta irq3.me1+1
+   lda #6
+   sta showstat.ph
    ;bne .fin
 .fin
    jsr showel
@@ -574,7 +607,7 @@ job:
    lda txtcnt
    and #127
    bne *
-
+.tx
    ldx #$77
    lda txtcnt
    bpl .t2
@@ -594,7 +627,7 @@ job:
    inc .t1+5
    dey
    bne .t1
-   jmp *
+   beq *
 
 .vl byte 0
 .vh byte 0
@@ -708,6 +741,47 @@ showel:
    jmp pr00
 
 showstat:
+   lda el1
+   clc
+   adc el2
+   ldx #109
+   ldy #0
+   jsr mul16
+   sty .m1+1
+   ldy .ph
+   sec
+   txa
+   sbc .ct,y
+   tax
+.m1 lda #0
+   sbc .ct+1,y
+   tay
+   txa
+   clc
+   adc .fc
+   sta .m2+1
+   tya
+   adc .fc+1
+   sta .m3+1
+   sec
+   lda job.vl
+.m2 sbc #0   
+   tax
+   lda job.vh
+.m3 sbc #0
+   txa
+   bcc .l5
+
+   ldy #32
+   adc #47
+   bne .l6
+.l5
+   ldy #$2d  ;-
+   eor #$ff
+   adc #49
+.l6
+   sty TEXTBASE+28
+   sta TEXTBASE+29
    lda job.vh
    ldx job.vl
    ldy #8
@@ -780,6 +854,9 @@ showstat:
 
 .fc word PALSTD
 .fch word PALSTD/2
+.ph byte 0
+.ct word 0, irq1time + irq2time, irq3time + irq4time, irq1time + irq2time + irq3time + irq4time
+    word 0, 0, irq3time + irq4time + irq5time, irq1time + irq2time + irq3time + irq4time + irq5time
 
 div32x16w:        ;dividend+2 < divisor, divisor < $8000
         ;lda .dividend+3
@@ -918,8 +995,8 @@ text1 byte 9,8,"The extra cycle meter",9,9
       byte "Big thanks to Luca, siz, and SukkoPera",9,26,"for their help."
       byte "Special thanks to Gaia and IstvanV for",9,25,"their emulators.",0
 text2 byte "This program lets us find the maximum number of extra cycles that we can get for the CPU on a particular monitor. Use the cursor keys. Press the up and right keys to increase the number of extra lines before and after the v-sync signals, respectively. The down and left keys decrease the number of extra lines before and after the v-sync.",9,61
-      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. You may use the additional cycles in your applications as an option! This can give you up to 10% acceleration.",9,59
-      byte "The accuracy of this meter is 1 cycle. Idon't still know why sometimes it allowsthis tiny inaccuracy.",9,60,0
+      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. The last number is the difference between the number of cycles shown and the theoretical value.",9,74
+      byte "You may use the additional cycles in your applications as an option! This can give you up to 10% acceleration.",9,60,0
 
 init:
 ;     lda #0
