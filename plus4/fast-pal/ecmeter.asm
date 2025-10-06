@@ -11,6 +11,7 @@ NTSCSTD = 17432
 PALSTD = 22882
 TEXTBASE = $fc4
 JPRIMM = $FF4F
+BLACKB = 0  ;1 means blacken NTSC borders and consuming upto 40 cycles per frame
 
 PALPOS0 = 250
 PALPOS3 = 260
@@ -19,19 +20,23 @@ PALPOS5 = 270
 NTSCPOS0 = 80
 
     assert >irq1 == >irq0, wrong alignment!
-start:
-    jmp init
 
+  if BLACKB
+irq1time = 67  ;60+7
+  else
 irq1time = 53  ;46+7
+  endif
 irq1:
      sta .m1+1
-;     lda $ff19
-;     sta irq2.m2+1
-;     lda #0
-;     sta $ff19
      lda $ff07
      ora #$40
      sta $ff07
+  if BLACKB
+     lda $ff19
+     sta irq2.m2+1
+     lda #0
+     sta $ff19
+  endif
      lda #NTSCPOS0
      sta $ff1d
 .me1  lda #NTSCPOS0      ;+EXTRALINES1*5
@@ -46,7 +51,11 @@ irq1:
      inc $ff09
      rti
 
+  if BLACKB
+irq2time = 65  ;48+7
+  else
 irq2time = 59  ;42+7
+  endif
 irq2:
      sta .m1+1
      lda $ff07
@@ -58,22 +67,34 @@ irq2:
      ;sta $ff1c
 .me2 lda #PALPOS0-4
      sta $ff0b
-.me3 lda #$a2  ;not required for the upper extras only
+.me3 lda #$a2
      sta $ff0a
 .me1 lda #<irq1
      sta $fffe
-;.m2  lda #0
-;     sta $ff19
+  if BLACKB
+.m2  lda #0
+     sta $ff19
+  endif
 .m1  lda #0
      inc $ff09
      rti
 
+  if BLACKB
+irq3time = 79  ;72+7
+  else
 irq3time = 65  ;58+7
+  endif
 irq3:
      sta .m1+1
      lda $ff07
      ora #$40
      sta $ff07
+  if BLACKB
+     lda $ff19
+     sta irq4.m2+1
+     lda #0
+     sta $ff19
+  endif
      lda #NTSCPOS0
      sta $ff1d
      lda #0
@@ -90,7 +111,11 @@ irq3:
      inc $ff09
      rti
 
+  if BLACKB
+irq4time = 71  ;64+7
+  else
 irq4time = 65  ;58+7
+  endif
 irq4:
      sta .m1+1
      lda $ff07
@@ -108,12 +133,16 @@ irq4:
      sta $fffe
      ;lda #>irq5
      ;sta $ffff
+  if BLACKB
+.m2  lda #0
+     sta $ff19
+  endif
 .m1  lda #0
      inc $ff09
      rti
 
 irq5time = 49  ;42+7
-irq5:   ;42 + 7 = 49 cycles
+irq5:
      sta .m1+1
 .me1 lda #<PALPOS5  ;+ EXTRALINES2*4 - 8
      sta $ff1d
@@ -131,7 +160,7 @@ irq5:   ;42 + 7 = 49 cycles
 
 irqtime = 90  ;83 (code) + 7 (irq) cycles on track
 irq0:
-     sta .m1+1		;4
+     pha			;3
      jsr counter	;6
 .me1 lda #<irq0		;2
      sta $fffe		;4
@@ -139,20 +168,27 @@ irq0:
      sta $ff0b		;4
 .me3 lda #$a2		;2
      sta $ff0a		;4
-.m1  lda #0			;2
+     pla			;4
      inc $ff09		;6
-     rti			;6 =42
+     rti			;6 =43
 
-     org $1100
 counter:
-.off = 1
+.off = 2
    stx .m+1		;4
    tsx			;2
    inc .sw+1	;6
 .sw lda #0		;2
    and #7		;2
-   bne .l1		;3 =19
+   beq .l1		;2 =18
 
+    lda #<track	;2
+    sta $103+.off,x	;5
+    lda #>track	 ;2
+.l2 sta $104+.off,x	;5
+.m ldx #0		;2
+   rts			;6 =22
+
+.l1
    lda $ff02
    adc $ff03
    and #5
@@ -164,14 +200,7 @@ counter:
    lda #<job
    sta $103+.off,x
    lda #>job
-   bne .l2
-
-.l1  lda #<track	;2
-    sta $103+.off,x	;5
-    lda #>track	 ;2
-.l2 sta $104+.off,x	;5
-.m ldx #0		;2
-   rts			;6 =22
+   bne .l2  ;always
 
 job:
    lda cnt
@@ -197,7 +226,7 @@ job:
    sta showstat.fch+1
    jmp .fin
 .l3
-   lda #0
+   lda #0  ;attached to .l3!
    beq *+8
    dec .l3+1
    jmp .fin
@@ -962,7 +991,7 @@ text2 byte "This program lets us find the maximum number of extra cycles that we
       byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. The last number is the difference between the actual number of cycles and the theoretical value.",9,73
       byte "You may use the additional cycles in your applications as an option! This can give you up to 10% acceleration.",9,60,0
 
-init:
+start:
 ;     lda #0
 ;     sta $ff19   ;black borders
    jsr JPRIMM
