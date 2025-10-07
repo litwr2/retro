@@ -597,6 +597,10 @@ job:
 .fin
    jsr showel
    jsr showstat
+   inc txtcnt+1
+   lda txtcnt+1
+   and #1
+   bne *+5
    inc txtcnt
    lda txtcnt
    and #127
@@ -980,7 +984,7 @@ showtext:
       inc .m2+2
 .lz   rts
 
-txtcnt byte 0
+txtcnt byte 0,0
 text1 byte 9,8,"The extra cycle meter",9,9
       byte 9,9,"v1b, by litwr, 2025",9,50
       byte "It is known that the C+4 PAL has 22,882 CPU cycles per standard video mode screen frame. However, it is possible to switch this machine to NTSC turbo mode. This accelerates the CPU clock to an impressive 2.21 MHz! But this distorts the video signal. What if we only used turbo mode during screen blanking? This would theoretically provide more CPU cycles while maintaining the normal video display. Some monitors allow us to get more extra cycles; others allow fewer.",9,52
@@ -988,12 +992,12 @@ text1 byte 9,8,"The extra cycle meter",9,9
       byte "Big thanks to Luca, siz, and SukkoPera",9,26,"for their help."
       byte "Special thanks to Gaia and IstvanV for",9,25,"their emulators.",0
 text2 byte "This program lets us find the maximum number of extra cycles that we can get for the CPU on a particular monitor. Use the cursor keys. Press the up and right keys to increase the number of extra lines before and after the v-sync signals, respectively. The down and left keys decrease the number of extra lines before and after the v-sync.",9,61
-      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the delta, and the percentage ratio. The last number is the difference between the actual number of cycles and the theoretical value.",9,73
+      byte "The program displays the number of extra lines before and after the vsync, the total number of cycles per frame, the bonus cycles, and the percentage ratio. The last number is the difference between the actual number of cycles and the theoretical value.",9,66
       byte "You may use the additional cycles in your applications as an option! This can give you up to 10% acceleration.",9,60,0
 
 start:
 ;     lda #0
-;     sta $ff19   ;black borders
+;     sta $ff19   ;global black borders
    jsr JPRIMM
    byte 147,9,14,0
 
