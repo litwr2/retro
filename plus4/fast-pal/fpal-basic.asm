@@ -21,6 +21,8 @@ JPRIMM = $ff4f
 
 	org $1300
 irq1:
+     lda #NTSCPOS0
+     sta $ff1d
      lda $ff07
      ora #$40
      sta $ff07
@@ -30,11 +32,8 @@ irq1:
      lda #0
      sta $ff19
   endif
-     lda #NTSCPOS0
-     sta $ff1d
      lda #<irq2
      sta $314
-
    if VR
      tsx
      lda $105,x
@@ -82,13 +81,13 @@ irq2:
      jmp $fcbe
 
 irq3:
+     lda #0
+     sta $ff1c
+     lda #NTSCPOS0
+     sta $ff1d
      lda $ff07
      ora #$40
      sta $ff07
-     lda #NTSCPOS0
-     sta $ff1d
-     lda #0
-     sta $ff1c
 .me1 lda #0  ;NTSCPOS0+5*EL2
      sta $ff0b
      lda #$a2

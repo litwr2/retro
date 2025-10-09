@@ -52,19 +52,17 @@ irq1:
      rti
 
   if BLACKB
-irq2time = 65  ;48+7
+irq2time = 66  ;59+7
   else
-irq2time = 59  ;42+7
+irq2time = 60  ;53+7
   endif
 irq2:
-     sta .m1+1
+     pha
+     lda #PALPOS0
+     sta $ff1d
      lda $ff07
      and #$bf
      sta $ff07
-     lda #PALPOS0
-     sta $ff1d
-     ;lda #0
-     ;sta $ff1c
 .me2 lda #PALPOS0-4
      sta $ff0b
 .me3 lda #$a2
@@ -75,17 +73,21 @@ irq2:
 .m2  lda #0
      sta $ff19
   endif
-.m1  lda #0
+     pla
      inc $ff09
      rti
 
   if BLACKB
-irq3time = 79  ;72+7
+irq3time = 80  ;73+7
   else
-irq3time = 65  ;58+7
+irq3time = 66  ;59+7
   endif
 irq3:
-     sta .m1+1
+     pha
+     lda #0
+     sta $ff1c
+     lda #NTSCPOS0
+     sta $ff1d
      lda $ff07
      ora #$40
      sta $ff07
@@ -95,10 +97,6 @@ irq3:
      lda #0
      sta $ff19
   endif
-     lda #NTSCPOS0
-     sta $ff1d
-     lda #0
-     sta $ff1c
 .me1  lda #NTSCPOS0  ;+EXTRALINES2*5
      sta $ff0b
      lda #$a2
@@ -107,7 +105,7 @@ irq3:
      sta $fffe
      ;lda #>irq4
      ;sta $ffff
-.m1  lda #0
+     pla
      inc $ff09
      rti
 
@@ -986,7 +984,7 @@ showtext:
 
 txtcnt byte 0,0
 text1 byte 9,8,"The extra cycle meter",9,9
-      byte 9,9,"v1b, by litwr, 2025",9,50
+      byte 9,9,"v1c, by litwr, 2025",9,50
       byte "It is known that the C+4 PAL has 22,882 CPU cycles per standard video mode screen frame. However, it is possible to switch this machine to NTSC turbo mode. This accelerates the CPU clock to an impressive 2.21 MHz! But this distorts the video signal. What if we only used turbo mode during screen blanking? This would theoretically provide more CPU cycles while maintaining the normal video display. Some monitors allow us to get more extra cycles; others allow fewer.",9,52
       byte "Thanks to Sandor for the initial",9,36,"initiative."
       byte "Big thanks to Luca, siz, and SukkoPera",9,26,"for their help."
