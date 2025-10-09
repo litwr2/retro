@@ -1,4 +1,5 @@
 ;for vasm6502/oldstyle
+;more extra lines can affect disk operations!
 
         org $1001
    include "fpal-basic.s"
@@ -81,12 +82,11 @@ irq2:
      jmp $fcbe
 
 irq3:
-     lda #0
+     lda #$40
      sta $ff1c
      ;lda #NTSCPOS0
      ;sta $ff1d
-     lda $ff07
-     ora #$40
+     ora $ff07
      sta $ff07
 .me1 lda #0  ;NTSCPOS0+5*EL2
      sta $ff0b

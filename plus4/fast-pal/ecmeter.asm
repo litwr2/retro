@@ -78,18 +78,17 @@ irq2:
      rti
 
   if BLACKB
-irq3time = 74  ;67+7
+irq3time = 72  ;65+7
   else
-irq3time = 60  ;53+7
+irq3time = 58  ;51+7
   endif
 irq3:
      pha
-     lda #0
+     lda #$40
      sta $ff1c
      ;lda #NTSCPOS0
      ;sta $ff1d
-     lda $ff07
-     ora #$40
+     ora $ff07
      sta $ff07
   if BLACKB
      lda $ff19
