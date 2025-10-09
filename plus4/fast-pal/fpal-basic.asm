@@ -14,7 +14,7 @@ PALPOS0 = 250
 PALPOS3 = 260
 PALPOS4 = 268
 PALPOS5 = 270
-NTSCPOS0 = 80
+NTSCPOS0 = 4
 
 INT2STR = $a45f  ;prints ac:xr
 JPRIMM = $ff4f
@@ -83,8 +83,8 @@ irq2:
 irq3:
      lda #0
      sta $ff1c
-     lda #NTSCPOS0
-     sta $ff1d
+     ;lda #NTSCPOS0
+     ;sta $ff1d
      lda $ff07
      ora #$40
      sta $ff07

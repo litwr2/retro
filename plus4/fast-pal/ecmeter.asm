@@ -17,7 +17,7 @@ PALPOS0 = 250
 PALPOS3 = 260
 PALPOS4 = 268
 PALPOS5 = 270
-NTSCPOS0 = 80
+NTSCPOS0 = 4   ;80
 
     assert >irq1 == >irq0, wrong alignment!
 
@@ -78,16 +78,16 @@ irq2:
      rti
 
   if BLACKB
-irq3time = 80  ;73+7
+irq3time = 74  ;67+7
   else
-irq3time = 66  ;59+7
+irq3time = 60  ;53+7
   endif
 irq3:
      pha
      lda #0
      sta $ff1c
-     lda #NTSCPOS0
-     sta $ff1d
+     ;lda #NTSCPOS0
+     ;sta $ff1d
      lda $ff07
      ora #$40
      sta $ff07
