@@ -1,0 +1,7 @@
+format ntsc-accelerator,88 d64 ntsc-accelerator.d64
+attach ntsc-accelerator.d64
+write cat.prg cat
+write ecmeter.prg ecmeter
+write fpal-basic.prg ntsc-throttle
+write tbas.prg sbench
+q
