@@ -1,4 +1,5 @@
 ./compile ecmeter.asm
 ./make-bas
 petcat -w3 cat+.bas >cat.prg
+petcat -w3 sbench.bas >sbench.prg
 c1541 <disk-ini.txt

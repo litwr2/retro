@@ -1,4 +1,4 @@
-B=fpal-basic
+B=ntsc-throttle
 petcat -w3 $B.bas >$B.prg
 gcc prg2asm.c && a.out <$B.prg >$B.s && rm a.out
 #VR=1 requires EL1>4
