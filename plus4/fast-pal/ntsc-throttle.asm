@@ -2,7 +2,7 @@
 ;more extra lines can affect disk operations!
 
         org $1001
-   include "fpal-basic.s"
+   include "ntsc-throttle.s"
 ;   byte $d,$10,$a,0,$9e
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
    byte 0,0,0
@@ -237,7 +237,7 @@ start:
      lda .m1+2
      jsr INT2STR
      jsr JPRIMM
-     byte " - THROTTLE OFF",13,0     
+     byte " - THROTTLE OFF",13,0
 
      jsr JPRIMM
      byte "SYS",0

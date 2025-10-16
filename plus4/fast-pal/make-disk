@@ -2,4 +2,7 @@
 ./make-bas
 petcat -w3 cat+.bas >cat.prg
 petcat -w3 sbench.bas >sbench.prg
+petcat -w3 seqr.bas >seqr.prg
+petcat -text -nh readme.txt | tr '\n' '\r' >readme.seq
 c1541 <disk-ini.txt
+rm readme.seq seqr.prg cat.prg

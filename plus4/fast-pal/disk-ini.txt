@@ -4,4 +4,6 @@ write cat.prg cat
 write ecmeter.prg ecmeter
 write ntsc-throttle.prg ntsc-throttle
 write sbench.prg sbench
+write seqr.prg readme
+write readme.seq read.me,s
 q

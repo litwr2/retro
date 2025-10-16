@@ -1,5 +1,5 @@
 #include<stdio.h>
-#define SZ 1024
+#define SZ 2048
 int main() {
     unsigned char buf[SZ];
     int i, k, s;

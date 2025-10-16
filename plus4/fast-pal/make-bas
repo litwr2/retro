@@ -1,5 +1,6 @@
 B=ntsc-throttle
 petcat -w3 $B.bas >$B.prg
-gcc prg2asm.c && a.out <$B.prg >$B.s && rm a.out
+gcc prg2asm.c && a.out <$B.prg >$B.s && rm a.out $B.prg
 #VR=1 requires EL1>4
 vasm6502_oldstyle -DVR=0 $B.asm -Fbin -cbm-prg -o $B.prg -L $B.lst
+rm $B.s
