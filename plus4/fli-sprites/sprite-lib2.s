@@ -165,10 +165,12 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr .main
     lda #2
 .l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcs .l12
+
     ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc $d7
+    adc ($e6),y  ;C=0
     tax
     iny
     lda ($e6),y
@@ -181,9 +183,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     inx
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
-    bcc .l6
+    bne .l6  ;always
 .l12
     ldx $d6
     inx
@@ -238,10 +238,15 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
 
 .l8 ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
 .l9 stx $d7
+    inx
+    txa
+    ldy #s2xsize_off
+    cmp ($e6),y
+    bcs .l14
+
     ldy #s2xpos_off
     lda ($e6),y
-    clc
-    adc $d7
+    adc $d7  ;C=0
     tax
     iny
     lda ($e6),y
@@ -253,14 +258,8 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldx $d7
     inx
     inx
-    inx
-    txa
-    ldy #s2xsize_off
-    cmp ($e6),y
-    dex
-    bcc .l9
-
-    stx $d7
+    bne .l9  ;always
+.l14
     ldy #s2xpos_off
     lda ($e6),y
     clc
@@ -466,12 +465,14 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     bne .odd
 
     jsr .main
-    lda #2
-.l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    ldx #2
+.l6 stx $d7  ;for (x = 2; x < xsize; x += 2)
+    cpx $dc
+    bcs .l1
+
     ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc $d7
+    txa
+    adc ($e6),y  ;C=0
     tax
     iny
     lda ($e6),y
@@ -483,9 +484,7 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     ldx $d7
     inx
     inx
-    txa
-    cmp $dc
-    bcc .l6
+    bne .l6  ;always
 .l1
     ldx $d6
     inx
@@ -527,10 +526,13 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
 
     ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
 .l9 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l15
+
     ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc $d7
+    adc ($e6),y  ;C=0
     tax
     iny
     lda ($e6),y
@@ -542,13 +544,8 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    bcc .l9
-
-    stx $d7
+    bne .l9  ;always
+.l15
     ldy #s2xpos_off
     lda ($e6),y
     clc
@@ -694,12 +691,14 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     bne .odd  ;if ((xpos&1) == 0)
 
     jsr .main
-    lda #2
-.l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
+    ldx #2
+.l6 stx $d7  ;for (x = 2; x < xsize; x += 2)
+    cpx $dc
+    bcs .l1
+
     ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc $d7
+    txa
+    adc ($e6),y  ;C=0
     tax
     iny
     lda ($e6),y
@@ -711,9 +710,7 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     ldx $d7
     inx
     inx
-    txa
-    cmp $dc
-    bcc .l6
+    bne .l6  ;always
 .l1
     ldx $d6
     inx
@@ -751,10 +748,13 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
 
     ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
 .l9 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l8
+
     ldy #s2xpos_off
-    lda ($e6),y
-    clc
-    adc $d7
+    adc ($e6),y  ;C=0
     tax
     iny
     lda ($e6),y
@@ -766,13 +766,8 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    bcc .l9
-
-    stx $d7
+    bne .l9  ;always
+.l8
     ldy #s2xpos_off
     lda ($e6),y
     clc
@@ -875,7 +870,6 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
 
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
-
     ldy #s2xsize_off
     lda ($e6),y
     sta $66
@@ -941,7 +935,6 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
 right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
-
     ldy #s2xsize_off
     lda ($e6),y
     sta $66
@@ -1078,10 +1071,14 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     bne .odd2
 
     jsr cmain2
-    lda #2
-.l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
-    clc
-    adc $66
+    ldx #2
+.l6 stx $d7  ;for (x = 2; x < xsize; x += 2)
+    cpx $dc
+    bcc *+5
+    jmp .p2
+
+    txa
+    adc $66   ;C=0
     tax
     ldy $68
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
@@ -1090,10 +1087,7 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldx $d7
     inx
     inx
-    txa
-    cmp $dc
-    bcc .l6
-    bcs .p2  ;always
+    bne .l6  ;always
 .odd2
     ldy $db
     lda ($e0),y
@@ -1121,10 +1115,14 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4
 
-    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
-.l2 sta $d7
-    clc
-    adc $66
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l2 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l3
+
+    adc $66  ;C=0
     tax
     ldy $68
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
@@ -1133,14 +1131,8 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    txa
-    bcc .l2
-
-    sta $d7
+    bne .l2   ;always
+.l3
     clc
     adc $66
     tax
@@ -1185,8 +1177,11 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     jsr cmain1
     lda #2  ;for (x = 2; x < xsize; x += 2)
 .l5 sta $d7
-    clc
-    adc $66
+    cmp $dc
+    bcc *+3
+    rts
+
+    adc $66   ;C=0
     tax
     ldy $d6
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
@@ -1196,9 +1191,7 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     inx
     inx
     txa
-    cmp $dc
-    bcc .l5
-    rts
+    bne .l5  ;always
 .odd1
     ldy #0
     lda ($d0),y
@@ -1216,10 +1209,14 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy $db
     sta ($e0),y  ;saved[xindex][yindex] = prg[addr + 0x400] >> 4 | prg[addr] << 4
 
-    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
-.l7 sta $d7
-    clc
-    adc $66
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l7 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l4
+
+    adc $66  ;C=0
     tax
     ldy $d6
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
@@ -1228,14 +1225,8 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    txa
-    bcc .l7
-
-    sta $d7
+    bne .l7  ;always
+.l4
     clc
     adc $66
     tax
@@ -1305,8 +1296,11 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     jsr cmain2
     lda #2
 .l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
-    clc
-    adc $66
+    cmp $dc
+    bcc *+5
+    jmp .p2
+
+    adc $66  ;C=0
     tax
     ldy $d6
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
@@ -1316,9 +1310,7 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     inx
     inx
     txa
-    cmp $dc
-    bcc .l6
-    bcs .p2  ;always
+    bne .l6  ;always
 .odd2
     ldy $db
     lda ($e0),y
@@ -1346,10 +1338,14 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4
 
-    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
-.l2 sta $d7
-    clc
-    adc $66
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l2 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l4
+
+    adc $66   ;C=0
     tax
     ldy $d6
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos)
@@ -1358,14 +1354,8 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    txa
-    bcc .l2
-
-    sta $d7
+    bne .l2  ;always
+.l4
     clc
     adc $66
     tax
@@ -1415,8 +1405,10 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     jsr cmain1
     lda #2  ;for (x = 2; x < xsize; x += 2)
 .l5 sta $d7
-    clc
-    adc $66
+    cmp $dc
+    bcs .l12
+
+    adc $66  ;C=0
     tax
     ldy $68
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
@@ -1426,8 +1418,7 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     inx
     inx
     txa
-    cmp $dc
-    bcc .l5
+    bne .l5  ;always
 .l12
     lda $d6
     clc
@@ -1463,10 +1454,14 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy $db
     sta ($e0),y  ;saved[xindex][yindex] = prg[addr + 0x400] >> 4 | prg[addr] << 4
 
-    lda #1  ;for (x = 1; x < xsize - 1; x += 2)
-.l7 sta $d7
-    clc
-    adc $66
+    ldx #1  ;for (x = 1; x < xsize - 1; x += 2)
+.l7 stx $d7
+    txa
+    inx
+    cpx $dc
+    bcs .l8
+
+    adc $66  ;C=0
     tax
     ldy $68
     jsr nextaddr22  ;nextaddr22(addr, x + xpos, ypos + ysize)
@@ -1475,14 +1470,8 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldx $d7
     inx
     inx
-    inx
-    txa
-    cmp $dc
-    dex
-    txa
-    bcc .l7
-
-    sta $d7
+    bne .l7  ;always
+.l8
     clc
     adc $66
     tax
