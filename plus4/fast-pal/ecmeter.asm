@@ -983,7 +983,7 @@ showtext:
 
 txtcnt byte 0,0
 text1 byte 9,8,"The extra cycle meter",9,9
-      byte 9,9,"v1c, by litwr, 2025",9,50
+      byte 9,9,"v1, by litwr, 2025",9,51
       byte "It is known that the C+4 PAL has 22,882 CPU cycles per standard video mode screen frame. However, it is possible to switch this machine to NTSC turbo mode. This accelerates the CPU clock to an impressive 2.21 MHz! But this distorts the video signal. What if we only used turbo mode during screen blanking? This would theoretically provide more CPU cycles while maintaining the normal video display. Some monitors allow us to get more extra cycles; others allow fewer.",9,52
       byte "Thanks to Sandor for the initial",9,36,"initiative."
       byte "Big thanks to Luca, siz, and SukkoPera",9,26,"for their help."
