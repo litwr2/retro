@@ -56,6 +56,10 @@ olrud_off = 12
 
     org $a000
 put_t1c:   ;it may only be used after the invocation of put_t1
+    ldy #sysize_off
+    lda ($e6),y
+    sta .m4+1
+
     ldy #0
 .l1x  ;for (int y = 0; y < ysize; y++)
     sty $d5
@@ -64,7 +68,7 @@ put_t1c:   ;it may only be used after the invocation of put_t1
     sta $d9
     tya
     clc
-    adc put00_t1.m4+1
+.m4 adc #0
     tay
     lda ($e2),y
     sta $da
@@ -77,7 +81,7 @@ put_t1c:   ;it may only be used after the invocation of put_t1
 
     ldy $d5
     iny
-    cpy put00_t1.m4+1
+    cpy .m4+1
     bne .l1x
     rts
 
@@ -103,29 +107,28 @@ put_t1:
     iny
     lda ($e6),y
     sta $e3
-
-    ldy #sysize_off
-    lda ($e6),y
-    sta put00_t1.m4+1
     jsr put_t1c       ;put00_t1 must be the next
 
 put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
          ;in: ac - mc output st, $e6,$e7 - sprite addr
-    ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
-    sta .m2+1
-    sta .m1+1
-
     ;lda $a5
     ;cmp $a5
     ;beq *-2
 
+    ldy #sysize_off
+    lda ($e6),y
+    sta .m4+1
+
+    ldy #sxsize_off
+    lda ($e6),y
+    lsr
+    lsr
+    sta .m1+1
+
     lda #0
     sta $d5
 .l1  ;for (int y = 0; y < ysize; y++)
-    pha
+    sta .m2+1
 
     ldy #sypos_off
     clc
@@ -138,14 +141,11 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     ldy $d3
     jsr getpaddr  ;addr = getcsaddr(xpos, ypos + y)
 
-    pla
-    pha
+.m2 lda #0
     beq .l11
 
-    ldy #sxsize_off
-    lda ($e6),y
-    lsr
-    lsr
+    lda .m1+1
+    clc
     adc $d5
     sta $d5
 .l11
@@ -175,7 +175,7 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     lda #1  ;for (int x = 1; x < xsize/4; x++)
     sta $d6
 .l8 lda $d6
-.m2 cmp #0
+    cmp .m1+1
     beq .l7
 
     asl
@@ -248,7 +248,6 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     ldy #0
     sta ($d0),y  ;prg[addr] = tab1[d]
 
-
     lda #1  ;for (int x = 1; x < xsize/4; x++)
     sta $d6
 .l5 lda $d6 
@@ -276,9 +275,9 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     inc $d6  ;x
     bne .l5   ;always
 
-.l6 pla
-    clc
-    adc #1
+.l6 ldy .m2+1
+    iny
+    tya
 .m4 cmp #0
     beq *+5
     jmp .l1
@@ -303,7 +302,7 @@ remove_t1:   ;use:$d0-d3, $d6
     sty .m1+1  ;l = xsize/4 + ((xpos&3) != 0)
 
     lda #0  ;for (int y = 0; y < ysize; y++)
-.l0 pha
+.l0 sta .l7+1
     ldy #sypos_off
     adc ($e6),y  ;C=0
     sta $d2  ;ypos + y
@@ -336,7 +335,7 @@ remove_t1:   ;use:$d0-d3, $d6
     inc $d6
     bne .l2   ;always
 
-.l7 pla
+.l7 lda #0
     adc #0  ;C=1
     ldy #sysize_off
     cmp ($e6),y
