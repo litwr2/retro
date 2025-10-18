@@ -1,5 +1,8 @@
 ;for vasm6502/oldstyle
 ;the next zp-locations are used: $e2-e7
+;e6-e7 - addr of the sprite def
+;e4-e5 - sprite bitmap addr
+;e2-e3 - sprite color addr
 
     macro sprite_t1,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -7,9 +10,9 @@ xsize_\id     byte \xs
 ysize_\id     byte \ys
 xpos_\id    byte \xp
 ypos_\id    byte \yp    ;after xpos!
-nlrud_\id   byte \nls,\nrs,\nus,\nds
-clrud_\id   byte 0,0,0,0
-olrud_\id   byte \id\()_l_sl-\id,\id\()_r_sl-\id,\id\()_u_sl-\id,\id\()_d_sl-\id
+nlrud_\id   byte \nls,\nrs,\nus,\nds   ;dataset limit
+clrud_\id   byte 0,0,0,0   ;the current dataset
+olrud_\id   byte \id\()_l_sl-\id,\id\()_r_sl-\id,\id\()_u_sl-\id,\id\()_d_sl-\id  ;base dataset offset
      endm
 
 sxsize_off = 0
@@ -37,12 +40,7 @@ olrud_off = 12
     lda ($e6),y
     sta $e5
 
-    iny
-    lda ($e6),y
-    sta $e2
-    iny
-    lda ($e6),y
-    sta $e3
+    sty put_t1c+1
 
     inx
     txa
@@ -55,7 +53,15 @@ olrud_off = 12
     endm
 
     org $a000
-put_t1c:   ;it may only be used after the invocation of put_t1
+put_t1c:   ;it may only be used after the invocation of put_t1 or setspr_t1
+    ldy #0   ;this instruction must be the first!   
+.e  iny
+    lda ($e6),y
+    sta $e2
+    iny
+    lda ($e6),y
+    sta $e3
+
     ldy #sysize_off
     lda ($e6),y
     sta .m4+1
@@ -101,13 +107,7 @@ put_t1:
     lda ($e6),y
     sta $e5
 
-    iny
-    lda ($e6),y
-    sta $e2
-    iny
-    lda ($e6),y
-    sta $e3
-    jsr put_t1c       ;put00_t1 must be the next
+    jsr put_t1c.e       ;put00_t1 must be the next
 
 put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
          ;in: ac - mc output st, $e6,$e7 - sprite addr
