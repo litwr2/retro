@@ -55,6 +55,32 @@ olrud_off = 12
     endm
 
     org $a000
+put_t1c:   ;it may only be used after the invocation of put_t1
+    ldy #0
+.l1x  ;for (int y = 0; y < ysize; y++)
+    sty $d5
+
+    lda ($e2),y
+    sta $d9
+    tya
+    clc
+    adc put00_t1.m4+1
+    tay
+    lda ($e2),y
+    sta $da
+
+    lda $d5
+    ldy #sypos_off
+    adc ($e6),y  ;C=0, ypos
+    tay    ;y+ypos
+    jsr setmcl
+
+    ldy $d5
+    iny
+    cpy put00_t1.m4+1
+    bne .l1x
+    rts
+
 put_t1:
     ldy #clrud_off+ddir
     lda ($e6),y
@@ -76,11 +102,15 @@ put_t1:
     sta $e2
     iny
     lda ($e6),y
-    sta $e3       ;put00_t1 must be the next
+    sta $e3
+
+    ldy #sysize_off
+    lda ($e6),y
+    sta put00_t1.m4+1
+    jsr put_t1c       ;put00_t1 must be the next
 
 put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
          ;in: ac - mc output st, $e6,$e7 - sprite addr
-d = $d7
     ldy #sxsize_off
     lda ($e6),y
     lsr
@@ -96,26 +126,12 @@ d = $d7
     sta $d5
 .l1  ;for (int y = 0; y < ysize; y++)
     pha
-    tax
 
     ldy #sypos_off
     clc
     adc ($e6),y  ;ypos
     sta $d3    ;y+ypos
 
-    txa
-    tay
-    lda ($e2),y
-    sta $d9
-    txa
-    ldy #sysize_off
-    adc ($e6),y  ;C=0
-    tay
-    lda ($e2),y
-    sta $da
-
-    ldy $d3
-    jsr setmcl
     ldy #sxpos_off
     lda ($e6),y  ;xpos
     tax
@@ -136,7 +152,7 @@ d = $d7
     sta $d2
     tay
     lda ($e4),y
-    sta d   ;d = data[0][y];
+    sta $d7   ;d = data[0][y];
     txa
     and #3
     bne *+5  ;if (z)
@@ -146,7 +162,7 @@ d = $d7
     asl
     sta $da  ;2z
     tax
-    lda d
+    lda $d7
     lsr
     dex
     bne *-2
@@ -175,11 +191,11 @@ d = $d7
     sec
     sbc $da
     tax
-    lda d
+    lda $d7
     asl
     dex
     bne *-2
-    sta d  ;d << 8 - 2*z
+    sta $d7  ;d << 8 - 2*z
 
     clc
     lda $d2
@@ -192,8 +208,8 @@ d = $d7
     dex
     bne *-2    ;nd >> 2*z
 
-    ora d
-    sty d     ;d = nd
+    ora $d7
+    sty $d7    ;d = nd
     tax
     lda tab1,x
     ldy #0
@@ -216,7 +232,7 @@ d = $d7
     sec
     sbc $da
     tax
-    lda d
+    lda $d7
     asl
     dex
     bne *-2
@@ -227,7 +243,7 @@ d = $d7
     sta ($d0),y  ;prg[addr] = tab1[(unsigned char)(d << 8 - 2*z)]
     beq .l6  ;always
 .l3
-    ldx d
+    ldx $d7
     lda tab1,x
     ldy #0
     sta ($d0),y  ;prg[addr] = tab1[d]
@@ -263,8 +279,7 @@ d = $d7
 .l6 pla
     clc
     adc #1
-    ldy #sysize_off
-    cmp ($e6),y
+.m4 cmp #0
     beq *+5
     jmp .l1
     rts
@@ -391,6 +406,7 @@ right_t1:
 
     setspr_t1 rdir
     jsr right0_t1
+    jsr put_t1c
     jmp put00_t1
 
 right2_t1:
@@ -406,6 +422,7 @@ right2_t1:
     setspr_t1 rdir
     jsr right0_t1
     jsr right0_t1
+    jsr put_t1c
     jmp put00_t1
 
   if 0
@@ -558,6 +575,7 @@ down_t1:
 
     setspr_t1 ddir
     jsr down0_t1
+    jsr put_t1c
     jmp put00_t1
 
 down2_t1:
@@ -573,6 +591,7 @@ down2_t1:
     setspr_t1 ddir
     jsr down0_t1
     jsr down0_t1
+    jsr put_t1c
     jmp put00_t1
 
 left0_t1:   ;use: $d0-$d3, $d6
@@ -639,6 +658,7 @@ left_t1:
 
     setspr_t1 ldir
     jsr left0_t1
+    jsr put_t1c
     jmp put00_t1
 
 left2_t1:
@@ -651,6 +671,7 @@ left2_t1:
     setspr_t1 ldir
     jsr left0_t1
     jsr left0_t1
+    jsr put_t1c
     jmp put00_t1
 
 up_t1:
@@ -661,6 +682,7 @@ up_t1:
 
     setspr_t1 udir
     jsr up0_t1
+    jsr put_t1c
     jmp put00_t1
 
 up2_t1:
@@ -673,6 +695,7 @@ up2_t1:
     setspr_t1 udir
     jsr up0_t1
     jsr up0_t1
+    jsr put_t1c
     jmp put00_t1
 
 tab1
