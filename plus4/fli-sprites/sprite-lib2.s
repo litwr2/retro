@@ -1,5 +1,8 @@
 ;for vasm6502/oldstyle
 ;the next zp-locations are used: $e2-e7
+;e6-e7 - addr of the sprite def
+;e4-e5 - sprite bitmap addr
+;e2-e3 - sprite saved data addr
 
     macro sprite_t2,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -106,6 +109,10 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
 
     setspr3_t2
 
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta .xsz+1
+
     ldy #s2xidx_off
     lda #0
     sta ($e6),y
@@ -114,11 +121,10 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
 
     sta $67
     sta $68
-
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
     cmp ($e6),y
-    bcs mul16.le
+    bcs mul16.le  ;exit
     
     lda #0
     sta $d7
@@ -135,8 +141,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     beq .l11
 
     clc
-    ldy #s2xsize_off
-    lda ($e6),y
+    lda .xsz+1
     adc $67
     sta $67
     bcc .l11
@@ -165,8 +170,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr .main
     lda #2
 .l6 sta $d7  ;for (x = 2; x < xsize; x += 2)
-    ldy #s2xsize_off
-    cmp ($e6),y
+.xsz cmp #0
     bcs .l12
 
     ldy #s2xpos_off
@@ -240,8 +244,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
 .l9 stx $d7
     inx
     txa
-    ldy #s2xsize_off
-    cmp ($e6),y
+    cmp .xsz+1
     bcs .l14
 
     ldy #s2xpos_off
@@ -857,12 +860,15 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     sbc #1  ;sets C=1
     sta ($e6),y  ;xpos--
 
+    ldy #s2xsize_off
+    lda ($e6),y
+    sta .xsz+1
+
     ldy #s2xidx_off
     lda ($e6),y
     bne .l1
 
-    ldy #s2xsize_off
-    lda ($e6),y
+    lda .xsz+1
     ldy #s2xidx_off
 .l1
     sbc #1  ;C=1
@@ -870,8 +876,7 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
 
     lda #0  ;for (int y = 0; y < ysize; y++)
 .l2 sta $d6
-    ldy #s2xsize_off
-    lda ($e6),y
+.xsz lda #0
     sta $66
     ldy #s2yidx_off
     lda ($e6),y
@@ -883,8 +888,7 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     sbc ($e6),y  ;C=1
     jsr mul16   ;(y + yindex)%ysize
 
-    ldy #s2xsize_off
-    lda ($e6),y
+    lda .xsz+1
     ldy #s2xpos_off
     clc
     adc ($e6),y
@@ -933,10 +937,13 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     rts
 
 right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
-    lda #0  ;for (int y = 0; y < ysize; y++)
-.l2 sta $d6
     ldy #s2xsize_off
     lda ($e6),y
+    sta .xsz+1
+
+    lda #0  ;for (int y = 0; y < ysize; y++)
+.l2 sta $d6
+.xsz lda #0
     sta $66
     ldy #s2yidx_off
     lda ($e6),y
@@ -971,8 +978,7 @@ right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     ldy $d5
     jsr setcolor22  ;setcolor22(xpos, ypos + y, saved[xindex][(y + yindex)%ysize])
 
-    ldy #s2xsize_off
-    lda ($e6),y
+    lda .xsz+1
     clc
     ldy #s2xpos_off
     adc ($e6),y
@@ -1004,9 +1010,8 @@ right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     ldy #s2xidx_off
     lda ($e6),y
     adc #1  ;C=0
-    ldy #s2xsize_off
-    cmp ($e6),y
-    bne *+4
+    cmp .xsz+1
+    bne *+6
     lda #0
     ldy #s2xidx_off
     sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
