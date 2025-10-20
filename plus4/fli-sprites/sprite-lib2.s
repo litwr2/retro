@@ -1,8 +1,9 @@
 ;for vasm6502/oldstyle
-;the next zp-locations are used: $e2-e7
+;the next zp-locations are used:
 ;e6-e7 - addr of the sprite def
 ;e4-e5 - sprite bitmap addr
 ;e2-e3 - sprite saved data addr
+;66-68, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
 
     macro sprite_t2,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -68,31 +69,28 @@ saved_off = 18
     endm
 
     ;org $a000
-mul16:   ;in: a * $66 -> $67-68;  byte*byte -> word; used: $66-$6a
-    sta $69
+mul16:   ;in: A * $66 -> Y:X;  byte*byte -> word; used: $66-$68; sets C=0
+    sta $67
     ldy #0
-    sty $6a
+    sty $68
     ldx #0
 .l2 lsr $66
     bcc .l1
 
     clc
     txa
-    adc $69
+    adc $67
     tax
     tya
-    adc $6a
+    adc $68
     tay
-.l1 asl $69
-    rol $6a
+.l1 asl $67
+    rol $68
     lda $66
     bne .l2
-
-    sty $68
-    stx $67
 .le rts
 
-put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
+put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2clrud_off+ddir
     lda ($e6),y
     asl
@@ -325,7 +323,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ora $d5
     ldy $d7
     sta ($e0),y  ;saved[x][y] = cc & 0xf | cl & 0xf0
-    sta $69
+    sta .t+1
 
     lda $da
     lsr
@@ -355,7 +353,7 @@ put_t2: ;in: $e6-e7;  used: $66-69, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $dc  ;if (data[x][y] == 0)
     bne .l3
 
-    lda $69
+.t  lda #0
     sta $d9    ;b1 = saved[x][y]
     lda $db
     sta $da  ;b2 = data[x + 1][y]
@@ -444,13 +442,11 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     bcc *+4
     sbc ($e6),y  ;C=1
     jsr mul16  ;[(y + yindex)%ysize]
-
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    clc
-    adc $67
+    txa
+    adc $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0], C=0
     sta $e0
-    lda $e3
-    adc $68
+    tya
+    adc $e3
     sta $e1
 
     lda $d6
@@ -680,13 +676,11 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     bcc *+4
     sbc ($e6),y  ;C=1
     jsr mul16   ;[(y + yindex)%ysize]
-
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    clc
-    adc $67
+    txa
+    adc $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0], C=0
     sta $e0
-    lda $e3
-    adc $68
+    tya
+    adc $e3  ;sets C=0
     sta $e1
 
     pla
@@ -853,7 +847,7 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     sta ($d2),y  ;prg[addr + 0x400] = b2 << 4 | b1 & 0xf
     rts
 
-left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
+left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     ldy #s2xpos_off
     lda ($e6),y
     sec
@@ -887,11 +881,16 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     bcc *+4
     sbc ($e6),y  ;C=1
     jsr mul16   ;(y + yindex)%ysize
+    txa
+    adc $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0], C=0
+    sta $e0
+    tya
+    adc $e3  ;sets C=0
+    sta $e1
 
     lda .xsz+1
     ldy #s2xpos_off
-    clc
-    adc ($e6),y
+    adc ($e6),y  ;C=0
     tax   ;xpos + xsize
 
     iny
@@ -899,12 +898,6 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     adc $d6  ;C=0
     sta $d5  ;ypos + y
 
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
     pha
@@ -936,7 +929,7 @@ left0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     bcc .l2
     rts
 
-right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
+right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     ldy #s2xsize_off
     lda ($e6),y
     sta .xsz+1
@@ -954,6 +947,12 @@ right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     bcc *+4
     sbc ($e6),y  ;C=1
     jsr mul16   ;(y + yindex)%ysize
+    txa
+    adc $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0], C=0
+    sta $e0
+    tya
+    adc $e3   ;sets C=0
+    sta $e1
 
     ldy #s2xpos_off
     lda ($e6),y
@@ -964,12 +963,6 @@ right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     adc $d6  ;C=0
     sta $d5  ;ypos + y
 
-    lda $e2  ;e0 - saved[0][(y + yindex)%ysize], e2 - saved[0][0]
-    adc $67  ;C=0
-    sta $e0
-    lda $e3
-    adc $68
-    sta $e1
     ldy #s2xidx_off
     lda ($e6),y
     pha
@@ -1017,7 +1010,7 @@ right0_t2:  ;used: $66-6a, $d0-d3, $d5-d6, $d9-db
     sta ($e6),y  ;xindex++;  if (xindex == xsize) xindex = 0
     rts
 
-up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
+up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1050,13 +1043,11 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy #s2yidx_off
     lda ($e6),y
     jsr mul16   ;yindex
-
-    lda $e2  ;e0 - saved[0][yindex], e2 - saved[0][0]
-    clc
-    adc $67
+    txa
+    adc $e2  ;e0 - saved[0][yindex], e2 - saved[0][0], C=0
     sta $e0
-    lda $e3
-    adc $68
+    tya
+    adc $e3  ;sets C=0
     sta $e1
 
     ldy #s2xpos_off
@@ -1260,7 +1251,7 @@ up0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0
     rts
 
-down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
+down0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     ldy #s2xidx_off
     lda ($e6),y
     sta $db   ;xindex
@@ -1275,13 +1266,11 @@ down0_t2:  ;used: $66-6a, $d0-d3, $d5-d7, $d9-dc
     ldy #s2yidx_off
     lda ($e6),y
     jsr mul16   ;yindex
-
-    lda $e2  ;e0 - saved[0][yindex], e2 - saved[0][0]
-    clc
-    adc $67
+    txa
+    adc $e2  ;e0 - saved[0][yindex], e2 - saved[0][0], C-0
     sta $e0
-    lda $e3
-    adc $68
+    tya
+    adc $e3  ;sets C=0
     sta $e1
 
     ldy #s2xpos_off
@@ -1593,7 +1582,7 @@ cmain1:
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
     rts
 
-left2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+left2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xpos_off
     lda ($e6),y
     cmp #2
@@ -1605,7 +1594,7 @@ left2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr left0_t2
     jmp put00_t2
 
-right_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+right_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1619,7 +1608,7 @@ right_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr right0_t2
     jmp put00_t2
 
-right2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
+right2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xsize_off
     lda ($e6),y
     sec
@@ -1634,7 +1623,7 @@ right2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     jsr right0_t2
     jmp put00_t2
 
-down_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
+down_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sta $d6
@@ -1649,7 +1638,7 @@ down_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr down0_t2
     jmp put00_t2
 
-down2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
+down2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     sec
@@ -1664,7 +1653,7 @@ down2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr down0_t2
     jmp put00_t2
 
-up_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
+up_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     bne *+3
@@ -1674,7 +1663,7 @@ up_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr up0_t2
     jmp put00_t2
 
-up2_t2:  ;in: $e6-e7;  used: $66-6a, $d0-d3, $d5-d7, $d9-de, $e0-e5
+up2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #s2ypos_off
     lda ($e6),y
     cmp #2
