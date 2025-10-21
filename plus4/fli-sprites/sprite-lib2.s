@@ -1,7 +1,7 @@
 ;for vasm6502/oldstyle
 ;the next zp-locations are used:
 ;e6-e7 - addr of the sprite def
-;e4-e5 - sprite bitmap addr
+;e4-e5 - sprite data addr
 ;e2-e3 - sprite saved data addr
 ;66-68, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
 
@@ -68,6 +68,49 @@ saved_off = 18
     sta $e3
     endm
 
+     macro rle_init
+     lda $e4
+     sta $dd
+     lda $e5
+     sta $de   ;addr
+     lda #0
+     sta $6b   ;count
+     endm
+
+     macro rle_get
+     ldy #0
+     lda $6b
+     beq .l1\@
+
+     lda ($dd),y
+     sta \1
+     dec $6b
+     bpl .l3\@  ;always
+.l1\@
+     lda ($dd),y
+     bmi .l2\@
+
+     sta \1
+     bpl .l4\@  ;always
+.l2\@
+     sec
+     sbc #129
+     sta $6b
+     inc $dd
+     bne *+4
+     inc $de
+     lda ($dd),y
+     sta \1
+     lda $6b
+.l3\@
+     bne .x\@
+.l4\@
+     inc $dd
+     bne *+4
+     inc $de
+.x\@
+     endm
+
     ;org $a000
 mul16:   ;in: A * $66 -> Y:X;  byte*byte -> word; used: $66-$68; sets C=0
     sta $67
@@ -106,6 +149,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     sta $e5
 
     setspr3_t2
+    rle_init
 
     ldy #s2xsize_off
     lda ($e6),y
@@ -135,6 +179,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr getaddr22  ;addr = getaddr22(xpos, y + ypos)
+    rle_get $69
     lda $d6
     beq .l11
 
@@ -154,13 +199,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $68
     sta $e1
 
-    lda $e4
-    adc $67 ;C=0
-    sta $dd
-    lda $e5
-    adc $68
-    sta $de  ;dd - data[0][y], e4 - data[0][0]
-
     pla
     and #1
     bne .odd
@@ -179,6 +217,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
+    rle_get $69
     jsr .main
 
     ldx $d7
@@ -190,7 +229,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldx $d6
     inx
     txa
-    bne .l7  ;always
+    jmp .l7
 
 .odd
     ldy #0
@@ -213,10 +252,9 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy #0
     sta ($e0),y  ; saved[0][y] = cc >> 4 | cl << 4
 
-    lda ($dd),y  ;Y=0
+    lda $69  ;b1 = data[0][y]
     beq .l8  ;if (data[0][y])
 
-    sta $db   ;b1 = data[0][y]
     lsr
     lsr
     lsr
@@ -230,7 +268,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $da
     and #$f
     sta $d5
-    lda $db
+    lda $69
     asl
     asl
     asl
@@ -254,6 +292,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
+    rle_get $69
     jsr .main
 
     ldx $d7
@@ -271,6 +310,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
+    rle_get $69
 
     ldy #0
     lda ($d0),y
@@ -286,11 +326,9 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ldy $d7
     sta ($e0),y  ;saved[x][y] = cc & 0xf | cl & 0xf0
 
-    ldy $d7
-    lda ($dd),y
+    lda $69    ;b2 = data[x][y]
     beq .l10   ;if (data[x][y])
 
-    sta $db   ;b2 = data[x][y]
     and #$f0
     sta $d5
     lda $d9
@@ -302,7 +340,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $da
     and #$f0
     sta $d5
-    lda $db
+    lda $69
     and #$f
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = cc & 0xf0 | b2 & 0xf
@@ -310,6 +348,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jmp .l12
 
 .main
+    rle_get $6a
     ldy #0
     lda ($d0),y
     sta $d9  ;cl = prg[addr]
@@ -341,36 +380,31 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     sta ($e0),y  ;saved[x + 1][y] = cc >> 4 | cl << 4
     sta $d5
 
-    lda ($dd),y
-    sta $db  ;data[x + 1][y]
-    dey
-    lda ($dd),y
-    sta $dc   ;data[x][y]
-    ora $db
+    lda $6a  ;data[x + 1][y]
+    ora $69  ;data[x][y]
     beq .l2  ;if ((data[x][y] | data[x + 1][y]) == 0)
 
-    ldy #0
-    lda $dc  ;if (data[x][y] == 0)
+    lda $69  ;if (data[x][y] == 0)
     bne .l3
 
 .t  lda #0
     sta $d9    ;b1 = saved[x][y]
-    lda $db
+    lda $6a
     sta $da  ;b2 = data[x + 1][y]
     jmp .l4  ;always  ?bvc
 .l3
-    lda $db  ;if (data[x + 1][y] == 0)
+    lda $6a  ;if (data[x + 1][y] == 0)
     bne .l5
 
-    lda $dc
+    lda $69
     sta $d9   ;b1 = data[x][y]
     lda $d5
     sta $da   ;b2 = saved[x + 1][y]
     jmp .l4  ;always  ?bvc
 .l5
-    lda $dc
+    lda $69
     sta $d9   ;b1 = data[x][y]
-    lda $db
+    lda $6a
     sta $da  ;b2 = data[x + 1][y]
 .l4
     lsr
@@ -381,7 +415,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $d9
     and #$f0
     ora $d5
-    ;ldy #0
+    ldy #0
     sta ($d0),y  ;prg[addr] = b1 & 0xf0 | b2 >> 4
     lda $da
     asl
