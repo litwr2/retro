@@ -3,7 +3,10 @@
 ;e6-e7 - addr of the sprite def
 ;e4-e5 - sprite data addr
 ;e2-e3 - sprite saved data addr
-;66-68, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
+;66-6a, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
+;6b - for RLE
+
+RLE = 1   ;1 slightly slower but supports the RLE compression
 
     macro sprite_t2,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -73,12 +76,15 @@ saved_off = 18
      sta $dd
      lda $e5
      sta $de   ;addr
+   if RLE
      lda #0
      sta $6b   ;count
+   endif
      endm
 
-     macro rle_get
+     macro rle_get   ;sets Y=0
      ldy #0
+  if RLE
      lda $6b
      beq .l1\@
 
@@ -109,6 +115,13 @@ saved_off = 18
      bne *+4
      inc $de
 .x\@
+   else
+     lda ($dd),y
+     sta \1
+     inc $dd
+     bne *+4
+     inc $de
+   endif
      endm
 
     ;org $a000
@@ -217,8 +230,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-    rle_get $69
-    jsr .main
+    jsr .main1
 
     ldx $d7
     inx
@@ -292,8 +304,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-    rle_get $69
-    jsr .main
+    jsr .main1
 
     ldx $d7
     inx
@@ -310,10 +321,9 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
-    rle_get $69
+    rle_get $69  ;sets Y=0
 
-    ldy #0
-    lda ($d0),y
+    lda ($d0),y  ;Y=0
     sta $d9  ;cl = prg[addr]
     lda ($d2),y
     sta $da  ;cc = prg[addr + 0x400]
@@ -347,10 +357,11 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
 .l10
     jmp .l12
 
+.main1
+    rle_get $69
 .main
-    rle_get $6a
-    ldy #0
-    lda ($d0),y
+    rle_get $6a  ;sets Y=0
+    lda ($d0),y  ;Y=0
     sta $d9  ;cl = prg[addr]
     lda ($d2),y
     sta $da  ;cc = prg[addr + 0x400]
@@ -440,10 +451,7 @@ left_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-db, $e0-e5
     ;jmp put00_t2
 
 put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
-    lda $e4
-    sta $dd
-    lda $e5
-    sta $de
+    rle_init
 
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
@@ -462,6 +470,7 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $d6  ;C=0
     tay
     jsr getaddr22  ;addr = getaddr22(xpos, y + ypos)
+    rle_get $69
 
     ldy #s2xsize_off
     lda ($e6),y
@@ -483,16 +492,6 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $e3
     sta $e1
 
-    lda $d6
-    beq .l11
-
-    lda $dd
-    adc $dc  ;C=0
-    sta $dd
-    bcc .l11
-
-    inc $de  ;dd - data[0][y], e4 - data[0][0]
-.l11
     pla
     and #1
     bne .odd
@@ -512,7 +511,7 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-    jsr .main
+    jsr .main1
 
     ldx $d7
     inx
@@ -525,8 +524,7 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     jmp .l7  ;always
 
 .odd
-    ldy #0
-    lda ($dd),y  ;data[0][y]
+    lda $69  ;data[0][y]
     bne .l8  ;if (data[0][y])
 
     ldy #s2xidx_off
@@ -572,13 +570,14 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos)
-    jsr .main
+    jsr .main1
 
     ldx $d7
     inx
     inx
     bne .l9  ;always
 .l15
+    rle_get $69
     ldy #s2xpos_off
     lda ($e6),y
     clc
@@ -589,13 +588,12 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
-
-    ldy $d7
-    lda ($dd),y  ;data[x][y]
+    lda $69  ;data[x][y]
     bne .l10   ;if (data[x][y])
 
     ldy #s2xidx_off
     lda ($e6),y
+    ;clc
     adc $d7  ;C=0
     cmp $dc
     bcc *+4
@@ -622,9 +620,11 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     sta ($d2),y  ;prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b2 & 0xf
     jmp .l1
 
+.main1
+    rle_get $69
 .main
-    ldy $d7
-    lda ($dd),y
+    rle_get $6a
+    lda $69
     bne .l5  ;if (data[x][y] == 0)
 
     ldy #s2xidx_off
@@ -638,9 +638,7 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
 .l5 sta $d9     ;b1 =
 
-    ldy $d7
-    iny
-    lda ($dd),y
+    lda $6a
     bne .l3  ;if (data[x + 1][y] == 0)
 
     ldy #s2xidx_off
