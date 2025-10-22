@@ -6,7 +6,7 @@
 ;66-6a, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
 ;6b - for RLE
 
-RLE = 0   ;1 slightly (7%) slower but supports the RLE compression
+RLE = 0   ;1 slightly (12%) slower but supports the RLE compression
 
     macro sprite_t2,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -72,19 +72,19 @@ saved_off = 18
     endm
 
      macro rle_init
+  if RLE
      lda $e4
      sta $dd
      lda $e5
      sta $de   ;addr
-   if RLE
      lda #0
      sta $6b   ;count
-   endif
+  endif
      endm
 
      macro rle_get   ;sets Y=0
-     ldy #0
   if RLE
+     ldy #0
      lda $6b
      beq .l1\@
 
@@ -115,13 +115,7 @@ saved_off = 18
      bne *+4
      inc $de
 .x\@
-   else
-     lda ($dd),y
-     sta \1
-     inc $dd
-     bne *+4
-     inc $de
-   endif
+  endif
      endm
 
     ;org $a000
@@ -211,7 +205,14 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $e3
     adc $68
     sta $e1
-
+  if !RLE
+    lda $e4
+    adc $67 ;C=0
+    sta $dd
+    lda $e5
+    adc $68
+    sta $de  ;dd - data[0][y], e4 - data[0][0]
+  endif
     pla
     and #1
     bne .odd
@@ -263,10 +264,15 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ora $d5
     ldy #0
     sta ($e0),y  ; saved[0][y] = cc >> 4 | cl << 4
-
-    lda $69  ;b1 = data[0][y]
+  if RLE
+    ldx $69  ;b1 = data[0][y]
+  else
+    lda ($dd),y  ;Y=0
+  endif
     beq .l8  ;if (data[0][y])
-
+  if !RLE
+    tax
+  endif
     lsr
     lsr
     lsr
@@ -280,7 +286,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $da
     and #$f
     sta $d5
-    lda $69
+    txa
     asl
     asl
     asl
@@ -322,7 +328,9 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
     rle_get $69  ;sets Y=0
-
+  if !RLE
+    ldy #0
+  endif
     lda ($d0),y  ;Y=0
     sta $d9  ;cl = prg[addr]
     lda ($d2),y
@@ -335,10 +343,16 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     ora $d5
     ldy $d7
     sta ($e0),y  ;saved[x][y] = cc & 0xf | cl & 0xf0
-
-    lda $69    ;b2 = data[x][y]
+  if RLE
+    ldx $69    ;b2 = data[x][y]
+  else
+    ldy $d7
+    lda ($dd),y
+  endif
     beq .l10   ;if (data[x][y])
-
+  if !RLE
+    tax
+  endif
     and #$f0
     sta $d5
     lda $d9
@@ -350,7 +364,7 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda $da
     and #$f0
     sta $d5
-    lda $69
+    txa
     and #$f
     ora $d5
     sta ($d2),y  ;prg[addr + 0x400] = cc & 0xf0 | b2 & 0xf
@@ -361,6 +375,9 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     rle_get $69
 .main
     rle_get $6a  ;sets Y=0
+  if !RLE
+    ldy #0
+  endif
     lda ($d0),y  ;Y=0
     sta $d9  ;cl = prg[addr]
     lda ($d2),y
@@ -390,9 +407,16 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     iny
     sta ($e0),y  ;saved[x + 1][y] = cc >> 4 | cl << 4
     sta $d5
-
-    lda $6a  ;data[x + 1][y]
-    ora $69  ;data[x][y]
+  if RLE
+    lda $69  ;data[x + 1][y]
+  else
+    lda ($dd),y
+    sta $6a  ;data[x + 1][y]
+    dey
+    lda ($dd),y
+    sta $69   ;data[x][y]
+  endif
+    ora $6a
     beq .l2  ;if ((data[x][y] | data[x + 1][y]) == 0)
 
     lda $69  ;if (data[x][y] == 0)
@@ -452,7 +476,12 @@ left_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-db, $e0-e5
 
 put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     rle_init
-
+  if !RLE
+    lda $e4
+    sta $dd
+    lda $e5
+    sta $de
+  endif
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
@@ -492,6 +521,18 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $e3
     sta $e1
 
+  if !RLE
+    lda $d6
+    beq .l11
+
+    lda $dd
+    adc $dc  ;C=0
+    sta $dd
+    bcc .l11
+
+    inc $de  ;dd - data[0][y], e4 - data[0][0]
+.l11
+  endif
     pla
     and #1
     bne .odd
@@ -524,7 +565,12 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     jmp .l7  ;always
 
 .odd
+  if RLE
     lda $69  ;data[0][y]
+  else
+    ldy #0
+    lda ($dd),y  ;data[0][y]
+  endif
     bne .l8  ;if (data[0][y])
 
     ldy #s2xidx_off
@@ -588,12 +634,16 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     adc $d6  ;C=0
     tay
     jsr nextaddr22  ;addr = nextaddr22(addr, x + xpos, y + ypos), sets C=0
+  if RLE
     lda $69  ;data[x][y]
+  else
+    ldy $d7
+    lda ($dd),y  ;data[x][y]
+  endif
     bne .l10   ;if (data[x][y])
 
     ldy #s2xidx_off
     lda ($e6),y
-    ;clc
     adc $d7  ;C=0
     cmp $dc
     bcc *+4
@@ -624,7 +674,12 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     rle_get $69
 .main
     rle_get $6a
+  if RLE
     lda $69
+  else
+    ldy $d7
+    lda ($dd),y
+  endif
     bne .l5  ;if (data[x][y] == 0)
 
     ldy #s2xidx_off
@@ -637,8 +692,13 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     tay
     lda ($e0),y  ;saved[(x + xindex)%xsize][(y + yindex)%ysize]
 .l5 sta $d9     ;b1 =
-
+  if RLE
     lda $6a
+  else
+    ldy $d7
+    iny
+    lda ($dd),y
+  endif
     bne .l3  ;if (data[x + 1][y] == 0)
 
     ldy #s2xidx_off
