@@ -6,7 +6,7 @@
 ;66-6a, d0-d3, d5-d7, d9-de, e0-e1 - temporary variables
 ;6b - for RLE
 
-RLE = 1   ;1 slightly slower but supports the RLE compression
+RLE = 0   ;1 slightly (7%) slower but supports the RLE compression
 
     macro sprite_t2,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id
@@ -58,7 +58,7 @@ saved_off = 18
     lda #0
     ldy #s2clrud_off+\1
     sta ($e6),y
-    
+
     setspr3_t2
     endm
 
