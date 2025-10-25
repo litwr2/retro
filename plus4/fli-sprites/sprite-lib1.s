@@ -3,6 +3,7 @@
 ;e6-e7 - addr of the sprite def
 ;e4-e5 - sprite bitmap addr
 ;e2-e3 - sprite color addr
+;d0-d3, d5-d7, d9-da - temporary variables
 
     macro sprite_t1,id,xs,ys,xp,yp,nls,nrs,nus,nds
 \id

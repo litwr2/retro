@@ -256,6 +256,9 @@ main:
   ifdef SPRITES1
      include "sprites-t1.s"
   endif
+  ifdef TEXT1
+     include "text-t1.s"
+  endif
   ifdef SPRITES2
      include "sprites-t2.s"
   endif
@@ -271,6 +274,13 @@ init:
      ora #$10
      sta $ff07   ;multicolor mode
      rts
+  if DYNAMIC
+rombyte:
+     sta $ff3e
+     lda ($d0),y
+     sta $ff3f
+     rts
+  endif
 
      org $2c00    ;clrs 0-1: 0-23
      rept $3c0
@@ -641,7 +651,7 @@ setmcl:   ;y - ($d8) y , colors - ($d9 $da)
      endr
   endif
 ;$248+ -$227
-  if DYNAMIC
+  if DYNAMIC   ;exceeds the limits if VSIZE is equal to 280
 abase1:  byte $28, $30, $38, $90
 abase2:  byte $98, $70, $80, $88
 seta:   ;y - ($d8) y , x - x, cs - a, color - $d9
