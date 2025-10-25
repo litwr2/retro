@@ -1,11 +1,12 @@
 #include "p4colors.h"
 int abase1[4] = {0x2800, 0x3000, 0x3800, 0x9000};
 int abase2[4] = {0x9800, 0x7000, 0x8000, 0x8800};
-map<int, int> colscn;
+map<int, int> colscn, n2rgb;
 unsigned char prg[65536];
 void prginit() {
     for (int i = 0; i < 128; i++)
-        colscn[p4palette[i][1]] = p4palette[i][0];
+        colscn[p4palette[i][1]] = p4palette[i][0],
+        n2rgb[p4palette[i][0]] = p4palette[i][1];
     colscn[-1] = 0;
 }
 void setbm() {
@@ -16,8 +17,10 @@ void setbm() {
 				px = 6 - ((x&3) << 1),
 				cs = 3;
 			if (y >= 192 && (y < 200 || y < 208 && x < 96)) bm = 0x6000;
-			if (picr[x][y] == cell[x/4][y/2].c1) cs = 1;
-			else if (picr[x][y] == cell[x/4][y/2].c2) cs = 2;
+			if (cell[x/4][y/2].c1 == cell[x/4][y/2].c2 && x%4 > 1 && picr[x][y] == cell[x/4][y/2].c1) cs = 1;
+			else 
+			if (picr[x][y] == cell[x/4][y/2].c1) cs = 2;
+			else if (picr[x][y] == cell[x/4][y/2].c2) cs = 1;
 			else if (picr[x][y] == mc2[y]) cs = 0;
 			prg[bm + p] = prg[bm + p] & ~(3 << px) | cs << px;
 	    }
@@ -25,8 +28,8 @@ void setbm() {
 void setattr(void) {
     for (int x = 0; x < hs/4; x++)
         for (int y = 0; y < vs; y += 2) {
-            int c1 = colscn[cell[x][y/2].c1],
-                c2 = colscn[cell[x][y/2].c2],
+            int c2 = colscn[cell[x][y/2].c1],
+                c1 = colscn[cell[x][y/2].c2],
                 ba = abase2[y/2%4] - 0x400,
                 p = (y >> 3)*40 + x;
             if (y < 192) ba = abase1[y/2%4];
