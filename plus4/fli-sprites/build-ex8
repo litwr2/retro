@@ -1,0 +1,4 @@
+#
+build-asm -DTEXT2
+build-picture bg.cpp
+mv out1.prg ex8.prg
