@@ -464,16 +464,6 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .l2 rts
 
-left_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-db, $e0-e5
-    ldy #s2xpos_off
-    lda ($e6),y
-    bne *+3
-    rts  ;if (xpos == 0) return
-
-    setspr_t2 ldir
-    jsr left0_t2
-    ;jmp put00_t2
-
 put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     rle_init
   if !RLE
@@ -1674,6 +1664,17 @@ cmain1:
     sta ($e0),y  ;saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
     rts
 
+  if HILEV2
+left_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-db, $e0-e5
+    ldy #s2xpos_off
+    lda ($e6),y
+    bne *+3
+    rts  ;if (xpos == 0) return
+
+    setspr_t2 ldir
+    jsr left0_t2
+    jmp put00_t2
+
 left2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d6, $d9-da, $dc-$de, $e0-e5
     ldy #s2xpos_off
     lda ($e6),y
@@ -1766,6 +1767,7 @@ up2_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     jsr up0_t2
     jsr up0_t2
     jmp put00_t2
+  endif
 
 getaddr22:  ;in :x, y;  used: AC, YR, XR;  doubled x, y are used;  returns addr in $d0-d1 and $d2-d3, C=0
     lda #0

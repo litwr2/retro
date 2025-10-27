@@ -1,5 +1,7 @@
 ;for vasm assembler, oldstyle syntax
 
+HILEV2 = 1
+
     ldy #<s10
     sty $e6
     ldy #>s10

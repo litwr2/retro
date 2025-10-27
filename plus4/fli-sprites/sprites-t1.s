@@ -1,5 +1,7 @@
 ;for vasm assembler, oldstyle syntax
 
+HILEV1 = 1
+
    ;jsr waitkey
     ldy #<s6
     sty $e6

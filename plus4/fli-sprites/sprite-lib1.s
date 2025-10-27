@@ -394,37 +394,6 @@ right0_t1:   ;use: $d0-d2,$d6
     bne .l5  ;always
 .l0 rts
 
-right_t1:
-    ldy #sxsize_off
-    lda ($e6),y
-    sec
-    sbc #HSIZE
-    ldy #sxpos_off
-    adc ($e6),y  ;C=0, xpos == 160-xsize
-    bne *+3
-    rts
-
-    setspr_t1 rdir
-    jsr right0_t1
-    jsr put_t1c
-    jmp put00_t1
-
-right2_t1:
-    ldy #sxsize_off
-    lda ($e6),y
-    sec
-    sbc #HSIZE-1
-    ldy #sxpos_off
-    adc ($e6),y  ;C=0, xpos + xpos < HSIZE - 1
-    bcc *+3
-    rts
-
-    setspr_t1 rdir
-    jsr right0_t1
-    jsr right0_t1
-    jsr put_t1c
-    jmp put00_t1
-
   if 0
 rightx_t1:
     ;ldy #sdptr_off
@@ -563,37 +532,6 @@ down0_t1:  ;use: $d0-d3, $d6, $d7
     inc $d6
     bne .l5  ;always
 
-down_t1:
-    ldy #sysize_off
-    lda ($e6),y
-    clc
-    sbc #VSIZE-1
-    ldy #sypos_off
-    adc ($e6),y     ;C=0
-    bne *+3
-    rts
-
-    setspr_t1 ddir
-    jsr down0_t1
-    jsr put_t1c
-    jmp put00_t1
-
-down2_t1:
-    ldy #sysize_off
-    lda ($e6),y
-    sec
-    sbc #VSIZE-1
-    ldy #sypos_off
-    adc ($e6),y  ;C=0, ypos + ypos < VSIZE - 1
-    bcc *+3
-    rts
-
-    setspr_t1 ddir
-    jsr down0_t1
-    jsr down0_t1
-    jsr put_t1c
-    jmp put00_t1
-
 left0_t1:   ;use: $d0-$d3, $d6
     ldy #sxpos_off
     lda ($e6),y
@@ -649,6 +587,68 @@ left0_t1:   ;use: $d0-$d3, $d6
     inc $d6
     bne .l5   ;always
 .l0 rts
+   if HILEV1
+right_t1:
+    ldy #sxsize_off
+    lda ($e6),y
+    sec
+    sbc #HSIZE
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0, xpos == 160-xsize
+    bne *+3
+    rts
+
+    setspr_t1 rdir
+    jsr right0_t1
+    jsr put_t1c
+    jmp put00_t1
+
+right2_t1:
+    ldy #sxsize_off
+    lda ($e6),y
+    sec
+    sbc #HSIZE-1
+    ldy #sxpos_off
+    adc ($e6),y  ;C=0, xpos + xpos < HSIZE - 1
+    bcc *+3
+    rts
+
+    setspr_t1 rdir
+    jsr right0_t1
+    jsr right0_t1
+    jsr put_t1c
+    jmp put00_t1
+
+down_t1:
+    ldy #sysize_off
+    lda ($e6),y
+    clc
+    sbc #VSIZE-1
+    ldy #sypos_off
+    adc ($e6),y     ;C=0
+    bne *+3
+    rts
+
+    setspr_t1 ddir
+    jsr down0_t1
+    jsr put_t1c
+    jmp put00_t1
+
+down2_t1:
+    ldy #sysize_off
+    lda ($e6),y
+    sec
+    sbc #VSIZE-1
+    ldy #sypos_off
+    adc ($e6),y  ;C=0, ypos + ypos < VSIZE - 1
+    bcc *+3
+    rts
+
+    setspr_t1 ddir
+    jsr down0_t1
+    jsr down0_t1
+    jsr put_t1c
+    jmp put00_t1
 
 left_t1:
     ldy #sxpos_off
@@ -697,6 +697,7 @@ up2_t1:
     jsr up0_t1
     jsr put_t1c
     jmp put00_t1
+   endif
 
 tab1
   byte $a5, $a4, $a7, $a6, $a1, $a0, $a3, $a2, $ad, $ac, $af, $ae, $a9, $a8, $ab, $aa

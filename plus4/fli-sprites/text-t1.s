@@ -1,5 +1,7 @@
 ;for vasm assembler, oldstyle syntax
 
+HILEV1 = 0
+
 test:
   if 0
     lda #<text1
