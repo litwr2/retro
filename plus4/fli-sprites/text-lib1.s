@@ -35,7 +35,6 @@ get_glyph_t1:  ;ZF - 0/1 - ROM/RAM; $d0-d1 - from addr, $d2-d3 - to addr, $d9 - 
     sta ($d2,x)  ;X=0
     tya
     jsr .subr1
-    tax
     lda $66
     ldy #1
     sta ($d2),y
@@ -45,7 +44,6 @@ get_glyph_t1:  ;ZF - 0/1 - ROM/RAM; $d0-d1 - from addr, $d2-d3 - to addr, $d9 - 
     sta $d2
     bcc *+4
     inc $d3
-    txa
     dec $67
     bne .l5
     rts
@@ -77,13 +75,13 @@ put_gl_t1: ;list: RAM/ROM(1,0), base_in (2,1), base_out(2,3), bg(1,5), fg(1,6), 
     iny
     stx $d6
     sty $d7  ;the list base
-    sty $6a
     clc
-    lda #8
-    adc $d6
+    txa
+    adc #8
     sta $69
-    bcc *+4
-    inc $6a  ;the char base
+    bcc *+3
+    iny
+    sty $6a  ;the char base
 
     ldy #7
     lda ($d6),y

@@ -2,58 +2,6 @@
 
 test:
   if 0
-    lda #<freemem
-    sta $e6
-    lda #>freemem
-    sta $e7
-    lda #10  ;x
-    sta $d5
-    lda #100  ;y
-    sta $d6
-    ldx #8  ;ys
-    lda #40  ;xs
-    jsr make_sprite_t1
-    lda $e6
-    clc
-    adc #20
-    sta $e4
-    sta ($e6),y
-    iny
-    lda $e7
-    adc #0
-    sta $e5
-    sta ($e6),y  ;bitmap addr
-    iny
-    lda $e4
-    adc #80  ;C=0
-    sta $e2
-    sta ($e6),y
-    iny
-    lda $e5
-    adc #0
-    sta $e3
-    sta ($e6),y  ;addr of colors
-    lda #$a5
-    ldy #80  ;40/4*8
-.l1 dey
-    sta ($e4),y
-    bne .l1
-
-    lda #0
-    ldy #8
-.l2 dey
-    sta ($e2),y
-    bne .l2
-
-    lda #$55
-    ldx #8
-    ldy #8
-.l3 sta ($e2),y
-    iny
-    dex
-    bne .l3
-  endif
-  if 0
     lda #<text1
     sta $e6
     lda #>text1

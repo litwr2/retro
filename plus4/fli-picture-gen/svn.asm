@@ -262,6 +262,9 @@ main:
   ifdef SPRITES2
      include "sprites-t2.s"
   endif
+  ifdef TEXT2
+     include "text-t2.s"
+  endif
      jmp *
 
      org $2800    ;attr 0-1: 0-23
