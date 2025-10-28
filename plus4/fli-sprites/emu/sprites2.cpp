@@ -6,33 +6,114 @@ struct Sprite2 {
     unsigned char xpos, ypos, xindex, yindex;
     unsigned char visible;
     void put00() {
-        for (int x = 0; x < xsize; x++)
-	        for (int y = 0; y < ysize; y++)
-	            if (data[x][y])
-	                setcolor22(xpos + x, ypos + y, data[x][y]);
+        int addr;
+        for (int y = 0; y < ysize; y++) {
+            addr = getaddr22(xpos, y + ypos);
+            if ((xpos&1) == 0) {
+                if (data[0][y])
+	                setcolor22f(addr, 2, data[0][y]);
 	            else
-	                setcolor22(xpos + x, ypos + y, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+	                setcolor22f(addr, 2, saved[xindex%xsize][(y + yindex)%ysize]);
+	            if (data[1][y])
+	                setcolor22f(addr, 1, data[1][y]);
+	            else
+	                setcolor22f(addr, 1, saved[(1 + xindex)%xsize][(y + yindex)%ysize]);
+		        for (int x = 2; x < xsize; x += 2) {
+		            addr = nextaddr22(addr, x + xpos, y + ypos);
+			        if (data[x][y])
+			            setcolor22f(addr, 2, data[x][y]);
+			        else
+			            setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+			        if (data[x + 1][y])
+			            setcolor22f(addr, 1, data[x + 1][y]);
+			        else
+			            setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+			    }
+	        } else {
+                if (data[0][y])
+	                setcolor22f(addr, 1, data[0][y]);
+	            else
+	                setcolor22f(addr, 1, saved[xindex%xsize][(y + yindex)%ysize]);
+		        for (int x = 1;; x += 2) {
+		            addr = nextaddr22(addr, x + xpos, y + ypos);
+			        if (data[x][y])
+			            setcolor22f(addr, 2, data[x][y]);
+			        else
+			            setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+			        if (x == xsize - 1) break;
+			        if (data[x + 1][y])
+			            setcolor22f(addr, 1, data[x + 1][y]);
+			        else
+			            setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+			    }
+	        }
+	    } 
     }
     void put0() {
         if (!visible) return;
         put00();
     }
     void put() {
+        int addr;
         if (visible) return;
         xindex = yindex = 0;
-        for (int x = 0; x < xsize; x++)
-	        for (int y = 0; y < ysize; y++) {
-	            saved[x][y] = getcolor22(xpos + x, ypos + y);
-            	if (data[x][y])
-            	    setcolor22(xpos + x, ypos + y, data[x][y]);
+        for (int y = 0; y < ysize; y++) {
+            addr = getaddr22(xpos, y + ypos);
+            if ((xpos&1) == 0) {
+            	saved[0][y] = getcolor22f(addr, 2);
+            	saved[1][y] = getcolor22f(addr, 1);
+                if (data[0][y])
+            		setcolor22f(addr, 2, data[0][y]);
+                if (data[1][y])
+            		setcolor22f(addr, 1, data[1][y]);
+	        	for (int x = 2; x < xsize; x += 2) {
+	            	addr = nextaddr22(addr, x + xpos, y + ypos);
+	            	saved[x][y] = getcolor22f(addr, 2);
+	            	saved[x + 1][y] = getcolor22f(addr, 1);
+            	    if (data[x][y])
+            	    	setcolor22f(addr, 2, data[x][y]);
+            	    if (data[x + 1][y])
+            	    	setcolor22f(addr, 1, data[x + 1][y]);
+            	}
+            } else {
+                saved[0][y] = getcolor22f(addr, 1);
+                if (data[0][y])
+            		setcolor22f(addr, 1, data[0][y]);
+	        	for (int x = 1;; x += 2) {
+	            	addr = nextaddr22(addr, x + xpos, y + ypos);
+	            	saved[x][y] = getcolor22f(addr, 2);
+            	    if (data[x][y])
+            	    	setcolor22f(addr, 2, data[x][y]);
+            	    if (x == xsize - 1) break;
+	            	saved[x + 1][y] = getcolor22f(addr, 1);
+            	    if (data[x + 1][y])
+            	    	setcolor22f(addr, 1, data[x + 1][y]);
+            	}
             }
+        }
         visible = 1;
     }
     void remove() {
+        int addr;
         if (!visible) return;
         for (int y = 0; y < ysize; y++) {
-            for (int x = 0; x < xsize; x++) {
-	            setcolor22(xpos + x, ypos + y, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+            addr = getaddr22(xpos, y + ypos);
+            if ((xpos&1) == 0) {
+                setcolor22f(addr, 2, saved[xindex%xsize][(y + yindex)%ysize]);
+                setcolor22f(addr, 1, saved[(1 + xindex)%xsize][(y + yindex)%ysize]);
+                for (int x = 2; x < xsize; x += 2) {
+                    addr = nextaddr22(addr, x + xpos, y + ypos);
+	                setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+	                setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+	            }
+            } else {
+                setcolor22f(addr, 1, saved[xindex%xsize][(y + yindex)%ysize]);
+                for (int x = 1;; x += 2) {
+                    addr = nextaddr22(addr, x + xpos, y + ypos);
+	                setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
+	                if (x == xsize - 1) break;
+	                setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+	            }
             }
         }
         visible = 0;
@@ -75,12 +156,37 @@ struct Sprite2 {
         put0();
     }
     void up0() {
+        int addr1, addr2;
         ypos--;
         if (!visible) return;
         if (yindex == 0) yindex = ysize - 1; else yindex--;
-        for (int x = 0; x < xsize; x++)
-            setcolor22(xpos + x, ypos + ysize, saved[(x + xindex)%xsize][yindex]),
-            saved[(x + xindex)%xsize][yindex] = getcolor22(xpos + x, ypos);
+        addr1 = getaddr22(xpos, ypos);
+        addr2 = getaddr22(xpos, ypos + ysize);
+        if ((xpos&1) == 0) {
+        	setcolor22f(addr2, 2, saved[xindex%xsize][yindex]);
+        	saved[xindex%xsize][yindex] = getcolor22f(addr1, 2);
+        	setcolor22f(addr2, 1, saved[(xindex + 1)%xsize][yindex]);
+        	saved[(xindex + 1)%xsize][yindex] = getcolor22f(addr1, 1);
+            for (int x = 2; x < xsize; x += 2)
+		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
+		        setcolor22f(addr2, 2, saved[(x + xindex)%xsize][yindex]),
+		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr1, 2),
+		        setcolor22f(addr2, 1, saved[(x + 1 + xindex)%xsize][yindex]),
+		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr1, 1);
+	    } else {
+        	setcolor22f(addr2, 1, saved[xindex%xsize][yindex]);
+        	saved[xindex%xsize][yindex] = getcolor22f(addr1, 1);
+            for (int x = 1;; x += 2) {
+		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
+		        setcolor22f(addr2, 2, saved[(x + xindex)%xsize][yindex]),
+		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr1, 2);
+		        if (x == xsize - 1) break;
+		        setcolor22f(addr2, 1, saved[(x + 1 + xindex)%xsize][yindex]),
+		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr1, 1);
+		    }
+	    }
     }
     void up() {
         if (ypos == 0) return;
@@ -88,10 +194,35 @@ struct Sprite2 {
         put0();
     }
     void down0() {
+        int addr1, addr2;
         if (!visible) {ypos++; return;}
-        for (int x = 0; x < xsize; x++)
-            setcolor22(xpos + x, ypos, saved[(x + xindex)%xsize][yindex]),
-            saved[(x + xindex)%xsize][yindex] = getcolor22(xpos + x, ypos + ysize);
+        addr1 = getaddr22(xpos, ypos);
+        addr2 = getaddr22(xpos, ypos + ysize);
+        if ((xpos&1) == 0) {
+        	setcolor22f(addr1, 2, saved[xindex%xsize][yindex]);
+        	saved[xindex%xsize][yindex] = getcolor22f(addr2, 2);
+        	setcolor22f(addr1, 1, saved[(xindex + 1)%xsize][yindex]);
+        	saved[(xindex + 1)%xsize][yindex] = getcolor22f(addr2, 1);
+            for (int x = 2; x < xsize; x += 2)
+		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
+		        setcolor22f(addr1, 2, saved[(x + xindex)%xsize][yindex]),
+		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr2, 2),
+		        setcolor22f(addr1, 1, saved[(x + 1 + xindex)%xsize][yindex]),
+		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr2, 1);
+	    } else {
+        	setcolor22f(addr1, 1, saved[xindex%xsize][yindex]);
+        	saved[xindex%xsize][yindex] = getcolor22f(addr2, 1);
+            for (int x = 1;; x += 2) {
+		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
+		        setcolor22f(addr1, 2, saved[(x + xindex)%xsize][yindex]),
+		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr2, 2);
+		        if (x == xsize - 1) break;
+		        setcolor22f(addr1, 1, saved[(x + 1 + xindex)%xsize][yindex]),
+		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr2, 1);
+		    }
+	    }
         yindex++;
         if (yindex == ysize) yindex = 0;
         ypos++;
@@ -172,5 +303,5 @@ struct Sprite2 {
     }
 };
 
-Sprite2 s1(18, 101);
+Sprite2 s1(16, 101);
 
