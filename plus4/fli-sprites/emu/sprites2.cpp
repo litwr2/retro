@@ -6,46 +6,62 @@ struct Sprite2 {
     unsigned char xpos, ypos, xindex, yindex;
     unsigned char visible;
     void put00() {
-        int addr;
+        int addr, x;
+        unsigned int b1, b2;
         for (int y = 0; y < ysize; y++) {
+            x = 0;
             addr = getaddr22(xpos, y + ypos);
             if ((xpos&1) == 0) {
-                if (data[0][y])
-	                setcolor22f(addr, 2, data[0][y]);
-	            else
-	                setcolor22f(addr, 2, saved[xindex%xsize][(y + yindex)%ysize]);
-	            if (data[1][y])
-	                setcolor22f(addr, 1, data[1][y]);
-	            else
-	                setcolor22f(addr, 1, saved[(1 + xindex)%xsize][(y + yindex)%ysize]);
-		        for (int x = 2; x < xsize; x += 2) {
+                if (data[x][y] == 0)
+		            b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
+		        else
+		            b1 = data[x][y];
+		        if (data[x + 1][y] == 0)
+		            b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize];
+		        else
+		            b2 = data[x + 1][y];
+	            prg[addr] = b1 & 0xf0 | b2 >> 4;
+                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+		        for (x = 2; x < xsize; x += 2) {
 		            addr = nextaddr22(addr, x + xpos, y + ypos);
-			        if (data[x][y])
-			            setcolor22f(addr, 2, data[x][y]);
+	                if (data[x][y] == 0)
+			            b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
 			        else
-			            setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
-			        if (data[x + 1][y])
-			            setcolor22f(addr, 1, data[x + 1][y]);
+			            b1 = data[x][y];
+			        if (data[x + 1][y] == 0)
+			            b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize];
 			        else
-			            setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+			            b2 = data[x + 1][y];
+ 	                prg[addr] = b1 & 0xf0 | b2 >> 4;
+                    prg[addr + 0x400] = b1 & 0xf | b2 << 4;
 			    }
 	        } else {
                 if (data[0][y])
-	                setcolor22f(addr, 1, data[0][y]);
+                    b1 = data[0][y];
 	            else
-	                setcolor22f(addr, 1, saved[xindex%xsize][(y + yindex)%ysize]);
-		        for (int x = 1;; x += 2) {
+	                b1 = saved[xindex][(y + yindex)%ysize];
+                prg[addr] = prg[addr] & 0xf0 | b1 >> 4;
+                prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b1 << 4;
+		        for (x = 1; x < xsize - 1; x += 2) {
 		            addr = nextaddr22(addr, x + xpos, y + ypos);
-			        if (data[x][y])
-			            setcolor22f(addr, 2, data[x][y]);
+	                if (data[x][y] == 0)
+			            b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
 			        else
-			            setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
-			        if (x == xsize - 1) break;
-			        if (data[x + 1][y])
-			            setcolor22f(addr, 1, data[x + 1][y]);
+			            b1 = data[x][y];
+			        if (data[x + 1][y] == 0)
+			            b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize];
 			        else
-			            setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+			            b2 = data[x + 1][y];
+	                prg[addr] = b1 & 0xf0 | b2 >> 4;
+                    prg[addr + 0x400] = b1 & 0xf | b2 << 4;
 			    }
+			    addr = nextaddr22(addr, x + xpos, y + ypos);
+			    if (data[x][y])
+                    b2 = data[x][y];
+	            else
+	                b2 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
+	            prg[addr] = prg[addr] & 0xf | b2 & 0xf0;
+	            prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b2 & 0xf;
 	        }
 	    } 
     }
@@ -55,65 +71,125 @@ struct Sprite2 {
     }
     void put() {
         int addr;
+        unsigned char cl, cc, b1, b2, x;
         if (visible) return;
         xindex = yindex = 0;
         for (int y = 0; y < ysize; y++) {
             addr = getaddr22(xpos, y + ypos);
             if ((xpos&1) == 0) {
-            	saved[0][y] = getcolor22f(addr, 2);
-            	saved[1][y] = getcolor22f(addr, 1);
-                if (data[0][y])
-            		setcolor22f(addr, 2, data[0][y]);
-                if (data[1][y])
-            		setcolor22f(addr, 1, data[1][y]);
-	        	for (int x = 2; x < xsize; x += 2) {
-	            	addr = nextaddr22(addr, x + xpos, y + ypos);
-	            	saved[x][y] = getcolor22f(addr, 2);
-	            	saved[x + 1][y] = getcolor22f(addr, 1);
-            	    if (data[x][y])
-            	    	setcolor22f(addr, 2, data[x][y]);
-            	    if (data[x + 1][y])
-            	    	setcolor22f(addr, 1, data[x + 1][y]);
-            	}
+                cc = prg[addr + 0x400];
+                cl = prg[addr];
+                saved[0][y] = cc & 0xf | cl & 0xf0;
+            	saved[1][y] = cc >> 4 | cl << 4;
+                if ((data[0][y] | data[1][y]) == 0);
+	            else {
+			        if (data[0][y] == 0)
+			            b1 = saved[0][y],
+		                b2 = data[1][y];
+			        else if (data[1][y] == 0)
+			            b1 = data[0][y],
+		                b2 = saved[1][y];
+			        else
+			            b1 = data[0][y],
+			            b2 = data[1][y];
+			        prg[addr] = b1 & 0xf0 | b2 >> 4;
+		            prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+                }
+		        for (x = 2; x < xsize; x += 2) {
+		            addr = nextaddr22(addr, x + xpos, y + ypos);
+		            cc = prg[addr + 0x400];
+                    cl = prg[addr];
+                    saved[x][y] = cc & 0xf | cl & 0xf0;
+            	    saved[x + 1][y] = cc >> 4 | cl << 4;
+			        if ((data[x][y] | data[x + 1][y]) == 0);
+			        else {
+					    if (data[x][y] == 0)
+			                b1 = saved[x][y],
+		                    b2 = data[x + 1][y];
+			            else if (data[x + 1][y] == 0)
+			                b1 = data[x][y],
+		                    b2 = saved[x + 1][y];
+			            else
+			                b1 = data[x][y],
+			                b2 = data[x + 1][y];
+			            prg[addr] = b1 & 0xf0 | b2 >> 4;
+		                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+                    }
+			    }
             } else {
-                saved[0][y] = getcolor22f(addr, 1);
+                cc = prg[addr + 0x400];
+                cl = prg[addr];
+                saved[0][y] = cc >> 4 | cl << 4;
                 if (data[0][y])
-            		setcolor22f(addr, 1, data[0][y]);
-	        	for (int x = 1;; x += 2) {
-	            	addr = nextaddr22(addr, x + xpos, y + ypos);
-	            	saved[x][y] = getcolor22f(addr, 2);
-            	    if (data[x][y])
-            	    	setcolor22f(addr, 2, data[x][y]);
-            	    if (x == xsize - 1) break;
-	            	saved[x + 1][y] = getcolor22f(addr, 1);
-            	    if (data[x + 1][y])
-            	    	setcolor22f(addr, 1, data[x + 1][y]);
-            	}
-            }
+                    b1 = data[0][y],
+                    prg[addr] = cl & 0xf0 | b1 >> 4,
+                    prg[addr + 0x400] = cc & 0xf | b1 << 4;
+		        for (x = 1; x < xsize - 1; x += 2) {
+		            addr = nextaddr22(addr, x + xpos, y + ypos);
+		            cc = prg[addr + 0x400];
+                    cl = prg[addr];
+                    saved[x][y] = cc & 0xf | cl & 0xf0;
+            	    saved[x + 1][y] = (cc & 0xf0) >> 4 | (cl & 0xf) << 4;
+			        if ((data[x][y] | data[x + 1][y]) == 0);
+			        else {
+					    if (data[x][y] == 0)
+			                b1 = saved[x][y],
+		                    b2 = data[x + 1][y];
+			            else if (data[x + 1][y] == 0)
+			                b1 = data[x][y],
+		                    b2 = saved[x + 1][y];
+			            else
+			                b1 = data[x][y],
+			                b2 = data[x + 1][y];
+			            prg[addr] = b1 & 0xf0 | b2 >> 4;
+		                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+                    }
+			    }
+			    addr = nextaddr22(addr, x + xpos, y + ypos);
+			    cc = prg[addr + 0x400];
+                cl = prg[addr];
+                saved[x][y] = cc & 0xf | cl & 0xf0;
+			    if (data[x][y])
+                    b2 = data[x][y],
+	                prg[addr] = cl & 0xf | b2 & 0xf0,
+	                prg[addr + 0x400] = cc & 0xf0 | b2 & 0xf;
+	        }
         }
         visible = 1;
     }
     void remove() {
         int addr;
+        unsigned char cl, cc, b1, b2, x;
         if (!visible) return;
         for (int y = 0; y < ysize; y++) {
             addr = getaddr22(xpos, y + ypos);
             if ((xpos&1) == 0) {
-                setcolor22f(addr, 2, saved[xindex%xsize][(y + yindex)%ysize]);
-                setcolor22f(addr, 1, saved[(1 + xindex)%xsize][(y + yindex)%ysize]);
-                for (int x = 2; x < xsize; x += 2) {
+                b1 = saved[xindex][(y + yindex)%ysize];
+                b2 = saved[(1 + xindex)%xsize][(y + yindex)%ysize];
+                prg[addr] = b2 >> 4 | b1 & 0xf0;
+                prg[addr + 0x400] = b2 << 4 | b1 & 0xf;
+                for (x = 2; x < xsize; x += 2) {
                     addr = nextaddr22(addr, x + xpos, y + ypos);
-	                setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
-	                setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+                    b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
+                    b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize];
+                    prg[addr] = b2 >> 4 | b1 & 0xf0;
+                    prg[addr + 0x400] = b2 << 4 | b1 & 0xf;
 	            }
             } else {
-                setcolor22f(addr, 1, saved[xindex%xsize][(y + yindex)%ysize]);
-                for (int x = 1;; x += 2) {
+                b2 = saved[xindex][(y + yindex)%ysize];
+                prg[addr] = prg[addr] & 0xf0 | b2 >> 4;
+                prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4;
+                for (x = 1; x < xsize - 1; x += 2) {
                     addr = nextaddr22(addr, x + xpos, y + ypos);
-	                setcolor22f(addr, 2, saved[(x + xindex)%xsize][(y + yindex)%ysize]);
-	                if (x == xsize - 1) break;
-	                setcolor22f(addr, 1, saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize]);
+                    b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
+                    b2 = saved[(x + 1 + xindex)%xsize][(y + yindex)%ysize];
+                    prg[addr] = b2 >> 4 | b1 & 0xf0;
+                    prg[addr + 0x400] = b2 << 4 | b1 & 0xf;
 	            }
+	            addr = nextaddr22(addr, x + xpos, y + ypos);
+	            b1 = saved[(x + xindex)%xsize][(y + yindex)%ysize];
+	            prg[addr] = prg[addr] & 0xf | b1 & 0xf0;
+	            prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf;
             }
         }
         visible = 0;
@@ -157,35 +233,63 @@ struct Sprite2 {
     }
     void up0() {
         int addr1, addr2;
+        unsigned char cl, cc, b1, b2, x;
         ypos--;
         if (!visible) return;
         if (yindex == 0) yindex = ysize - 1; else yindex--;
         addr1 = getaddr22(xpos, ypos);
         addr2 = getaddr22(xpos, ypos + ysize);
         if ((xpos&1) == 0) {
-        	setcolor22f(addr2, 2, saved[xindex%xsize][yindex]);
-        	saved[xindex%xsize][yindex] = getcolor22f(addr1, 2);
-        	setcolor22f(addr2, 1, saved[(xindex + 1)%xsize][yindex]);
-        	saved[(xindex + 1)%xsize][yindex] = getcolor22f(addr1, 1);
-            for (int x = 2; x < xsize; x += 2)
-		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+            b2 = saved[(xindex + 1)%xsize][yindex];
+            b1 = saved[xindex][yindex];
+            prg[addr2] = b1 & 0xf0 | b2 >> 4;
+            prg[addr2 + 0x400] = b1 & 0xf | b2 << 4;
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[(xindex + 1)%xsize][yindex] = cc >> 4 | cl << 4;
+            saved[xindex][yindex] = cc & 0xf | cl & 0xf0;
+            for (x = 2; x < xsize; x += 2)
 		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        setcolor22f(addr2, 2, saved[(x + xindex)%xsize][yindex]),
-		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr1, 2),
-		        setcolor22f(addr2, 1, saved[(x + 1 + xindex)%xsize][yindex]),
-		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr1, 1);
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr2] = b1 & 0xf0 | b2 >> 4,
+                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
+   		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+                cc = prg[addr1 + 0x400],
+                cl = prg[addr1],
+                saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
+                saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    } else {
-        	setcolor22f(addr2, 1, saved[xindex%xsize][yindex]);
-        	saved[xindex%xsize][yindex] = getcolor22f(addr1, 1);
-            for (int x = 1;; x += 2) {
-		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+	        cc = prg[addr2 + 0x400];
+            cl = prg[addr2];
+            b2 = saved[xindex][yindex];
+            prg[addr2] = cl & 0xf0 | b2 >> 4;
+            prg[addr2 + 0x400] = cc & 0xf | b2 << 4;
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[xindex][yindex] = cc >> 4 | cl << 4;
+            for (x = 1; x < xsize - 1; x += 2) {
 		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        setcolor22f(addr2, 2, saved[(x + xindex)%xsize][yindex]),
-		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr1, 2);
-		        if (x == xsize - 1) break;
-		        setcolor22f(addr2, 1, saved[(x + 1 + xindex)%xsize][yindex]),
-		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr1, 1);
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr2] = b1 & 0xf0 | b2 >> 4,
+                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
+   		        addr1 = nextaddr22(addr1, x + xpos, ypos),
+                cc = prg[addr1 + 0x400],
+                cl = prg[addr1],
+                saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
+                saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 		    }
+		    addr2 = nextaddr22(addr2, x + xpos, ypos + ysize);
+		    cc = prg[addr2 + 0x400];
+            cl = prg[addr2];
+            b1 = saved[(x + xindex)%xsize][yindex];
+            prg[addr2] = cl & 0xf | b1 & 0xf0;
+            prg[addr2 + 0x400] = cc & 0xf0 | b1 & 0xf;
+	        addr1 = nextaddr22(addr1, x + xpos, ypos);
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    }
     }
     void up() {
@@ -195,33 +299,61 @@ struct Sprite2 {
     }
     void down0() {
         int addr1, addr2;
+        unsigned char cl, cc, b1, b2, x;
         if (!visible) {ypos++; return;}
-        addr1 = getaddr22(xpos, ypos);
-        addr2 = getaddr22(xpos, ypos + ysize);
+        addr2 = getaddr22(xpos, ypos);
+        addr1 = getaddr22(xpos, ypos + ysize);
         if ((xpos&1) == 0) {
-        	setcolor22f(addr1, 2, saved[xindex%xsize][yindex]);
-        	saved[xindex%xsize][yindex] = getcolor22f(addr2, 2);
-        	setcolor22f(addr1, 1, saved[(xindex + 1)%xsize][yindex]);
-        	saved[(xindex + 1)%xsize][yindex] = getcolor22f(addr2, 1);
-            for (int x = 2; x < xsize; x += 2)
-		        addr1 = nextaddr22(addr1, x + xpos, ypos),
-		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        setcolor22f(addr1, 2, saved[(x + xindex)%xsize][yindex]),
-		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr2, 2),
-		        setcolor22f(addr1, 1, saved[(x + 1 + xindex)%xsize][yindex]),
-		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr2, 1);
+            b2 = saved[(xindex + 1)%xsize][yindex];
+            b1 = saved[xindex][yindex];
+            prg[addr2] = b1 & 0xf0 | b2 >> 4;
+            prg[addr2 + 0x400] = b1 & 0xf | b2 << 4;
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[(xindex + 1)%xsize][yindex] = cc >> 4 | cl << 4;
+            saved[xindex][yindex] = cc & 0xf | cl & 0xf0;
+            for (x = 2; x < xsize; x += 2)
+                addr2 = nextaddr22(addr2, x + xpos, ypos),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr2] = b1 & 0xf0 | b2 >> 4,
+                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
+   		        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize),
+                cc = prg[addr1 + 0x400],
+                cl = prg[addr1],
+                saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
+                saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    } else {
-        	setcolor22f(addr1, 1, saved[xindex%xsize][yindex]);
-        	saved[xindex%xsize][yindex] = getcolor22f(addr2, 1);
-            for (int x = 1;; x += 2) {
-		        addr1 = nextaddr22(addr1, x + xpos, ypos),
-		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        setcolor22f(addr1, 2, saved[(x + xindex)%xsize][yindex]),
-		        saved[(x + xindex)%xsize][yindex] = getcolor22f(addr2, 2);
-		        if (x == xsize - 1) break;
-		        setcolor22f(addr1, 1, saved[(x + 1 + xindex)%xsize][yindex]),
-		        saved[(x + 1 + xindex)%xsize][yindex] = getcolor22f(addr2, 1);
+	        cc = prg[addr2 + 0x400];
+            cl = prg[addr2];
+            b2 = saved[xindex][yindex];
+            prg[addr2] = cl & 0xf0 | b2 >> 4;
+            prg[addr2 + 0x400] = cc & 0xf | b2 << 4;
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[xindex][yindex] = cc >> 4 | cl << 4;
+            for (x = 1; x < xsize - 1; x += 2) {
+                addr2 = nextaddr22(addr2, x + xpos, ypos),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr2] = b1 & 0xf0 | b2 >> 4,
+                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
+   		        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize),
+                cc = prg[addr1 + 0x400],
+                cl = prg[addr1],
+                saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
+                saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 		    }
+		    addr2 = nextaddr22(addr2, x + xpos, ypos);
+		    cc = prg[addr2 + 0x400];
+            cl = prg[addr2];
+            b1 = saved[(x + xindex)%xsize][yindex];
+            prg[addr2] = cl & 0xf | b1 & 0xf0;
+            prg[addr2 + 0x400] = cc & 0xf0 | b1 & 0xf;
+	        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize);
+            cc = prg[addr1 + 0x400];
+            cl = prg[addr1];
+            saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    }
         yindex++;
         if (yindex == ysize) yindex = 0;
@@ -301,7 +433,21 @@ struct Sprite2 {
             printf("$%02x\n", data[xsize - 1][y]);
          }
     }
+    Sprite2(int x, int y, unsigned char * d) {
+         xpos = x, ypos = y;
+         visible = 0;
+         for (y = 0; y < ysize; y++)
+            for (x = 0; x < xsize; x++)
+               data[x][y] = d[y*xsize + x];
+         for (y = 0; y < ysize; y++) {
+            for (x = 0; x < xsize - 1; x++)
+                printf("$%02x, ", data[x][y]);
+            printf("$%02x\n", data[xsize - 1][y]);
+         }
+    }
 };
 
 Sprite2 s1(16, 101);
-
+/*unsigned char d1[] = {0x62,0x62,0x6f,0x6f,0,0,0x62,0x62,
+                      0x6f,0x6f,0,0,0x62,0x62,0x66,0x66};
+Sprite2 s1(40,100,d1);*/
