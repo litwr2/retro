@@ -41,18 +41,18 @@ int getB(int c) {
 }
 void fillscr() {
     int c = 8;
-    for (int y = 0; y < ymax/2; y++)
-        for (int x = 0; x < xmax/2; x++) {
+    for (int y = 0; y < ymax; y += 2)
+        for (int x = 0; x < xmax; x += 2) {
             //setpa22(x, y, 0x6e, 2);
             //setpa22r(x, y, c);
-            c = abs(x - y)%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
+            c = abs((x - y)/2)%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
             //c = y%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
             //c = x%128; if (c < 8) c = (c + 80); setpa22r(x, y, c);
             if (++c > 127) c = 8;
         }
 }
 
-#include "sprites2.cpp"
+#include "sprites3.cpp"
 
 class Drawing : public Fl_Widget {
     void draw() {
@@ -72,52 +72,54 @@ public:
 
 void button1_callback(Fl_Widget *w) {
     s1.put();
-    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button2_callback(Fl_Widget *w) {
     s1.remove();
-    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button3_callback(Fl_Widget *w) {
     s1.up();
-    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button4_callback(Fl_Widget *w) {
     s1.down();
-    gdrawing->damage(1, s1.xpos*x_scale*2, (s1.ypos - 1)*y_scale*2, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, (s1.ypos - 2)*y_scale, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button5_callback(Fl_Widget *w) {
     s1.left();
-    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
+    //gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button6_callback(Fl_Widget *w) {
     s1.right();
-    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
+    //gdrawing->redraw();
+    gdrawing->damage(1, (s1.xpos - 2)*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button7_callback(Fl_Widget *w) {
     s1.downleft();
-    gdrawing->damage(1, s1.xpos*x_scale*2, (s1.ypos - 1)*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, (s1.ypos - 2)*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button8_callback(Fl_Widget *w) {
     s1.downright();
-    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, (s1.ypos - 1)*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, (s1.xpos - 2)*x_scale, (s1.ypos - 2)*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button9_callback(Fl_Widget *w) {
     s1.upleft();
-    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button10_callback(Fl_Widget *w) {
     s1.upright();
-    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->damage(1, (s1.xpos - 2)*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 void buttonSU_callback(Fl_Widget *w) {
     gdrawing->redraw();
@@ -145,7 +147,8 @@ int main(int argc, char **argv) {
     gwindow->end();
     gwindow->show();
 
-    Fl_Window window(340, 250, "Sprite Control Center 2");
+    Fl_Window window(340, 250, "Sprite Control Center 3");
+    window.position(700,0);
     Fl_Button button1(10, 10, 320, 20, "Put");
     button1.labelsize(12);
     button1.callback(button1_callback);
