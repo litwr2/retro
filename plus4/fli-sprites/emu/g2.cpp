@@ -58,7 +58,7 @@ void fillscr() {
         }
 }
 
-#include "sprites.cpp"
+#include "sprites2.cpp"
 
 class Drawing : public Fl_Widget {
     void draw() {
@@ -78,54 +78,52 @@ public:
 
 void button1_callback(Fl_Widget *w) {
     s1.put();
-    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button2_callback(Fl_Widget *w) {
     s1.remove();
-    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button3_callback(Fl_Widget *w) {
     s1.up();
-    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button4_callback(Fl_Widget *w) {
     s1.down();
-    gdrawing->damage(1, s1.xpos*x_scale, (s1.ypos - 2)*y_scale, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button5_callback(Fl_Widget *w) {
     s1.left();
-    //gdrawing->redraw();
-    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button6_callback(Fl_Widget *w) {
     s1.right();
-    //gdrawing->redraw();
-    gdrawing->damage(1, (s1.xpos - 2)*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button7_callback(Fl_Widget *w) {
     s1.downleft();
-    gdrawing->damage(1, s1.xpos*x_scale, (s1.ypos - 2)*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button8_callback(Fl_Widget *w) {
     s1.downright();
-    gdrawing->damage(1, (s1.xpos - 2)*x_scale, (s1.ypos - 2)*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button9_callback(Fl_Widget *w) {
     s1.upleft();
-    gdrawing->damage(1, s1.xpos*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 
 void button10_callback(Fl_Widget *w) {
     s1.upright();
-    gdrawing->damage(1, (s1.xpos - 2)*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+    gdrawing->redraw();
 }
 void buttonSU_callback(Fl_Widget *w) {
     gdrawing->redraw();
@@ -153,7 +151,7 @@ int main(int argc, char **argv) {
     gwindow->end();
     gwindow->show();
 
-    Fl_Window window(340, 250, "Sprite type 1 Control Center");
+    Fl_Window window(340, 250, "Sprite type 2 Control Center");
     window.position(700,0);
     Fl_Button button1(10, 10, 320, 20, "Put");
     button1.labelsize(12);
