@@ -50,12 +50,9 @@ unsigned char tab1[256] = {
 
 struct Sprite {
     static const int xsize = 16, ysize = 18;
-    unsigned char data[xsize/4][ysize];  //0 - transparent, 1 - mc1, 2 - mc2, 3 - bg inversion - don't use on edges!
+    unsigned char data[xsize/4][ysize];  //0 - transparent, 1 - mc1, 2 - mc2, 3 - bg inversion
     unsigned char xpos, ypos;
     unsigned char color[ysize][2], visible;
-/*    int get2(int x, int y) {
-        return (data[x/4][y] >> (x&3)*2)&3;
-    }*/
     void set2(int x, int y, int v) {
         unsigned char a = data[x/4][y];
         int b = 6 - (x&3)*2;
@@ -66,7 +63,7 @@ struct Sprite {
         unsigned char d, nd, z = xpos&3;
         for (int y = 0; y < ysize; y++) {
             if (h)
-                setmc(ypos + y, color[y]);
+                setmc(ypos + y, color[y][0], color[y][1]);
             addr = getcsaddr(xpos, ypos + y);  //getnextyaddr()
             d = data[0][y];
             if (z) {
@@ -322,5 +319,5 @@ unsigned char colors1[16][2] = {
 //Sprite s1(87, 201, colors1);
 Sprite s1(70, 202, s6data, s6colors);
 //Sprite s1(72, 204, s6data, s6colors);
-//Sprite s1(83, 200, s3data, s3colors);
+//Sprite s1(0, 0, s3data, s3colors);
 
