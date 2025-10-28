@@ -1,5 +1,5 @@
-#define XSIZE 16
-#define YSIZE 16
+#define XSIZE 2
+#define YSIZE 2
 struct Sprite2 {
     static const int xsize = XSIZE, ysize = YSIZE;
     unsigned char data[xsize][ysize], saved[xsize][ysize];  //4-7 - lum, 0-3 - color
@@ -232,63 +232,63 @@ struct Sprite2 {
         put0();
     }
     void up0() {
-        int addr1, addr2;
+        int addr;
         unsigned char cl, cc, b1, b2, x;
         ypos--;
         if (!visible) return;
         if (yindex == 0) yindex = ysize - 1; else yindex--;
-        addr1 = getaddr22(xpos, ypos);
-        addr2 = getaddr22(xpos, ypos + ysize);
+        addr = getaddr22(xpos, ypos + ysize);
         if ((xpos&1) == 0) {
             b2 = saved[(xindex + 1)%xsize][yindex];
             b1 = saved[xindex][yindex];
-            prg[addr2] = b1 & 0xf0 | b2 >> 4;
-            prg[addr2 + 0x400] = b1 & 0xf | b2 << 4;
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
+            prg[addr] = b1 & 0xf0 | b2 >> 4;
+            prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+            for (x = 2; x < xsize; x += 2)
+		        addr = nextaddr22(addr, x + xpos, ypos + ysize),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr] = b1 & 0xf0 | b2 >> 4,
+                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+	    } else {
+            b2 = saved[xindex][yindex];
+            prg[addr] = prg[addr] & 0xf0 | b2 >> 4;
+            prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4;
+            for (x = 1; x < xsize - 1; x += 2) {
+		        addr = nextaddr22(addr, x + xpos, ypos + ysize),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr] = b1 & 0xf0 | b2 >> 4,
+                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+		    }
+		    addr = nextaddr22(addr, x + xpos, ypos + ysize);
+            b1 = saved[(x + xindex)%xsize][yindex];
+            prg[addr] = prg[addr] & 0xf | b1 & 0xf0;
+            prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf;
+	    }
+	    addr = getaddr22(xpos, ypos);
+        if ((xpos&1) == 0) {
+            cc = prg[addr + 0x400];
+            cl = prg[addr];
             saved[(xindex + 1)%xsize][yindex] = cc >> 4 | cl << 4;
             saved[xindex][yindex] = cc & 0xf | cl & 0xf0;
             for (x = 2; x < xsize; x += 2)
-		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        b2 = saved[(xindex + x + 1)%xsize][yindex],
-                b1 = saved[(x + xindex)%xsize][yindex],
-                prg[addr2] = b1 & 0xf0 | b2 >> 4,
-                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
-   		        addr1 = nextaddr22(addr1, x + xpos, ypos),
-                cc = prg[addr1 + 0x400],
-                cl = prg[addr1],
+   		        addr = nextaddr22(addr, x + xpos, ypos),
+                cc = prg[addr + 0x400],
+                cl = prg[addr],
                 saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
                 saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    } else {
-	        cc = prg[addr2 + 0x400];
-            cl = prg[addr2];
-            b2 = saved[xindex][yindex];
-            prg[addr2] = cl & 0xf0 | b2 >> 4;
-            prg[addr2 + 0x400] = cc & 0xf | b2 << 4;
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
-            saved[xindex][yindex] = cc >> 4 | cl << 4;
+            saved[xindex][yindex] = prg[addr + 0x400] >> 4 | prg[addr] << 4;
             for (x = 1; x < xsize - 1; x += 2) {
-		        addr2 = nextaddr22(addr2, x + xpos, ypos + ysize),
-		        b2 = saved[(xindex + x + 1)%xsize][yindex],
-                b1 = saved[(x + xindex)%xsize][yindex],
-                prg[addr2] = b1 & 0xf0 | b2 >> 4,
-                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
-   		        addr1 = nextaddr22(addr1, x + xpos, ypos),
-                cc = prg[addr1 + 0x400],
-                cl = prg[addr1],
+   		        addr = nextaddr22(addr, x + xpos, ypos),
+                cc = prg[addr + 0x400],
+                cl = prg[addr],
                 saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
                 saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 		    }
-		    addr2 = nextaddr22(addr2, x + xpos, ypos + ysize);
-		    cc = prg[addr2 + 0x400];
-            cl = prg[addr2];
-            b1 = saved[(x + xindex)%xsize][yindex];
-            prg[addr2] = cl & 0xf | b1 & 0xf0;
-            prg[addr2 + 0x400] = cc & 0xf0 | b1 & 0xf;
-	        addr1 = nextaddr22(addr1, x + xpos, ypos);
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
+	        addr = nextaddr22(addr, x + xpos, ypos);
+            cc = prg[addr + 0x400];
+            cl = prg[addr];
             saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    }
     }
@@ -298,62 +298,60 @@ struct Sprite2 {
         put0();
     }
     void down0() {
-        int addr1, addr2;
+        int addr;
         unsigned char cl, cc, b1, b2, x;
         if (!visible) {ypos++; return;}
-        addr2 = getaddr22(xpos, ypos);
-        addr1 = getaddr22(xpos, ypos + ysize);
+        addr = getaddr22(xpos, ypos);
         if ((xpos&1) == 0) {
             b2 = saved[(xindex + 1)%xsize][yindex];
             b1 = saved[xindex][yindex];
-            prg[addr2] = b1 & 0xf0 | b2 >> 4;
-            prg[addr2 + 0x400] = b1 & 0xf | b2 << 4;
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
+            prg[addr] = b1 & 0xf0 | b2 >> 4;
+            prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+            for (x = 2; x < xsize; x += 2)
+                addr = nextaddr22(addr, x + xpos, ypos),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr] = b1 & 0xf0 | b2 >> 4,
+                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+	    } else {
+            b2 = saved[xindex][yindex];
+            prg[addr] = prg[addr] & 0xf0 | b2 >> 4;
+            prg[addr + 0x400] = prg[addr + 0x400] & 0xf | b2 << 4;
+            for (x = 1; x < xsize - 1; x += 2) {
+                addr = nextaddr22(addr, x + xpos, ypos),
+		        b2 = saved[(xindex + x + 1)%xsize][yindex],
+                b1 = saved[(x + xindex)%xsize][yindex],
+                prg[addr] = b1 & 0xf0 | b2 >> 4,
+                prg[addr + 0x400] = b1 & 0xf | b2 << 4;
+		    }
+		    addr = nextaddr22(addr, x + xpos, ypos);
+            b1 = saved[(x + xindex)%xsize][yindex];
+            prg[addr] = prg[addr] & 0xf | b1 & 0xf0;
+            prg[addr + 0x400] = prg[addr + 0x400] & 0xf0 | b1 & 0xf;
+	    }
+        addr = getaddr22(xpos, ypos + ysize);
+        if ((xpos&1) == 0) {
+            cc = prg[addr + 0x400];
+            cl = prg[addr];
             saved[(xindex + 1)%xsize][yindex] = cc >> 4 | cl << 4;
             saved[xindex][yindex] = cc & 0xf | cl & 0xf0;
             for (x = 2; x < xsize; x += 2)
-                addr2 = nextaddr22(addr2, x + xpos, ypos),
-		        b2 = saved[(xindex + x + 1)%xsize][yindex],
-                b1 = saved[(x + xindex)%xsize][yindex],
-                prg[addr2] = b1 & 0xf0 | b2 >> 4,
-                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
-   		        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize),
-                cc = prg[addr1 + 0x400],
-                cl = prg[addr1],
+   		        addr = nextaddr22(addr, x + xpos, ypos + ysize),
+                cc = prg[addr + 0x400],
+                cl = prg[addr],
                 saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
                 saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 	    } else {
-	        cc = prg[addr2 + 0x400];
-            cl = prg[addr2];
-            b2 = saved[xindex][yindex];
-            prg[addr2] = cl & 0xf0 | b2 >> 4;
-            prg[addr2 + 0x400] = cc & 0xf | b2 << 4;
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
-            saved[xindex][yindex] = cc >> 4 | cl << 4;
+            saved[xindex][yindex] = prg[addr + 0x400] >> 4 | prg[addr] << 4;
             for (x = 1; x < xsize - 1; x += 2) {
-                addr2 = nextaddr22(addr2, x + xpos, ypos),
-		        b2 = saved[(xindex + x + 1)%xsize][yindex],
-                b1 = saved[(x + xindex)%xsize][yindex],
-                prg[addr2] = b1 & 0xf0 | b2 >> 4,
-                prg[addr2 + 0x400] = b1 & 0xf | b2 << 4,
-   		        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize),
-                cc = prg[addr1 + 0x400],
-                cl = prg[addr1],
+   		        addr = nextaddr22(addr, x + xpos, ypos + ysize),
+                cc = prg[addr + 0x400],
+                cl = prg[addr],
                 saved[(xindex + x + 1)%xsize][yindex] = cc >> 4 | cl << 4,
                 saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
 		    }
-		    addr2 = nextaddr22(addr2, x + xpos, ypos);
-		    cc = prg[addr2 + 0x400];
-            cl = prg[addr2];
-            b1 = saved[(x + xindex)%xsize][yindex];
-            prg[addr2] = cl & 0xf | b1 & 0xf0;
-            prg[addr2 + 0x400] = cc & 0xf0 | b1 & 0xf;
-	        addr1 = nextaddr22(addr1, x + xpos, ypos + ysize);
-            cc = prg[addr1 + 0x400];
-            cl = prg[addr1];
-            saved[(xindex + x)%xsize][yindex] = cc & 0xf | cl & 0xf0;
+	        addr = nextaddr22(addr, x + xpos, ypos + ysize);
+            saved[(xindex + x)%xsize][yindex] = prg[addr + 0x400] & 0xf | prg[addr] & 0xf0;
 	    }
         yindex++;
         if (yindex == ysize) yindex = 0;
@@ -447,7 +445,9 @@ struct Sprite2 {
     }
 };
 
-Sprite2 s1(16, 101);
-/*unsigned char d1[] = {0x62,0x62,0x6f,0x6f,0,0,0x62,0x62,
-                      0x6f,0x6f,0,0,0x62,0x62,0x66,0x66};
-Sprite2 s1(40,100,d1);*/
+//Sprite2 s1(16, 101);
+unsigned char d1[] = {0,0x62,
+                      0x6f,0};
+//unsigned char d1[] = {0x62,0x62,0,0,
+//                      0,0,0x66,0x66};
+Sprite2 s1(40,100,d1);

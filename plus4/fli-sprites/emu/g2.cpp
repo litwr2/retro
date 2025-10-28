@@ -125,7 +125,11 @@ void button10_callback(Fl_Widget *w) {
     s1.upright();
     gdrawing->redraw();
 }
-void buttonSU_callback(Fl_Widget *w) {
+void buttonC_callback(Fl_Widget *w) {
+    s1.remove();
+    s1.xpos = xmax/4;
+    s1.ypos = ymax/4;
+    s1.put();
     gdrawing->redraw();
 }
 void buttonSD_callback(Fl_Widget *w) {
@@ -183,9 +187,9 @@ int main(int argc, char **argv) {
     Fl_Button button10(180, 160, 150, 20, "Up-Right");
     button10.labelsize(12);
     button10.callback(button10_callback);
-    Fl_Button buttonSU(10, 190, 150, 20, "Scroll Up");
-    buttonSU.labelsize(12);
-    buttonSU.callback(buttonSU_callback);
+    Fl_Button buttonC(10, 190, 150, 20, "Center");
+    buttonC.labelsize(12);
+    buttonC.callback(buttonC_callback);
     Fl_Button buttonSD(180, 190, 150, 20, "Scroll Down");
     buttonSD.labelsize(12);
     buttonSD.callback(buttonSD_callback);
