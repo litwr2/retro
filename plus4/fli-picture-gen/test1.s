@@ -197,7 +197,7 @@
      ;jmp *
 
 scroll:
-     lda #40
+     lda #10
      sta $e0
 .l4: lda #1
      sta $d4

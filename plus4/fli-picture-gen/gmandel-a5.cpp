@@ -10,6 +10,7 @@ using namespace std;
 #define BSZ 512
 #define VS 280
 #define HS 160
+int oneblack[121];
 int picr[HS][VS], mc1[VS], mc2[VS];
 struct Cell {
    int c1, c2;
@@ -51,7 +52,7 @@ void mandel() {
             }
             picr[2*px][2*py] = picr[2*px + 1][2*py] = picr[2*px][2*py + 1] = picr[2*px + 1][2*py + 1] =
                 picr[2*px][2*(ymax - 1 - py)] = picr[2*px + 1][2*(ymax - 1 - py)] =
-                picr[2*px][2*(ymax - py) - 1] = picr[2*px + 1][2*(ymax - py) - 1] = n2rgb[iter^0x70];
+                picr[2*px][2*(ymax - py) - 1] = picr[2*px + 1][2*(ymax - py) - 1] = n2rgb[oneblack[iter]]; //n2rgb[iter^0x70];
         }
     for (int y = 0; y < ymax*2; y += 2)
 		    for (int x = 0; x < xmax*2; x += 4){
@@ -60,9 +61,30 @@ void mandel() {
 		    }
 }
 
+void bubble_sort(int *a) {
+    bool epf;
+    int UBound = 120;
+    do {
+        epf = false;
+        for (int i = 0; i < UBound; ++i)
+            if ((a[i]&0xf) > (a[i + 1]&0xf) || (a[i]&0xf) == (a[i + 1]&0xf) && (a[i]&0xf0) > (a[i + 1]&0xf0)) {
+                swap(a[i], a[i + 1]);
+                epf = true;
+            }
+        --UBound;
+    }
+    while (epf);
+}
+
 int main(int argc, char **argv) {
     FILE *fi, *fo;
     unsigned char b[3];
+
+    hs = 1;
+    for (int i = 0; i < 128; i++)
+        if ((i&0xf) != 0) oneblack[hs++] = i;
+    bubble_sort(oneblack);
+
     hs = xmax*2;
     vs = ymax*2;
 	prginit();
