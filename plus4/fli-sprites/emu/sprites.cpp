@@ -21,19 +21,36 @@ unsigned char s6data[18][4] = {
   0x68,0x68,0x68,0x68,0x68,0x68,0x68,0x6d,0x6d,0x5b,0x5b,0x5b,0x5b,0x5b,0x00,0x00,0x00,0x00,
   0x00,0x00,0x00,0x00,0x72,0x72,0x72,0x72,0x72,0x72,0x72,0x72,0x72,0x46,0x46,0x46,0x48,0x21
 };
+unsigned char s3data[2][2] = {
+  0x66,0x66,
+  0x99,0x99
+}, s3colors[2][2] = {
+  0x7e, 0x6e,
+  0x53, 0x42};
 unsigned char s7data[1][4] = {
    0x55,0x55,0x55,0x00
 }, s7colors[2][1] = {0x68, 0x68};
-unsigned char tab1[16] = {0xa5, 0xa0, 0xaf, 0xa3, 0x5, 0, 0xf, 0x3, 0xf5, 0xf0, 0xff, 0xf3, 0x35, 0x30, 0x3f, 0x33},
-              tab2[16] = {0xa5, 0xa0, 0xaf, 0xac, 0x5, 0, 0xf, 0xc, 0xf5, 0xf0, 0xff, 0xfc, 0xc5, 0xc0, 0xcf, 0xcc},
-              tab3t[4] = {0xa5, 5, 0xf5, 0x35},
-              tab3b[4] = {0xa5, 5, 0xf5, 0xc5},
-              tab5t[4] = {0xa5, 0xa0, 0xaf, 0xa3},
-              tab5b[4] = {0xa5, 0xa0, 0xaf, 0xac};
+unsigned char tab1[256] = {
+0xa5, 0xa4, 0xa7, 0xa6, 0xa1, 0xa0, 0xa3, 0xa2, 0xad, 0xac, 0xaf, 0xae, 0xa9, 0xa8, 0xab, 0xaa,
+0x85, 0x84, 0x87, 0x86, 0x81, 0x80, 0x83, 0x82, 0x8d, 0x8c, 0x8f, 0x8e, 0x89, 0x88, 0x8b, 0x8a,
+0xb5, 0xb4, 0xb7, 0xb6, 0xb1, 0xb0, 0xb3, 0xb2, 0xbd, 0xbc, 0xbf, 0xbe, 0xb9, 0xb8, 0xbb, 0xba,
+0x95, 0x94, 0x97, 0x96, 0x91, 0x90, 0x93, 0x92, 0x9d, 0x9c, 0x9f, 0x9e, 0x99, 0x98, 0x9b, 0x9a,
+0x25, 0x24, 0x27, 0x26, 0x21, 0x20, 0x23, 0x22, 0x2d, 0x2c, 0x2f, 0x2e, 0x29, 0x28, 0x2b, 0x2a,
+0x05, 0x04, 0x07, 0x06, 0x01, 0x00, 0x03, 0x02, 0x0d, 0x0c, 0x0f, 0x0e, 0x09, 0x08, 0x0b, 0x0a,
+0x35, 0x34, 0x37, 0x36, 0x31, 0x30, 0x33, 0x32, 0x3d, 0x3c, 0x3f, 0x3e, 0x39, 0x38, 0x3b, 0x3a,
+0x15, 0x14, 0x17, 0x16, 0x11, 0x10, 0x13, 0x12, 0x1d, 0x1c, 0x1f, 0x1e, 0x19, 0x18, 0x1b, 0x1a,
+0xe5, 0xe4, 0xe7, 0xe6, 0xe1, 0xe0, 0xe3, 0xe2, 0xed, 0xec, 0xef, 0xee, 0xe9, 0xe8, 0xeb, 0xea,
+0xc5, 0xc4, 0xc7, 0xc6, 0xc1, 0xc0, 0xc3, 0xc2, 0xcd, 0xcc, 0xcf, 0xce, 0xc9, 0xc8, 0xcb, 0xca,
+0xf5, 0xf4, 0xf7, 0xf6, 0xf1, 0xf0, 0xf3, 0xf2, 0xfd, 0xfc, 0xff, 0xfe, 0xf9, 0xf8, 0xfb, 0xfa,
+0xd5, 0xd4, 0xd7, 0xd6, 0xd1, 0xd0, 0xd3, 0xd2, 0xdd, 0xdc, 0xdf, 0xde, 0xd9, 0xd8, 0xdb, 0xda,
+0x65, 0x64, 0x67, 0x66, 0x61, 0x60, 0x63, 0x62, 0x6d, 0x6c, 0x6f, 0x6e, 0x69, 0x68, 0x6b, 0x6a,
+0x45, 0x44, 0x47, 0x46, 0x41, 0x40, 0x43, 0x42, 0x4d, 0x4c, 0x4f, 0x4e, 0x49, 0x48, 0x4b, 0x4a,
+0x75, 0x74, 0x77, 0x76, 0x71, 0x70, 0x73, 0x72, 0x7d, 0x7c, 0x7f, 0x7e, 0x79, 0x78, 0x7b, 0x7a,
+0x55, 0x54, 0x57, 0x56, 0x51, 0x50, 0x53, 0x52, 0x5d, 0x5c, 0x5f, 0x5e, 0x59, 0x58, 0x5b, 0x5a};
 
 struct Sprite {
-    static const int xsize = 16, ysize = 16;
-    unsigned char data[xsize/4][ysize];  //0 - transparent, 1 - mc1, 2 - mc2, 3 - mc1 and mc2 dithering
+    static const int xsize = 16, ysize = 18;
+    unsigned char data[xsize/4][ysize];  //0 - transparent, 1 - mc1, 2 - mc2, 3 - bg inversion - don't use on edges!
     unsigned char xpos, ypos;
     unsigned char color[ysize][2], visible;
 /*    int get2(int x, int y) {
@@ -45,61 +62,29 @@ struct Sprite {
         data[x/4][y] = a & ~(3 << b) | v << b;
     }
     void put00(int h) {
-        int addr;
-        unsigned char d, nd;
+        int addr, x;
+        unsigned char d, nd, z = xpos&3;
         for (int y = 0; y < ysize; y++) {
-            if (h) {
-                setmc(ypos + 2*y, color[y]);
-                setmc(ypos + 2*y + 1, color[y]);
-            }
-            addr = getcsaddr(xpos, ypos + 2*y);  //getnextyaddr()
+            if (h)
+                setmc(ypos + y, color[y]);
+            addr = getcsaddr(xpos, ypos + y);  //getnextyaddr()
             d = data[0][y];
-            if (xpos&2) {
-                nd  = d >> 6;
-                prg[addr] = tab5t[nd];
-                prg[addr + 1] = tab5b[nd];
-
-	            addr = getnextxaddr(addr, xpos + 2, ypos + 2*y);
-	            nd = (d & 0x3f) >> 2;
-	            prg[addr] = tab1[nd];
-		        prg[addr + 1] = tab2[nd];
-		        for (int x = 1; x < xsize/4; x++) {
-                    d = (d & 3) << 6 | data[x][y] >> 2;
-                    addr = getnextxaddr(addr, xpos + 8*x - 2, ypos + 2*y);
-		            nd  = d >> 4;
-		            prg[addr] = tab1[nd];
-		            prg[addr + 1] = tab2[nd];
-
-                    addr = getnextxaddr(addr, xpos + 8*x + 2, ypos + 2*y);
-		            nd = d & 0xf;
-		            prg[addr] = tab1[nd];
-		            prg[addr + 1] = tab2[nd];
-		            d = data[x][y];
+            if (z) {
+                prg[addr] = tab1[d >> 2*z];
+		        for (x = 1; x < xsize/4; x++) {
+                    addr = getnextxaddr(addr, (xpos & 0xfc) + 4*x, ypos + y);
+                    nd = data[x][y];
+		            prg[addr] = tab1[(unsigned char)(d << 8 - 2*z | nd >> 2*z)];
+		            d = nd;
                 }
-                addr = getnextxaddr(addr, xpos + 30, ypos + 2*y);
-                nd = d & 3;
-                prg[addr] = tab3t[nd];
-                prg[addr + 1] = tab3b[nd];
+                addr = getnextxaddr(addr, (xpos & 0xfc) + 4*x, ypos + y);
+                prg[addr] = tab1[(unsigned char)(d << 8 - 2*z)];
             } else {
-                nd  = d >> 4;
-	            prg[addr] = tab1[nd];
-	            prg[addr + 1] = tab2[nd];
-
-	            addr = getnextxaddr(addr, xpos + 4, ypos + 2*y);
-	            nd = d & 0xf;
-	            prg[addr] = tab1[nd];
-		        prg[addr + 1] = tab2[nd];
-                for (int x = 1; x < 4; x++) {
-		            addr = getnextxaddr(addr, xpos + 8*x, ypos + 2*y);
-                    d = data[x][y];
-		            nd  = d >> 4;
+	            prg[addr] = tab1[d];
+                for (int x = 1; x < xsize/4; x++) {
+		            addr = getnextxaddr(addr, xpos + 4*x, ypos + y);
+                    nd = data[x][y];
 		            prg[addr] = tab1[nd];
-		            prg[addr + 1] = tab2[nd];
-
-		            addr = getnextxaddr(addr, xpos + 8*x + 4, ypos + 2*y);
-		            nd = d & 0xf;
-		            prg[addr] = tab1[nd];
-		            prg[addr + 1] = tab2[nd];
                 }
             }
         }
@@ -114,66 +99,33 @@ struct Sprite {
         visible = 1;
     }
     void remove() {
-        int addr;
+        int addr, x, p, l;
         if (!visible) return;
+        p = xpos&0xfc;
+        l = xsize/4 + ((xpos&3) != 0);
         for (int y = 0; y < ysize; y++) {
-            addr = getcsaddr(xpos, ypos + 2*y);  //getnextyaddr()
-            if (xpos&2) {
-                prg[addr + 1] = prg[addr] = prg[addr] & 0xf0 | 5;
-	            addr = getnextxaddr(addr, xpos + 2, ypos + 2*y);
-                prg[addr + 1] = prg[addr] = 0xa5;
-		        for (int x = 1; x < xsize/4; x++) {
-		            addr = getnextxaddr(addr, xpos + 8*x - 2, ypos + 2*y);
-                    prg[addr + 1] = prg[addr] = 0xa5;
-
-		            addr = getnextxaddr(addr, xpos + 8*x + 2, ypos + 2*y);
-                    prg[addr + 1] = prg[addr] = 0xa5;
-                }
-                addr = getnextxaddr(addr, xpos + 30, ypos + 2*y);
-                prg[addr + 1] = prg[addr] = prg[addr] & 0xf | 0xa0;
-            } else {
-	            prg[addr + 1] = prg[addr] = 0xa5;
-	            addr = getnextxaddr(addr, xpos + 4, ypos + 2*y);
-	            prg[addr + 1] = prg[addr] = 0xa5;
-	            for (int x = 1; x < xsize/4; x++) {
-		            addr = getnextxaddr(addr, xpos + 8*x, ypos + 2*y);
-		            prg[addr + 1] = prg[addr] = 0xa5;
-
-		            addr = getnextxaddr(addr, xpos + 8*x + 4, ypos + 2*y);
-		            prg[addr + 1] = prg[addr] = 0xa5;
-                }
+            addr = getcsaddr(xpos, ypos + y);  //getnextyaddr()
+            prg[addr] = 0xa5;
+            for (int x = 1; x < l; x++) {
+	            addr = getnextxaddr(addr, p + 4*x, ypos + y);
+	            prg[addr] = 0xa5;
             }
         }
         visible = 0;
     }
     void left0() {
-        int addr, d;
-        xpos -= 2;
+        int addr;
+        xpos--;
         if (!visible) return;
-        addr = getcsaddr(xpos + 2*xsize, ypos);  //getnextyaddr()
-        if (xpos&2) {
-            d = prg[addr] << 4;
-	        prg[addr] = (d == 0x50 ? 0xa0 : d) | 5;
-	        d = prg[addr + 1] << 4;
-	        prg[addr + 1] = (d == 0x50 ? 0xa0 : d) | 5;
+        if ((xpos&3) == 0) {
+            addr = getcsaddr(xpos + xsize, ypos);  //getnextyaddr()
+	        prg[addr] = 0xa5;
             for (int y = 1; y < ysize; y++) {
-                if (((ypos + 2*y)&7) == 0)
-                    addr = getcsaddr(xpos + 2*xsize, ypos + 2*y);
+                if (((ypos + y)&7) == 0)
+                    addr = getcsaddr(xpos + xsize, ypos + y);
                 else
-                    addr += 2;
-	            d = prg[addr] << 4;
-		        prg[addr] = (d == 0x50 ? 0xa0 : d) | 5;
-		        d = prg[addr + 1] << 4;
-		        prg[addr + 1] = (d == 0x50 ? 0xa0 : d) | 5;
-            }
-        } else {
-            prg[addr + 1] = prg[addr] = 0xa5;
-        	for (int y = 1; y < ysize; y++) {
-                if (((ypos + 2*y)&7) == 0)
-                	addr = getcsaddr(xpos + 2*xsize, ypos + 2*y);
-                else
-                    addr += 2;
-                prg[addr + 1] = prg[addr] = 0xa5;
+                    addr++;
+		        prg[addr] = 0xa5;
             }
         }
     }
@@ -182,89 +134,72 @@ struct Sprite {
         left0();
         put0(0);
     }
-#if 1
+#if 0
     void right0() {
-        if (!visible) {xpos += 2; return;}
+        if (!visible) {xpos++; return;}
         remove();
         visible = 1;
         //for (int y = 0; y < ysize; y++)
         //    setpa22rr(xpos, ypos + 2*y);
-        xpos += 2;
+        xpos++;
         put00(0);
     }
 #else
      void right0() {
-        int addr, d;
-        xpos += 2;
+        int addr;
+        xpos++;
         if (!visible) return;
-        addr = getcsaddr(xpos - 2, ypos);  //getnextyaddr()
-        if (xpos&2) {
-            d = prg[addr] >> 4;
-	        prg[addr] = 0xa0 | (d == 0xa ? 5 : d);
-	        d = prg[addr + 1] >> 4;
-	        prg[addr + 1] = 0xa0 | (d == 0xa ? 5 : d);
+        if ((xpos&3) == 0) {
+            addr = getcsaddr(xpos - 1, ypos);  //getnextyaddr()
+	        prg[addr] = 0xa5;
             for (int y = 1; y < ysize; y++) {
-                if (((ypos + 2*y)&7) == 0)
-                    addr = getcsaddr(xpos - 2, ypos + 2*y);
+                if (((ypos + y)&7) == 0)
+                    addr = getcsaddr(xpos - 1, ypos + y);
                 else
-                    addr += 2;
-	            prg[addr] = 0xa0 | prg[addr] >> 4;
-    	        prg[addr + 1] = 0xa0 | prg[addr + 1] >> 4;
-            }
-        } else {
-            prg[addr + 1] = prg[addr] = 0xa5;
-        	for (int y = 1; y < ysize; y++) {
-                if (((ypos + 2*y)&7) == 0)
-                	addr = getcsaddr(xpos - 2, ypos + 2*y);
-                else
-                    addr += 2;
-                prg[addr + 1] = prg[addr] = 0xa5;
+                    addr++;
+	            prg[addr] = 0xa5;
             }
         }
     }
 #endif
     void right() {
-        if (xpos + 2*xsize == xmax) return;
+        if (xpos + xsize == xmax) return;
         right0();
         put0(0);
     }
     void up0() {
-        int addr, p;
-        ypos -= 2;
+        int addr, p, l;
+        ypos--;
         if (!visible) return;
+        addr = getcsaddr(xpos, ypos + ysize);  //getnextyaddr()
+        prg[addr] = 0xa5;
+        l = xsize/4 + ((xpos&3) != 0);
         p = xpos & 0xfc;
-        addr = getcsaddr(xpos, ypos + 2*ysize);  //getnextyaddr()
-        prg[addr + 1] = prg[addr] = 0xa5;
-        for (int x = 1; x < xsize/2 + ((xpos&2)>>1); x++) {
-            addr = getnextxaddr(addr, p + 4*x, ypos + 2*ysize);
-	        prg[addr + 1] = prg[addr] = 0xa5;
+        for (int x = 1; x < l; x++) {
+            addr = getnextxaddr(addr, p + 4*x, ypos + ysize);
+	        prg[addr] = 0xa5;
         }
     }
-    /*void up0() {
-        ypos -= 2;
-        if (!visible) return;
-        for (int x = 0; x < xsize; x++)
-            setpa22rr(xpos + 2*x, ypos + 2*ysize);
-    }*/
     void up() {
         if (ypos == 0) return;
         up0();
         put0(1);
     }
     void down0() {
-        int addr, p;
-        if (!visible) {ypos += 2; return;}
+        int addr, p, l;
+        if (!visible) {ypos++; return;}
         p = xpos & 0xfc;
         addr = getcsaddr(xpos, ypos);  //getnextyaddr()
-        prg[addr + 1] = prg[addr] = 0xa5;
-        for (int x = 1; x < xsize/2 + ((xpos&2)>>1); x++) {
+        prg[addr] = 0xa5;
+        l = xsize/4 + ((xpos&3) != 0);
+        for (int x = 1; x < l; x++) {
             addr = getnextxaddr(addr, p + 4*x, ypos);
-	        prg[addr + 1] = prg[addr] = 0xa5;
+	        prg[addr] = 0xa5;
         }
-        ypos += 2;
+        ypos++;
     }
     void down() {
-        if (ypos + 2*ysize == ymax) return;
+        if (ypos + ysize == ymax) return;
         down0();
         put0(1);
     }
@@ -330,10 +265,10 @@ struct Sprite {
          visible = 0;
          for (int y = 0; y < ysize; y++)
              for (int k = 0; k < 2; k++)
-                 color[y][k] = c[k][y];
+                 color[y][k] = c[y][k];
          //fill_square();
-         fill_sphere();
-         //fill_rectangle(1);
+         //fill_sphere();
+         fill_rectangle(2);
          for (y = 0; y < ysize; y++) {
             for (x = 0; x < xsize/4 - 1; x++)
                 printf("$%02x, ", data[x][y]);
@@ -345,7 +280,7 @@ struct Sprite {
             printf("$%02x\n", color[y][x]);
          }
     }
-    Sprite(int x, int y, unsigned char (*d)[4], unsigned char (*co)[ysize]) {
+    Sprite(int x, int y, unsigned char (*d)[xsize/4], unsigned char (*co)[ysize]) {
          xpos = x, ypos = y;
          visible = 0;
          for (int y = 0; y < ysize; y++)
@@ -384,6 +319,8 @@ unsigned char colors1[16][2] = {
 {0, 0x5e},
 {0, 0x6e},
 {0, 0x7e}};
-Sprite s1(70, 202, colors1);
-//Sprite s1(70, 202, s6data, s6colors);
-//Sprite s1(72, 204, s7data, s7colors);
+//Sprite s1(87, 201, colors1);
+Sprite s1(70, 202, s6data, s6colors);
+//Sprite s1(72, 204, s6data, s6colors);
+//Sprite s1(83, 200, s3data, s3colors);
+

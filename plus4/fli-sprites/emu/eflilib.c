@@ -23,20 +23,21 @@ int getcsbyte(int x, int y) {
     return prg[getcsaddr(x, y)];
 }
 void setmc(int y, int mc1, int mc2) {
+    int c[2] = {mc1, mc2};
     for (int z = 0; z < 2; z++) {
 		int p = BA + y*17 + 5*z;
 		if (y%2 == 0)
 		    if (y < 192)
-			    prg[p] = mc1;
+			    prg[p] = c[z];
 			else if (y == 192)
-			    prg[BA - 4 + 2*z] = mc1;
+			    prg[BA - 4 + 2*z] = c[z];
 			else
-			    prg[p + 2] = mc1;
+			    prg[p + 2] = c[z];
 		else
 			if (y < 193)
-			    prg[p - 3] = mc2;
+			    prg[p - 3] = c[z];
 			else
-			    prg[p - 1] = mc2;
+			    prg[p - 1] = c[z];
     }
 }
 void getpa(int x, int y, int *cs, int *bg, int *fg, int *mc1, int *mc2) {
