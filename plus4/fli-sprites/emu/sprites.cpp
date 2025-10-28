@@ -1,137 +1,188 @@
 struct Sprite {
     static const int xsize = 16, ysize = 16;
-    unsigned char data[xsize][ysize], saved[xsize][ysize];
-    unsigned char xpos, ypos, xindex, yindex;
-    int color[2], visible;
+    unsigned char data[xsize/4][ysize];  //0 - transparent, 1 - mc1, 2 - mc2, 3 - mc1 and mc2 dithering
+    unsigned char xpos, ypos;
+    unsigned char color[ysize][2], visible;
+    int get2(int x, int y) {
+        return (data[x/4][y] >> (6 - (x&3)*2))&3;
+    }
+    void set2(int x, int y, int v) {
+        unsigned char a = data[x/4][y];
+        int b = 6 - (x&3)*2;
+        data[x/4][y] = a & ~(3 << b) | v << b;
+    }
     void put0() {
-        for (int i = 0; i < xsize; i++)
-            for (int k = 0; k < ysize; k++) {
-                if (data[i][k] == 3)
-                    smap[xpos + i][ypos + k] = saved[(i + xindex)&0xf][(k + yindex)&0xf]^0x7f;
-                else if (data[i][k] == 0)
-                    smap[xpos + i][ypos + k] = saved[(i + xindex)&0xf][(k + yindex)&0xf];
+        if (!visible) return;
+        for (int y = 0; y < ysize; y++) {
+            setmc(2*(ypos + y), color[y]);
+            setmc(2*(ypos + y) + 1, color[y]);
+            for (int x = 0; x < xsize; x++) {
+                int d = get2(x, y);
+                if (d == 3)
+                    setpa22mcd(xpos + x, ypos + y);
+                else if (d == 0)
+                    setpa22rr(xpos + x, ypos + y);
                 else
-                    smap[xpos + i][ypos + k] = color[data[i][k] - 1];
+                    setpa22mc(xpos + x, ypos + y, d^1);
             }
+        }
     }
     void put() {
         if (visible) return;
-        xindex = yindex = 0;
-        for (int i = 0; i < xsize; i++)
-            for (int k = 0; k < ysize; k++) {
-                saved[i][k] = smap[xpos + i][ypos + k];
-                if (data[i][k] == 3)
-                    smap[xpos + i][ypos + k] = smap[xpos + i][ypos + k]^0x7f;
-                else if (data[i][k] != 0)
-                    smap[xpos + i][ypos + k] = color[data[i][k] - 1];
+        for (int y = 0; y < ysize; y++) {
+            setmc(2*(ypos + y), color[y]);
+            setmc(2*(ypos + y) + 1, color[y]);
+            for (int x = 0; x < xsize; x++) {
+                int d = get2(x, y);
+                if (d == 3)
+                    setpa22mcd(xpos + x, ypos + y);
+                else if (d != 0)
+                    setpa22mc(xpos + x, ypos + y, d^1);
             }
+        }
         visible = 1;
     }
     void remove() {
         if (!visible) return;
         for (int i = 0; i < xsize; i++)
             for (int k = 0; k < ysize; k++)
-            	smap[xpos + i][ypos + k] = saved[(i + xindex)&0xf][(k + yindex)&0xf];
+            	setpa22rr(xpos + i, ypos + k);
         visible = 0;
     }
-    int left0() {
-        if (xpos == 0) return 0;
+    void left0() {
         xpos--;
-        if (!visible) return 0;
-        if (xindex == 0) xindex = xsize - 1; else xindex--;
+        if (!visible) return;
         for (int i = 0; i < ysize; i++)
-            smap[xpos + xsize][ypos + i] = saved[xindex][(i + yindex)&0xf],
-            saved[xindex][(i + yindex)&0xf] = smap[xpos][ypos + i];
-        return 1;
+            setpa22rr(xpos + xsize, ypos + i);
     }
     void left() {
-        if (left0()) put0();
+        if (xpos == 0) return;
+        left0();
+        put0();
     }
-    int right0() {
-        if (xpos + xsize == xmax) return 0;
-        if (!visible) {xpos++; return 0;}
+    void right0() {
+        if (!visible) {xpos++; return;}
         for (int i = 0; i < ysize; i++)
-            smap[xpos][ypos + i] = saved[xindex][(i + yindex)&0xf],
-            saved[xindex][(i + yindex)&0xf] = smap[xpos + xsize][ypos + i];
-        xindex++;
-        if (xindex == xsize) xindex = 0;
+            setpa22rr(xpos, ypos + i);
         xpos++;
-        return 1;
     }
     void right() {
-        if (right0()) put0();
+        if (xpos + xsize == xmax/2) return;
+        right0();
+        put0();
     }
-    int up0() {
-        if (ypos == 0) return 0;
+    void up0() {
         ypos--;
-        if (!visible) return 0;
-        if (yindex == 0) yindex = ysize - 1; else yindex--;
+        if (!visible) return;
         for (int i = 0; i < xsize; i++)
-            smap[xpos + i][ypos + ysize] = saved[(i + xindex)&0xf][yindex],
-            saved[(i + xindex)&0xf][yindex] = smap[xpos + i][ypos];
-		return 1;
+            setpa22rr(xpos + i, ypos + ysize);
     }
     void up() {
-        if (up0()) put0();
+        if (ypos == 0) return;
+        up0();
+        put0();
     }
-    int down0() {
-        if (ypos + ysize == ymax) return 0;
-        if (!visible) {ypos++; return 0;}
+    void down0() {
+        if (!visible) {ypos++; return;}
         for (int i = 0; i < xsize; i++)
-            smap[xpos + i][ypos] = saved[(i + xindex)&0xf][yindex],
-            saved[(i + xindex)&0xf][yindex] = smap[xpos + i][ypos + ysize];
-        yindex++;
-        if (yindex == ysize) yindex = 0;
+            setpa22rr(xpos + i, ypos);
         ypos++;
-        return 1;
     }
     void down() {
-        if (down0()) put0();
+        if (ypos + ysize == ymax/2) return;
+        down0();
+        put0();
     }
     void upleft() {
-        if ((ypos&&xpos) == 0) return;
-        ypos--, xpos--;
-        if (!visible) return;
-        int oyindex = yindex, oxindex = xindex;
-        if (yindex == 0) yindex = ysize - 1; else yindex--;
-        if (xindex == 0) xindex = xsize - 1; else xindex--;
-        for (int i = 0; i < xsize; i++)
-            smap[xpos + i + 1][ypos + ysize] = saved[(i + oxindex)&0xf][yindex],
-            saved[(i + xindex)&0xf][yindex] = smap[xpos + i][ypos];
-        for (int i = 0; i < ysize - 1; i++)
-            smap[xpos + xsize][ypos + i + 1] = saved[xindex][(i + oyindex)&0xf],
-            saved[xindex][(i + 1 + yindex)&0xf] = smap[xpos][ypos + i + 1];
+        if (xpos == 0 || ypos == 0) return;
+        up0();
+        left0();
         put0();
     }
     void downright() {
-        if (xpos + xsize == xmax) return;
-        if (down0() && right0()) put0();
+        if (xpos + xsize == xmax/2 || ypos + ysize == ymax/2) return;
+        down0();
+        right0();
+        put0();
     }
     void downleft() {
-        if (xpos == 0) return;
-        if (down0() && left0()) put0();
+        if (xpos == 0 || ypos + ysize == ymax/2) return;
+        down0();
+        left0();
+        put0();
     }
     void upright() {
-        if (xpos + xsize == xmax) return;
-        if (up0() && right0()) put0();
+        if (xpos + xsize == xmax/2 || ypos == 0) return;
+        up0();
+        right0();
+        put0();
     }
-    Sprite(int x, int y, int c0, int c1) {
-         xpos = x, ypos = y;
-         visible = 0;
-         color[0] = c0;
-         color[1] = c1;
-         for (int x = 0; x < xsize; x++)
+    void fill_square() {
+        for (int x = 0; x < xsize; x++)
             for (int y = 0; y < ysize; y++)
                  if (x < 2 || y < 2 || x > 13 || y > 13)
-                     data[x][y] = 1;
+                     set2(x, y, 1);
                  else if (x < 4 || y < 4 || x > 11 || y > 11)
-                     data[x][y] = 0;
+                     set2(x, y, 0);
                  else if (x < 6 || y < 6 || x > 9 || y > 9)
-                     data[x][y] = 2;
+                     set2(x, y, 2);
                  else
-                     data[x][y] = 3;
+                     set2(x, y, 3);
+    }
+    void fill_sphere() {
+        for (int x = 0; x < xsize; x++)
+            for (int y = 0; y < ysize; y++) {
+                 double dx = x - (xsize - 1)/2., dy = y - (ysize - 1)/2.; 
+                 if (dx*dx + dy*dy > 57)
+                     set2(x, y, 0);
+                 else if (dx*dx + dy*dy > 49)  //43
+                     set2(x, y, 2);
+                 else if (dx*dx + dy*dy > 36)
+                     set2(x, y, 1);
+                 else if (dx*dx + dy*dy > 16)
+                     set2(x, y, 3);
+                 else
+                     set2(x, y, 0);
+            }
+    }
+    void fill_rectangle(int f) {
+        for (int x = 0; x < xsize; x++)
+            for (int y = 0; y < ysize; y++)
+                set2(x, y, f);
+    }
+    Sprite(int x, int y, unsigned char (*c)[2]) {
+         xpos = x, ypos = y;
+         visible = 0;
+         for (int i = 0; i < ysize; i++)
+             for (int k = 0; k < 2; k++)
+                 color[i][k] = c[i][k];
+         fill_square();
+         //fill_sphere();
+         //fill_rectangle(3);
+         for (y = 0; y < ysize; y++) {
+            for (x = 0; x < xsize/4 - 1; x++)
+                printf("%02x ", data[x][y]);
+            printf("%02x\n", data[xsize/4 - 1][y]);
+         }
     }
 };
 
-Sprite s1(7, 70, 0, 0x7e);
+unsigned char colors1[16][2] = {
+{0, 0x7e},
+{0, 0x6e},
+{0, 0x5e},
+{0, 0x4e},
+{0, 0x3e},
+{0, 0x2e},
+{0x53, 0x5d},
+{0x63, 0x4d},
+{0x63, 0x4d},
+{0x53, 0x5d},
+{0, 0x2e},
+{0, 0x3e},
+{0, 0x4e},
+{0, 0x5e},
+{0, 0x6e},
+{0, 0x7e}};
+Sprite s1(41, 101, colors1);
 

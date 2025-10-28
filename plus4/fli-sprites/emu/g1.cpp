@@ -24,7 +24,8 @@ using namespace std;
 #define Xmax (xmax*x_scale)
 #define Ymax (ymax*y_scale)
 
-int smap[xmax][ymax];
+#include "flilib.c"
+#include "eflilib.c"
 
 Fl_Window *gwindow;
 map<int, int> n2rgb, rgb2n;
@@ -38,26 +39,26 @@ int getG(int c) {
 int getB(int c) {
    return c&255;
 }
-
 void fillscr() {
     int c = 8;
-    for (int y = 0; y < ymax; y++)
-        for (int x = 0; x < xmax; x++) {
-            //smap[x][y] = 0x6e;
-            //smap[x][y] = c;
-            c = abs(x - y)%128; if (c < 8) c = (c + 8); smap[x][y] = c;
-            //c = y%128; if (c < 8) c = (c + 8); smap[x][y] = c;
+    for (int y = 0; y < ymax/2; y++)
+        for (int x = 0; x < xmax/2; x++) {
+            //setpa22(x, y, 0x6e, 2);
+            //setpa22r(x, y, c);
+            c = abs(x - y)%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
+            //c = y%128; if (c < 8) c = (c + 8); setpa22r(x, y, c);
+            //c = x%128; if (c < 8) c = (c + 80); setpa22r(x, y, c);
             if (++c > 127) c = 8;
         }
 }
 
-#include "sprites.cpp"
+#include "sprites2.cpp"
 
 class Drawing : public Fl_Widget {
     void draw() {
         for (int y = 0; y < ymax; y++)
         	for (int x = 0; x < xmax; x++) {
-            	int c = n2rgb[smap[x][y]];
+            	int c = n2rgb[getcolor(x, y)];
             	fl_color(getR(c), getG(c), getB(c));
             	for (int ys = 0; ys < y_scale; ys++)
                 	for (int xs = 0; xs < x_scale; xs++)
@@ -71,54 +72,59 @@ public:
 
 void button1_callback(Fl_Widget *w) {
     s1.put();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button2_callback(Fl_Widget *w) {
     s1.remove();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button3_callback(Fl_Widget *w) {
     s1.up();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button4_callback(Fl_Widget *w) {
     s1.down();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, (s1.ypos - 1)*y_scale*2, s1.xsize*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button5_callback(Fl_Widget *w) {
     s1.left();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button6_callback(Fl_Widget *w) {
     s1.right();
-    gdrawing->redraw();
+    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, s1.ysize*y_scale*2);
 }
 
 void button7_callback(Fl_Widget *w) {
     s1.downleft();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, (s1.ypos - 1)*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button8_callback(Fl_Widget *w) {
     s1.downright();
-    gdrawing->redraw();
+    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, (s1.ypos - 1)*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button9_callback(Fl_Widget *w) {
     s1.upleft();
-    gdrawing->redraw();
+    gdrawing->damage(1, s1.xpos*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
 
 void button10_callback(Fl_Widget *w) {
     s1.upright();
+    gdrawing->damage(1, (s1.xpos - 1)*x_scale*2, s1.ypos*y_scale*2, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
+}
+void buttonSU_callback(Fl_Widget *w) {
     gdrawing->redraw();
 }
-
+void buttonSD_callback(Fl_Widget *w) {
+    gdrawing->redraw();
+}
 void buttonX_callback(Fl_Widget *w) {
     std::exit(0);
 }
@@ -139,7 +145,7 @@ int main(int argc, char **argv) {
     gwindow->end();
     gwindow->show();
 
-    Fl_Window window(340, 220, "Sprite Proxy");
+    Fl_Window window(340, 250, "Sprite Control Center 2");
     Fl_Button button1(10, 10, 320, 20, "Put");
     button1.labelsize(12);
     button1.callback(button1_callback);
@@ -170,7 +176,13 @@ int main(int argc, char **argv) {
     Fl_Button button10(180, 160, 150, 20, "Up-Right");
     button10.labelsize(12);
     button10.callback(button10_callback);
-    Fl_Button buttonX(10, 190, 320, 20, "Exit");
+    Fl_Button buttonSU(10, 190, 150, 20, "Scroll Up");
+    buttonSU.labelsize(12);
+    buttonSU.callback(buttonSU_callback);
+    Fl_Button buttonSD(180, 190, 150, 20, "Scroll Down");
+    buttonSD.labelsize(12);
+    buttonSD.callback(buttonSD_callback);
+    Fl_Button buttonX(10, 220, 320, 20, "Exit");
     buttonX.labelsize(12);
     buttonX.callback(buttonX_callback);
     window.end();
