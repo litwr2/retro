@@ -35,8 +35,9 @@ saved_off = 18
 
     macro setspr_t2
     ldy #s2clrud_off+\1
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     asl
 
     ldy #s2olrud_off+\1
@@ -178,9 +179,10 @@ put_t2: ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-de, $e0-e5
     lda #0
     sta $d7
 .l1 ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     pha
-    tax
     iny
     lda ($e6),y
     adc $d6  ;C=0
@@ -481,9 +483,10 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     lda #0
     sta $d7
     ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     pha
-    tax
     iny
     lda ($e6),y
     adc $d6  ;C=0
@@ -736,9 +739,10 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
     sta $d7
 
     ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     pha
-    tax
     iny
     lda ($e6),y
     adc $d6  ;C=0
@@ -931,10 +935,12 @@ remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
 
 left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;sec
+    ;sbc #1  ;sets C=1
+    ;sta ($e6),y  ;xpos--
+    byte $d3,$e6    ;deccmp ($e6),y
     sec
-    sbc #1  ;sets C=1
-    sta ($e6),y  ;xpos--
 
     ldy #s2xsize_off
     lda ($e6),y
@@ -989,8 +995,9 @@ left0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     jsr setcolor22  ;setcolor22(xpos + xsize, ypos + y, saved[xindex][(y + yindex)%ysize])
 
     ldy #s2xpos_off
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     iny
     lda ($e6),y
     clc
@@ -1037,8 +1044,9 @@ right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
     sta $e1
 
     ldy #s2xpos_off
-    lda ($e6),y
-    tax   ;xpos
+    ;lda ($e6),y
+    ;tax   ;xpos
+    byte $b3,$e6   ;ldxlda ($e6),y
 
     iny
     lda ($e6),y
@@ -1094,10 +1102,13 @@ right0_t2:  ;used: $66-68, $d0-d3, $d5-d6, $d9-db
 
 up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     ldy #s2ypos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;sec
+    ;sbc #1  ;sets C=1
+    ;sta ($e6),y  ;ypos--
+    byte $d3,$e6   ;deccmp ($e6),y
     sec
-    sbc #1  ;sets C=1
-    sta ($e6),y  ;ypos--
+    lda ($e6),y
     sta $d6
 
     ldy #s2yidx_off
@@ -1133,9 +1144,10 @@ up0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     sta $e1
 
     ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     sta $66  ;xpos
-    tax
     iny
     lda ($e6),y
     ldy #s2ysize_off
@@ -1356,9 +1368,10 @@ down0_t2:  ;used: $66-68, $d0-d3, $d5-d7, $d9-dc
     sta $e1
 
     ldy #s2xpos_off
-    lda ($e6),y
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6  ;ldxlda ($e6),y
     sta $66  ;xpos
-    tax
     ldy #s2ypos_off
     lda ($e6),y
     sta $d6

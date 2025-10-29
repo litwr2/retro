@@ -26,8 +26,9 @@ olrud_off = 12
 
     macro setspr_t1
     ldy #clrud_off+\1
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     asl
     asl
 
@@ -112,10 +113,6 @@ put_t1:
 
 put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
          ;in: ac - mc output st, $e6,$e7 - sprite addr
-    ;lda $a5
-    ;cmp $a5
-    ;beq *-2
-
     ldy #sysize_off
     lda ($e6),y
     sta .m4+1
@@ -137,8 +134,9 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     sta $d3    ;y+ypos
 
     ldy #sxpos_off
-    lda ($e6),y  ;xpos
-    tax
+    ;lda ($e6),y  ;xpos
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     ldy $d3
     jsr getpaddr  ;addr = getcsaddr(xpos, ypos + y)
 
@@ -267,8 +265,9 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
     clc
     adc $d2  ;xsize/4*y
     tay
-    lda ($e4),y
-    tax      ;nd = data[x][y]
+    ;lda ($e4),y
+    ;tax      ;nd = data[x][y]
+    byte $b3,$e4   ;ldxlda ($e4),y
     lda tab1,x
     ldy #0
     sta ($d0),y  ;prg[addr] = tab1[nd]
@@ -286,8 +285,9 @@ put00_t1:   ;use: $d0-$d3, $d6, $d7, $d9, $da
 
 remove_t1:   ;use:$d0-d3, $d6
     ldy #sxpos_off
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6   ;ldxlda ($e6),y
     and #$fc  ;p = xpos&0xfc
     sta $d3
 
@@ -425,10 +425,12 @@ rightx_t1:
 
 up0_t1:  ;use:  $d0-d3, $d6, $d7
     ldy #sypos_off
+    ;lda ($e6),y
+    ;clc
+    ;adc #-1
+    ;sta ($e6),y   ;ypos--
+    byte $d3,$e6   ;deccmp ($e6),y
     lda ($e6),y
-    clc
-    adc #-1
-    sta ($e6),y   ;ypos--
 
     ldy #sysize_off
     clc
@@ -436,8 +438,9 @@ up0_t1:  ;use:  $d0-d3, $d6, $d7
     sta $d2     ;ypos + ysize
 
     ldy #sxpos_off
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6    ;ldxlda ($e6),y
     and #$fc
     sta $d3    ;p = xpos & 0xfc
     txa
@@ -488,8 +491,9 @@ down0_t1:  ;use: $d0-d3, $d6, $d7
     adc #1
     sta ($e6),y   ;ypos++
     ldy #sxpos_off
-    lda ($e6),y
-    tax
+    ;lda ($e6),y
+    ;tax
+    byte $b3,$e6    ;ldxlda ($e6),y
     and #$fc
     sta $d3    ;p = xpos & 0xfc
     txa
@@ -534,11 +538,12 @@ down0_t1:  ;use: $d0-d3, $d6, $d7
 
 left0_t1:   ;use: $d0-$d3, $d6
     ldy #sxpos_off
+    ;lda ($e6),y
+    ;sec
+    ;sbc #1
+    ;sta ($e6),y   ;xpos--
+    byte $d3,$e6  ;deccmp ($e6),y
     lda ($e6),y
-    sec
-    sbc #1
-    ;ldy #sxpos_off
-    sta ($e6),y   ;xpos--
     and #3
     bne .l0
 
@@ -587,6 +592,7 @@ left0_t1:   ;use: $d0-$d3, $d6
     inc $d6
     bne .l5   ;always
 .l0 rts
+
    if HILEV1
 right_t1:
     ldy #sxsize_off

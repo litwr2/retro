@@ -144,7 +144,9 @@ test:
     lda #<text2
     ldx #>text2
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     ldy #17
     jsr put_t1c.e
     jsr put00_t1
@@ -152,7 +154,9 @@ test:
     lda #<text5
     ldx #>text5
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     ldy #17
     jsr put_t1c.e
     jsr put00_t1
@@ -160,7 +164,9 @@ test:
     lda #<text3
     ldx #>text3
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr put00_t1
 
     dec .count2
@@ -201,7 +207,9 @@ test:
     lda #<text2
     ldx #>text2
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
     ldy #17
     jsr put_t1c.e
@@ -210,7 +218,9 @@ test:
     lda #<text5
     ldx #>text5
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
     ldy #17
     jsr put_t1c.e
@@ -219,7 +229,9 @@ test:
     lda #<text3
     ldx #>text3
     jsr .seta
-    jsr up0_t1
+    ;jsr up0_t1
+    ldy #sypos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
     ;ldy #17
     ;jsr put_t1c.e
@@ -233,7 +245,9 @@ test:
     ldx #>text3
     jsr .seta
 .loo4
-    jsr right0_t1
+    ;jsr right0_t1
+    ldy #sxpos_off
+    byte $f3,$e6    ;incsbc ($e6),y
     jsr put00_t1
     dec .count2
     bne .loo4
@@ -244,7 +258,9 @@ test:
     ldx #>text2
     jsr .seta
 .loo3
-    jsr left0_t1
+    ;jsr left0_t1
+    ldy #sxpos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr put00_t1
     dec .count2
     bne .loo3
@@ -255,7 +271,9 @@ test:
     ldx #>text5
     jsr .seta
 .loo5
-    jsr right0_t1
+    ;jsr right0_t1
+    ldy #sxpos_off
+    byte $f3,$e6    ;incsbc ($e6),y
     jsr right0_t1
     jsr put00_t1
     dec .count2
@@ -270,7 +288,9 @@ test:
     ldx #>text5
     jsr .seta
 .loo8
-    jsr left0_t1
+    ;jsr left0_t1
+    ldy #sxpos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr put00_t1
     dec .count2
     bne .loo8
@@ -281,7 +301,9 @@ test:
     ldx #>text3
     jsr .seta
 .loo7
-    jsr left0_t1
+    ;jsr left0_t1
+    ldy #sxpos_off
+    byte $d3,$e6    ;deccmp ($e6),y
     jsr put00_t1
     dec .count2
     bne .loo7
@@ -292,7 +314,9 @@ test:
     ldx #>text2
     jsr .seta
 .loo6
-    jsr right0_t1
+    ;jsr right0_t1
+    ldy #sxpos_off
+    byte $f3,$e6    ;incsbc ($e6),y
     jsr put00_t1
     dec .count2
     bne .loo6
