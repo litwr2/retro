@@ -1,0 +1,49 @@
+#for MESS/MAME emu of the Sinclair QL
+A=`wmctrl -l|awk '/QL/&&/MESS/{print $1}'`
+awk 'BEGIN {
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = "shift+" sprintf("%c", i + 65)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
+   }
+   t[" "] = "space"
+   t["!"] = "shift+1"
+   t["\""] = "shift+apostrophe"
+   t["#"] = "shift+3"
+   t["$"] = "shift+4"
+   t["%"] = "shift+5"
+   t["&"] = "shift+7"
+   t[sprintf("%c", 39)] = "apostrophe"
+   t["("] = "shift+9"
+   t[")"] = "shift+0"
+   t["*"] = "shift+8"
+   t["+"] = "shift+equal"
+   t[","] = "comma"
+   t["-"] = "minus"
+   t["."] = "period"
+   t["/"] = "slash"
+   t[":"] = "shift+semicolon"
+   t[";"] = "semicolon"
+   t["<"] = "shift+comma"
+   t["="] = "equal"
+   t[">"] = "shift+period"
+   t["?"] = "shift+slash"
+   t["@"] = "shift+2"
+   t["["] = "bracketleft"
+   t["\\"] = "backslash"
+   t["]"] = "bracketright"
+##t["`"] = "grave"  ##pound?
+   t["_"] = "shift+minus"
+   t["^"] = "shift+backslash shift+backslash"
+   t["{"] = "shift+bracketleft"
+   t["|"] = "shift+backslash"
+   t["}"] = "shift+bracketright"
+   t["~"] = "shift+grave"
+   print "mssleep 100"
+}
+{
+  printf "xdotool windowactivate --sync '$A'  key --delay 100 "
+  for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
+  print " Return"
+  print "mssleep 100"
+}' $1

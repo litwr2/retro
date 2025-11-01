@@ -1,0 +1,52 @@
+#for MESS/MAME emu of the BBC Micro model B
+#ok: ' _&*^=+-,./:;~?"%{}<>()[]#$!@10AZ
+#pound sign instead of `
+#\| via F11 redefined in MESS
+A=`wmctrl -l|awk '/BBC/&&/MAME/{print $1}'`
+awk 'BEGIN {
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = "shift+" sprintf("%c", i + 65)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
+   }
+   t[" "] = "space"
+   t["!"] = "shift+1"
+   t["\""] = "shift+2"
+   t["#"] = "shift+3"
+   t["$"] = "shift+4"
+   t["%"] = "shift+5"
+   t["&"] = "shift+6"
+   t[sprintf("%c", 39)] = "shift+7"
+   t["("] = "shift+8"
+   t[")"] = "shift+9"
+   t["+"] = "shift+semicolon"  #~
+   t["*"] = "shift+apostrophe"
+   t[","] = "comma"
+   t["-"] = "minus"
+   t["."] = "period"
+   t["/"] = "slash"
+   t[":"] = "apostrophe"
+   t[";"] = "semicolon"
+   t["<"] = "shift+comma"
+   t["="] = "shift+minus"
+   t[">"] = "shift+period"
+   t["?"] = "shift+slash"
+   t["@"] = "backslash"
+   t["["] = "bracketleft"  #{
+   t["\\"] = "F11"
+   t["]"] = "bracketright"  #}
+   t["`"] = "shift+grave"  ##pound?
+   t["_"] = "grave"  #=
+   t["^"] = "equal"  #@
+   t["{"] = "shift+bracketleft"
+   t["|"] = "shift+F11"  #@
+   t["}"] = "shift+bracketright"
+   t["~"] = "shift+equal"
+   print "mssleep 100"
+}
+{
+  printf "xdotool windowactivate --sync '$A'  key --delay 100 "
+  for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
+  print " Return"
+  print "mssleep 100"
+}' $1
