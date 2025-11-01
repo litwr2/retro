@@ -1,5 +1,6 @@
  10 print"** ntsc throttle v1 by litwr, 2025"
  20 print"use ecmeter to find the best values for"spc(29)"your monitor"
+ 25 if peek(44)<>16 then print"load this code at $1001!":end
  30 if peek(65287)and64 then print"this only works on pal computers":end
  40 input"extra lines before the vsync (1-11)";a:ifa<1ora>11then40
  50 input"extra lines after the vsync (3-12)";b:ifb<3orb>12then50

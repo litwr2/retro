@@ -20,7 +20,7 @@ NTSCPOS0 = 4
 INT2STR = $a45f  ;prints ac:xr
 JPRIMM = $ff4f
 
-	org $1300
+	org $1400
 irq1:
      lda #NTSCPOS0
      sta $ff1d
@@ -131,17 +131,19 @@ irq5:
      jmp $fcbe
 
 acoff:
-     sei
      lda #$e
      ldx #$ce
-     bne acon.le
+     bne acon.le  ;always
 
 acon:
-     sei
 .m1  lda #0
 .m2  ldx #0
-.le  sta $314
+.le  sei
+     sta $314
      stx $315
+     lda $ff07
+     and #$bf
+     sta $ff07
      cli
      rts
 
@@ -251,7 +253,7 @@ start:
      jsr JPRIMM
      byte " - THROTTLE ON",13,0
      ldx #0
-.l1  lda $1300,x
+.l1  lda $1400,x
 .m1  sta $1000,x
      inx
      cpx #<start
@@ -268,13 +270,13 @@ start:
      sta $4002
      sta $4000
      lda #$40
-     bne .l6
+     bne .l6  ;always
 
 .l5  lda #<SOB
      sta $2b
-     lda #>SOB-3
+     lda #>SOB->start+$10
      sta $2c
-     lda #>start-3
+     lda #$10
      sta $2e
      sta $30
      sta $32
