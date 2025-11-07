@@ -56,9 +56,11 @@ void fillscr() {
             //c = x%128; if (c < 8) c = (c + 80); setcolor22(x/2, y/2, c);
             if (++c > 127) c = 8;
         }
+//for(int x = 0; x < 40; x++) setcolu22(x*2, 127, 0x23, 0x54);
 }
 
 #include "sprites.cpp"
+#include "sscroll.cpp"
 
 class Drawing : public Fl_Widget {
     void draw() {
@@ -127,8 +129,23 @@ void button10_callback(Fl_Widget *w) {
     s1.upright();
     gdrawing->damage(1, (s1.xpos - 2)*x_scale, s1.ypos*y_scale, (s1.xsize + 1)*x_scale*2, (s1.ysize + 1)*y_scale*2);
 }
+void buttonC_callback(Fl_Widget *w) {
+    if (s1.visible) {
+		s1.remove();
+        s1.xpos = xmax/2;
+        s1.ypos = ymax/2;
+		s1.put();
+		gdrawing->redraw();
+    } else
+        s1.xpos = xmax/2, s1.ypos = ymax/2;
+}
 void buttonSU_callback(Fl_Widget *w) {
-    gdrawing->redraw();
+    if (s1.visible) {
+		s1.remove();
+        sscroll_up();
+		s1.put();
+		gdrawing->redraw();
+    }
 }
 void buttonSD_callback(Fl_Widget *w) {
     gdrawing->redraw();
@@ -191,7 +208,10 @@ int main(int argc, char **argv) {
     Fl_Button buttonSD(180, 190, 150, 20, "Scroll Down");
     buttonSD.labelsize(12);
     buttonSD.callback(buttonSD_callback);
-    Fl_Button buttonX(10, 220, 320, 20, "Exit");
+    Fl_Button buttonC(10, 220, 150, 20, "Center");
+    buttonC.labelsize(12);
+    buttonC.callback(buttonC_callback);
+    Fl_Button buttonX(180, 220, 150, 20, "Exit");
     buttonX.labelsize(12);
     buttonX.callback(buttonX_callback);
     window.end();

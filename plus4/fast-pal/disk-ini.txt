@@ -1,5 +1,5 @@
-format ntsc-accelerator,88 d64 ntsc-accelerator.d64
-attach ntsc-accelerator.d64
+format ntsc-throttle,88 d64 ntsc-throttle.d64
+attach ntsc-throttle.d64
 write cat.prg cat
 write ecmeter.prg ecmeter
 write ntsc-throttle.prg ntsc-throttle

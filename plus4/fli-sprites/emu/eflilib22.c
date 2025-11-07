@@ -32,6 +32,15 @@ int getcolor22f(int addr, int cs) {  //x, y are doubled
     else
         return cc & 0xf | cl & 0xf0;
 }
+void getcolu22(int x, int y, int &co, int &lu) {  //x, y are doubled
+    int p, ba;
+    p = (y >> 2)*40 + (x >> 1);
+    ba = abase2[y&3] - 0x400;
+    if (y < 96) ba = abase1[y&3];
+    else if (y < 100 || y < 104 && x < 48) ba = abase2[y&3];
+    co = prg[ba + p + 0x400];
+    lu = prg[ba + p];
+}
 void setcolor22(int x, int y, int c) {  //x, y are doubled
     int addr, cs, cc, cl;  //cs: 1 - background, 2 - foreground
     addr = getaddr22(x, y);

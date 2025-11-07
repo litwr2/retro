@@ -317,7 +317,7 @@ unsigned char colors1[16][2] = {
 {0, 0x6e},
 {0, 0x7e}};
 //Sprite s1(87, 201, colors1);
-Sprite s1(70, 202, s6data, s6colors);
+Sprite s1(70, 22, s6data, s6colors);  //202
 //Sprite s1(72, 204, s6data, s6colors);
 //Sprite s1(0, 0, s3data, s3colors);
 

@@ -126,10 +126,16 @@ void button10_callback(Fl_Widget *w) {
     gdrawing->redraw();
 }
 void buttonC_callback(Fl_Widget *w) {
-    s1.remove();
-    s1.xpos = xmax/4;
-    s1.ypos = ymax/4;
-    s1.put();
+    if (s1.visible) {
+		s1.remove();
+        s1.xpos = xmax/4;
+        s1.ypos = ymax/4;
+		s1.put();
+		gdrawing->redraw();
+    } else
+        s1.xpos = xmax/4, s1.ypos = ymax/4;
+}
+void buttonSU_callback(Fl_Widget *w) {
     gdrawing->redraw();
 }
 void buttonSD_callback(Fl_Widget *w) {
@@ -187,13 +193,16 @@ int main(int argc, char **argv) {
     Fl_Button button10(180, 160, 150, 20, "Up-Right");
     button10.labelsize(12);
     button10.callback(button10_callback);
-    Fl_Button buttonC(10, 190, 150, 20, "Center");
-    buttonC.labelsize(12);
-    buttonC.callback(buttonC_callback);
+    Fl_Button buttonSU(10, 190, 150, 20, "Scroll Up");
+    buttonSU.labelsize(12);
+    buttonSU.callback(buttonSU_callback);
     Fl_Button buttonSD(180, 190, 150, 20, "Scroll Down");
     buttonSD.labelsize(12);
     buttonSD.callback(buttonSD_callback);
-    Fl_Button buttonX(10, 220, 320, 20, "Exit");
+    Fl_Button buttonC(10, 220, 150, 20, "Center");
+    buttonC.labelsize(12);
+    buttonC.callback(buttonC_callback);
+    Fl_Button buttonX(180, 220, 150, 20, "Exit");
     buttonX.labelsize(12);
     buttonX.callback(buttonX_callback);
     window.end();
