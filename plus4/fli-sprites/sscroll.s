@@ -22,9 +22,10 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      asl
      rol $67  ;sets C=0
      adc $66  ;C=0
-     sta $66
-     sta $68
-     sta $d0
+     sta .m31+1
+     sta .m33+1
+     sta .l31+1
+     sta .m32+1
      lda #0
      adc $67  ;C=0
      tay   ;bau = ((y - 1)&0xfc)*10
@@ -32,29 +33,27 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      bne .l21  ;if ((y&3) == 0)
 
      lda #39
-     adc $d0  ;C=1
-     sta $d0
+     adc .l31+1  ;C=1
+     sta .l31+1
+     sta .m32+1
      tya
      adc abase1  ;C=0
      bne *+5  ;always
 .l21 adc abase1+1,x  ;C=0
-     sta $d1  ;bal += 40, ;bal = abase1[y&3] + bau
+     sta .l31+2  ;bal += 40, ;bal = abase1[y&3] + bau
      adc #4   ;C=0
-     sta $d3
+     sta .m32+2
      tya
      adc abase1,x  ;C=0
-     sta $67  ;bau += abase1[(y - 1)&3]
-
+     sta .m31+2  ;bau += abase1[(y - 1)&3]
      adc #4   ;C=0
-     sta $69
-     lda $d0
-     sta $d2
+     sta .m33+2
 
      ldy #39  ;for (int x = 0; x < 40; x++)
-.l31 lda ($d0),y
-     sta ($66),y  ;prg[bau + x] = prg[bal + x]
-     lda ($d2),y
-     sta ($68),y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
+.l31 lda $d1d0,y
+.m31 sta $6766,y  ;prg[bau + x] = prg[bal + x]
+.m32 lda $d3d2,y
+.m33 sta $6968,y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
      dey
      bpl .l31
 
@@ -86,30 +85,28 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      asl
      rol $67  ;sets C=0
      adc $66  ;C=0
-     sta $66
-     sta $68
-     sta $d0
+     sta .m21+1
+     sta .m23+1
+     sta .l32+1
+     sta .m22+1
      lda #0
      adc $67
-     sta $67  ;bau = ((y - 1)&0xfc)*10
+     tay  ;bau = ((y - 1)&0xfc)*10
      adc abase2+1,x  ;C=0
-     sta $d1  ;bal += 40, ;bal = abase2[y&3] + bau
+     sta .l32+2  ;bal += 40, ;bal = abase2[y&3] + bau
      adc #4   ;C=0
-     sta $d3
-     lda $67
+     sta .m22+2
+     tya
      adc abase2,x  ;C=0
-     sta $67  ;bau += abase2[(y - 1)&3]
-
+     sta .m21+2  ;bau += abase2[(y - 1)&3]
      adc #4   ;C=0
-     sta $69
-     lda $d0
-     sta $d2
+     sta .m23+2
 
      ldy #39  ;for (int x = 0; x < 40; x++)
-.l32 lda ($d0),y
-     sta ($66),y  ;prg[bau + x] = prg[bal + x]
-     lda ($d2),y
-     sta ($68),y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
+.l32 lda $d1d0,y
+.m21 sta $6766,y  ;prg[bau + x] = prg[bal + x]
+.m22 lda $d3d2,y
+.m23 sta $6968,y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
      dey
      bpl .l32
 
@@ -153,21 +150,19 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      sta $66
      sta $68
      sta $d0
+     sta $d2
      lda #0
      adc $67
-     sta $67  ;bau = ((y - 1)&0xfc)*10
+     tay  ;bau = ((y - 1)&0xfc)*10
      adc abase2+1,x  ;C=0
      sta $d1  ;bal += 40, ;bal = abase2[y&3] + bau
      adc #4   ;C=0
      sta $d3
-     lda $67
+     tya
      adc abase2,x  ;C=0
      sta $67  ;bau += abase2[(y - 1)&3]
-
      adc #4   ;C=0
      sta $69
-     lda $d0
-     sta $d2
 
      ldy #23  ;for (int x = 0; x < 24; x++)
 .l33 lda ($d0),y
@@ -230,38 +225,38 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      asl
      rol $67  ;sets C=0
      adc $66  ;C=0
-     sta $66
-     sta $68
-     tay
+     sta .m51+1
+     sta .m53+1
+     sta .l35+1
+     sta .m52+1
      lda #-4
      adc $67
-     sta $67  ;bau = ((y - 1)&0xfc)*10 - 0x400
+     tay  ;bau = ((y - 1)&0xfc)*10 - 0x400
      cpx #3
      bne .l22  ;if ((y&3) == 0)
 
-     tya
+     lda .l35+1
      adc #39  ;C=1
-     tay
-     lda $67
+     sta .l35+1
+     sta .m52+1
+     tya
      adc abase2  ;C=0
      bne *+5  ;always
 .l22 adc abase2+1,x  ;C=0
-     sta $d1  ;bal += 40 ;bal = abase2[y&3] + bau
+     sta .l35+2  ;bal += 40 ;bal = abase2[y&3] + bau
      adc #4   ;C=0
-     sta $d3
-     lda $67
+     sta .m52+2
+     tya
      adc abase2,x  ;C=0
-     sta $67  ;bau += abase2[(y - 1)&3]
+     sta .m51+2  ;bau += abase2[(y - 1)&3]
      adc #4   ;C=0
-     sta $69
-     sty $d0
-     sty $d2
+     sta .m53+2
 
      ldy #39  ;for (int x = 0; x < 40; x++)
-.l35 lda ($d0),y
-     sta ($66),y  ;prg[bau + x] = prg[bal + x]
-     lda ($d2),y
-     sta ($68),y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
+.l35 lda $d1d0,y
+.m51 sta $6766,y  ;prg[bau + x] = prg[bal + x]
+.m52 lda $d3d2,y
+.m53 sta $6968,y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
      dey
      bpl .l35
 
