@@ -186,10 +186,10 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
      sta ($68),y  ;prg[bau + 1024 + x] = prg[bal + 1024 + x]
      dey
      cpy #23
-     bpl .l34
+     bne .l34  ;set C=1 on exit
 
      lda $d5
-     adc #1   ;C=0
+     adc #0   ;C=1
      cmp #103  ;sets C=1 on exit!
      bne .l13
 

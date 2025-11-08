@@ -46,14 +46,18 @@ l0
     and kmatrix+7   ;1
     bne l5
 
-    lda #2
-    sta $d4
-    jsr up_t1
-    lda #20
-    jsr delay
-    lda #-2
-    sta $d4
+    ;lda #2
+    ;sta $d4
+    ;jsr up_t1
+    ;lda #20
+    ;jsr delay
+    ;lda #-2
+    ;sta $d4
+    jsr remove_t1
+    jsr sscroll_up
+    jsr put_t1
     jmp down_t1
+zup byte 0
 l5
     lda #8
     and kmatrix+7  ;2
@@ -166,6 +170,7 @@ l2 pha
    include "common.s"
    include "aux.s"
    include "sprite-lib1.s"
+   include "sscroll.s"
    ;include "sprite-lib2.s"
    include "sprlib/s6.s"
 

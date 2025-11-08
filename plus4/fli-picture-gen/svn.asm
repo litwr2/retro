@@ -254,7 +254,7 @@ main:
      include "aux.s"
   endif
   ifdef SPRITES1
-     include "sprites-t1s.s"
+     include "sprites-t1.s"
   endif
   ifdef TEXT1
      include "text-t1.s"
