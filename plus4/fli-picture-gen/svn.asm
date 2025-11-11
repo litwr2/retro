@@ -198,21 +198,61 @@ irq276:   ;245
      lda #249
   endif
      sta $ff1d
-
-     lda #2
-     sta $ff0b
-     lda #$a2
+.l   lda #$a2
      sta $ff0a
+  if DYNAMIC
+.me  lda #0
+     beq .l1
 
-     lda #<irq2
+     dec .me+1
+     lda $ff06
+     and #$ef
+     sta $ff06
+     lda #<irqX
+     sta .m1+1
+     lda #>irqX
+     sta .m2+1
+     lda #196
+     sta .l1+1
+  endif
+.l1  lda #2
+     sta $ff0b
+.m1  lda #<irq2
      sta $fffe
-     lda #>irq2
+.m2  lda #>irq2
      sta $ffff
 
-     pla
+.le  pla
      inc $ff09
      rti
+  if DYNAMIC
+irqX: ;196
+     pha
+     lda #140
+     sta $ff1d
+     lda #205
+     sta $ff0b
+     lda #<irq205
+     sta $fffe
+  ;if >irqX != >irq205
+     lda #>irq205
+     sta $ffff
+  ;endif
+.me  lda #0
+     beq irq276.le
 
+     dec .me+1
+     lda $ff06
+     ora #$10
+     sta $ff06
+     lda #<irq2
+     sta irq276.m1+1
+     lda #>irq2
+     sta irq276.m2+1
+     lda #2
+     sta irq276.l1+1
+     bne irq276.le  ;always
+  endif
 irq205:
      pha
 .sc:

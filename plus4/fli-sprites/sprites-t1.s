@@ -53,12 +53,68 @@ l0
     ;jsr delay
     ;lda #-2
     ;sta $d4
-    jsr remove_t1
-    jsr sscroll_up
-    jsr put_t1
-    jmp down_t1
-zup byte 0
+    ;jsr down_t1
+    ;inc irq276.me+1
+    ;jsr remove_t1
+    ;jsr sscroll_up4
+    ;jsr put_t1
+    ;inc irqX.me+1
+    lda #-2
+    sta $d4
+    jsr down2_t1
+    lda #4
+    jsr delay
+    lda #-2
+    sta $d4
+    jsr down2_t1
+    lda #4
+    jsr delay
+    lda #-2
+    sta $d4
+    jsr down2_t1
+    lda #4
+    jsr delay
+    lda #-2
+    sta $d4
+    jsr down2_t1
+    lda #20
+    jsr delay
+    lda #2
+    sta $d4
+    jsr up2_t1
+    lda #4
+    jsr delay
+    lda #2
+    sta $d4
+    jsr up2_t1
+    lda #4
+    jsr delay
+    lda #2
+    sta $d4
+    jsr up2_t1
+    lda #4
+    jsr delay
+    lda #2
+    sta $d4
+    jsr up2_t1
+    ;inc irq276.me+1
+    ;jsr remove_t1
+    ;jsr sscroll_up4
+    ;jsr put_t1
+    ;inc irqX.me+1
+    rts
 l5
+    lda #1
+    and kmatrix+1  ;3
+    bne l5a
+
+    inc irq276.me+1
+    jsr remove_t1
+    jsr sscroll_up4
+    jsr put_t1
+    inc irqX.me+1
+    rts
+l5a
     lda #8
     and kmatrix+7  ;2
     bne l6

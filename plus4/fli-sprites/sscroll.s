@@ -1,3 +1,79 @@
+     macro assign0,bau,p
+     lda \bau+1064+\p*40,x
+     sta \bau+1024+\p*40,x
+     lda \bau+40+\p*40,x
+     sta \bau+\p*40,x
+     endm
+     macro assign1,bau,bal,p
+     lda \bal+1064+\p*40,x
+     sta \bau+1024+\p*40,x
+     lda \bal+40+\p*40,x
+     sta \bau+\p*40,x
+     endm
+     macro assignx,bau,bal
+     ldx #39
+.l\@ lda \bau,x
+     sta .slu
+     lda \bau+$400,x
+     sta .sco
+     assign0 \bau,0
+     assign0 \bau,1
+     assign0 \bau,2
+     assign0 \bau,3
+     assign0 \bau,4
+     assign0 \bau,5
+     assign0 \bau,6
+     assign0 \bau,7
+     assign0 \bau,8
+     assign0 \bau,9
+     assign0 \bau,10
+     assign0 \bau,11
+     assign0 \bau,12
+     assign0 \bau,13
+     assign0 \bau,14
+     assign0 \bau,15
+     assign0 \bau,16
+     assign0 \bau,17
+     assign0 \bau,18
+     assign0 \bau,19
+     assign0 \bau,20
+     assign0 \bau,21
+     assign0 \bau,22
+     assign1 \bau,\bal,23
+     cpx #24
+     bcs .l1\@
+
+     assign0 \bal,24
+     assign1 \bal,\bal-$400,25
+     bcc .l2\@  ;always
+.l1\@
+     assign1 \bal,\bal-$400,24
+     assign0 \bal-$400,25
+.l2\@
+     assign0 \bal-$400,26
+     assign0 \bal-$400,27
+     assign0 \bal-$400,28
+     assign0 \bal-$400,29
+     assign0 \bal-$400,30
+     lda .sco
+     sta \bal+31*40,x
+     lda .slu
+     sta \bal-$400+31*40,x
+     dex
+     bmi *+5
+     jmp .l\@
+     endm
+
+sscroll_up4:
+     assignx $2800,$9800
+     assignx $3000,$7000
+     assignx $3800,$8000
+     assignx $9000,$8800
+     rts
+.sco byte 0
+.slu byte 0
+
+  if 0
 sscroll_up:  ;$66-69, $d0-d3, $d5
      ldx #39
 .l0  lda $2c00,x  ;for (int x = 0; x < 40; x++)
@@ -276,4 +352,5 @@ sscroll_up:  ;$66-69, $d0-d3, $d5
 
 .sco ds 40
 .slu ds 40    ;unsigned char sco[40], slu[40];
+  endif
 
