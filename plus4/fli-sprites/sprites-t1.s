@@ -59,22 +59,33 @@ l0
     ;jsr sscroll_up4
     ;jsr put_t1
     ;inc irqX.me+1
-    jsr down2_t1
+    jsr down_t1
     lda #-2
     sta $d4
     jsr down_t1
+    jsr down_t1
+    lda #-2
+    sta $d4
+    jsr down_t1
+    jsr down_t1
+    lda #-2
+    sta $d4
+    jsr down_t1
+    jsr down_t1
+    lda #6
+    sta $d4
     inc irq276.me+1
     jsr remove_t1
-    jsr sscroll_up4
+    jsr sscroll_up8
     ldy #sypos_off
     lda ($e6),y
     sec
-    sbc #2
+    sbc #7
     sta ($e6),y
     jsr put_t1
     inc irqX.me+1
-    lda #2
-    sta $d4
+    ;lda #6
+    ;sta $d4
     rts
 l5
     lda #1
@@ -83,7 +94,7 @@ l5
 
     inc irq276.me+1
     jsr remove_t1
-    jsr sscroll_up4
+    jsr sscroll_up8
     jsr put_t1
     inc irqX.me+1
     rts
