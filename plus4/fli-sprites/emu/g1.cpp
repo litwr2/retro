@@ -150,7 +150,12 @@ void buttonSU_callback(Fl_Widget *w) {
     }
 }
 void buttonSD_callback(Fl_Widget *w) {
-    gdrawing->redraw();
+    if (s1.visible) {
+		s1.remove();
+        sscroll_down8f();
+		s1.put();
+		gdrawing->redraw();
+    }
 }
 void buttonX_callback(Fl_Widget *w) {
     std::exit(0);

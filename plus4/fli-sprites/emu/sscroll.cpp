@@ -1,3 +1,173 @@
+#define assign2r(a,y) prg[a + 1024 + 40*((y) + 2) + x] = prg[a + 1024 + 40*(y) + x], prg[a + 40*((y) + 2) + x] = prg[a + 40*(y) + x]
+#define assign3r(a,b,y) prg[b + 1024 + 40*((y) + 2) + x] = prg[a + 1024 + 40*(y) + x], prg[b + 40*((y) + 2) + x] = prg[a + 40*(y) + x]
+void sscroll_down8f() {
+    unsigned char sco0, slu0, sco1, slu1;
+    int bau, bal, y;
+    for (int x = 0; x < 40; x++)
+        bal = 0x9800,
+        bau = 0x2800,
+        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        assign2r(bal - 0x400, 29),
+        assign2r(bal - 0x400, 28),
+        assign2r(bal - 0x400, 27),
+        assign2r(bal - 0x400, 26),
+        x < 24 ?
+            assign3r(bal, bal - 0x400, 25),
+            assign3r(bau, bal, 23)
+        :
+            (assign2r(bal - 0x400, 25),
+            assign3r(bau, bal - 0x400, 23)),
+        assign3r(bal, bal - 0x400, 24),
+        assign3r(bau, bal, 22),
+        assign2r(bau, 21),
+        assign2r(bau, 20),
+        assign2r(bau, 19),
+        assign2r(bau, 18),
+        assign2r(bau, 17),
+        assign2r(bau, 16),
+        assign2r(bau, 15),
+        assign2r(bau, 14),
+        assign2r(bau, 13),
+        assign2r(bau, 12),
+        assign2r(bau, 11),
+        assign2r(bau, 10),
+        assign2r(bau, 9),
+        assign2r(bau, 8),
+        assign2r(bau, 7),
+        assign2r(bau, 6),
+        assign2r(bau, 5),
+        assign2r(bau, 4),
+        assign2r(bau, 3),
+        assign2r(bau, 2),
+        assign2r(bau, 1),
+        assign2r(bau, 0),
+        prg[bau + 0x400 + x] = sco0, prg[bau + x] = slu0,
+        prg[bau + 0x428 + x] = sco1, prg[bau + 40 + x] = slu1;
+    for (int x = 0; x < 40; x++) 
+        bau = 0x3000,
+        bal = 0x7000,
+        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        assign2r(bal - 0x400, 29),
+        assign2r(bal - 0x400, 28),
+        assign2r(bal - 0x400, 27),
+        assign2r(bal - 0x400, 26),
+        x < 24 ?
+            assign3r(bal, bal - 0x400, 25),
+            assign3r(bau, bal, 23)
+        :
+            (assign2r(bal - 0x400, 25),
+            assign3r(bau, bal - 0x400, 23)),
+        assign3r(bal, bal - 0x400, 24),
+        assign3r(bau, bal, 22),
+        assign2r(bau, 21),
+        assign2r(bau, 20),
+        assign2r(bau, 19),
+        assign2r(bau, 18),
+        assign2r(bau, 17),
+        assign2r(bau, 16),
+        assign2r(bau, 15),
+        assign2r(bau, 14),
+        assign2r(bau, 13),
+        assign2r(bau, 12),
+        assign2r(bau, 11),
+        assign2r(bau, 10),
+        assign2r(bau, 9),
+        assign2r(bau, 8),
+        assign2r(bau, 7),
+        assign2r(bau, 6),
+        assign2r(bau, 5),
+        assign2r(bau, 4),
+        assign2r(bau, 3),
+        assign2r(bau, 2),
+        assign2r(bau, 1),
+        assign2r(bau, 0),
+        prg[bau + 0x400 + x] = sco0, prg[bau + x] = slu0,
+        prg[bau + 0x428 + x] = sco1, prg[bau + 40 + x] = slu1;
+    for (int x = 0; x < 40; x++)
+        bau = 0x3800,
+        bal = 0x8000,
+        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        assign2r(bal - 0x400, 29),
+        assign2r(bal - 0x400, 28),
+        assign2r(bal - 0x400, 27),
+        assign2r(bal - 0x400, 26),
+        x < 24 ?
+            assign3r(bal, bal - 0x400, 25),
+            assign3r(bau, bal, 23)
+        :
+            (assign2r(bal - 0x400, 25),
+            assign3r(bau, bal - 0x400, 23)),
+        assign3r(bal, bal - 0x400, 24),
+        assign3r(bau, bal, 22),
+        assign2r(bau, 21),
+        assign2r(bau, 20),
+        assign2r(bau, 19),
+        assign2r(bau, 18),
+        assign2r(bau, 17),
+        assign2r(bau, 16),
+        assign2r(bau, 15),
+        assign2r(bau, 14),
+        assign2r(bau, 13),
+        assign2r(bau, 12),
+        assign2r(bau, 11),
+        assign2r(bau, 10),
+        assign2r(bau, 9),
+        assign2r(bau, 8),
+        assign2r(bau, 7),
+        assign2r(bau, 6),
+        assign2r(bau, 5),
+        assign2r(bau, 4),
+        assign2r(bau, 3),
+        assign2r(bau, 2),
+        assign2r(bau, 1),
+        assign2r(bau, 0),
+        prg[bau + 0x400 + x] = sco0, prg[bau + x] = slu0,
+        prg[bau + 0x428 + x] = sco1, prg[bau + 40 + x] = slu1;
+    for (int x = 0; x < 40; x++)
+        bau = 0x9000,
+        bal = 0x8800,
+        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        assign2r(bal - 0x400, 29),
+        assign2r(bal - 0x400, 28),
+        assign2r(bal - 0x400, 27),
+        assign2r(bal - 0x400, 26),
+        x < 24 ?
+            assign3r(bal, bal - 0x400, 25),
+            assign3r(bau, bal, 23)
+        :
+            (assign2r(bal - 0x400, 25),
+            assign3r(bau, bal - 0x400, 23)),
+        assign3r(bal, bal - 0x400, 24),
+        assign3r(bau, bal, 22),
+        assign2r(bau, 21),
+        assign2r(bau, 20),
+        assign2r(bau, 19),
+        assign2r(bau, 18),
+        assign2r(bau, 17),
+        assign2r(bau, 16),
+        assign2r(bau, 15),
+        assign2r(bau, 14),
+        assign2r(bau, 13),
+        assign2r(bau, 12),
+        assign2r(bau, 11),
+        assign2r(bau, 10),
+        assign2r(bau, 9),
+        assign2r(bau, 8),
+        assign2r(bau, 7),
+        assign2r(bau, 6),
+        assign2r(bau, 5),
+        assign2r(bau, 4),
+        assign2r(bau, 3),
+        assign2r(bau, 2),
+        assign2r(bau, 1),
+        assign2r(bau, 0),
+        prg[bau + 0x400 + x] = sco0, prg[bau + x] = slu0,
+        prg[bau + 0x428 + x] = sco1, prg[bau + 40 + x] = slu1;
+}
 #define assign2(a,y) prg[a + 1024 + 40*(y) + x] = prg[a + 1024 + 40*((y) + 2) + x], prg[a + 40*(y) + x] = prg[a + 40*((y) + 2) + x]
 #define assign3(a,b,y) prg[a + 1024 + 40*(y) + x] = prg[b + 1024 + 40*((y) + 2) + x], prg[a + 40*(y) + x] = prg[b + 40*((y) + 2) + x]
 void sscroll_up8f() {
@@ -42,8 +212,8 @@ void sscroll_up8f() {
         assign2(bal - 0x400, 27),
         assign2(bal - 0x400, 28),
         assign2(bal - 0x400, 29),
-        prg[bal - 0x400 + 1024 + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
-        prg[bal - 0x400 + 1024 + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
+        prg[bal + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
+        prg[bal + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
     for (int x = 0; x < 40; x++) 
         bau = 0x3000,
         sco0 = prg[bau + 0x400 + x], slu0 = prg[bau + x],
@@ -83,8 +253,8 @@ void sscroll_up8f() {
         assign2(bal - 0x400, 27),
         assign2(bal - 0x400, 28),
         assign2(bal - 0x400, 29),
-        prg[bal - 0x400 + 1024 + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
-        prg[bal - 0x400 + 1024 + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
+        prg[bal + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
+        prg[bal + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
     for (int x = 0; x < 40; x++)
         bau = 0x3800,
         sco0 = prg[bau + 0x400 + x], slu0 = prg[bau + x],
@@ -124,8 +294,8 @@ void sscroll_up8f() {
         assign2(bal - 0x400, 27),
         assign2(bal - 0x400, 28),
         assign2(bal - 0x400, 29),
-        prg[bal - 0x400 + 1024 + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
-        prg[bal - 0x400 + 1024 + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
+        prg[bal + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
+        prg[bal + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
     for (int x = 0; x < 40; x++)
         bau = 0x9000,
         sco0 = prg[bau + 0x400 + x], slu0 = prg[bau + x],
@@ -165,8 +335,8 @@ void sscroll_up8f() {
         assign2(bal - 0x400, 27),
         assign2(bal - 0x400, 28),
         assign2(bal - 0x400, 29),
-        prg[bal - 0x400 + 1024 + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
-        prg[bal - 0x400 + 1024 + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
+        prg[bal + 30*40 + x] = sco0, prg[bal - 0x400 + 30*40 + x] = slu0,
+        prg[bal + 31*40 + x] = sco1, prg[bal - 0x400 + 31*40 + x] = slu1;
 }
 #define assign0(a,y) prg[a + 1024 + 40*(y) + x] = prg[a + 1024 + 40*((y) + 1) + x], prg[a + 40*(y) + x] = prg[a + 40*((y) + 1) + x]
 #define assign1(a,b,y) prg[a + 1024 + 40*(y) + x] = prg[b + 1024 + 40*((y) + 1) + x], prg[a + 40*(y) + x] = prg[b + 40*((y) + 1) + x]
