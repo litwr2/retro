@@ -76,7 +76,7 @@ l0
     sta $d4
     inc irq276.me+1
     jsr remove_t1
-    jsr sscroll_up8
+    jsr sscroll_up4
     ldy #sypos_off
     lda ($e6),y
     sec
@@ -94,7 +94,7 @@ l5
 
     inc irq276.me+1
     jsr remove_t1
-    jsr sscroll_down8
+    jsr sscroll_up4
     jsr put_t1
     inc irqX.me+1
     rts
