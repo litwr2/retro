@@ -142,7 +142,7 @@ void buttonC_callback(Fl_Widget *w) {
 void buttonSU_callback(Fl_Widget *w) {
     if (s1.visible) {
 		s1.remove();
-        sscroll_up8f();
+        sscroll_up4f();
 //        sscroll_up4f();
 //        sscroll_up();
 		s1.put();
@@ -152,7 +152,7 @@ void buttonSU_callback(Fl_Widget *w) {
 void buttonSD_callback(Fl_Widget *w) {
     if (s1.visible) {
 		s1.remove();
-        sscroll_down8f();
+        sscroll_down4f();
 		s1.put();
 		gdrawing->redraw();
     }
