@@ -1,3 +1,83 @@
+     macro assign2r,bau,p
+     lda \bau+1024+\p*40,x
+     sta \bau+1104+\p*40,x
+     lda \bau+\p*40,x
+     sta \bau+80+\p*40,x
+     endm
+     macro assign3r,bau,bal,p
+     lda \bau+1024+\p*40,x
+     sta \bal+1104+\p*40,x
+     lda \bau+\p*40,x
+     sta \bal+80+\p*40,x
+     endm
+     macro assignr,bau,bal
+     ldx #39
+.l\@ lda \bal+1240,x
+     sta .sco1\@+1
+     lda \bal+1200,x
+     sta .sco0\@+1
+     lda \bal+216,x
+     sta .slu1\@+1
+     lda \bal+176,x
+     sta .slu0\@+1
+     assign2r \bal-1024,29
+     assign2r \bal-1024,28
+     assign2r \bal-1024,27
+     assign2r \bal-1024,26
+     cpx #24
+     bcs .l1\@
+
+     assign3r \bal,\bal-1024,25
+     assign3r \bau,\bal,23
+     bcc .l2\@  ;always
+.l1\@
+     assign2r \bal-$400,25
+     assign3r \bau,\bal-$400,23
+.l2\@
+     assign3r \bal,\bal-$400,24
+     assign3r \bau,\bal,22
+     assign2r \bau,21
+     assign2r \bau,20
+     assign2r \bau,19
+     assign2r \bau,18
+     assign2r \bau,17
+     assign2r \bau,16
+     assign2r \bau,15
+     assign2r \bau,14
+     assign2r \bau,13
+     assign2r \bau,12
+     assign2r \bau,11
+     assign2r \bau,10
+     assign2r \bau,9
+     assign2r \bau,8
+     assign2r \bau,7
+     assign2r \bau,6
+     assign2r \bau,5
+     assign2r \bau,4
+     assign2r \bau,3
+     assign2r \bau,2
+     assign2r \bau,1
+     assign2r \bau,0
+.sco0\@ lda #0
+     sta \bau+1024,x
+.slu0\@ lda #0
+     sta \bau,x
+.sco1\@ lda #0
+     sta \bau+1064,x
+.slu1\@ lda #0
+     sta \bau+40,x
+     dex
+     bmi *+5
+     jmp .l\@
+     endm
+
+sscroll_down8:
+     assignr $2800,$9800
+     assignr $3000,$7000
+     assignr $3800,$8000
+     assignr $9000,$8800
+     rts
+
      macro assign2,bau,p
      lda \bau+1104+\p*40,x
      sta \bau+1024+\p*40,x

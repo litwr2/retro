@@ -6,8 +6,8 @@ void sscroll_down8f() {
     for (int x = 0; x < 40; x++)
         bal = 0x9800,
         bau = 0x2800,
-        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
-        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        sco0 = prg[bal + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
         assign2r(bal - 0x400, 29),
         assign2r(bal - 0x400, 28),
         assign2r(bal - 0x400, 27),
@@ -47,8 +47,8 @@ void sscroll_down8f() {
     for (int x = 0; x < 40; x++) 
         bau = 0x3000,
         bal = 0x7000,
-        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
-        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        sco0 = prg[bal + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
         assign2r(bal - 0x400, 29),
         assign2r(bal - 0x400, 28),
         assign2r(bal - 0x400, 27),
@@ -88,8 +88,8 @@ void sscroll_down8f() {
     for (int x = 0; x < 40; x++)
         bau = 0x3800,
         bal = 0x8000,
-        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
-        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        sco0 = prg[bal + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
         assign2r(bal - 0x400, 29),
         assign2r(bal - 0x400, 28),
         assign2r(bal - 0x400, 27),
@@ -129,8 +129,8 @@ void sscroll_down8f() {
     for (int x = 0; x < 40; x++)
         bau = 0x9000,
         bal = 0x8800,
-        sco0 = prg[bal - 0x400 + 1024 + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
-        sco1 = prg[bal - 0x400 + 1024 + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
+        sco0 = prg[bal + 30*40 + x], slu0 = prg[bal - 0x400 + 30*40 + x],
+        sco1 = prg[bal + 31*40 + x], slu1 = prg[bal - 0x400 + 31*40 + x],
         assign2r(bal - 0x400, 29),
         assign2r(bal - 0x400, 28),
         assign2r(bal - 0x400, 27),
