@@ -8,7 +8,7 @@
   <TITLE>Commodore +4 Emulator Forever?</TITLE>
 </HEAD>
 
-<body background=cbm2.gif bgproperties=fixed>
+<body background=../cbm2.gif style=background-attachment:fixed>
 
 <div align=center>
 
@@ -16,60 +16,51 @@
 
 <h2>CONTENTS</h2>
 
-<p><a href="#0">Preview</a>
-<p><a href="#1">OS</a>
-<p><a href="#DOS">Why Assembler &amp; DOS?!</a>
-<p><a href="#2">Used IBM PC hardware resources</a>
-<p><a href="#3">Keyboard</a>
-<p><a href="#4">Joysticks</a>
-<p><a href="#DD">Disk Drives</a>
-<p><a href="#SND">Sound</a>
-<p><a href="#VSS">Video subsystem</a>
-<p><a href="#5">Mouse</a>
-<p><a href="#6">ROMs</a>
-<p><a href="#7">Main Features Of The Emulator</a>
-<p><a href="#8">CPU JAM instructions</a>
-<p><a href="#9">I/O Ports Emulation</a>
-<p><a href="#10">TED Emulation</a>
-<p><a href="#11">Commodore +4 main specifications</a>
-<p><a href="#12">C+4 vs C64</a>
-<p><a href="#13">Debugger</a>
-<p><a href="#14">CPU and TED Timing</a>
-<p><a href="#15">Datasette Emulation</a>
-<p><a href="#16">Menus</a>
-<p><a href="#17">CTF Format</a>
-<p><a href="#18">C2F Format</a>
-<p><a href="#CFG">CFG Format</a>
-<p><a href="#CLP">Command Line Parameters</a>
-<p><a href="#19">Compilation</a>
-<p><a href="#20">(C) Copyright</a>
-<p><a href="#BUG">Bugs reports</a>
-<p><a href="#21">History and the last updates</a>
+<p><a href=#0>Preview</a>
+<p><a href=#1>OS</a>
+<p><a href=#DOS>Why Assembler &amp; DOS?!</a>
+<p><a href=#2>Used IBM PC hardware resources</a>
+<p><a href=#3>Keyboard</a>
+<p><a href=#4>Joysticks</a>
+<p><a href=#DD>Disk Drives</a>
+<p><a href=#SND>Sound</a>
+<p><a href=#VSS>Video subsystem</a>
+<p><a href=#5>Mouse</a>
+<p><a href=#6>ROMs</a>
+<p><a href=#7>Main Features Of The Emulator</a>
+<p><a href=#8>CPU JAM instructions</a>
+<p><a href=#9>I/O Ports Emulation</a>
+<p><a href=#10>TED Emulation</a>
+<p><a href=#11>Commodore +4 main specifications</a>
+<p><a href=#12>C+4 vs C64</a>
+<p><a href=#13>Debugger</a>
+<p><a href=#14>CPU and TED Timing</a>
+<p><a href=#15>Datasette Emulation</a>
+<p><a href=#16>Menus</a>
+<p><a href=#17>CTF Format</a>
+<p><a href=#18>C2F Format</a>
+<p><a href=#CFG>CFG Format</a>
+<p><a href=#CLP>Command Line Parameters</a>
+<p><a href=#19>Compilation</a>
+<p><a href=#20>(C) Copyright</a>
+<p><a href=#BUG>Bugs reports</a>
+<p><a href=#21>History and the last updates</a>
 </div>
 
 
-<a name="0"></a><h2 align=center>Preview</h2>
+<a name=0></a><h2 align=center>Preview</h2>
 
-<p>I think I've created an unique emulator, because I've never seen any
-Commodore plus/4 (16 or 116) since March 1991... I've also never been an
-owner of Commodore disk drive. This version of the
-emulator has created only from some my old and found in Internet
-documentation (e.g., `c64doc' by John West and Marko Makela, `Extra
-Instructions Of The 65XX Series CPU' by Adam Vardy) and some advice
-from Attila Grosz. It's written only in 100% 80486 assembler (16-bit mode).
+<p>I think I've created a unique emulator because I haven't come across any Commodore Plus/4 (16 or 116) since March 1991. I've also never owned a Commodore disk drive. This version of the emulator has been created solely from some old documentation I had and some that I found on the Internet (e.g., `c64doc' by John West and Marko Makela, `Extra Instructions Of The 65XX Series CPU' by Adam Vardy) and some advice
+from Attila Grosz.  It's written only in 100% 80486 assembler (16-bit mode).
 
 
 
-<a name="1"></a><h2 align=center>OS</h2>
+<a name=1></a><h2 align=center>OS</h2>
 
-<p>Reprogramming the timer hardware made impossible to run the
-emulator from Microsoft Windows GUI environment &mdash; use DOS or Windows
-95/98/Me DOS mode. For NT/2000/XP, Linux, FreeBSD users &mdash; creation a
-DOS boot disk (or CD-ROM) is a possibility to run this program.
+<p>Reprogramming the timer hardware has made it impossible to run the emulator from the Microsoft Windows GUI environment. Users are advised to utilize DOS or Windows 95/98/Me DOS mode. For those on NT/2000/XP, Linux, or FreeBSD, creating a DOS boot disk (or CD-ROM) is a viable option to run this program.  Another option is to use a virtual machine to boot DOS. DOSBOX is the best choice as it properly emulates the Sound Blaster, but it can be quite slow. I have found that other virtual machines such as VirtualBox and Qemu+KVM are much faster.
 
 
-
-<a name="DOS"></a><h2 align=center>Why Assembler &amp; DOS?!</h2>
+<a name=DOS></a><h2 align=center>Why Assembler &amp; DOS?!</h2>
 
 <p>Why this old nearly completely forgotten OS is used as base for 2007
 software? There are several reasons.
@@ -91,26 +82,26 @@ Windows (Plus4emu, Yape). Presented emulator is the best for DOS forever!
 <li>Author's computer of the middle of 1990s was 486DX-120 and Assembler was
 the only choice in attempt to reach 100% performance with it.
 
-<li>The programming in Assembler under DOS without debugger is very difficult
-and time consumptive &mdash; this makes the pleasure of emulator creation
+<li>The programming in Assembler under DOS without a debugger is very difficult
+and time consumptive &mdash; this makes the pleasure of the emulator creation
 longer.
 </ol>
 
 
 
-<a name="2"></a><h2 align=center>Used IBM hardware resources</h2>
+<a name=2></a><h2 align=center>Used IBM hardware resources</h2>
 
-<p>The emulator completely takes-over interrupt 9 (keyboard) and intercepts
-interrupt 8. The emulator uses only base DOS memory. Screen size is
+<p>The emulator completely takes over interrupt 9 (keyboard) and intercepts
+interrupt 8. The emulator uses only base DOS memory. The screen size is
 selectable. It has direct access to the following ports: 20-21 (programmable
 interrupt controller); 40, 43 (timer hardware &mdash; to set IRQ0 frequency to
 37288Hz); 60, 64 (keyboard); 61 (speaker); 201 (joysticks); 388, 389 (Ad
 Lib); 3C0, 3C1, 3C2, 3C4, 3C5, 3CE, 3CF (VGA); 3D4, 3D5, 3DA (color VGA);
 3B4, 3B5, 3BA (mono VGA); 2x6, 2xA, 2xC, 2xE (Sound Blaster, x may be 2,4,6,
-or 8). Some VGA registers are used only for several video modes.
+or 8). Several more VGA registers are used only for some video modes.
 
 
-<a name="3"></a><h2 align=center>Keyboard</h2>
+<a name=3></a><h2 align=center>Keyboard</h2>
 
 <p>Some keys description:
 
@@ -127,15 +118,15 @@ or 8). Some VGA registers are used only for several video modes.
 <tr><td>Num Lock<td>-<td>Button Record on the datasette (press only it when 
 message "PRESS PLAY & RECORD ON TAPE" appeared)
 <tr><td>SysRq (Alt+PrintScreen)<td>-<td>Immediate exit to DOS (Warning! It can 
-interrupt any operation, e.g. with file)
+interrupt any operation, e.g. with a file)
 </table>
 
 
 
-<a name="4"></a><h2 align=center>Joysticks</h2>
+<a name=4></a><h2 align=center>Joysticks</h2>
 
-<p>You can use any combination of real analog joysticks and the keyboard keys
-for joystick emulation. There are two keys sets for the emulation:
+<p>You can use any combination of real analog joysticks and keyboard keys
+for the joystick emulation. There are two keys sets for the emulation:
 
 <ul>
 <li>KEYS1 - Word Star like - SEDX/;
@@ -144,7 +135,7 @@ for joystick emulation. There are two keys sets for the emulation:
 
 
 
-<a name="DD"></a><h2 align=center>Disk Drives</h2>
+<a name=DD></a><h2 align=center>Disk Drives</h2>
 
 <p>You can use units 8 and 9. There are two kinds of emulation of Commodore
 DOS:
@@ -154,10 +145,10 @@ DOS:
 <li>for IBM PC directory (FAT or CD-ROM).
 </ol>
 
-<p>The both emulations allow to use the next BASIC DOS commands and
+<p>The both emulations allow us to use the next BASIC DOS commands and
 variables: DIRECTORY, DLOAD, LOAD, DSAVE, SAVE, VERIFY, INPUT#, GET#, PRINT#,
 OPEN, CLOSE, SCRATCH, RENAME, HEADER, COLLECT, DS, DS$, ST, CMD, COPY. The
-DOS commands U9/UI and U:/UJ are partially supported &mdash; they return DOS
+DOS commands U9/UI and U:/UJ are partially supported &mdash; they return the DOS
 version in the DS$ and finish all i/o operations. The DOS command I
 (INITIALIZE) finishes all i/o operations. The DOS command M-R (MEMORY READ)
 may be used to read C1551 ROM and 5 256 bytes data buffers at addresses from
@@ -170,27 +161,27 @@ the emulation.
 <p>The emulation on the D64 images supports direct access U1/UA, U2/UB, B-A,
 B-F, # and B-P DOS commands that allows to use such programs as
 <em>Zork</em>, <em>Hitchhiker's Guide</em>, <em>Blazin Forth</em>, etc.
-The U1/UA can use the sectors map from D64 images which provide it that allows
+The U1/UA can use the sectors map from D64 images, which provide it, that allows
 to use the programs (e.g. <em>Typing Professor</em>) from copy-protected disk.
-The COPY command is not supported for relative files only. The read-only
-D64-image is considered as write-protected disk by the emulator.
+The COPY command is not supported for relative files only. A read-only
+D64-image is considered as a write-protected disk by the emulator.
 
 <p>The emulation on the IBM PC filesystems provides support for all types of
 standard files and some DOS commands (C, R, S, P, N, V). It doesn't support
 direct access commands like U1, B-A, M-W, etc. The relative files and COPY
-command are fully supported. The HEADER command simply clears current
+command are fully supported. The HEADER command simply clears the current
 directory from all not locked (not read-only) PRG and X00 files. The COLLECT
 command doesn't produce any effect. The read-only files are considered as
 locked by the emulator.
 
-<p>You can use pattern (like A??B*=P) in any command which allows it
-(SCRATCH, DIRECTORY, ...). The SAVE/OPEN command supports usage of @
+<p>You can use a pattern (like A??B*=P) in any command that allows it
+(SCRATCH, DIRECTORY, ...). The SAVE/OPEN command supports usage of the @
 replacement prefix.
 
 <p>The both units are assigned to the current PC directory at the start of
 the emulator. Use F7 in the menus for reassignments of the units.
 
-<p>Usage of IBM PC filesystems emulation gives more space and flexibility
+<p>Usage of the IBM PC filesystems emulation gives more space and flexibility
 especially for such programs like <em>Austrospeed Basic Compiler</em> or 
 <em>SVS B.A.L. System</em>. So extract files from D64 and get some benefit!
 
@@ -226,7 +217,7 @@ especially for such programs like <em>Austrospeed Basic Compiler</em> or
 </table>
 
 <p>[1] - doesn't remove r/o files<br>
-[2] - the splat files are impossible for DOS on PC filesystem<br>
+[2] - the splat files are impossible for DOS on the PC filesystem<br>
 [3] - it can't copy relative files<br>
 [4] - it can't correctly combine relative files with different record size<br>
 [5] - it can be used to access to memory ranges at $300-$7ff (RAM) and
@@ -258,20 +249,20 @@ default is 17)<br>
 <tr><td># (SET BUFFER)<td>+ <td>-
 </table>
 
-<a name="SND"></a><h2 align=center>Sound</h2>
+<a name=SND></a><h2 align=center>Sound</h2>
 
-<p>The emulator can use three kind of hardware for sound generation:
+<p>The emulator can use three kinds of hardware for sound generation:
 
 <ol>
 <li>Standard PC speaker digital sound at 37287Hz;
 <li>Adlib FM sound;
-<li>Sound Blaster digital sound at 18643Hz. The direct mode is used, it is a
-bit slow so it requires at least 300Mhz CPU. The BLASTER environment variable
-is required to set up Sound Blaster hardware.
+<li>Sound Blaster digital sound at 18643Hz. Direct mode is used, it is a
+bit slow and therefore it requires at least 300Mhz CPU. The BLASTER environment variable
+is required to set up the Sound Blaster hardware.
 </ol>
 
 
-<a name="VSS"></a><h2 align=center>Video subsystem</h2>
+<a name=VSS></a><h2 align=center>Video subsystem</h2>
 
 <p>The following modes are supported
 
@@ -289,10 +280,10 @@ is required to set up Sound Blaster hardware.
 </table>
 
 <p>All these modes must be compatible with modern TFT-LCD monitors. Mode 0 
-is set as default. Second mode number is VBE mode.
+is set as default. The second mode number is VBE mode.
 
 
-<a name="5"></a><h2 align=center>Mouse</h2>
+<a name=5></a><h2 align=center>Mouse</h2>
 
 <table align=center>
 <tr><td>Left button<td>-<td>Emulator's file system & options
@@ -301,7 +292,7 @@ is set as default. Second mode number is VBE mode.
 
 
 
-<a name="6"></a><h2 align=center>ROMs</h2>
+<a name=6></a><h2 align=center>ROMs</h2>
 
 <p>The emulator can possibility to change/add any ROM-chip. When emulator
 starts it looks for the next ROM-image files in the start-up directory:
@@ -319,10 +310,10 @@ starts it looks for the next ROM-image files in the start-up directory:
 </table>
 
 <p>Any of these files must have exactly 16KB length. If one or more of
-the such files are missed then standard (build-in in the emulator program
+such files are missed then standard (build-in in the emulator program
 body) ROM contents will be used instead.
 
-<p>Some ROM images in the Internet have 16386 bytes length (for unknown for
+<p>Some ROM images on the Internet have 16386 bytes length (for unknown for
 me reason 2 bytes added to theirs start) &mdash; remove first 2 bytes from
 them.
 
@@ -334,7 +325,7 @@ in the <a href=#CLP>command line parameters</a>. The first column in the above
 table indicates ROM-bank number.
 
       
-<a name="7"></a><h2 align=center>Main Features Of The Emulator</h2>
+<a name=7></a><h2 align=center>Main Features Of The Emulator</h2>
 
 <p>It supports:
 
@@ -370,10 +361,10 @@ table indicates ROM-bank number.
 <p>[1] - full support of datasette lines only (Cassette Read/Write/Motor) and
 bit 5 is always set to 0.<br>
 [2] - 99% compatible.<br>
-[3] - only for PC speaker, Adlib or Sound Blaster compatible cards.
-It's nearly impossible to produce digital sound effects on the
-Adlib-cards family &mdash; use Speaker or Sound Blaster to hear them.<br>
-[4] - only Cassette Sense line.<br>
+[3] - only for the PC speaker, Adlib or Sound Blaster compatible cards.
+It's nearly impossible to produce digital sound effects with the
+Adlib-cards family &mdash; use the PC Speaker or Sound Blaster to hear them.<br>
+[4] - only the Cassette Sense line.<br>
 [5] - Turbo-Loaders and some operations are still not supported.<br>
 
 <p>Internal features of the emulator:
@@ -388,21 +379,21 @@ below) formats;
 <li>build-in debugger with assembler/disassembler.
 </ul>
 
-<p>It can run only on the computer with 80486 compatible CPU (at least P200
-is required for 100% speed emulation, DPMI can reduce performance of emulator
-down more than twice so use pure DOS for maximum performance) and VGA or VESA
+<p>It can run only on a computer with the 80486 compatible CPU (at least the P200
+is required for the 100% speed emulation, DPMI can reduce performance of the emulator
+down more than twice, so use pure DOS for the maximum performance) and the VGA or VESA
 compatible card.
 
 
 
-<a name="8"></a><h2 align=center>CPU JAM/HLT instructions</h2>
+<a name=8></a><h2 align=center>CPU JAM/HLT instructions</h2>
 
-<p>JAM instructions work like hardware reset. If Reset vector points on
-any HLT type instruction then the emulator begins meditation after reset.
+<p>The 'JAM' instructions work like hardware reset. If the Reset vector points on
+any HLT type instruction then the emulator begins its meditation after the reset.
 
 
 
-<a name="9"></a><h2 align=center>I/O Ports Emulation</h2>
+<a name=9></a><h2 align=center>I/O Ports Emulation</h2>
 
 <table align=center>
 <tr><td>FC00-FCFF<td>KERNAL ROM FIX          <td>+
@@ -418,7 +409,7 @@ any HLT type instruction then the emulator begins meditation after reset.
 
 
 
-<a name="10"></a><h2 align=center>TED Emulation</h2>
+<a name=10></a><h2 align=center>TED Emulation</h2>
 
 <table align=center border=1>
 <tr><td>Index<td>Bit(s)<td>Function         <td>Emulation 
@@ -518,12 +509,12 @@ memory base<td>+
 [2] - you may use this bit as ordinal RAM storage.<br>
 [4] - always 0.<br>
 [5] - bit 5 has higher priority than bit 6.<br>
-[6] - its value 1 mutes both sound channels for Adlib &mdash; for PC speaker 
-and Sound Blaster this bit supported properly.<br>
+[6] - its value 1 mutes both sound channels for the Adlib &mdash; for the PC speaker 
+and Sound Blaster this bit is supported properly.<br>
 
 
 
-<a name="11"></a><h2 align=center>Commodore +4 main specifications</h2>
+<a name=11></a><h2 align=center>Commodore +4 main specifications</h2>
 
 <ul>
 <li>Commodore BASIC v3.5 (60671 byte free) with graphic, sound, disk i/o and
@@ -546,7 +537,7 @@ text mode;
 <li>user port (parallel/centronics or serial/RS-232C with TTL logic up to
 19200 bauds!);
 <li>67 keys keyboard + reset button;
-<li>2 digital joysticks;
+<li>2 digital joysticks (the typical Atari joystick logic but with the atypical smaller connector);
 <li>datasette port (the same logic as for C-1530 but with another, smaller
 connector);
 <li>Commodore serial bus.
@@ -556,141 +547,175 @@ connector);
 
 
 
-<a name="12"></a><h2 align=center>C+4 vs C64</h2>
+<a name=12></a><h2 align=center>C+4 vs C64</h2>
 
-<p>C+4 and C64 are very similar. Why does success come only for C64?
+<p>The C+4 and C64 are very similar, but the C64 achieved greater success.  The key difference?  The C64 was released more than a years earlier!  Below is a comparison table highlighting the main features of both machines.  Who comes out on top in this data competition?  Let's find out!
 
-<p>I think it is only one answer: C64 is two years elder! Below I place a
-table with quality/quantity comparison of the main features of both machines.
-Who has won this data competition?...</p>
+<table align=center border=1 style=border-color:green;border-width:thin;border-style:solid;border-spacing:0px>
+<tr><th><th>C64 <th>C+4 <th>Notes
 
-<pre>
-                            C64     C+4     Notes
+<tr><th colspan=4 align=center>BASIC
+<tr><td>Version <td>2.0 <td>3.5 <td>
+<tr><td>Free memory, bytes <td>38911 <td>60671 <td>
+<tr><td>Total tokens <td>77 <td>128 <td>
+<tr><td>DOS commands <td>- <td>+ <td>The C64 doesn't even have a command that shows directory contents.<br>
+You have to load the contents as a file and then list it
+<tr><td>Graphics commands <td>- <td>+ <td>
+<tr><td>Structural commands <td>- <td>+ <td>
+<tr><td>Sound commands <td>- <td>+ <td>
+<tr><td>Joysticks commands <td>- <td>+ <td>
+<tr><td>Garbage collection <td>worse <td>better <td>This requires 2 bytes more for every string on the C+4
+<tr><td>Editor <td>worse <td>better <td>The C+4 has a set of ESC-commands that are implemented on the C128 too
+<tr><td>Speed  <td colspan=3>In full screen modes the C64 is slightly faster than the C+4, but in the screen blank case the C+4 is much faster
 
-  BASIC
-   Version                  2.0     3.5
-   Free memory, bytes       38911   60671
-   Total tokens             77      128
-   Special disk commands    -       +
-   Graphics commands        -       +
-   Structural commands      -       +
-   Sound commands           -       +
-   Joysticks commands       -       +
+<tr><th colspan=4 align=center>OTHER FIRMWARE
+<tr><td>Build-in Monitor<br>with (dis)assembler <td>- <td>+ <td>
+<tr><td>Build-in Full Screen<br>Text Editor, Spreadsheet<br>and DataBase <td>- <td>+ <td>The quality of the C+4 built-in software is good only for very small documents:<br>text notes and spreadsheets.
 
-  Build-in Monitor
-    with (dis)assembler     -       +
+<tr><th colspan=4 align=center>HARDWARE
+<tr><td>Effective CPU frequency<br>in standard screen mode,<br>MHz, PAL <td>0.933 <td>1.144 <td>≈123%
+<tr><td>" NTSC <td>0.961 <td>1.046 <td>≈109%
+<tr><td>Effective CPU frequency<br>in screen blank mode,<br>MHz, PAL <td>0.985 <td>1.7 <td>≈173%
+<tr><td>" NTSC <td>1.023 <td>1.713 <td>≈167%
+<tr><td>RAM Total <td>64K <td>64K <td>The C64 can use upto about 1.5 KB RAM more than the C+4<br>because of I/O holes and color RAM.<br>However the C+4 can get 1 KB gain when we use a user defined charset.<br>So in this case the C64 advantage is only about .5 KB, and if the C64 doesn't<br>use color RAM and uses a user defined charset then the C+4 can get .5 KB gain
+<tr><td>I/O holes, byte <td>2(+4096)  <td>548  <td>C+4: CPU=2,IO=512(ACIA=16,PIO=16,KBD=16,<br>
+MAGIC VOICE SOUND=16,ROMSEL=16),TED=34.<br>
+C64: CPU=2,VIC=1024,SID=1024,VRAM=1024,CIA1=256,<br>
+CIA2=256,EXP1/Z80=256,EXP2/DISK=256<br>
+These holes (but CPU) reduce total usable RAM/ROM capacity on the C+4 only
+<tr><td>ROM Total <td>2*8K+4K=20K <td>4*16K=64K <td>
+<tr><td>ROM Max <td>5*8K+4K=44K <td>8*16K=128K <td>
+<tr><td>CPU ports <td>6 <td>7 <td>They are the fastest
+<tr><td>Serial Bus <td>+ <td>+ <td>
+<tr><td>Digital Joysticks <td>2 <td>2 <td>
+<tr><td>Paddles <td>4 <td>- <td>This allows to connect to the C64 up to 2 4-buttons<br>
+analog joysticks (instead 2 digital) or the mouse
+<tr><td>Datasette <td>1  <td>1 <td>
+<tr><td>Fast C1551 drives <td>- <td>+ <td>These drives are connected directly to the CPU bus,<br>
+the C64 theoretically can use similar drives.<br>This advantage became insignificant in the turbo loader epoch.<br>
+But this was very important in the 80s
 
-  Build-in Full Screen Text
-    Editor, Spreadsheet
-    and DataBase            -       +
+<tr><th colspan=4 align=center>User Port
+<tr><td>Centronics <td>1 <td>1 <td rowspan=2>The C64 or C+4 can use only RS-232C or Centronics in the same time, but not both.<br>Not all standard Centronics or RS-232C signals are supported
+<tr><td>TTL RS-232C <td>1 <td>1
+<tr><td>Max. speed, bauds <td>300 <td>19200 <td>Special software enables the C64 to operate at speeds of up to 2400 baud
+<tr><td>Synchro Serial Ports <td>2 <td>- <td>
 
-  Speed                     =       =       In full screen modes the C+4 is
-                                            about 23% faster than the C64, in
-                                            screen blank case the C+4 is
-                                            about 73% faster
-  RAM
-   Total                    64K     64K
-   Holes, byte              4098    548     C+4: CPU=2,IO=512(ACIA=16,PIO=16,
-                                                 KBD=16,MAGIC VOICE SOUND=16,
-                                                 ROMSEL=16),TED=34.
-                                            C64: CPU=2,VIC=1024,SID=1024,
-                                                 VRAM=1024,CIA1=256,CIA2=256,
-                                                 EXP1/Z80=256,EXP2/DISK=256
-                                            * These holes reduce total usable
-                                            RAM/ROM capacity
+<tr><th colspan=4 align=center>Keyboard
+<tr><td>Total keys <td>66 <td>67+Reset <td>
+<tr><td>Design <td>worse <td>better <td>The C+4 has separated cursor keys, the Esc key, and the doubled Control key.<br>The C64 has the Restore special key
 
-  ROM
-   Total                    2*8K+4K 4*16K   The C+4 can work only with one 16K
-                            =20K    =64K    Kernal ROM and use other 3 16K
-                                            ROM slots in any manner (e.g. to
-                                            view/save any ROM chip content)
-   Max                      3*8K+4K 8*16K-3*802-546
-                            =28K    =128K-2952=125.1171875K
-  Keyboard
-   Total keys               66      67+Reset
-   Reset button             -       +
-   Design                   worse   better
+<tr><th colspan=4 align=center>Graphics
+<tr><td>Colors <td>16 <td>121 <td>
+<tr><td>Hires Resolution <td>320x200 <td>320x200 <td>The C+4 can use more lines: 288 (PAL) and 232 (NTSC) or even more.<br>
+The C64 may use sprites to extend the visible screen size. This allows,<br>for example to use 368x200 raster and even more
+<tr><td>Multicolor Resolution <td>160x200 <td>160x200 <td>Similarly to the above, the C+4 can use more lines,<br>while the C64 can improve on this mode by adding sprites
+<tr><td>Normal text mode <td>worse <td>better <td>The C+4 supports hardware flashing and more colors;<br>
+it can also use more rows: 80 bytes per row.<br>
+The C64 may use sprites to enhance this mode greatly
+<tr><td>Hardware cursor <td>- <td>+ <td>
+<tr><td>256 chars. on screen <td>worse <td>better <td>The C64 has limits on the use of the upper 128 chars:<br>
+Kernal/Basic ROM assumes the reversed chars there
+<tr><td>Hardware reverse <td>- <td>+  <td>This allows automatically to produce inverted
+characters<br>
+saving 2K characters ROM and removing limits on the upper 128 chars
+<tr><td>Hardware flashing <td>- <td>+  <td>This consumes 1 bit of the color byte
+<tr><td>Normal text mode,<br>
+bytes per screen <td>1501 <td>2001 <td>C64: 1000 (chars) + 500 (foreground) + 1 (background)<br>
+C+4: 1000 + 1000 + 1
+<tr><td>Extended color text mode <td>+ <td>+ <td>
+<tr><td>Extended color text mode,<br>
+bytes per screen <td>1504 <td>2004 <td>C64: 1000 + 500 + 4 (ext. colors)<br>
+C+4: 1000 + 1000 + 4
+<tr><td>Multicolor text mode <td>+ <td>+ <td>Both computers reduce the number of colors from the background byte<br>
+for a multicolor tile: C64 - 8 instead of 16, C+4 - 57 instead of 121.<br>
+Similarly to the above, the C+4 can use more lines,<br>
+while the C64 can improve on this mode by adding sprites
+<tr><td>Multicolor text mode,<br>
+bytes per screen <td>1503 <td>2003 <td>C64: 1000 + 500 + 3 (multicolors)<br>
+C+4: 1000 + 1000 + 3
+<tr><td>Hires Bitmap mode <td>+  <td>+ <td>
+<tr><td>Hires Bitmap mode,<br>bytes per screen <td>9000 <td>10000 <td>C64: 8000 (bitmap) + 1000 (colors)<br>C+4: 8000 + 2000, the C+4 can use more lines: 400 bytes per 8 lines
+<tr><td>Hires Bitmap mode,<br>dots per free color shape <td>32<td>32 <td>2 free colors in 8x8 matrix, 64/2<br>
+The C64 can use sprites to add a lot of additional free colors
+<tr><td>Hires Bitmap mode, average<br>number of colors per pixel <td>2.4375 <td>5.71875 <td>C64: (16*2+2*62)/64<br>C+4: (121*2+2*62)/64
+<tr><td>Hires FLI-64/DFLI+4,<br>bytes per screen <td>16000 <td>16000 <td>8000 (bitmap) + 8000 (colors)<br>The C+4 can use more lines: 640 bytes per 8 lines
+<tr><td>Hires FLI-64/DFLI+4,<br>dots per free color shape <td>4 <td>8 <td>C64: 2 free colors in the 8x1 matrix, 8/2<br>C+4: 2 free colors in the 8x2 matrix, 16/2<br>The C64 ability to use sprites is limited with FLI graphics
+<tr><td>HR FLI-64/DFLI+4, average<br>number of colors per pixel <td>5.5 <td>16.875 <td>C64: (16*2+2*6)/8<br>C+4: (121*2+2*14)/16
+<tr><td>Multicolor Bitmap mode <td>better <td>worse <td>
+<tr><td>Multicolor Bitmap mode,<br>bytes per screen <td>9501 <td>10002 <td>C64: 8000 + 1000 + 500 (VRAM) + 1<br>C+4: 8000 + 2000 + 2, the C+4 can use more lines: 400 bytes per 8 lines
+<tr><td>Multicolor Bitmap mode,<br>dots per free color shape <td>≈10.663 <td>≈15.984 <td>C64 free colors: 3 per 4x8 matrix + 1 per screen, 32000/3001<br>
+C+4 free colors: 2 per 4x8 matrix + 2 per screen, 32000/2002<br>
+The C64 can use sprites to add a lot of additional free colors
+<tr><td>MC Bitmap mode, average<br>number of colors per pixel <td>5.125375 <td>11.3198125 <td>C64: (16*(1000*3+1)+4*(32000-3001))/32000<br>C+4: (121*(1000*2+2)+4*(32000-2002))/32000
+<tr><td>Multicolor FLI-64/DFLI+4,<br>bytes per screen <td>16700 <td>16400 <td>C64: 8000 + 8*1000 + 500 (VRAM) + 200 (a color per line)<br>
+C+4: 8000 + 4*2000 + 400 (2 colors per line)<br>
+The C+4 can use more lines, 656 bytes per 8 lines
+<tr><td>Multicolor FLI-64/DFLI+4,<br>dots per free color shape <td>≈1.86 <td>≈3.81 <td>C64 free colors: 2 per 4x1 matrix + 1 per 4x8 matrix + 1 per line, 1280/688<br>
+C+4 free colors: 2 per 4x2 matrix + 2 per line, 320/84<br>
+The C64 ability to use sprites is limited with FLI graphics
+<tr><td>MC FLI-64/DFLI+4, average<br>number of colors per pixel <td>10.45 <td>34.7125 <td>C64: (16*(17*40+8)+4*(1280-688))/1280<br>C+4: (121*(2*40+4)+4*(320-84))/320
+<tr><td>CPU cycles on a bad line<td>20/22 + 3 w/o<td>22 + 3 w/o<td>C64: no sprite fetches on this line, 22 - NTSC, 20 - PAL
+<tr><td>Hardware scrolling <td>worse <td>better <td>
+<tr><td>Color RAM <td>0.5K <td>- <td>This gives less free colors in multicolor bitmap mode for the C+4.<br>
+Color RAM helps the C64 to handle video faster than the C+4<br> and increases free RAM storage for some modes<br>
+(the C+4 takes 1K of main memory for keeping color information)
+<tr><td>Hardware sprites <td>+ <td>- <td>The C64 can manage up to 8 24x21 sprites and even more,<br>
+automatically detects their collisions, etc.<br> But every sprite makes the C64 CPU slightly slower
 
-  Graphics
-   Colors                   16      121
-   Max. Resolution          320x200 320x200
-   Extended mode            +       +
-   Multicolor mode          +       +
-   Bit Map Mode             +       +
-   Hardware cursor          -       +
-   256 chars. on screen     +       +
-   Hardware reverse         -       +       This allows automatically to
-                                            produce inverted characters
-                                            saving 2K characters ROM
-   38/40 columns modes      +       +
-   24/25 rows modes         +       +
-   X/Y-scrolling            +       +
-   Fixed color RAM          +       -       This makes the C+4 more flexible
-   Color RAM                0.5K    -       Color RAM helps the C64 to be some 
-                                            faster (one badline for 8 rows while
-                                            the C+4 needs 2 badlines) and
-                                            increases free RAM storage
-                                            (the C+4 takes 1K of main memory
-                                            for keeping color information)
-   Hardware sprites         +       -       The C64 can manage up to 8 24x21
-                                            sprites, automatically detects
-                                            their collisions, etc.
-   
-  Sound
-   Channels                 3       2       The C+4's second channel can produce
-                                            either white noise or music
-   Frequency range          0-      109Hz-
-                             3.9KHz  110KHz
-   Wave forms               wide    square  The C64 can produce various
-                            range   only    different types of special sound
-                                            effects and high quality music
-                                            synthesis
+<tr><th colspan=4 align=center>Sound
+<tr><td>Chip <td>SID <td>TED <td>The SID has been available for the +4 as an option
+<tr><td>Channels <td>3 <td>2 <td>The C+4's second channel can produce either white noise or music
+<tr><td>Frequency range <td>0-3.9KHz <td>109Hz-110KHz <td>
+<tr><td>Wave forms <td>wide range <td>square only <td>The SID can produce various different types<br>
+of special sound effects and high quality music synthesis
 
-  Time
-   2-bytes timers           4       3       The C64 timers have wider range of
-                                            working modes than on the C+4
-   4-bytes RTC              2       -
+<tr><th colspan=4 align=center>Time
+<tr><td>2-bytes timers <td>4 <td>3 <td>The C64 timers have wider range of working<br>modes than on the C+4
+<tr><td>4-bytes RTC <td>2 <td>- <td>They are actually pseudo-RTC because they don't have a battery.
 
-  Interrupts
-   NMI                      +       -
-   IRQ                      +       +
-   Reset                    worse   better  The C64 has no simple user usable
-                                            Reset switch, the C+4 has one
-   Interrupts sources
-    Cassette Read/
-     Serial Bus SRQ         1       -       The C64 has 13 types of interrupt
-    Timers                  4       3       sources: 4 from VIC, 5 from CIA1
-    RTC                     1       -       and 4 from CIA2 - VIC (IRQ),
-    Raster                  1       1       CIA1 (IRQ) and CIA2 (NMI) can
-    Sprite's                2       -       produce only one interrupt signal;
-    Synchro Serial Port     2       -       the C+4 has 6 types of internal
-    Light Pen               1       1       interrupt sources: 5 from TED and 
-    RS-232C                 1       1       1 from ACIA
+<tr><th colspan=4 align=center>Interrupts
+<tr><td>NMI <td>+ <td>- <td>
+<tr><td>IRQ <td>+ <td>+ <td>
+<tr><td>Reset <td>worse <td>better <td> The C64 has no usable Reset switch, the C+4 has one
+<tr><td>Cassette Read/<br>
+Serial Bus SRQ  <td>1  <td>- <td rowspan=8>      The C64 has 14 types of interrupt sources: the Restore key (1, NMI),<br> VIC-II (4, IRQ), CIA1 (5, IRQ) and CIA2 (4, NMI); the C+4 has 6 types<br> of internal interrupt sources: the TED (5) and ACIA (1)
+<tr><td>Timers <td>4 <td>3       
+<tr><td>RTC <td>1 <td>-       
+<tr><td>Raster <td>1 <td>1       
+<tr><td>Sprite's <td>2 <td>-       
+<tr><td>Synchro Serial Ports <td>2 <td>-       
+<tr><td>Light Pen <td>1 <td>1       
+<tr><td>RS-232C <td>1 <td>1       
+</table>
 
-  Serial Bus                +       +       The C+4 doesn't support SRQ line
+<p>The C64 has fewer colors, but they are more flexible.  This allows more dithering.  And this can significantly offset the C64 disadvantage compared to the C+4.
 
-  Digital Joysticks         2       2
+<p>The C+4 may also use Hires FLI graphics using 2 free colors in the 8x1 matrix but this fixes 16 colors for the whole screen and therefore reducing number of colors from 121 maximum.  This mode gives the same average number of colors per pixel as on the C64 and requires 16040 bytes per 320x200 screen, 640 bytes per 8 lines plus 40 bytes for the initialization.  The C+4 may also use Multicolor FLI graphics using 2 free colors in the 4x1 matrix but this again fixes 16 colors for the whole screen reducing total number of colors from 121 maximum.  The Multicolor FLI graphics keeps the two additional free colors free from this limitation allowing to use any of 121 colors.  So this mode gives (16*80+121*2+4*(160-82))/160 = 11.4625 for the average number of colors per pixel having 160/82 ≈ 1.951 for dots per free color shape.  This mode requires 16440 bytes per 160x200 screen.  These modes have been used very rarely and not properly documented.
 
-  Paddles                   4       -       This allows to connect to the C64
-                                            up to 2 4-buttons analog
-                                            joysticks (instead 2 digital)
+<p>The FLI/DFLI graphics requires some code to support it, about 20 bytes per line.
 
-  User Port
-   Centronics               1       1       The C64 and C+4 can use only RS-232C
-   TTL RS-232C              1       1       or Centronics in the same time,
-     Max. speed, bauds      2400    19200   but not both
-   Synchro Serial Ports     2       -
+<p>The C+4 can control the raster very flexibly, for example, you can add visible lines by reducing the refresh rate of the screen, or vice versa, you can increase the refresh rate by reducing the number of lines.  By controlling the raster, you can also move the screen up or down.
 
-  Datasette                 1       1
+<p>The C+4 can use interlacing graphics that doubles the number of raster lines.  Some programs use this.  But this feature is still not documented.  
 
-  Fast C1551 drives         -       +       These drives connected directly to
-                                            the CPU bus, the C64 theoretically
-                                            can use similar drives
-</pre>
+<p>The C+4 PAL can use PAL inverted colors that gives upto 112 additional colors and that gives resulting 233 colors total!
 
+<p>The C+4 PAL can be switched to NTSC mode.  This unfortunately breaks the video signal but speeds up the CPU to 2.22 MHz!  The effective frequency is slightly lower, at approximately 2.12 MHz when the screen is blank.  Nonetheless, this renders the C+4 faster than any other known 8-bit computer.
 
+<p>So, the C+4 has a faster CPU, an enhanced BASIC with DOS commands, a better editor and keyboard, a good ML monitor, better hardware scrolling, a much faster RS-232C port, slightly better normal text mode, many more colors, more ROM and a resizable screen (1-29/36 rows on NTSC/PAL; fewer rows means the faster CPU).  It also has better handling of 256 characters.
 
-<a name="13"></a><h2 align=center>Debugger</h2>
+<p>The C64 has typically slightly more usable RAM, slightly better multicolor bitmap mode, hardware sprites and much better synthesized music.  It also supports the paddles and the mouse!  The sprites offer a variety of additional capabilities.  The C64 also has more timers, which are more advanced, but this doesn't rather offer any practical advantages.
+
+<p>It seems that the digital sound quality of both machines is almost identical.
+
+<p>Finally, it should be mentioned that the C64 has more software and hardware while the C+4 has been much cheaper since 1986.  But the C+4 (or C264) could have been much cheaper since 1984 and if this had happened then we could have had something completely different in the amount of hardware and software available for this computer.  Moreover, Commodore ceased supporting the C+4 in 1985 and this had dramatic consequences for this computer: no more official software releases, etc.
+
+<p>Interestingly that the C+4 PAL is generally more advanced than the C+4 NTSC while the C64 NTSC is only slightly better (a bit faster, few more CPU cycles per line) than the C64 PAL.
+
+<p>Special thanks to Epy who helped to fix an error.
+
+<a name=13></a><h2 align=center>Debugger</h2>
 
 <p>It's a functional copy of the MS-DOS DEBUGGER. It has almost the same
 commands set (see table below).</p>
@@ -728,26 +753,25 @@ commands set (see table below).</p>
 <p>[1] - It doesn't support string literals (i.e. this command supports only 
 hex literals).<br>
 [2] - It shows the plus/4 screen.<br>
-[3] - This command is equivalent of G (Go) command with breakpoint set to the
+[3] - This command is equivalent of G (Go) command with a breakpoint set to the
 next assembler instruction, it is very useful for fast tracing
-subroutines (JSR) and back loops (BNE, BEQ, ...). Using P for trace JMP
+subroutines (JSR) and back loops (BNE, BEQ, ...). Using P for tracing the JMP
 instruction or forward conditional branches has no viewable sense.<br>
-[4] - It returns to the emulator and turns emulator to the non-debugger
-mode.<br>
-[5] - This command outputs time of instruction(s) execution. It hides
+[4] - It returns to the emulator and turns it to the non-debugger mode.<br>
+[5] - This command outputs the time of the instruction(s) execution. It hides
 interrupts during its execution but the interrupt execution time is displayed.
 Some interrupt handlers may change interrupt return point &mdash; this may
-throw T-command into endless loop &mdash; press F9 in this case.<br>
-[6] - After these commands emulator turns into debugger mode. In this mode F9
-causes to return to last debugger screen.<br>
-[7] - It has the same syntax as G command but instead of breakpoints it sets
-watchpoints (they break program execution if any byte at given
+throw T-command into an endless loop &mdash; press F9 in this case.<br>
+[6] - After these commands the emulator turns into debugger mode. In this mode F9
+causes to return to the last debugger screen.<br>
+[7] - It has the same syntax as the G command but instead of breakpoints it sets
+watchpoints (they break the program execution if any byte at the given
 addresses is rewritten).<br>
 [8] - It selects 25 or 50 rows debugger mode.<br>
-[9] - Immediate exit from emulator.<br>
-[10] - It breaks execution at given line.<br>
-[11] - This command is TED oriented &mdash; it invokes special mode of
-debugger &mdash; any other command returns debugger to the normal mode<br>
+[9] - Immediate exit from the emulator.<br>
+[10] - It breaks the execution at a given line.<br>
+[11] - This command is TED oriented &mdash; it invokes special mode of the
+debugger &mdash; any other command returns the debugger to normal mode<br>
 [12] - It also shows LINE (TED 1C & 1D registers pair value), POS (TED 1E
 register) and 2CPU (cycles performed by CPU for current instruction).<br>
 [14] - This command shows internal TED and emulated video display values,
@@ -890,39 +914,39 @@ or O (Watchpoint) commands slow the emulator but only on several percents.
 </pre>
 
 <p>You must enter all 2 or 4 digits in operands: don't miss leading zero(s)!
-This limitation is only applicable for entering 8501 assembler mnemonics, not
+This limitation is only applicable for entering the 8501 assembler mnemonics, not
 debugger commands. All spaces are ignored in the entered mnemonics between
 its natural delimiters (comma, brackets, $, #), e.g. you may enter: BNE$0672,
 LDA # $ 01, etc.). Some instructions (NOP1, NOP2, JAM, etc.) have the same
 mnemonics and operands structure: during assembling the minimal appropriate
 opcode is gotten.
 
-<p>The debugger uses command line editor which is built-in in the any DOS
+<p>The debugger uses command line editor which is built-in in any DOS
 core: thus you may use F1, F2, F3, F4, F5, Insert, Delete, Esc,
 and BackSpace keys for edit in any kind of DOS. You may also use ^C
-(Control-C) and ^S (Control-S) keys during text output. Some DOSes have
+(Control-C) and ^S (Control-S) keys during the text output. Some DOSes have
 extended command line editors or command like HISTORY.COM which can extend
 features of the editor.
 
 <p>If you want to save some debugger disassembler or dump output in a file,
-you may use standard DOS streams redirection technique, e.g.<br>
+you may use the standard DOS streams redirection technique, e.g.<br>
 &nbsp;&nbsp;<code>PLUS4 &lt;CMDS &gt;LISTING</code><br>
-will start normal emulator execution but after F9 all input will get from
-CMDS file and all output will send to LISTING. CMDS file must consists of
-debugger's commands (one command per a line) and last line in it ought to
+will start the normal emulator execution but after F9 all input will go from the
+CMDS file and all the output will send to LISTING. The CMDS file must consists of
+the debugger commands (one command per line) and the last line in it ought to
 be Q.
 
-<p>The debugger correct works with PRG and supports pure binary formats (with
-some other formats it can work as with pure binaries).
+<p>The debugger correctly works with PRG and supports pure binary formats (with
+some other formats it can work as with the pure binaries).
 
 <p>NOTE! The i/o menus are not available from the debugger, i.e. during
 execution G, O, or P commands.
 
 
 
-<a name="14"></a><h2 align=center>CPU and TED Timing</h2>
+<a name=14></a><h2 align=center>CPU and TED Timing</h2>
 
-<p>Since version of 1.32 of the emulator the timing becomes 99.9% exact. FLI
+<p>Since version of 1.32 of the emulator the timing becomes 99.9% exact. Most FLI
 demos must work.
 
 <p>The emulator maximum frame rate is limited (for synchronization with the
@@ -931,67 +955,67 @@ speed).
 
 
 
-<a name="15"></a><h2 align=center>Datasette Emulation</h2>
+<a name=15></a><h2 align=center>Datasette Emulation</h2>
 
 <p>The CTF format is the best (at least for now) for the emulation of
-datasette. It has some features, which let CTF-file to look slightly better
-than real cassette.
+datasette. It has some features that even let a CTF-file to look slightly better
+than a real cassette.
 
-<p>Before cassette read, you can place datasette's head exactly on desired
-block (using menus). After reading last block on tape, head automatically
-moved to the position of the first block (= auto rewind).
+<p>Before the cassette read, you can place the datasette head exactly on the desired
+block (using menus). After reading the last block on the tape, the head automatically
+moves to the position of the first block (= auto rewind).
 
-<p>The datasette automatically moves head to the start of the tape's free space
+<p>The datasette automatically moves head to the start of the tape free space
 when the write operation begins. After writing the head is placed on
-the start of first block on the tape.
+the start of the first block on the tape.
 
-<p>WARNING!!! Activation of the tape motor not for i/o operation and then
+<p>WARNING!!! Activation of the tape motor not for i/o operations and then
 making attempt to access to the Commodore serial bus may produce a block of
 garbage on the tape (this situation is fully adequate the real one: press play
 & record on the real datasette with the tape then try to access to the serial
-bus and you get some unsense noise on the cassette...) or a block starting
+bus and you get some unsense noise on the cassette) or a block starting
 with garbage (this block may not be recognized in menus). To evade these small
-inconveniences press PLAY (& RECORD) on tape (Scroll Lock button on the PC
+inconveniences press PLAY (& RECORD) on tape (the Scroll Lock button on the PC
 keyboard) only after appropriate prompts.
 
-<p>TAP format is also supported for read operations only.
+<p>The TAP format is also supported but for the read operations only.
 
 
-<a name="16"></a><h2 align=center>Menus</h2>
+<a name=16></a><h2 align=center>Menus</h2>
 
-<p>Menus accessible only when debugger is off. They provide a lot of
-the useful features missed on the real plus/4: freeze/restore current
-computer state (e.g. save game in any moment), devices manipulation, fast
+<p>Menus are accessible only when the debugger is off. They provide a lot of
+useful features missed on the real plus/4: freeze/restore the current
+computer state (e.g. save game in any moment), device manipulations, fast
 load/save and export/import data and programs, etc.
 
-<p>'Size' column shows size depend on image file type: in bytes for CTF
-files and in the blocks for D64 ones.
+<p>'Size' column shows size depend on image file type: in bytes for the CTF
+files and in blocks for the D64 files.
 
-<p>If in the 'Type' column for a block of a CTF file placed '?' (and
-appropriate size is equal to 0) then this means that this block is a
+<p>If in the 'Type' column for a block of a CTF file is placed '?' (and
+the appropriate size is equal to 0) then this means that this block is a
 turbo-block or a garbage-block.
 
-<p>Menus support mouse.
+<p>Menus support the mouse.
 
 
 
-<a name="17"></a><h2 align=center>CTF Format</h2>
+<a name=17></a><h2 align=center>CTF Format</h2>
 
-<p>CTF &mdash; Commodore Tape File. It was developed before TAP format appeared.
+<p>CTF &mdash; Commodore Tape File. It was developed before the TAP format appeared.
 The CTF is 100% real cassette compatible (like TAP) and provides some
-structural information which allows to move head position to the beginning
-of every tape block (like T64). The CTF has unlimited capacity. The T64
-doesn't reflect the block nature of CBM method used for
+structural information which allows to move the head position to the beginning
+of every tape block (like T64). CTF has unlimited capacity. T64, unlike CTF,
+doesn't reflect the block nature of the CBM method used for
 writing on the tape. For example, it can't work with data files (via OPEN,
 PRINT#, CLOSE, ...) and turbo loaders and savers.
 
 <p>It's easy to convert T64 to CTF or CTF to TAP. Backward conversion is not
-formal and requires some AI. It's nearly impossible to convert general CTF or
-TAP data to T64 format. Conversion from TAP to CTF is much easier.
-CTF-file size is several times smaller than for the same data in the TAP
+formal and requires some AI. It's nearly impossible to convert the general CTF or
+TAP data to the T64 format. The conversion from TAP to CTF is much easier.
+The CTF-file size is several times smaller than for the same data in the TAP
 format.
 
-<p>TAP is only intermediate format to transfer data from the real tapes.
+<p>TAP is only the intermediate format to transfer data from the real tapes.
 It is the best for its fields but if you want to feel the taste of the full
 scaled job with datasette (data files, turbo savers, ...) then use CTF!
 Utility CTF2TAP may always convert CTF-file to the TAP form.
@@ -1018,9 +1042,9 @@ NNNN+4  BLOCK #2 TIME
 </pre>
 
 <p>Data at offset 0BH consist of bits which are value in the CPU datasette
-port through fix time periods (time constant at 0AH is equal to this period).
+port through fixed time periods (the time constant at 0AH is equal to this period).
 
-<p>Standard Commodore 264 tape block starts and ends with gap from max
+<p>The standard Commodore 264 tape block starts and ends with the gap of max
 frequency waves. Each byte of the information has the next structure:
 
 <p>[SM][B1][B2][B3][B4][B5][B6][B7][B8][B9];<br>
@@ -1037,15 +1061,15 @@ tape two times (with gap between them). The next nine bytes precede a block
 first time: 89h, 88h, .. 81h; and the next nine bytes precede a block second
 time: 9, 8, ..1.
 
-<p>Therefore each byte of data on the tape in standard Commodore 264 format
-occupies (9*6+12)*2=132bits=16.5bytes. The length of block in CTF file (in
+<p>Therefore each byte of data on the tape in the standard Commodore 264 format
+occupies (9*6+12)*2=132bits=16.5 bytes. The length of block in CTF file (in
 standard format) is approximately equal to [start gap length =4096]+[gap
 between blocks length =110]+[end gap length =49]+16.5*([length of block]+10).
-Many of the turbo savers (like NOVALOAD) may produce less than 3 bytes per
+Many of turbo savers (like NOVALOAD) may produce less than 3 bytes per
 each saved byte in a CTF file.
 
-<p>Each block (except program body block) in the standard Commodore 264 tape
-format after 9 marker bytes contains type specification byte, e.g.:
+<p>Each block (except the program body block) in the standard Commodore 264 tape
+format after 9 marker bytes contains the type specification byte, e.g.:
 
 <p>1 - standard (BASIC) program header (next block loaded at $1001)<br>
 2 - data block (created by PRINT# or CLOSE)<br>
@@ -1055,7 +1079,7 @@ format after 9 marker bytes contains type specification byte, e.g.:
  
 
 
-<a name="18"></a><h2 align=center>C2F Format</h2>
+<a name=18></a><h2 align=center>C2F Format</h2>
 
 <p>C2F - Commodore 264 Freeze format. The table below shows its structure.</p>
 
@@ -1104,9 +1128,9 @@ OFFSET  AREA NAME       LENGTH  COMMENTS
 </pre>
 
 
-<a name="CFG"></a><h2 align=center>CFG file format</h2>
+<a name=CFG></a><h2 align=center>CFG file format</h2>
 
-<p>First byte is a <a href="#VSS">video mode number</a> multiplied by 2,
+<p>First byte is a <a href=#VSS>video mode number</a> multiplied by 2,
 second byte is a frame skipping determinant (1 &mdash; no skips, 3 &mdash;
 to skip 2/3 of frames, 5 &mdash; to skip 4/5 of frames, etc.), third byte
 determines sound card (0 &mdash; PC Speaker, 1 &mdash; Adlib, 2 &mdash; no
@@ -1118,11 +1142,10 @@ sound; 3 &mdash; Sound Blaster).
 from the command line.
 
 
-<a name="CLP"></a><h2 align=center>Command Line Parameters</h2>
+<a name=CLP></a><h2 align=center>Command Line Parameters</h2>
 
 <p>It is possible to use up to 12 parameters at the command line &mdash; the
-names of PRG/P0N/D64/CTF/TAP/C2F/ROM/CFG-files. These files will be
-loaded/attached automatically during startup of the emulator.
+names of PRG/P0n/D64/CTF/TAP/C2F/ROM/CFG-files. These files will be automatically loaded/attached during the emulator's startup.
 
 <p>Example.<br>
 <code>plus4 a.prg x\b.prg c.p01 e.d64 f.tap</code><br>
@@ -1135,9 +1158,9 @@ or `/9' prefix.
 <p>So <code>plus4 e.d64 /9g.d64</code>,<br>
 will attach disk image `e' to device 8 and disk image `g' to device 9.
 
-<p>Within the parameters list it is possible to set working directory. This
+<p>Within the parameters list, it is possible to set working directory. This
 setting will affect all followed relative filesystem addresses. The working
-directory may be set several times in one parameters list.
+directory may be set several times in one list of parameters.
 
 <p>Example.<br>
 <code>plus4 c:\cplus4\d64\ disk.d64 /9..\d2.d64 d:\ cbm\a.prg</code><br>
@@ -1146,7 +1169,7 @@ will set working directory, attach `disk.d64' from it, attach `d2.d64' from
 
 <p>NOTE! Do not omit extension for any file name. The working directory must
 be ended by `\'. The order of parameters is important &mdash; the next
-parameter may override effect of previous one.
+parameter may override the effect of the previous one.
 
 <p>The name of the ROM-image file may be preceded by /N, where N is
 ROM-bank number (<a href=#6>to see the table</a>). The default number is 4.
@@ -1170,11 +1193,11 @@ files.
 <code>plus4 1snd</code><br>
 selects Adlib card.
 
-<p>The option ? (question mark) may be used to show summary of command line
+<p>The option ? (question mark) may be used to show summary of the command line
 parameters.
 
 
-<a name="19"></a><h2 align=center>Compilation</h2>
+<a name=19></a><h2 align=center>Compilation</h2>
 
 <p>You need <a href=http://fasm.sourceforge.net/>FASM</a> V1.67 or newer for
 sources compilation.
@@ -1189,14 +1212,14 @@ subdirectory during compilation. The third and fourth files are unnecessary
 and may contain anything.
 
 
-<a name="20"></a><h2 align=center>(C) Copyright</h2> 
+<a name=20></a><h2 align=center>(C) Copyright</h2> 
 
 <p>Almost all data and program files of this package are written by
 V.Lidovski in the X/1996-IV/1997;VI-VIII,XII/1998;IV/2000;XI/2002;
 VII-VIII/2003;II,V-VIII,X,XII/2004;VI-VIII,XI,XII/2005;I,V,VII-VIII/2006;
-I-III,VIII,XII/2007;I,VIII/2008.
+I-III,VIII,XII/2007;I,VIII/2008, VI/2024.
 
-<p>All source code is Copyright (C) 1997-2008 Vladimir Lidovski. This program
+<p>All source code is Copyright (C) 1997-2008,2024,2025 Vladimir Lidovski. This program
 is distributed under the GNU General Public License, Version 2, or, at your
 discretion, any later version. The GNU General Public License is available
 via the Web <a href=http://www.gnu.org/copyleft/gpl.html>here</a>. The GPL is 
@@ -1205,25 +1228,21 @@ do not remove that freedom from others.
 
 
 
-<a name="BUG"></a><h2 align=center>BUGS REPORTS</h2>
+<a name=BUG></a><h2 align=center>BUGS REPORTS</h2>
 
 <p>Please send messages about any discovered bugs to author's email &mdash;
 litwr@yandex.ru.
 
 
 
-<a name="21"></a><h2 align=center>History and the last updates</h2>
+<a name=21></a><h2 align=center>History and the last updates</h2>
 
-<p>The first version of this emulator was finally compiled at the 9th of April
-of 1997. It was uploaded to ftp.funet.fi at the 30th of June of 1997.
+<p>The first version of this emulator was finally compiled on the 9th of April
+of 1997. It was uploaded to <a href=https://www.zimmers.net/anonftp/pub/cbm/crossplatform/emulators/msdos/index.html>ftp.funet.fi</a> on the 30th of June of 1997.
 
 <p>The <em>changes list history</em> is <a href=plus4chl.htm>here</a>.
 
-<p>v1.42 (VIII-2008)
-
-<ul>
-<li>added ? command line option
-</ul>
+<p>v1.43 Beta has been developing since 2024, its sources are available at <a href=https://github.com/litwr2/retro/tree/main/plus4/plus4-forever-qm>github</a>.
 
 </body>
 </html>
