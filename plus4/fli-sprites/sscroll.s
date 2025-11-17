@@ -1,9 +1,87 @@
 SU4 = 1
-;SD4 = 0
+SD4 = 1
 SU8 = 0
 SD8 = 0
 SU1 = 0
 ;SD1 = 0
+
+   if SD4
+     macro assign0r,bau,p
+     lda \bau+1024+\p*40,x
+     sta \bau+1064+\p*40,x
+     lda \bau+\p*40,x
+     sta \bau+40+\p*40,x
+     endm
+
+     macro assign1r,bau,bal,p
+     lda \bau+1024+\p*40,x
+     sta \bal+1064+\p*40,x
+     lda \bau+\p*40,x
+     sta \bal+40+\p*40,x
+     endm
+
+     macro assignxr,bau,bal
+     ldx #39
+.l\@ lda \bal+216,x
+     sta .slu\@+1
+     lda \bal+1240,x
+     sta .sco\@+1
+     assign0r \bal-$400,30
+     assign0r \bal-$400,29
+     assign0r \bal-$400,28
+     assign0r \bal-$400,27
+     assign0r \bal-$400,26
+     cpx #24
+     bcs .l1\@
+
+     assign1r \bal,\bal-$400,25
+     assign0r \bal,24
+     bcc .l2\@  ;always
+.l1\@
+     assign0r \bal-$400,25
+     assign1r \bal,\bal-$400,24
+.l2\@
+     assign1r \bau,\bal,23
+     assign0r \bau,22
+     assign0r \bau,21
+     assign0r \bau,20
+     assign0r \bau,19
+     assign0r \bau,18
+     assign0r \bau,17
+     assign0r \bau,16
+     assign0r \bau,15
+     assign0r \bau,14
+     assign0r \bau,13
+     assign0r \bau,12
+     assign0r \bau,11
+     assign0r \bau,10
+     assign0r \bau,9
+     assign0r \bau,8
+     assign0r \bau,7
+     assign0r \bau,6
+     assign0r \bau,5
+     assign0r \bau,4
+     assign0r \bau,3
+     assign0r \bau,2
+     assign0r \bau,1
+     assign0r \bau,0
+
+.sco\@ lda #0
+     sta \bau+1024,x
+.slu\@ lda #0
+     sta \bau,x
+     dex
+     bmi *+5
+     jmp .l\@
+     endm
+
+sscroll_down4:
+     assignxr $2800,$9800
+     assignxr $3000,$7000
+     assignxr $3800,$8000
+     assignxr $9000,$8800
+     rts
+   endif  ;SD4
 
    if SU4
      macro assign0,bau,p

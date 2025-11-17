@@ -94,7 +94,7 @@ l5
 
     inc irq276.me+1
     jsr remove_t1
-    jsr sscroll_up4
+    jsr sscroll_down4
     jsr put_t1
     inc irqX.me+1
     rts
@@ -103,14 +103,40 @@ l5a
     and kmatrix+7  ;2
     bne l6
 
-    lda #-2
-    sta $d4
-    jsr down_t1
-    lda #20
-    jsr delay
+    ;lda #-2
+    ;sta $d4
+    ;jsr down_t1
+    ;lda #20
+    ;jsr delay
+    ;lda #2
+    ;sta $d4
+    ;jmp up_t1
+    jsr up_t1
     lda #2
     sta $d4
-    jmp up_t1
+    jsr up_t1
+    jsr up_t1
+    lda #2
+    sta $d4
+    jsr up_t1
+    jsr up_t1
+    lda #2
+    sta $d4
+    jsr up_t1
+    jsr up_t1
+    lda #-6
+    sta $d4
+    inc irq276.me+1
+    jsr remove_t1
+    jsr sscroll_down4
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #7
+    sta ($e6),y
+    jsr put_t1
+    inc irqX.me+1
+    rts
 l6
     lda #2
     and kmatrix+2   ;R
