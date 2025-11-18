@@ -46,34 +46,23 @@ l0
     and kmatrix+7   ;1
     bne l5
 
-    ;lda #2
-    ;sta $d4
-    ;jsr up_t1
-    ;lda #20
-    ;jsr delay
-    ;lda #-2
-    ;sta $d4
-    ;jsr down_t1
-    ;inc irq276.me+1
-    ;jsr remove_t1
-    ;jsr sscroll_up4
-    ;jsr put_t1
-    ;inc irqX.me+1
-    jsr down_t1
+scoff = * + 1
+    lda #0
+    bmi .l1
+
+    cmp #3
+    beq .l0
+.l1
+    inc scoff
     lda #-2
     sta $d4
     jsr down_t1
-    jsr down_t1
-    lda #-2
+    jmp down_t1
+.l0 lda #6
     sta $d4
     jsr down_t1
-    jsr down_t1
-    lda #-2
-    sta $d4
-    jsr down_t1
-    jsr down_t1
-    lda #6
-    sta $d4
+    lda #0
+    sta scoff
     inc irq276.me+1
     jsr remove_t1
     jsr sscroll_up4
@@ -84,48 +73,33 @@ l0
     sta ($e6),y
     jsr put_t1
     inc irqX.me+1
-    ;lda #6
-    ;sta $d4
     rts
 l5
     lda #1
     and kmatrix+1  ;3
     bne l5a
 
-    inc irq276.me+1
-    jsr remove_t1
-    jsr sscroll_down4
-    jsr put_t1
-    inc irqX.me+1
-    rts
 l5a
     lda #8
     and kmatrix+7  ;2
     bne l6
 
-    ;lda #-2
-    ;sta $d4
-    ;jsr down_t1
-    ;lda #20
-    ;jsr delay
-    ;lda #2
-    ;sta $d4
-    ;jmp up_t1
-    jsr up_t1
+    lda scoff
+    bpl .l1
+
+    cmp #-3
+    beq .l0
+.l1
+    dec scoff
     lda #2
     sta $d4
     jsr up_t1
-    jsr up_t1
-    lda #2
+    jmp up_t1
+.l0 lda #-6
     sta $d4
     jsr up_t1
-    jsr up_t1
-    lda #2
-    sta $d4
-    jsr up_t1
-    jsr up_t1
-    lda #-6
-    sta $d4
+    lda #0
+    sta scoff
     inc irq276.me+1
     jsr remove_t1
     jsr sscroll_down4

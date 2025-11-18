@@ -3,7 +3,7 @@
 HILEV2 = 0
 
 test:
-  if 0
+   if 0
     lda #<ltext1
     sta $e6
     lda #>ltext1
@@ -185,7 +185,7 @@ test:
 
     lda #120
     jsr delay
-.shift = 80
+.shift = 32  ;80
      lda #.shift
      sta .count1
     lda #<ltext3
@@ -443,6 +443,177 @@ test:
     jsr put00_t2
     dec .count1
     bne .loo00b
+
+    lda #8
+    sta .count1
+.loox
+    lda #5
+    jsr delay
+    lda #2
+    sta $d4
+    lda #<ltext1
+    ldy #>ltext1
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext4
+    ldy #>ltext4
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext2
+    ldy #>ltext2
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext5
+    ldy #>ltext5
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext3
+    ldy #>ltext3
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #50
+    jsr delay
+
+    lda #2
+    sta $d4
+    lda #<ltext1
+    ldy #>ltext1
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext4
+    ldy #>ltext4
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext2
+    ldy #>ltext2
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext5
+    ldy #>ltext5
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext3
+    ldy #>ltext3
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #50
+    jsr delay
+
+    lda #2
+    sta $d4
+    lda #<ltext1
+    ldy #>ltext1
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext4
+    ldy #>ltext4
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext2
+    ldy #>ltext2
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext5
+    ldy #>ltext5
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #<ltext3
+    ldy #>ltext3
+    jsr .seta
+    jsr up0_t2
+    jsr put00_t2
+    lda #50
+    jsr delay
+
+    lda #-6
+    sta $d4
+
+    inc irq276.me+1
+    lda #<ltext1
+    ldy #>ltext1
+    jsr .seta
+    jsr remove_t2
+    lda #<ltext2
+    ldy #>ltext2
+    jsr .seta
+    jsr remove_t2
+    lda #<ltext3
+    ldy #>ltext3
+    jsr .seta
+    jsr remove_t2
+    lda #<ltext4
+    ldy #>ltext4
+    jsr .seta
+    jsr remove_t2
+    lda #<ltext5
+    ldy #>ltext5
+    jsr .seta
+    jsr remove_t2
+
+    jsr sscroll_down4
+    lda #<ltext1
+    ldy #>ltext1
+    jsr .seta
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    lda #<ltext2
+    ldy #>ltext2
+    jsr .seta
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    lda #<ltext3
+    ldy #>ltext3
+    jsr .seta
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    lda #<ltext4
+    ldy #>ltext4
+    jsr .seta
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    lda #<ltext5
+    ldy #>ltext5
+    jsr .seta
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    inc irqX.me+1
+    dec .count1
+    beq *+5
+    jmp .loox
     jmp .restart
 
 .count1 byte 0
@@ -471,6 +642,7 @@ test:
    ;include "text-lib1.s"
    include "sprite-lib2.s"
    include "text-lib2.s"
+   include "sscroll.s"
 
 ltext1_xsz = 6  ;hello
 ltext1_ysz = 2

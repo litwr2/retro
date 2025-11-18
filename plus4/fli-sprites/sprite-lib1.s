@@ -56,7 +56,7 @@ olrud_off = 12
 
     org $a000
 put_t1c:   ;it may only be used after the invocation of put_t1 or setspr_t1
-    ldy #0   ;this instruction must be the first!   
+    ldy #0   ;this instruction must be the first!
 .e  iny
     lda ($e6),y
     sta $e2

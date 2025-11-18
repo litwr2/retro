@@ -119,8 +119,10 @@ test:
     sta $e7
     jsr put_t1
     ;jsr waitkey
-    lda #200
+    lda #100
     jsr delay
+    lda #17
+    sta put_t1c+1
 .loo0
     lda #70
     sta .count2
@@ -129,26 +131,26 @@ test:
     ldx #>text1
     jsr .seta
     jsr up0_t1
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17   ;offset for colors
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text4
     ldx #>text4
     jsr .seta
     jsr up0_t1
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text2
     ldx #>text2
     jsr .seta
-    ;jsr up0_t1
+    ;jsr up0_t1  ;because the last line is empty!
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text5
@@ -157,8 +159,8 @@ test:
     ;jsr up0_t1
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text3
@@ -195,8 +197,8 @@ test:
     jsr .seta
 .loo1
     jsr up0_t1
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
     dec .count2
     bne .loo1
@@ -211,8 +213,8 @@ test:
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text5
@@ -222,8 +224,8 @@ test:
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
-    ldy #17
-    jsr put_t1c.e
+    ;ldy #17
+    jsr put_t1c
     jsr put00_t1
 
     lda #<text3
@@ -233,8 +235,6 @@ test:
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
-    ;ldy #17
-    ;jsr put_t1c.e
     jsr put00_t1
     dec .count2
     bne .loo2
@@ -320,6 +320,220 @@ test:
     jsr put00_t1
     dec .count2
     bne .loo6
+
+    lda #8
+    sta .count2
+.loox
+    lda #5
+    jsr delay
+    lda #2
+    sta $d4
+    lda #<text1
+    ldx #>text1
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text4
+    ldx #>text4
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text2
+    ldx #>text2
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text5
+    ldx #>text5
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text3
+    ldx #>text3
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put00_t1
+    lda #20
+    jsr delay
+
+    lda #2
+    sta $d4
+    lda #<text1
+    ldx #>text1
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text4
+    ldx #>text4
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text2
+    ldx #>text2
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text5
+    ldx #>text5
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text3
+    ldx #>text3
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put00_t1
+    lda #20
+    jsr delay
+
+    lda #2
+    sta $d4
+    lda #<text1
+    ldx #>text1
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text4
+    ldx #>text4
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text2
+    ldx #>text2
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text5
+    ldx #>text5
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
+    lda #<text3
+    ldx #>text3
+    jsr .seta
+    jsr up0_t1
+    jsr up0_t1
+    jsr put00_t1
+    lda #20
+    jsr delay
+
+    lda #-6
+    sta $d4
+
+    inc irq276.me+1
+    lda #<text1
+    ldx #>text1
+    jsr .seta
+    jsr remove_t1
+    lda #<text2
+    ldx #>text2
+    jsr .seta
+    jsr remove_t1
+    lda #<text3
+    ldx #>text3
+    jsr .seta
+    jsr remove_t1
+    lda #<text4
+    ldx #>text4
+    jsr .seta
+    jsr remove_t1
+    lda #<text5
+    ldx #>text5
+    jsr .seta
+    jsr remove_t1
+
+    jsr sscroll_down4
+    lda #<text1
+    ldx #>text1
+    jsr .seta
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #6
+    sta ($e6),y
+    jsr put_t1
+
+    lda #<text2
+    ldx #>text2
+    jsr .seta
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #6
+    sta ($e6),y
+    jsr put_t1
+
+    lda #<text3
+    ldx #>text3
+    jsr .seta
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #6
+    sta ($e6),y
+    jsr put_t1
+
+    lda #<text4
+    ldx #>text4
+    jsr .seta
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #6
+    sta ($e6),y
+    jsr put_t1
+
+    lda #<text5
+    ldx #>text5
+    jsr .seta
+    ldy #sypos_off
+    lda ($e6),y
+    clc
+    adc #6
+    sta ($e6),y
+    jsr put_t1
+    inc irqX.me+1
+    dec .count2
+    beq *+5
+    jmp .loox
     jmp .loo0
 
 .count2 byte 0
@@ -330,7 +544,7 @@ test:
     adc #20
     sta $e4
     txa
-    sta $e7    
+    sta $e7
     adc #0
     sta $e5
     rts
@@ -340,6 +554,7 @@ test:
    include "aux.s"
    include "sprite-lib1.s"
    include "text-lib1.s"
+   include "sscroll.s"
    ;include "sprite-lib2.s"
    ;include "sprlib/s6.s"
 

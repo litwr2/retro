@@ -42,27 +42,65 @@ l0
     and kmatrix+7   ;1
     bne l5
 
+scoff2 = * + 1
+    lda #0
+    bmi .l1
+
+    cmp #3
+    beq .l0
+.l1
+    inc scoff2
+    lda $d4
+    bne *-2
     lda #-2
     sta $d4
-    jsr down_t2
-    lda #40
-    jsr delay
-    lda #2
+    jmp down_t2
+.l0 lda #6
     sta $d4
-    jmp up_t2
-
+    lda #0
+    sta scoff2
+    inc irq276.me+1
+    jsr remove_t2
+    jsr sscroll_up4
+    ldy #s2ypos_off
+    lda ($e6),y
+    sec
+    sbc #3
+    sta ($e6),y
+    jsr put_t2
+    inc irqX.me+1
+    rts
 l5  lda #8
     and kmatrix+7  ;2
     bne l6
 
+    lda scoff2
+    bpl .l1
+
+    cmp #-3
+    beq .l0
+.l1
+    dec scoff2
+    lda $d4
+    bne *-2
     lda #2
     sta $d4
-    jsr up_t2
-    lda #40
-    jsr delay
-    lda #-2
+    jmp up_t2
+.l0 lda #-6
     sta $d4
-    jmp down_t2
+    lda #0
+    sta scoff2
+    inc irq276.me+1
+    jsr remove_t2
+    jsr sscroll_down4
+    ldy #s2ypos_off
+    lda ($e6),y
+    clc
+    adc #3
+    sta ($e6),y
+    jsr put_t2
+    inc irqX.me+1
+    rts
 
 l6  lda #2
     and kmatrix+2   ;R
@@ -160,5 +198,6 @@ l2 pha
    include "aux.s"
    ;include "sprite-lib1.s"
    include "sprite-lib2.s"
+   include "sscroll.s"
    include "sprlib/s10_t2.s"
 
