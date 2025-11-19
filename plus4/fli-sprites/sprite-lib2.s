@@ -728,13 +728,13 @@ put00_t2:  ;in: $e6-e7;  used: $66-68, $d0-d3, $d5-d7, $d9-da, $dc, $e0-e5
     sta ($d2),y  ;prg[addr + 0x400] = b1 & 0xf | b2 << 4
 .le rts
 
-remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3
+remove_t2:  ;in: e6-e7;  used: $d0-d3, $d5-$d7, $d9-da, $dc, $e0-e3; sets C=1
     lda #0
 .l7 sta $d6   ;for (int y = 0; y < ysize; y++)
     ldy #s2ysize_off
     cmp ($e6),y
     bcs put00_t2.le
-    
+
     lda #0
     sta $d7
 
