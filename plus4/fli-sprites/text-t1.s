@@ -139,7 +139,6 @@ test:
     ldx #>text4
     jsr .seta
     jsr up0_t1
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
 
@@ -149,7 +148,6 @@ test:
     ;jsr up0_t1  ;because the last line is empty!
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
 
@@ -159,7 +157,6 @@ test:
     ;jsr up0_t1
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
 
@@ -197,7 +194,6 @@ test:
     jsr .seta
 .loo1
     jsr up0_t1
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
     dec .count2
@@ -213,7 +209,6 @@ test:
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
 
@@ -224,7 +219,6 @@ test:
     ldy #sypos_off
     byte $d3,$e6    ;deccmp ($e6),y
     jsr up0_t1
-    ;ldy #17
     jsr put_t1c
     jsr put00_t1
 
@@ -332,6 +326,8 @@ test:
     ldx #>text1
     jsr .seta
     jsr up0_t1
+    ;jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -340,6 +336,8 @@ test:
     ldx #>text4
     jsr .seta
     jsr up0_t1
+    ;jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -348,6 +346,8 @@ test:
     ldx #>text2
     jsr .seta
     jsr up0_t1
+    ;jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -356,6 +356,8 @@ test:
     ldx #>text5
     jsr .seta
     jsr up0_t1
+    ;jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -364,6 +366,7 @@ test:
     ldx #>text3
     jsr .seta
     jsr up0_t1
+    jsr put00_t1
     jsr up0_t1
     jsr put00_t1
     lda #20
@@ -375,6 +378,8 @@ test:
     ldx #>text1
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -383,6 +388,8 @@ test:
     ldx #>text4
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -391,6 +398,8 @@ test:
     ldx #>text2
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -399,6 +408,8 @@ test:
     ldx #>text5
     jsr .seta
     jsr up0_t1
+    ;jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -407,6 +418,7 @@ test:
     ldx #>text3
     jsr .seta
     jsr up0_t1
+    jsr put00_t1
     jsr up0_t1
     jsr put00_t1
     lda #20
@@ -418,6 +430,8 @@ test:
     ldx #>text1
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -426,6 +440,8 @@ test:
     ldx #>text4
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -434,6 +450,8 @@ test:
     ldx #>text2
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -442,6 +460,8 @@ test:
     ldx #>text5
     jsr .seta
     jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
@@ -450,6 +470,7 @@ test:
     ldx #>text3
     jsr .seta
     jsr up0_t1
+    jsr put00_t1
     jsr up0_t1
     jsr put00_t1
     lda #20
