@@ -118,8 +118,7 @@ test:
     lda #>text5
     sta $e7
     jsr put_t1
-    ;jsr waitkey
-    lda #100
+    lda #60
     jsr delay
     lda #17
     sta put_t1c+1
@@ -172,7 +171,7 @@ test:
     beq *+5
     jmp .loo
 
-    lda #120
+    lda #60
     jsr delay
 .shift = 180
     lda #<text1
@@ -273,7 +272,7 @@ test:
     dec .count2
     bne .loo5
 
-    lda #100
+    lda #60
     jsr delay
 
     lda #40
@@ -317,96 +316,23 @@ test:
 
     lda #8
     sta .count2
+    lda #<text1
+    ldx #>text1
+    jsr .seta
 .loox
-    lda #5
-    jsr delay
+    lda $d4
+    bne *-2
     lda #2
     sta $d4
-    lda #<text1
-    ldx #>text1
-    jsr .seta
     jsr up0_t1
     ;jsr put_t1c
     jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
-
-    lda #<text4
-    ldx #>text4
-    jsr .seta
-    jsr up0_t1
-    ;jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text2
-    ldx #>text2
-    jsr .seta
-    jsr up0_t1
-    ;jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text5
-    ldx #>text5
-    jsr .seta
-    jsr up0_t1
-    ;jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text3
-    ldx #>text3
-    jsr .seta
-    jsr up0_t1
-    jsr put00_t1
-    jsr up0_t1
-    jsr put00_t1
-    lda #20
-    jsr delay
 
     lda #2
     sta $d4
-    lda #<text1
-    ldx #>text1
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text4
-    ldx #>text4
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text2
-    ldx #>text2
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text5
-    ldx #>text5
-    jsr .seta
     jsr up0_t1
     ;jsr put_t1c
     jsr put00_t1
@@ -414,141 +340,28 @@ test:
     jsr put_t1c
     jsr put00_t1
 
-    lda #<text3
-    ldx #>text3
-    jsr .seta
-    jsr up0_t1
-    jsr put00_t1
-    jsr up0_t1
-    jsr put00_t1
-    lda #20
-    jsr delay
-
     lda #2
     sta $d4
-    lda #<text1
-    ldx #>text1
-    jsr .seta
     jsr up0_t1
-    jsr put_t1c
+    ;jsr put_t1c
     jsr put00_t1
     jsr up0_t1
     jsr put_t1c
     jsr put00_t1
-
-    lda #<text4
-    ldx #>text4
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text2
-    ldx #>text2
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text5
-    ldx #>text5
-    jsr .seta
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-    jsr up0_t1
-    jsr put_t1c
-    jsr put00_t1
-
-    lda #<text3
-    ldx #>text3
-    jsr .seta
-    jsr up0_t1
-    jsr put00_t1
-    jsr up0_t1
-    jsr put00_t1
-    lda #20
-    jsr delay
 
     lda #-6
     sta $d4
 
+    jsr up0_t1
+    jsr put_t1c
+    jsr put00_t1
+
     inc irq276.me+1
-    lda #<text1
-    ldx #>text1
-    jsr .seta
     jsr remove_t1
-    lda #<text2
-    ldx #>text2
-    jsr .seta
-    jsr remove_t1
-    lda #<text3
-    ldx #>text3
-    jsr .seta
-    jsr remove_t1
-    lda #<text4
-    ldx #>text4
-    jsr .seta
-    jsr remove_t1
-    lda #<text5
-    ldx #>text5
-    jsr .seta
-    jsr remove_t1
-
-    jsr sscroll_down4
-    lda #<text1
-    ldx #>text1
-    jsr .seta
+    jsr sscroll_down4  ;sets C=0
     ldy #sypos_off
-    lda ($e6),y
-    clc
-    adc #6
-    sta ($e6),y
-    jsr put_t1
-
-    lda #<text2
-    ldx #>text2
-    jsr .seta
-    ldy #sypos_off
-    lda ($e6),y
-    clc
-    adc #6
-    sta ($e6),y
-    jsr put_t1
-
-    lda #<text3
-    ldx #>text3
-    jsr .seta
-    ldy #sypos_off
-    lda ($e6),y
-    clc
-    adc #6
-    sta ($e6),y
-    jsr put_t1
-
-    lda #<text4
-    ldx #>text4
-    jsr .seta
-    ldy #sypos_off
-    lda ($e6),y
-    clc
-    adc #6
-    sta ($e6),y
-    jsr put_t1
-
-    lda #<text5
-    ldx #>text5
-    jsr .seta
-    ldy #sypos_off
-    lda ($e6),y
-    clc
-    adc #6
+    lda ($e6),y   ;C=0
+    adc #7
     sta ($e6),y
     jsr put_t1
     inc irqX.me+1
@@ -559,7 +372,7 @@ test:
 
 .count2 byte 0
 
-.seta
+.seta   ;sets C=0
     sta $e6
     clc
     adc #20
