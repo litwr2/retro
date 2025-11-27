@@ -75,9 +75,13 @@ DYNAMIC = 1  ;use 0 if you use only static images, this saves some space
      endm
 
         org $1001
-   byte $b,$10,$a,0,$9e
+   word eobp
+   word 10
+   byte $9e
    byte start/1000+48,start%1000/100+48,start%100/10+48,start%10+48
-   byte 0,0,0
+   byte 0
+eobp
+   byte 0,0
 
 start:
      lda #0
