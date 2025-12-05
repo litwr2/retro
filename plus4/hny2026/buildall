@@ -1,0 +1,5 @@
+g++ pbm2hires.cpp || exit
+a.out si-1p.ppm || exit
+F=si-driver-hr
+vasm6502_oldstyle $F.asm -Fbin -cbm-prg -o $F.prg -L $F.lst
+rm a.out *.s

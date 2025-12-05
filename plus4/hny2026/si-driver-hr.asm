@@ -2,12 +2,16 @@
 ;
 ;The next code was made by litwr in 2025
 ;
-;320x256 HiRes for the Commodore +4
+;320x256 double buffer HiRes for the Commodore +4
 
-; text data for 32 rows:
+; text data for 32 rows, buffer 0:
 ;    $1800 - 1be7, $1c00 - 1fe7  1000 chars  y = 0..199
 ;    $53e8 - 53ff, $57e8 - 57ff    24 chars  y = 200..207, x = 0..191
 ;    $5000 - 50ff, $5400 - 54ff   256 chars  y = 200..207, x = 192..319; y = 208..255
+; text data for 32 rows, buffer 1:
+;    $0800 - 0be7, $0c00 - 0fe7  1000 chars  y = 0..199
+;    $5be8 - 5bff, $5fe8 - 5fff    24 chars  y = 200..207, x = 0..191
+;    $5800 - 58ff, $5c00 - 5cff   256 chars  y = 200..207, x = 192..319; y = 208..255
 ; graph data for 32 rows:
 ;    $2000 - 3f3f  8000 bytes, y = 0..199
 ;    $4140 - 49ff  2240 bytes, y = 200..255
@@ -46,6 +50,7 @@ irqe2  pha      ;@202
        STA $FF0B
        LDA #<irqe3
        STA $FFFE
+.ab2 = * + 1
        LDA #$50
        STA $FF14
        INC $FF09
@@ -73,6 +78,7 @@ irqe3  pha    ;@206
        STA $FF1D  ;236
        JSR comm1
        INC $FF09
+.ab1 = * + 1
        LDA #$18
        STA $FF14
 
@@ -115,15 +121,52 @@ start: JSR JPRIMM
     asl
     asl
     ora #bcolor&0xf
-    sta .ac
+    sta buf0.ac
     lda .colors,x
     lsr
     lsr
     lsr
     lsr
     ora #bcolor&0xf0
-    ;sta .al
+    sta buf0.al
     ldx #0
+    lda .cbuf
+    and #1
+    bne .l1
+
+    jsr buf0
+    jmp .l3
+
+.l1 jsr buf1
+.l3 inc .cbuf
+    ldy $ff1c
+    iny
+    bne *-4
+    ldy $ff1c
+    iny
+    beq *-4
+    ldy $ff1c
+    iny
+    bne *-4
+    sta irqe3.ab1
+    sta $ff14
+    stx irqe2.ab2
+
+    inc .cc
+    lda .cc
+    cmp .cmax
+    bne .cloop
+    jmp .mloop
+
+.cc byte 0
+.cbuf byte 0
+.cmax byte 12
+.colors byte $6f, $6a, $59, $58, $48, $3b, $24, $1e, $3e, $46, $5d, $6c
+;.colors byte $62, $65, $58, $64, $5d, $4b, $24, $69, $68, $6b, $71, $4e
+
+buf0:
+.al = * + 1
+    lda #0
 .loop1
     sta $1800,x
     sta $1900,x
@@ -141,8 +184,8 @@ start: JSR JPRIMM
     sta $5300,x
     inx
     bne *-4
-
-    lda .ac
+.ac = * + 1
+    lda #0
     ;ldx #0
 .loop2
     sta $1c00,x
@@ -161,25 +204,52 @@ start: JSR JPRIMM
     sta $5700,x
     inx
     bne *-4
+    lda #$18
+    ldx #$50
+    rts
 
-    pha   ;delay
-    ldy #9
-    lda .cc
-    dey
+buf1:
+    lda buf0.al
+.loop1
+    sta $800,x
+    sta $900,x
+    sta $a00,x
+    sta $5800,x
+    inx
+    bne .loop1
+
+    ldx #$e8
+    dex
+    sta $b00,x
     bne *-4
-    pla
 
-    inc .cc
-    lda .cc
-    cmp .cmax
-    bne .cloop
-    jmp .mloop
+    ldx #$e8
+    sta $5b00,x
+    inx
+    bne *-4
 
-.cc byte 0
-.ac byte 0
-;.al byte 0
-.cmax byte 4
-.colors byte $6f, $6a, $59, $58
+    lda buf0.ac
+    ;ldx #0
+.loop2
+    sta $c00,x
+    sta $d00,x
+    sta $e00,x
+    sta $5c00,x
+    inx
+    bne .loop2
+
+    ldx #$e8
+    dex
+    sta $f00,x
+    bne *-4
+
+    ldx #$e8
+    sta $5f00,x
+    inx
+    bne *-4
+    lda #$8
+    ldx #$58
+    rts
 
 iniirq:LDA #>irqe1
        STA $FFFF
