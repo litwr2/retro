@@ -1,0 +1,5 @@
+g++ pbm2mc.cpp || exit
+a.out si-mc-2026.ppm || exit
+F=si-driver-mc
+vasm6502_oldstyle $F.asm -Fbin -cbm-prg -o $F.prg -L $F.lst
+rm a.out *.s

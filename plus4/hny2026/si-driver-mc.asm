@@ -2,7 +2,7 @@
 ;
 ;The next code was made by litwr in 2025
 ;
-;320x256 double buffer HiRes for the Commodore +4
+;160x256 double buffer multicolor for the Commodore +4 or 116/16 (32K)
 
 ; text data for 32 rows, buffer 0:
 ;    $1800 - 1be7, $1c00 - 1fe7  1000 chars  y = 0..199
@@ -18,8 +18,6 @@
 
 BSOUT = $FFD2
 JPRIMM = $FF4F
-
-bcolor = $41
 
    org $1001
    word eobp
@@ -94,40 +92,57 @@ irqe3  pha    ;@206
 .l2:   pla
        RTI
 
-start: JSR JPRIMM
-       byte 9,14,"**************************************",13
-       byte "*             ILLUSIONS              *",13
-       byte "**************************************",13
-       byte 'pRESS A KEY',0
-       ;JSR waitkey
-
+start:
+    sei
     STA $FF3F
     LDX #$3B
     STX $FF06
-    LDX #8
+    LDX #$18
     STX $FF07
-    LDA #bcolor
+    LDA #BG
     STA $FF19
     JSR iniirq
+    cli
+       lda #MC1
+       sta $ff15
+       lda #MC2
+       sta $ff16
        JSR waitkey
+    ldx #0
+.loop0
+    lda $1800,x
+    sta $800,x
+    inx
+    bne .loop0
+
+    inc .loop0+2
+    inc .loop0+5
+    lda .loop0+5
+    cmp #$10
+    bne .loop0
+.loop1
+    lda $5300,x
+    sta $5b00,x
+    lda $5700,x
+    sta $5f00,x
+    lda $5000,x
+    sta $5800,x
+    lda $5400,x
+    sta $5c00,x
+    inx
+    bne .loop1
 .mloop
     lda #0
     sta .cc
 .cloop
     tax
-    lda .colors,x
-    asl
-    asl
-    asl
-    asl
-    ora #bcolor&0xf
+    lda .fgco,x
+    and #15
+    ora #(BG&0x0f)<<4
     sta buf0.ac
-    lda .colors,x
-    lsr
-    lsr
-    lsr
-    lsr
-    ora #bcolor&0xf0
+    lda .fgco,x
+    and #$f0
+    ora #BG>>4
     sta buf0.al
     ldx #0
     lda .cbuf
@@ -142,16 +157,24 @@ start: JSR JPRIMM
     ldy $ff1c
     iny
     bne *-4
+  rept 1
     ldy $ff1c
     iny
     beq *-4
     ldy $ff1c
     iny
     bne *-4
+  endr
     sta irqe3.ab1
     sta $ff14
     stx irqe2.ab2
+    ldx .cc
+    lda .mc1co,x
+    sta $ff15
+    lda .mc2co,x
+    sta $ff16
 
+    ;jsr waitkey
     inc .cc
     lda .cc
     cmp .cmax
@@ -160,96 +183,14 @@ start: JSR JPRIMM
 
 .cc byte 0
 .cbuf byte 0
+;.cmax byte 6
+;.fgco byte $59,$42,$3b,$3d,$4d,$5c   ;rept 3
+;.mc1co byte $6f,$59,$48,$24,$3e,$6d
+;.mc2co byte $53,$58,$57,$3b,$46,$3d
 .cmax byte 12
-.colors byte $6f, $6a, $59, $58, $48, $3b, $24, $1e, $3e, $46, $5d, $6c
-;.colors byte $62, $65, $58, $64, $5d, $4b, $24, $69, $68, $6b, $71, $4e
-
-buf0:
-.al = * + 1
-    lda #0
-.loop1
-    sta $1800,x
-    sta $1900,x
-    sta $1a00,x
-    sta $5000,x
-    inx
-    bne .loop1
-
-    ldx #$e8
-    dex
-    sta $1b00,x
-    bne *-4
-
-    ldx #$e8
-    sta $5300,x
-    inx
-    bne *-4
-.ac = * + 1
-    lda #0
-    ;ldx #0
-.loop2
-    sta $1c00,x
-    sta $1d00,x
-    sta $1e00,x
-    sta $5400,x
-    inx
-    bne .loop2
-
-    ldx #$e8
-    dex
-    sta $1f00,x
-    bne *-4
-
-    ldx #$e8
-    sta $5700,x
-    inx
-    bne *-4
-    lda #$18
-    ldx #$50
-    rts
-
-buf1:
-    lda buf0.al
-.loop1
-    sta $800,x
-    sta $900,x
-    sta $a00,x
-    sta $5800,x
-    inx
-    bne .loop1
-
-    ldx #$e8
-    dex
-    sta $b00,x
-    bne *-4
-
-    ldx #$e8
-    sta $5b00,x
-    inx
-    bne *-4
-
-    lda buf0.ac
-    ;ldx #0
-.loop2
-    sta $c00,x
-    sta $d00,x
-    sta $e00,x
-    sta $5c00,x
-    inx
-    bne .loop2
-
-    ldx #$e8
-    dex
-    sta $f00,x
-    bne *-4
-
-    ldx #$e8
-    sta $5f00,x
-    inx
-    bne *-4
-    lda #$8
-    ldx #$58
-    rts
+.mc1co byte $6f,$6a,$59,$58,$48,$3b,$24,$1e,$3e,$46,$6d,$6c
+.mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
+.fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
 iniirq:LDA #>irqe1
        STA $FFFF
@@ -299,5 +240,24 @@ waitkey:
     beq .l2
    rts
 
-  include "pic.s"
+  include "pic-mc.s"
+
+  org $6000
+buf0:
+.al = * + 1
+    lda #0
+.ac = * + 1
+    ldx #0
+    include "pic-mc-fg0.s"
+    lda #$18
+    ldx #$50
+    rts
+
+buf1:
+    lda buf0.al
+    ldx buf0.ac
+    include "pic-mc-fg1.s"
+    lda #$8
+    ldx #$58
+    rts
 
