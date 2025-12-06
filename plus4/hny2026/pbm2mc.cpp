@@ -1,4 +1,4 @@
-//simple plus4 multicolor converter
+//specialized PPM to the C+4 MC 160xN converter
 #include <cstdio>
 #include <cstring>
 #include <cstdlib>
@@ -148,14 +148,24 @@ E1:     fprintf(stderr, "incorrect format %d\n", err);
 	            if (yl == 7) fputs("\n", fi); else fputs(",", fi);
 	        }
 	    }
-    fputs("\n org $53e8\n", fi);
+    fprintf(fi, "\n org $%x\n", addr = 0x53e8);
     for (int y = 25; y < 26; y++)
-	    for (int x = 0; x < 24; x++)
-    	    fprintf(fi, " byte $%x\n", bg/16 + (fg&0xf0));
-    fputs("\n org $57e8\n", fi);
+	    for (int x = 0; x < 24; x++) {
+    	    if (extras.find(addr) != extras.end())
+	            fprintf(fi, " byte $%x\n", extras[addr]);
+	        else
+	        	fprintf(fi, " byte $%x\n", bg/16 + (fg&0xf0));
+	        addr++;
+	    }
+    fprintf(fi, "\n org $%x\n", addr = 0x57e8);
     for (int y = 25; y < 26; y++)
-	    for (int x = 0; x < 24; x++)
-    	    fprintf(fi, " byte $%x\n", (fg&15) + ((bg&15) << 4));
+	    for (int x = 0; x < 24; x++) {
+    	    if (extras.find(addr) != extras.end())
+	            fprintf(fi, " byte $%x\n", extras[addr]);
+	        else
+	        	fprintf(fi, " byte $%x\n", (fg&15) + ((bg&15) << 4));
+	        addr++;
+	    }
 	fputs("\n org $5000\n", fi);
     for (int y = 25; y < 32; y++)
 	    for (int x = 0; x < 40; x++)
