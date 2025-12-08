@@ -19,6 +19,10 @@
 BSOUT = $FFD2
 JPRIMM = $FF4F
 
+mp = $d0 ;+$d1
+icnt = $d2
+tmp = $d3
+
    org $1001
    word eobp
    word 10
@@ -41,36 +45,6 @@ irqe1  pha      ;@284
 irqe0  INC $FF09
        RTI
 
-irqe2  pha      ;@202
-       LDA #$92
-       STA $FF1D
-       LDA #$CE		;206
-       STA $FF0B
-       LDA #<irqe3
-       STA $FFFE
-.ab2 = * + 1
-       LDA #$50
-       STA $FF14
-       INC $FF09
-
-    pha  ;a delay
-    pla
-    pha
-    pla
-    pha
-    pla
-    nop
-    nop
-
-       LDA #$10     ;$4000
-       STA $FF12
-       ;LDA #0
-       STA $FF1A
-       LDA #40
-       STA $FF1B
-       pla
-       RTI
-
 irqe3  pha    ;@206
        LDA #$EC
        STA $FF1D  ;236
@@ -80,7 +54,9 @@ irqe3  pha    ;@206
        LDA #$18
        STA $FF14
 
-       LDA #8    ;$2000
+       lda $ff12
+       and #3
+       ORA #8    ;$2000
        STA $FF12
        inc $a5
        bne .l2
@@ -92,7 +68,108 @@ irqe3  pha    ;@206
 .l2:   pla
        RTI
 
+irqe2  pha      ;@202
+       LDA #$92
+       STA $FF1D
+       LDA #$CE		;206
+       STA $FF0B
+       LDA #<irqe3
+       STA $FFFE
+.ab2 = * + 1
+       LDA #$50
+       STA $FF14
+       INC $FF09
+       lda $ff12
+       and #3
+       sty .e1+1
+
+    pha  ;a delay, 15 ticks
+    pla
+    pha
+    pla
+    ;nop   ;-1, 14 actual
+
+       ora #$10     ;$4000
+       STA $FF12
+       LDA #0
+       STA $FF1A
+       LDA #40
+       STA $FF1B
+
+       dec icnt
+       bne .e1
+
+       lda #6
+       sta icnt
+
+.l6 ldy #0
+    lda (mp),y
+    bpl .l3
+
+    cmp #$ff
+    bne .l4
+
+    lda #<music
+    sta mp
+    lda #>music
+    sta mp+1
+    bne .e1  ;always
+
+.l4 eor #$80
+    sta $ff11
+    inc mp
+    bne *+4
+    inc mp +1
+    bne .l6  ;always
+
+.l3 asl
+    bpl .l1
+
+    lsr  ;sets C=0
+    and #3
+    sta tmp
+    lda $ff12
+    and #$fc
+    ora tmp
+    sta $ff12
+    iny
+    lda (mp),y
+    sta $ff0e
+.l8 lda mp
+    adc #2  ;C=0
+    sta mp
+    bcc *+4
+    inc mp+1
+    bne .l6  ;always
+
+.l1 asl
+    bpl .l5
+
+    lsr
+    lsr   ;sets C=0
+    and #3
+    sta $ff10
+    iny
+    lda (mp),y
+    sta $ff0f
+    bcc .l8  ;always
+
+.l5 inc mp
+    bne *+4
+    inc mp +1
+
+.e1    ldy #0
+       pla
+       RTI
+
 start:
+    lda #7
+    sta icnt
+    lda #<music
+    sta mp
+    lda #>music
+    sta mp+1
+       ;JSR waitkey
     sei
     STA $FF3F
     LDX #$3B
@@ -107,7 +184,6 @@ start:
        sta $ff15
        lda #MC2
        sta $ff16
-       JSR waitkey
     ldx #0
 .loop0
     lda $1800,x
@@ -260,4 +336,7 @@ buf1:
     lda #$8
     ldx #$58
     rts
+
+music:
+  include "music.s"
 
