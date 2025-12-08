@@ -185,18 +185,18 @@ start:
        lda #MC2
        sta $ff16
     ldx #0
-.loop0
+.iloop0
     lda $1800,x
     sta $800,x
     inx
-    bne .loop0
+    bne .iloop0
 
-    inc .loop0+2
-    inc .loop0+5
-    lda .loop0+5
+    inc .iloop0+2
+    inc .iloop0+5
+    lda .iloop0+5
     cmp #$10
-    bne .loop0
-.loop1
+    bne .iloop0
+.iloop1
     lda $5300,x
     sta $5b00,x
     lda $5700,x
@@ -206,7 +206,7 @@ start:
     lda $5400,x
     sta $5c00,x
     inx
-    bne .loop1
+    bne .iloop1
 .mloop
     lda #0
     sta .cc
@@ -225,10 +225,12 @@ start:
     and #1
     bne .l1
 
+    jsr .shift0
     jsr buf0
     jmp .l3
 
-.l1 jsr buf1
+.l1 jsr .shift1
+    jsr buf1
 .l3 inc .cbuf
     ldy $ff1c
     iny
@@ -256,6 +258,42 @@ start:
     cmp .cmax
     bne .cloop
     jmp .mloop
+
+.shift0
+    ldx #0
+    ldy $181b,x
+.shl0
+    tya
+    ldy $181c,x
+    sta $181c,x
+    sta $1844,x
+    sta $186c,x
+    inx
+    cpx #12
+    bne .shl0
+
+    sty $181b
+    sty $1843
+    sty $186b
+    rts
+
+.shift1
+    ldx #0
+    ldy $81b,x
+.shl1
+    tya
+    ldy $81c,x
+    sta $81c,x
+    sta $844,x
+    sta $86c,x
+    inx
+    cpx #12
+    bne .shl1
+
+    sty $81b
+    sty $843
+    sty $86b
+    rts
 
 .cc byte 0
 .cbuf byte 0
