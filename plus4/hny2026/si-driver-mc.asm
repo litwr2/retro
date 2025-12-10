@@ -22,6 +22,7 @@ JPRIMM = $FF4F
 mp = $d0 ;+$d1
 icnt = $d2
 tmp = $d3
+textbase = $2500
 
    org $1001
    word eobp
@@ -82,17 +83,16 @@ irqe2  pha      ;@202
        lda $ff12
        and #3
        sty .e1+1
+       ldy #0
 
-    pha  ;a delay, 15 ticks
+    pha  ;a delay, 13 ticks
     pla
     pha
-    pla
-    ;nop   ;-1, 14 actual
+    pla  ;+1, 14 actual
 
        ora #$10     ;$4000
        STA $FF12
-       LDA #0
-       STA $FF1A
+       STY $FF1A
        LDA #40
        STA $FF1B
 
@@ -109,11 +109,12 @@ irqe2  pha      ;@202
     cmp #$ff
     bne .l4
 
+    sty icnt
     lda #<music
     sta mp
     lda #>music
     sta mp+1
-    bne .e1  ;always
+    bne .e2  ;always
 
 .l4 eor #$80
     sta $ff11
@@ -159,11 +160,31 @@ irqe2  pha      ;@202
     inc mp +1
 
 .e1    ldy #0
-       pla
+.e2    pla
        RTI
 
 start:
-    lda #7
+    ldx #0
+.iloop2
+    lda $d400,x
+    sta $d400,x
+    lda $d500,x
+    sta $d500,x
+    lda $d600,x
+    sta $d600,x
+    lda $d700,x
+    sta $d700,x
+    inx
+    bne .iloop2
+
+.iloop3
+    lda tripleem,x
+    sta $d408,x
+    inx
+    cpx #8
+    bne .iloop3
+
+    lda #180
     sta icnt
     lda #<music
     sta mp
@@ -207,6 +228,8 @@ start:
     sta $5c00,x
     inx
     bne .iloop1
+
+    jsr initext
 .mloop
     lda #0
     sta .cc
@@ -220,7 +243,19 @@ start:
     and #$f0
     ora #BG>>4
     sta buf0.al
-    ldx #0
+
+.clrow = * + 1
+    ldy #0
+    jsr lscroll
+    inc .clrow
+.crrow = * +1
+    ldy #0
+    jsr rscroll
+    dec .crrow
+    bpl .l2
+
+    jsr initext
+.l2 ldx #0
     lda .cbuf
     and #1
     bne .l1
@@ -235,14 +270,15 @@ start:
     ldy $ff1c
     iny
     bne *-4
-  rept 1
+  
     ldy $ff1c
     iny
     beq *-4
-    ldy $ff1c
-    iny
-    bne *-4
-  endr
+    
+    ;ldy $ff1c
+    ;iny
+    ;bne *-4
+
     sta irqe3.ab1
     sta $ff14
     stx irqe2.ab2
@@ -256,7 +292,9 @@ start:
     inc .cc
     lda .cc
     cmp .cmax
-    bne .cloop
+    ;bne .cloop
+    beq *+5
+    jmp .cloop
     jmp .mloop
 
 .shift0
@@ -297,14 +335,83 @@ start:
 
 .cc byte 0
 .cbuf byte 0
-;.cmax byte 6
-;.fgco byte $59,$42,$3b,$3d,$4d,$5c   ;rept 3
-;.mc1co byte $6f,$59,$48,$24,$3e,$6d
-;.mc2co byte $53,$58,$57,$3b,$46,$3d
 .cmax byte 12
 .mc1co byte $6f,$6a,$59,$58,$48,$3b,$24,$1e,$3e,$46,$6d,$6c
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
+
+text db "3..  2..  1..  START", 1, " HAPPY NEW YEAR!  THIS IS MY 1ST PROGRAM FOR THE C+4 THAT PLAYS MUSIC.  THE TUNE IS TAKEN FROM THE OLD GOOD GAME HUSTLER.  I ALSO USED A FREE, ANONYMOUS ANIMATED GIF FROM THE NET AS THE BASIS FOR THE PICTURE.  WE CAN SEE PEOPLE RUNNING, BUT NO ONE ACTUALLY MOVES!  IT'S AN ILLUSION.  PERHAPS THE WORLD AROUND US IS AN ILLUSION TOO...  AND ALL OUR ACTIONS ARE NOTHING BUT VANITY OF VANITIES.  IT'S CRAZY AND AMAZING SIMULTANEOUSLY.  SO LET'S HAVE SOME MORE FUN!  ",0
+
+tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
+
+initext: jsr getchar
+    sta lscroll.char
+    lda #0
+    sta start.clrow
+    lda #7
+    sta start.crrow
+    rts
+
+outdirow:   ;Y-row, A-char (<128)
+         sty .t2
+         ldy #$d0>>3
+         sty .t1
+         asl
+         sec  ;$d4
+         rol .t1
+         asl
+         rol .t1
+         asl
+         rol .t1  ;set C=0
+         tay
+.t2 = * + 1
+.t1 = * + 2
+         lda $d400,y  ;chargen
+         sta .t1
+         ldx #0
+.l6      ldy #4
+.l4      bit .t1
+         bpl .l5
+
+         clc ;sec
+         rol
+         sec ;clc
+         rol
+         jmp .l3  ;always
+
+.l5      sec ;clc
+         rol
+         clc ;sec
+         rol
+.l3      asl .t1
+         dey
+         bne .l4
+
+         sta .chars,x
+         inx
+         cpx #2
+         bne .l6
+         rts
+.chars byte 0,0
+
+getchar: ldx .cpos
+.mh = * + 2
+         lda text,x
+         bne .l1
+
+         sta .cpos
+         lda #>text
+         sta .mh
+         bne getchar  ;always
+
+.l1      cmp #$60
+         bcc *+4
+         eor #$60
+         inc .cpos
+         bne *+5
+         inc .mh
+         rts
+.cpos byte 0
 
 iniirq:LDA #>irqe1
        STA $FFFF
@@ -355,6 +462,98 @@ waitkey:
    rts
 
   include "pic-mc.s"
+
+  org $4a00
+  macro sup
+    ldx #0
+.ml\@ lda \1+1,x
+    sta \1,x
+    lda \1+9,x
+    sta \1+8,x
+    inx
+    cpx #7
+    bne .ml\@
+  endm
+  macro supc
+    lda \1+320
+    sta \1+7
+    lda \1+328
+    sta \1+15
+  endm
+  macro supe
+    sup \1
+    supc \1
+  endm
+lscroll:  ;y - offset
+    supe textbase
+    supe textbase+320
+    supe textbase+320*2
+    supe textbase+320*3
+    supe textbase+320*4
+    supe textbase+320*5
+    supe textbase+320*6
+    supe textbase+320*7
+    supe textbase+320*8
+    supe textbase+320*9
+    supe textbase+320*10
+    supe textbase+320*11
+    supe textbase+320*12
+    supe textbase+320*13
+    supe textbase+320*14
+    sup textbase+320*15
+.char = * + 1
+    lda #0
+    jsr outdirow
+    lda outdirow.chars
+    sta textbase+320*15+7
+    lda outdirow.chars+1
+    sta textbase+320*15+15
+    rts
+
+  macro sdown
+    ldx #6
+.ml\@ lda \1,x
+    sta \1+1,x
+    lda \1+8,x
+    sta \1+9,x
+    dex
+    bpl .ml\@
+  endm
+  macro sdownc
+    lda \1-320+7
+    sta \1
+    lda \1-312+7
+    sta \1+8
+  endm
+  macro sdowne
+    sdown \1
+    sdownc \1
+  endm
+rshift = 38*8
+rscroll:  ;y - offset
+    sdowne textbase+320*15+rshift
+    sdowne textbase+320*14+rshift
+    sdowne textbase+320*13+rshift
+    sdowne textbase+320*12+rshift
+    sdowne textbase+320*11+rshift
+    sdowne textbase+320*10+rshift
+    sdowne textbase+320*9+rshift
+    sdowne textbase+320*8+rshift
+    sdowne textbase+320*7+rshift
+    sdowne textbase+320*6+rshift
+    sdowne textbase+320*5+rshift
+    sdowne textbase+320*4+rshift
+    sdowne textbase+320*3+rshift
+    sdowne textbase+320*2+rshift
+    sdowne textbase+320+rshift
+    sdown textbase+rshift
+    lda lscroll.char
+    jsr outdirow
+    lda outdirow.chars
+    sta textbase+rshift
+    lda outdirow.chars+1
+    sta textbase+8+rshift
+    rts
 
   org $6000
 buf0:
