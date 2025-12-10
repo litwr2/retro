@@ -1,3 +1,4 @@
+#for gawk
 /^seg/ {
     a = $1
     sub("seg", "", a)
