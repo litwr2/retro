@@ -1,8 +1,10 @@
 ;for vasm assembler, oldstyle syntax
 ;
 ;The next code was made by litwr in 2025
+;The basis for the music is taken from the Hustler game (1985).
+;The picture is based on the image from https://www.reddit.com/r/opticalillusions/comments/1hxx4h5/no_objects_in_this_image_are_moving/
 ;
-;160x256 double buffer multicolor for the Commodore +4 or 116/16 (32K)
+;160x256 double buffer multicolor for the Commodore +4 or 116/16 (64K)
 
 ; text data for 32 rows, buffer 0:
 ;    $1800 - 1be7, $1c00 - 1fe7  1000 chars  y = 0..199
@@ -179,7 +181,7 @@ start:
 
 .iloop3
     lda tripleem,x
-    sta $d408,x
+    sta $d4f0,x
     inx
     cpx #16
     bne .iloop3
@@ -193,7 +195,55 @@ start:
        ;JSR waitkey
     sei
     STA $FF3F
-    LDX #$3B
+    lda #2
+    sta .cc
+.lz3 ldy #0
+.m1l = * + 1
+.m1h = * + 2
+.lz2 lda $d400,y
+    ldx #0
+.lz1 asl
+.m2l = * + 1
+.m2h = * + 2
+    ror $d000,x
+    inx
+    cpx #8
+    bne .lz1
+
+    iny
+    cpy #8
+    bne .lz2
+
+    clc
+    lda #8
+    adc .m1l
+    sta .m1l
+    clc
+    lda #8
+    adc .m2l
+    sta .m2l
+    bcc .lz3
+
+    inc .m1h
+    inc .m2h
+    lda .m1h
+    cmp #$d8
+    bne .lz3
+
+    dec .cc
+    beq .lz4
+
+    lda #$d4
+    sta .m1h
+    lda #$d8
+    sta .m2h
+    lda #$4a  ;lsr
+    sta .lz1
+    lda #$3e  ;rol abs,x
+    sta .m2l-1
+    bne .lz3
+    
+.lz4 LDX #$3B
     STX $FF06
     LDX #$18
     STX $FF07
@@ -340,10 +390,11 @@ start:
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
-text db "3..  2..  1..  START", 1, " HAPPY NEW YEAR!  THIS IS MY 1ST PROGRAM FOR THE ", 2, "+4 THAT PLAYS MUSIC.  THE TUNE IS TAKEN FROM THE OLD GOOD GAME HUSTLER.  I ALSO USED A FREE, ANONYMOUS ANIMATED GIF FROM THE NET AS THE BASIS FOR THE PICTURE.  WE CAN OBSERVE PEOPLE RUNNING, BUT NO ONE ACTUALLY MOVES!  IT'S AN ILLUSION.  PERHAPS THE WORLD AROUND US IS AN ILLUSION TOO...  AND ALL OUR ACTIONS ARE NOTHING BUT VANITY OF VANITIES.  IT'S CRAZY AND AMAZING SIMULTANEOUSLY.  SO LET'S HAVE SOME MORE FUN!  ",0
+text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!  ",0
 
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
 cbmlogo  db $18,$38,$66,$64,$66,$38,$18,0
+;cbmlogo  db $38,$78,$e7,$c4,$c4,$e7,$78,$38
 
 initext: jsr getchar
     sta lscroll.char
@@ -355,10 +406,10 @@ initext: jsr getchar
 
 outdirow:   ;Y-row, A-char (<128)
          sty .t2
+.e0 = * + 1
          ldy #$d0>>3
          sty .t1
          asl
-         sec  ;$d4
          rol .t1
          asl
          rol .t1
@@ -502,6 +553,8 @@ lscroll:  ;y - offset
     supe textbase+320*13
     supe textbase+320*14
     sup textbase+320*15
+    lda #$d0>>3
+    sta outdirow.e0
 .char = * + 1
     lda #0
     jsr outdirow
@@ -548,6 +601,8 @@ rscroll:  ;y - offset
     sdowne textbase+320*2+rshift
     sdowne textbase+320+rshift
     sdown textbase+rshift
+    lda #$d8>>3
+    sta outdirow.e0
     lda lscroll.char
     jsr outdirow
     lda outdirow.chars
