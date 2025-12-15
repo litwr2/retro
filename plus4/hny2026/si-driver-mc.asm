@@ -180,10 +180,10 @@ start:
     bne .iloop2
 
 .iloop3
-    lda tripleem,x
-    sta $d4f0,x
+    lda cbmlogo0,x
+    sta $d4e8,x
     inx
-    cpx #16
+    cpx #24
     bne .iloop3
 
     lda #180
@@ -390,11 +390,12 @@ start:
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
-text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!  ",0
+text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!  ",0
 
+cbmlogo0 db $3f,$7f,$e0,$c0,$c0,$e0,$7f,$3f
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
-cbmlogo  db $18,$38,$66,$64,$66,$38,$18,0
-;cbmlogo  db $38,$78,$e7,$c4,$c4,$e7,$78,$38
+cbmlogo1 db 0,0,$fe,$e0,$f0,$fe,0,0
+;cbmlogo  db $18,$38,$66,$64,$66,$38,$18,0
 
 initext: jsr getchar
     sta lscroll.char
