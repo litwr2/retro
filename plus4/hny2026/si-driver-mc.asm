@@ -243,12 +243,17 @@ start:
     sta .m2l-1
     bne .lz3
     
-.lz4 LDX #$3B
-    STX $FF06
-    LDX #$18
+.lz4 LDX #$18
     STX $FF07
-    LDA #BG
-    STA $FF19
+
+    ldy $ff1c
+    iny
+    bne *-4
+  
+    ldy $ff1c
+    iny
+    beq *-4
+
     JSR iniirq
     cli
        lda #MC1
@@ -280,6 +285,10 @@ start:
     bne .iloop1
 
     jsr initext
+    LDA #BG
+    STA $FF19
+    LDX #$3B
+    STX $FF06
 .mloop
     lda #0
     sta .cc
@@ -338,7 +347,6 @@ start:
     lda .mc2co,x
     sta $ff16
 
-    ;jsr waitkey
     inc .cc
     lda .cc
     cmp .cmax
