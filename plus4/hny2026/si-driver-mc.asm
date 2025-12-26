@@ -167,7 +167,8 @@ irqe2  pha      ;@202
 
 start:
     jsr $ff4f
-    byte 147,"T CHANGES THE TEXT SPEED", 13, "C CHANGES THE COLOR SPEED",13,"PRESS ANY KEY",0
+    byte 147,"HNY2026! BY LITWR",13,"SPEED OPTIONS WERE SUGGESTED BY MMS",13
+    byte "T TOGGLES THE TEXT SPEED", 13, "C TOGGLES THE COLOR SPEED",13,"PRESS ANY KEY",0
     jsr waitkey
     ldx #0
 .iloop2
@@ -432,7 +433,7 @@ start:
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
-text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!         ",0
+text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used an anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!             ",0
 
 cbmlogo0 db $3f,$7f,$e0,$c0,$c0,$e0,$7f,$3f
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
