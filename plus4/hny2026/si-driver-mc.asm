@@ -166,6 +166,9 @@ irqe2  pha      ;@202
        RTI
 
 start:
+    jsr $ff4f
+    byte 147,"T CHANGES THE TEXT SPEED", 13, "C CHANGES THE COLOR SPEED",13,"PRESS ANY KEY",0
+    jsr waitkey
     ldx #0
 .iloop2
     lda $d400,x
@@ -303,6 +306,31 @@ start:
     ora #BG>>4
     sta buf0.al
 
+    jsr getkmtrix
+    lda kmatrix+2
+    and #$40   ;T
+    bne .ln1
+
+    lda .tsc
+    eor #1
+    sta .tsc
+    bpl .ln2  ;always
+
+.ln1 lda kmatrix+2
+    and #$10   ;C
+    bne .ln2
+
+    lda .tcc
+    eor #1
+    sta .tcc
+
+.ln2 inc .ts
+.ts = * + 1
+    lda #0
+.tsc = * + 1
+    and #0
+    bne .l2
+ 
 .clrow = * + 1
     ldy #0
     jsr lscroll
@@ -326,6 +354,9 @@ start:
 .l1 jsr .shift1
     jsr buf1
 .l3 inc .cbuf
+
+    pha
+.l7 inc .tc
     ldy $ff1c
     iny
     bne *-4
@@ -333,11 +364,14 @@ start:
     ldy $ff1c
     iny
     beq *-4
-    
-    ;ldy $ff1c
-    ;iny
-    ;bne *-4
 
+.tc = * + 1
+    lda #0
+.tcc = * + 1
+    and #0
+    bne .l7
+
+    pla
     sta irqe3.ab1
     sta $ff14
     stx irqe2.ab2
@@ -398,7 +432,7 @@ start:
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
-text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!  ",0
+text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used a free, anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!         ",0
 
 cbmlogo0 db $3f,$7f,$e0,$c0,$c0,$e0,$7f,$3f
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
@@ -495,7 +529,7 @@ kmatrix blk 8
 ;6 cl   *   ;  cr  esc  =   +   /
 ;7  1  clr ctr  2  spc cbm  Q  run
 
-getkmtrix:
+getkmtrix:  ;corrupts XR and AC
     ldx #7
     lda #$7f
     sec
