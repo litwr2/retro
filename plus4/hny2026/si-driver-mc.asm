@@ -44,9 +44,41 @@ irqe1  pha      ;@284
        STA $FF0A
        LDA #<irqe2
        STA $FFFE
+       stx .m1
+       jsr getkmtrix
+       ldx #7
+       lda #$ff
+.l1    and kmatrix,x
+       dex
+       bpl .l1
+
+       cmp #$ff
+       bne .l2
+
+       lda akbd
+       ora #$80
+       bne .ln2  ;always
+
+.l2    lda kmatrix+2
+       and #$40   ;T
+       bne .ln1
+
+       lda #'T'
+       bne .ln2   ;always
+
+.ln1   lda kmatrix+2
+       and #$10   ;C
+       bne .ln2
+
+       lda #'C'
+.ln2   sta akbd
+.m1 = * + 1
+       ldx #0
        pla
 irqe0  INC $FF09
        RTI
+
+akbd byte 0
 
 irqe3  pha    ;@206
        LDA #$EC
@@ -307,24 +339,23 @@ start:
     ora #BG>>4
     sta buf0.al
 
-    jsr getkmtrix
-    lda kmatrix+2
-    and #$40   ;T
+    ;jsr getkmtrix
+    lda akbd
+    cmp #'T'+$80
     bne .ln1
 
     lda .tsc
     eor #1
     sta .tsc
-    bpl .ln2  ;always
+    bpl .ln3  ;always
 
-.ln1 lda kmatrix+2
-    and #$10   ;C
+.ln1 cmp #'C'+$80
     bne .ln2
 
     lda .tcc
     eor #1
     sta .tcc
-
+.ln3 sta akbd
 .ln2 inc .ts
 .ts = * + 1
     lda #0
