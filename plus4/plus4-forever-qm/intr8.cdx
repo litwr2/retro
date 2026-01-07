@@ -41,7 +41,7 @@ INTR8SND:       PUSH    AX
                 PUSH    DS
                 MOV     AX,SEG_DATA
                 MOV     DS,AX
-        
+
                 CMP     [TIMER_ST],0
                 JNE     .L22
 

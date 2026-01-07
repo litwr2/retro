@@ -1,6 +1,7 @@
 ;for vasm assembler, oldstyle syntax
 ;
-;The next code was made by litwr in 2025
+;The next code (Version 1) was made by litwr in XII-2025
+;Version 2 is released thanks to gerliczer and Luca, I-2026
 ;The basis for the music is taken from the Hustler game (1985).
 ;The picture is based on the image from https://www.reddit.com/r/opticalillusions/comments/1hxx4h5/no_objects_in_this_image_are_moving/
 ;
@@ -199,7 +200,8 @@ irqe2  pha      ;@202
 
 start:
     jsr $ff4f
-    byte 147,"HNY2026! BY LITWR",13,"SPEED OPTIONS WERE SUGGESTED BY MMS",13
+    byte 147,"HNY2026! V2, BY LITWR",13,"SPEED OPTIONS WERE SUGGESTED BY MMS",13
+    byte "THANKS TO GERLICZER AND LUCA",13
     byte "T TOGGLES THE TEXT SPEED", 13, "C TOGGLES THE COLOR SPEED",13,"PRESS ANY KEY",0
     jsr waitkey
     ldx #0
@@ -339,7 +341,6 @@ start:
     ora #BG>>4
     sta buf0.al
 
-    ;jsr getkmtrix
     lda akbd
     cmp #'T'+$80
     bne .ln1
@@ -356,25 +357,8 @@ start:
     eor #1
     sta .tcc
 .ln3 sta akbd
-.ln2 inc .ts
-.ts = * + 1
-    lda #0
-.tsc = * + 1
-    and #0
-    bne .l2
- 
-.clrow = * + 1
-    ldy #0
-    jsr lscroll
-    inc .clrow
-.crrow = * +1
-    ldy #0
-    jsr rscroll
-    dec .crrow
-    bpl .l2
-
-    jsr initext
-.l2 ldx #0
+.ln2
+    ldx #0
     lda .cbuf
     and #1
     bne .l1
@@ -388,11 +372,44 @@ start:
 .l3 inc .cbuf
 
     pha
-.l7 inc .tc
+    txa
+    pha
+
+    ldy #5
+    ldx #26
+    inx
+    bne *-1
+    dey
+    bne *-4
+
+    inc .ts
+.ts = * + 1
+    lda #0
+.tsc = * + 1
+    and #0
+    bne .l2
+ 
+.clrow = * + 1
+    ldy #0
+    ;inc $ff19
+    jsr lscroll
+    ;dec $ff19
+    inc .clrow
+.crrow = * +1
+    ldy #0
+    ;dec $ff19
+    jsr rscroll
+    ;inc $ff19
+    dec .crrow
+    bpl .l2
+
+    jsr initext
+.l2
+    inc .tc
     ldy $ff1c
     iny
     bne *-4
-  
+
     ldy $ff1c
     iny
     beq *-4
@@ -401,12 +418,13 @@ start:
     lda #0
 .tcc = * + 1
     and #0
-    bne .l7
+    bne .l2
 
+    pla
+    sta irqe2.ab2
     pla
     sta irqe3.ab1
     sta $ff14
-    stx irqe2.ab2
     ldx .cc
     lda .mc1co,x
     sta $ff15
@@ -464,7 +482,7 @@ start:
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
 
-text db "  3..  2..  1..  Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  I also used an anonymous animated GIF as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!             ",0
+text db "  3..  2..  1..  V2 Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  An anonymous animated GIF is used as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!             ",0
 
 cbmlogo0 db $3f,$7f,$e0,$c0,$c0,$e0,$7f,$3f
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
