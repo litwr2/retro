@@ -2,6 +2,7 @@
 ;
 ;The next code (Version 1) was made by litwr in XII-2025
 ;Version 2 is released thanks to gerliczer and Luca, I-2026
+;Version 3 just isolates music for HVTC, I-2026
 ;The basis for the music is taken from the Hustler game (1985).
 ;The picture is based on the image from https://www.reddit.com/r/opticalillusions/comments/1hxx4h5/no_objects_in_this_image_are_moving/
 ;
@@ -21,6 +22,8 @@
 
 BSOUT = $FFD2
 JPRIMM = $FF4F
+
+NOTMUSICONLY = 1
 
 mp = $d0 ;+$d1
 icnt = $d2
@@ -45,6 +48,7 @@ irqe1  pha      ;@284
        STA $FF0A
        LDA #<irqe2
        STA $FFFE
+    if NOTMUSICONLY
        stx .m1
        jsr getkmtrix
        ldx #7
@@ -75,17 +79,17 @@ irqe1  pha      ;@284
 .ln2   sta akbd
 .m1 = * + 1
        ldx #0
+    endif
        pla
 irqe0  INC $FF09
        RTI
-
-akbd byte 0
 
 irqe3  pha    ;@206
        LDA #$EC
        STA $FF1D  ;236
        JSR comm1
        INC $FF09
+   if NOTMUSICONLY
 .ab1 = * + 1
        LDA #$18
        STA $FF14
@@ -94,6 +98,7 @@ irqe3  pha    ;@206
        and #3
        ORA #8    ;$2000
        STA $FF12
+   endif
        inc $a5
        bne .l2
 
@@ -101,7 +106,7 @@ irqe3  pha    ;@206
        bne .l2
 
        inc $a3
-.l2:   pla
+.l2    pla
        RTI
 
 irqe2  pha      ;@202
@@ -111,10 +116,13 @@ irqe2  pha      ;@202
        STA $FF0B
        LDA #<irqe3
        STA $FFFE
+    if NOTMUSICONLY
 .ab2 = * + 1
        LDA #$50
        STA $FF14
+    endif
        INC $FF09
+    if NOTMUSICONLY
        lda $ff12
        and #3
        sty .e1+1
@@ -130,7 +138,7 @@ irqe2  pha      ;@202
        STY $FF1A
        LDA #40
        STA $FF1B
-
+    endif
        dec icnt
        bne .e1
 
@@ -199,8 +207,9 @@ irqe2  pha      ;@202
        RTI
 
 start:
+   if NOTMUSICONLY
     jsr $ff4f
-    byte 147,"HNY2026! V2, BY LITWR",13,"SPEED OPTIONS WERE SUGGESTED BY MMS",13
+    byte 147,"HNY2026! V3, BY LITWR",13,"SPEED OPTIONS WERE SUGGESTED BY MMS",13
     byte "THANKS TO GERLICZER AND LUCA",13
     byte "T TOGGLES THE TEXT SPEED", 13, "C TOGGLES THE COLOR SPEED",13,"PRESS ANY KEY",0
     jsr waitkey
@@ -223,7 +232,12 @@ start:
     inx
     cpx #24
     bne .iloop3
-
+   else
+    lda $ff19
+    sta $ff15
+    lda #$b
+    sta $ff06
+   endif
     lda #180
     sta icnt
     lda #<music
@@ -233,6 +247,7 @@ start:
        ;JSR waitkey
     sei
     STA $FF3F
+   if NOTMUSICONLY
     lda #2
     sta .cc
 .lz3 ldy #0
@@ -291,9 +306,10 @@ start:
     ldy $ff1c
     iny
     beq *-4
-
+   endif
     JSR iniirq
     cli
+   if NOTMUSICONLY
        lda #MC1
        sta $ff15
        lda #MC2
@@ -327,7 +343,9 @@ start:
     STA $FF19
     LDX #$3B
     STX $FF06
+   endif
 .mloop
+   if NOTMUSICONLY
     lda #0
     sta .cc
 .cloop
@@ -437,8 +455,9 @@ start:
     ;bne .cloop
     beq *+5
     jmp .cloop
+   endif
     jmp .mloop
-
+   if NOTMUSICONLY
 .shift0
     ldx #0
     ldy $181b,x
@@ -481,13 +500,23 @@ start:
 .mc1co byte $6f,$6a,$59,$58,$48,$3b,$24,$1e,$3e,$46,$6d,$6c
 .mc2co byte $53,$55,$58,$57,$57,$24,$3b,$32,$46,$4d,$3d,$3d
 .fgco byte $59,$48,$42,$42,$3b,$3d,$3d,$4d,$4d,$53,$5c,$57
+  endif
+iniirq:LDA #>irqe1
+       STA $FFFF
+comm1: LDA #<irqe1
+       STA $FFFE
+       LDA #$1C     ;$11c = 284
+       STA $FF0B
+       LDA #$A3		;1 - hi byte, raster irq only
+       STA $FF0A
+       RTS
+   if NOTMUSICONLY
+text db "  3..  2..  1..  V3 Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  An anonymous animated GIF is used as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!             ",0
 
-text db "  3..  2..  1..  V2 Start", 126, "  Happy New Year!  This is my 1st program for the ", 125, 127, "+4 that plays music.  The tune is taken from the old good game Hustler.  An anonymous animated GIF is used as the basis for the picture.  We can observe people running, but no one actually moves!  It's an illusion.  Perhaps the world around us is an illusion too...  And all our actions are nothing but vanity of vanities.  It's crazy and amazing simultaneously.  So let's have some more fun!             ",0
-
+akbd byte 0
 cbmlogo0 db $3f,$7f,$e0,$c0,$c0,$e0,$7f,$3f
 tripleem db $49,$49,$49,$2a,$2a,0,$2a,0
 cbmlogo1 db 0,0,$fe,$e0,$f0,$fe,0,0
-;cbmlogo  db $18,$38,$66,$64,$66,$38,$18,0
 
 initext: jsr getchar
     sta lscroll.char
@@ -557,16 +586,6 @@ getchar: ldx .cpos
          inc .mh
          rts
 .cpos byte 0
-
-iniirq:LDA #>irqe1
-       STA $FFFF
-comm1: LDA #<irqe1
-       STA $FFFE
-       LDA #$1C     ;$11c = 284
-       STA $FF0B
-       LDA #$A3		;1 - hi byte, raster irq only
-       STA $FF0A
-       RTS
 
 kmatrix blk 8
 ;   0   1   2   3   4   5   6   7  $ff08
@@ -722,7 +741,7 @@ buf1:
     lda #$8
     ldx #$58
     rts
-
+   endif
 music:
   include "music.s"
 
