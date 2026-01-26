@@ -1,0 +1,8 @@
+#genpic FN VSIZE DYNAMIC
+#uses A5-world and svn.asm
+if [ $# != 3 ]; then echo NO PROPER PARAMETERS!!!; exit 1; fi
+vasm6502_oldstyle -DVSIZE=$2 -DDYNAMIC=$3 svn.asm -Fbin -cbm-prg -o out.prg -L out.lst
+awk '/VSIZE *=/{split($0, a, "[^0-9]+");print "#define VSIZE", a[2]}' svn.asm >svn.h
+g++ 22-2-a5.cpp -o 22-2-a5
+22-2-a5 $1 z
+rm 22-2-a5 svn.h

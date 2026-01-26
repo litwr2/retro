@@ -18,8 +18,7 @@ void setbm() {
 				cs = 3;
 			if (y >= 192 && (y < 200 || y < 208 && x < 96)) bm = 0x6000;
 			if (cell[x/4][y/2].c1 == cell[x/4][y/2].c2 && x%4 > 1 && picr[x][y] == cell[x/4][y/2].c1) cs = 1;
-			else 
-			if (picr[x][y] == cell[x/4][y/2].c1) cs = 2;
+			else if (picr[x][y] == cell[x/4][y/2].c1) cs = 2;
 			else if (picr[x][y] == cell[x/4][y/2].c2) cs = 1;
 			else if (picr[x][y] == mc2[y]) cs = 0;
 			prg[bm + p] = prg[bm + p] & ~(3 << px) | cs << px;
@@ -54,8 +53,6 @@ void setmc(void) {
 		    else {
 				if (y < 193)
 				    prg[BA - 3 + y*17 + 5*z] = c[z];
-				else if (y == 193)
-				    prg[BA + 3280 + 5*z] = c[z];
 				else
 				    prg[BA - 1 + y*17 + 5*z] = c[z];
 			}

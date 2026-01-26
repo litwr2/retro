@@ -7,7 +7,8 @@ using namespace std;
 #define msqr(a) ((a)*(a))
 #define mabs(a) ((a) > 0 ? (a) : -(a))
 #define BSZ 512
-#define VS 280
+#include "svn.h"
+#define VS VSIZE
 #define HS 160
 int pic[HS][VS], picr[HS][VS], picc[HS][VS], mc1[VS], mc2[VS];
 struct Cell {
