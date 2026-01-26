@@ -5,7 +5,8 @@
 #include <map>
 using namespace std;
 #define BSZ 512
-#define VS 280
+#include "svn.h"
+#define VS VSIZE
 #define HS 160
 int pic[HS][VS], picr[HS][VS], picc[HS][VS], mc1[VS], mc2[VS];
 struct Cell {
