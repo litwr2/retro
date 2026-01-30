@@ -1,4 +1,4 @@
-    sprite_t2 s10,12,24,41,100,6,6,5,6  ;based on a sprite set from craftpix.net
+    sprite_t2 s10,12,24,41,50,6,6,5,6  ;based on a sprite set from craftpix.net
 s10_l_sl word data_s10_l1,data_s10_l2,data_s10_l3,data_s10_l4,data_s10_l5,data_s10_l6
 s10_r_sl word data_s10_r1,data_s10_r2,data_s10_r3,data_s10_r4,data_s10_r5,data_s10_r6
 s10_u_sl word data_s10_u1,data_s10_u2,data_s10_u3,data_s10_u4,data_s10_u5

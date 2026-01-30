@@ -5,7 +5,7 @@
 #define START 0x1030
 
 #define xmax 160
-#define ymax 256
+#define ymax VSIZE
 
 #define x_scale 4
 #define y_scale 2
