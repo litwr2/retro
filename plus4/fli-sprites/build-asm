@@ -1,3 +1,1 @@
-echo $*|awk '/DVSIZE/{i=match($0,"VSIZE=[0-9]+"); print "#define VSIZE", substr($0, i+6, RLENGTH-6)}' >svn.h
-vasm6502_oldstyle svn.asm -Fbin -cbm-prg -o out.prg -L out.lst $1 $2 $3
-
+../fli-picture-gen/build-asm

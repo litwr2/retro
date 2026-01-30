@@ -1,4 +1,4 @@
 #supercolors.s + supercolors.c
-build-asm -DSUPERC
+build-asm -DSUPERC -DVSIZE=256
 build-picture supercolors.c
 mv out1.prg ex4.prg

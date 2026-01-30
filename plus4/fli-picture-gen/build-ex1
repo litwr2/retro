@@ -1,4 +1,4 @@
 #test.c
-build-asm
+build-asm -DVSIZE=280 -DDYNAMIC=0
 build-picture test.c
 mv out1.prg ex1.prg
