@@ -50,20 +50,28 @@ scoff = * + 1
     lda #0
     bmi .l1
 
+   if SSCROLL256
     cmp #3
+   else
+    cmp #205-VSIZE/4-IRQ270/2
+   endif
     beq .l0
 .l1
     inc scoff
     lda #-2
     sta $d4
     jsr down_t1
+    lda #2
+    jsr delay
     jmp down_t1
-.l0 lda #6
+.l0
+   if SSCROLL256
+    lda #6
     sta $d4
     jsr down_t1
     lda #0
     sta scoff
-    inc irq276.me+1
+    inc irq270.me+1
     jsr remove_t1
     jsr sscroll_up4
     ldy #sypos_off
@@ -73,6 +81,7 @@ scoff = * + 1
     sta ($e6),y
     jsr put_t1
     inc irqX.me+1
+   endif
     rts
 l5
     lda #1
@@ -87,20 +96,28 @@ l5a
     lda scoff
     bpl .l1
 
+   if SSCROLL256
     cmp #-3
+   else
+    cmp #-207+VSIZE/4+IRQ270/2
+   endif
     beq .l0
 .l1
     dec scoff
     lda #2
     sta $d4
     jsr up_t1
+    lda #2
+    jsr delay
     jmp up_t1
-.l0 lda #-6
+.l0 
+   if SSCROLL256
+    lda #-6
     sta $d4
     jsr up_t1
     lda #0
     sta scoff
-    inc irq276.me+1
+    inc irq270.me+1
     jsr remove_t1
     jsr sscroll_down4
     ldy #sypos_off
@@ -110,6 +127,7 @@ l5a
     sta ($e6),y
     jsr put_t1
     inc irqX.me+1
+   endif
     rts
 l6
     lda #2

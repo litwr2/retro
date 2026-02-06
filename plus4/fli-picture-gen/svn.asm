@@ -4,18 +4,18 @@
 ; 1: $4140-427f    $2828-284f
 ;      ...           ...
 ;23: $5cc0-5dff    $2b98-2bbf
-;24: $7e00-7f3f    $9bc0-9be7  $7000  $8000  $8800
+;24: $7e00-7f3f    $9bc0-9be7  $73c0  $83c0  $8bc0
 ;25: $7f40-7fff    $9be8-9bff
-;    $6000-607f    $9800-980f
+;    $6000-607f    $9800-980f  $7000  $8000  $8800
 ;26: $6080-61c0    $9810-9837
 ;28: $6300-643f    $9860-9887
 ;31: $66c0-67ff    $98d8-98ff
 ;32: $6800-693f    $9900-9927
 ;33: $6940-6a7f    $9928-994f
 ;34: $6a80-6bbf    $9950-9977
-;line 202 gets -56 = 146
-;line 206 gets +30 = 236 interrupt
-;line 284 gets +26 = 310 interrupt
+;line 196 sets 396 - VSIZE
+;line 205 sets 205 + (VSIZE - 200)/2, interrupt
+;line 270x sets 270x + (VSIZE - 200)/2, interrupt
 
 ;the library uses zp locations $d0-d7
 
@@ -23,10 +23,26 @@
 VSIZE = 256  ;value less than 225 makes images compatible with both PAL and NTSC
              ;this value must be a multiple of 8 and in the range 200-280
    endif
+
 HSIZE = 160  ;fixed
-  ifndef DYNAMIC
+
+   ifndef DYNAMIC
 DYNAMIC = 1  ;use 0 if you use only static images, this saves some space
-  endif
+   endif
+
+   if VSIZE < 240
+IRQ270 = 290 - (VSIZE - 200)/2
+   else
+IRQ270 = 270
+   endif
+
+   ifndef SSCROLL256
+SSCROLL256 = 0
+   endif
+
+   if SSCROLL256 && VSIZE != 256
+   fail Wrong VSIZE
+   endif
 
      macro setmc
      lda #\1     ;3x,$9a - 4x,$ca
@@ -87,7 +103,7 @@ start:
      lda #0
      sta $ff19   ;border color
      nop
-     nop
+     nop         ;it is the offset for irq2 that defines the mc-coordinates!
      jsr init
 
      sei
@@ -172,8 +188,8 @@ BA = *+1
      txa
      eor #$ff
      clc
-     adc irq276.sc+1
-     sta irq276.sc+1
+     adc irq270.sc+1
+     sta irq270.sc+1
      lda #0
      sta $d4
 .nosc:
@@ -193,18 +209,14 @@ BA = *+1
      inc $ff09
      rti
 
-irq276:   ;245
+irq270:
      pha
 .sc:
-  if VSIZE > 224
-     lda #<302+VSIZE/264*8
-  else
-     lda #249
-  endif
+     lda #<IRQ270+(VSIZE-200)/2
      sta $ff1d
 .l   lda #$a2
      sta $ff0a
-  if DYNAMIC
+  if SSCROLL256
 .me  lda #0
      beq .l1
 
@@ -229,7 +241,8 @@ irq276:   ;245
 .le  pla
      inc $ff09
      rti
-  if DYNAMIC
+
+  if SSCROLL256
 irqX: ;196
      pha
      lda #140
@@ -243,44 +256,37 @@ irqX: ;196
      sta $ffff
   ;endif
 .me  lda #0
-     beq irq276.le
+     beq irq270.le
 
      dec .me+1
      lda $ff06
      ora #$10
      sta $ff06
      lda #<irq2
-     sta irq276.m1+1
+     sta irq270.m1+1
      lda #>irq2
-     sta irq276.m2+1
+     sta irq270.m2+1
      lda #2
-     sta irq276.l1+1
-     bne irq276.le  ;always
+     sta irq270.l1+1
+     bne irq270.le  ;always
   endif
+
 irq205:
      pha
 .sc:
-  if VSIZE > 224
-     lda #VSIZE-21-VSIZE/264*8
-  else
-     lda #VSIZE+1
-  endif
+     lda #205+(VSIZE-200)/2
      sta $ff1d
 
-  if VSIZE > 224
      lda #$a3
      sta $ff0a
-     lda #<276
-  else
-     lda #245
-  endif
+     lda #<IRQ270
      sta $ff0b
 
-  if >irq276 != >irq205
-     lda #>irq276  ;245
+  if >irq270 != >irq205
+     lda #>irq270
      sta $ffff
   endif
-     lda #<irq276  ;245
+     lda #<irq270
      sta $fffe
      pla
      inc $ff09

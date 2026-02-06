@@ -356,7 +356,7 @@ test:
     jsr put_t1c
     jsr put00_t1
 
-    inc irq276.me+1
+    inc irq270.me+1
     jsr remove_t1
     jsr sscroll_down4  ;sets C=0
     ldy #sypos_off

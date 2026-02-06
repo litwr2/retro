@@ -46,7 +46,7 @@ scoff2 = * + 1
     lda #0
     bmi .l1
 
-    cmp #3
+    cmp #205-VSIZE/4-IRQ270/2   ;3 for sscroll_up4
     beq .l0
 .l1
     inc scoff2
@@ -55,11 +55,13 @@ scoff2 = * + 1
     lda #-2
     sta $d4
     jmp down_t2
-.l0 lda #6
+.l0 
+   if 0
+    lda #6
     sta $d4
     lda #0
     sta scoff2
-    inc irq276.me+1
+    inc irq270.me+1
     jsr remove_t2
     jsr sscroll_up4
     ldy #s2ypos_off
@@ -69,7 +71,9 @@ scoff2 = * + 1
     sta ($e6),y
     jsr put_t2
     inc irqX.me+1
+   endif
     rts
+
 l5  lda #8
     and kmatrix+7  ;2
     bne l6
@@ -77,7 +81,7 @@ l5  lda #8
     lda scoff2
     bpl .l1
 
-    cmp #-3
+    cmp #-207+VSIZE/4+IRQ270/2   ;-3 for sscroll_down4
     beq .l0
 .l1
     dec scoff2
@@ -86,11 +90,13 @@ l5  lda #8
     lda #2
     sta $d4
     jmp up_t2
-.l0 lda #-6
+.l0
+   if 0
+    lda #-6
     sta $d4
     lda #0
     sta scoff2
-    inc irq276.me+1
+    inc irq270.me+1
     jsr remove_t2
     jsr sscroll_down4
     ldy #s2ypos_off
@@ -100,6 +106,7 @@ l5  lda #8
     sta ($e6),y
     jsr put_t2
     inc irqX.me+1
+   endif
     rts
 
 l6  lda #2

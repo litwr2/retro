@@ -1,4 +1,4 @@
 #
-build-asm -DTEXT1 -DVSIZE=256
+build-asm -DTEXT1 -DVSIZE=256 -DSSCROLL256=1
 build-picture bg.cpp
 mv out1.prg ex6.prg

@@ -476,7 +476,7 @@ test:
     lda #-6
     sta $d4
 
-    inc irq276.me+1
+    inc irq270.me+1
     lda #<ltext1
     ldy #>ltext1
     jsr .seta
@@ -528,7 +528,7 @@ test:
     lda #6
     sta $d4
 
-    inc irq276.me+1
+    inc irq270.me+1
     lda #<ltext1
     ldy #>ltext1
     jsr .seta

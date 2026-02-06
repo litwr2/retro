@@ -1,9 +1,18 @@
+   if SSCROLL256
 SU4 = 1
 SD4 = 1
 SU8 = 0
 SD8 = 0
 SU1 = 0
 ;SD1 = 0
+   else
+SU4 = 0
+SD4 = 0
+SU8 = 0
+SD8 = 0
+SU1 = 0
+;SD1 = 0
+   endif
 
    if SD4
      macro assign0r,bau,p
