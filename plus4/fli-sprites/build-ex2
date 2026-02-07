@@ -1,4 +1,4 @@
 #
-build-asm -DSPRITES1 -DVSIZE=256
+build-asm -DSPRITES1 -DVSIZE=256 #-DSSCROLL256=1
 build-picture bg.cpp
 mv out1.prg ex2.prg

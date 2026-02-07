@@ -46,7 +46,7 @@ kmatrix blk 8
 ;6 cl   *   ;  cr  esc  =   +   /
 ;7  1  clr ctr  2  spc cbm  Q  run
 
-getkmtrix:
+getkmatrix:
     ldx #7
     lda #$7f
     sec
@@ -62,7 +62,7 @@ getkmtrix:
     rts
 
 waitkey:
-.l2 jsr getkmtrix
+.l2 jsr getkmatrix
     ldx #7
     lda #$ff
 .l1 and kmatrix,x
