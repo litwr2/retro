@@ -1,0 +1,22 @@
+Alt-F11             toggle fullscreen mode     полноэкранный/окошечный режим
+F12                 load file                  загрузить bin-файл
+ScrollLock/Pause    toggle color/bw mode       цвет/чб режим
+ap2 + F11           reset
+ap2 + F10           toggle fullthrottle        полная/натуральная скорость
+
+F1                  repeat key                 повтор
+F2                                             кт
+F3                                             -|-->
+F4                                             |<---
+F5                                             |--->
+F6                                             инд су
+F7                                             блок ред
+F8                                             шаг
+F9                                             сбр
+ESC                 stop                       стоп
+Ctrl                                           cy
+Home                                           вс
+Tab                                            таб
+Backspace                                      <--
+Right Windows/Left Alt                         ар2
+Return
