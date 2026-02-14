@@ -22,7 +22,9 @@ I resolved this problem by using IMR in my interrupt 9 handler.  I mask IRQ 0 be
 
 I can only suppose that the problem may be in
 >  MOV AL,20H
+
 >  OUT 20H,AL
+
 command sequence in the end of each (?) hardware interrupt.  This sequence is the command to the PIC which must clear the set bit in the ISR (In-Service Register) with the largest IRQ priority.  Maybe it is connected with Special Mask Mode (SMM)...
 
 I may be wrong about the details, but I'm pretty sure that IRQERR.COM crashes FreeDOS and other DOSes, but not MS-DOS.
