@@ -232,6 +232,7 @@ endif
 
 loadpic proc
     local exit,l1,l3,l4,l8
+    call restoreintr
     ld c,$f    ;open
     ld de,fcb_drive
     call BDOS
@@ -288,6 +289,9 @@ l4  ld a,(de)
     call BDOS
     xor a
 exit
+    push af
+    call setintr
+    pop af
     ret
     endp
 
@@ -1443,6 +1447,22 @@ l6  ld (TXBASE+64*16-2),a
     ret
     endp
 
+widetxtout proc
+    local l1
+    ld hl,TXBASE
+l1  ex de,hl
+    ld a,(hl)
+    cp '$'
+    ret z
+
+    ex de,hl
+    ld (hl),a
+    inc de
+    inc hl
+    inc hl
+    jp l1
+    endp
+
 scroll2 proc
     local l1,l3,l4
     call sdelay
@@ -1594,14 +1614,15 @@ init proc
     local exit0
     ld hl,($f7d0)
     ld (intera+1),hl
-    ld hl,interp
-    ld ($f7d0),hl
+    call setintr
   ;jp l77
     call fillall
     call txtpal
     ld de,msg1
     ld c,9
     call BDOS
+    ld de,msg1m
+    call widetxtout
     call loadpic
     jp m,exit0
 
@@ -1622,8 +1643,10 @@ init proc
     ld (m1tp+1),a
     call txtpal
     ld de,msg2
-    ld c,9
-    call BDOS
+    ;ld c,9
+    ;call BDOS
+    ;ld de,msg2m
+    call widetxtout
     xor a
     ld hl,fcb_drive+6
     inc (hl)
@@ -1635,6 +1658,10 @@ init proc
     ld (hl),a
     ld hl,gcnp
     dec (hl)
+    ld hl,ldata2
+    ld (pldata),hl
+    ld hl,pause1
+    ld (pdata),hl
     call loadpic
     jp m,exit0
 
@@ -1669,6 +1696,10 @@ init proc
     ld (hl),a
     ld hl,gcnp
     inc (hl)
+    ld hl,ldata3
+    ld (pldata),hl
+    ld hl,pause1
+    ld (pdata),hl
     call loadpic
     jp m,exit0
 
@@ -1744,7 +1775,7 @@ extra proc
     ld (hl),a
     ld hl,fcb_drive+32
     ld (hl),a
-    ld hl,pause5
+    ld hl,pause1
     ld (pdata),hl
     call loadpic
     jp m,exit0
@@ -1842,13 +1873,22 @@ l1  push af     ;11
     ret         ;10
     endp
 
-final proc
-    ld hl,(intera+1)
+setintr
+    ld hl,interp
     ld ($f7d0),hl
+    ret
+
+restoreintr
     ld a,$20
     ld (IOBASE+SOUNDM),a
     ld a,1
     ld (IOBASE+SOUNDD),a
+    ld hl,(intera+1)
+    ld ($f7d0),hl
+    ret
+
+final proc
+    call restoreintr
     ld e,31     ;cls
     ld c,2
     jp BDOS
@@ -1876,16 +1916,17 @@ msg0 db 10,13,"$"
 msg1 db 31            ;cls
      db $1b,"0"       ;the main charset
      db $1b,";"       ;curoff
-     db $1b,"3"
+     db $1b,"3$"
+msg1m
 if ENGLISH
      db "The Corvette computer has a unique architecture. It was created by young physicists from Moscow State University by 1985. They tried to combine the features of the TRS-80 and MSX computers, but in the end they created an absolutely unlike anything else computer. 512x256 graphics with 16 colors and hardware acceleration elements were close to the level of expensive professional equipment. The characteristics were somewhat spoiled only by an outdated processor, which, however, corresponded in performance to $"
-msg11 db "the processors of the popular computers: the Tandy TRS-80 models I and III, Apple II, Commmodore 64/128. At first everything went very well. The Corvette was planned to be produced at many factories and in large quantities since 1987.",0
+msg11 db "the processors of the popular computers: the Tandy TRS-80 models I and III, Apple II, Commodore 64/128. At first everything went very well. The Corvette was planned to be produced at many factories and in large quantities since 1987.",0
 else
      db "Koмпьютep Kopвeт имeeт yникaльнyю apxитeктypy. Егo coздaли мoлoдыe физики из MГУ к 1985. Oни пытaлиcь coвмecтить ocoбeннocти кoмпьютepoв TRS-80 и MSX, нo в итoгe coздaли aбcoлютнo ни нa чтo нe пoxoжий кoмпьютep. Гpaфикa 512x256 c 16 цвeтaми и элeмeнтaми aппapaтнoгo ycкopeния былa близкa ypoвню дopoгoй пpoфeccиoнaльнoй тexники. Xapaктepиcтики нecкoлькo пopтил тoлькo cлaбoвaтый пpoцeccop, кoтopый, oднaкo, cooтвeтcтвoвaл пo пpoизвoдитeльнocти пpoцeccopaм пoпyляpныx кoмпьютepoв Tandy TRS-80 мoдeлeй I и III, Ap$"
-msg11 db "ple II, Commmodore 64/128. Пoнaчaлy вcё шло oчeнь xopoшo. Kopвeт намeчaлось пpoизвoдить нa мнoгиx зaвoдах и в бoльшиx кoличecтвax c 1987.",0
+msg11 db "ple II, Commodore 64/128. Пoнaчaлy вcё шло oчeнь xopoшo. Kopвeт намeчaлось пpoизвoдить нa мнoгиx зaвoдах и в бoльшиx кoличecтвax c 1987.",0
 endif
 
-msg2 db 31
+msg2 ;db 31
 if ENGLISH
      db "Since 1988, disturbing publications began to appear about the fate of the computer. Something was going wrong - the Corvette was really sinking. There were several reasons for this. The main problem was the electronics industry's unpreparedness for mass production. This problem was seriously aggravated by the aggressive forceful pushing of a much more expensive UKNC computer into the place of the main school computer, despite the fact that the UKNC had serious architectural flaws and was extremely unreliab$"
 msg21 db "le. The conflict in the Caucasus also added to the problems, which made it impossible to produce Corvettes at a large factory in Baku. And then there was a temporary departure of the chief designers of the Corvette to the United States and their loss of interest in their invention...",0
@@ -1930,9 +1971,11 @@ else
      db "Pиcyнoк нa биc$"
 endif
 
-pldata dw ldata+2
-ldata dw pause5,data1,pause5,data1,pause5,pause1,pause1,pause1,pause1,data1,pause5,pause1,data2,pause1,pause5,pause1,pause1,data2,pause5,pause5,pause5,pause5,pause5,data3,0
-pdata dw pause5
+pldata dw ldata
+ldata dw data1,0
+ldata2 dw data2,0
+ldata3 dw data3,0
+pdata dw pause1
 cscnt db 0
 data1
      include music/icicle-music1.inc
@@ -1945,9 +1988,6 @@ data3
      db 0
 
 pause1 db 50
-       dw -1
-       db 0
-pause5 db 250
        dw -1
        db 0
 

@@ -1,7 +1,8 @@
-D=ep.kdi
+#D=ep.kdi
+D=corvette-demo-4.kdi
 F=ai
 ENGLISH=
-P=corvette.pic
+#P=corvette.pic
 sed -r 's/ё/e/g' $F.asm | iconv -f UTF-8 -t KOI-8 | sed -rf tr.sed >${F}x.asm
 pasmo --w8080 ${F}x.asm $F.bin || exit && pasmo6 --listing $F.lst ${F}x.asm $F$ENGLISH.com || exit
 awk -f kvant8.awk $F.asm | awk -f kvant8c.awk | iconv -f UTF-8 -t 8859_5 | sed -rf tr.sed >K${F}x.asm
@@ -16,10 +17,10 @@ pasmo K${F}x.asm K$F$ENGLISH.com
 rm K${F}x.asm ${F}x.asm $F.bin
 
 if [ -f $D ]; then
-krm $D $F$ENGLISH.com; kcp $D $F$ENGLISH.com 0:$F$ENGLISH.com
-krm $D K$F$ENGLISH.com; kcp $D K$F$ENGLISH.com 0:K$F$ENGLISH.com
-krm $D $F$ENGLISH.com; kcp $D $F$ENGLISH.com 0:$F$ENGLISH.com
-krm $D K$F$ENGLISH.com; kcp $D K$F$ENGLISH.com 0:K$F$ENGLISH.com
+krm $D $F.com; kcp $D $F.com 0:$F.com
+krm $D K$F.com; kcp $D K$F.com 0:K$F.com
+krm $D ${F}E.com; kcp $D ${F}E.com 0:${F}E.com
+krm $D K${F}E.com; kcp $D K${F}E.com 0:K${F}E.com
 for i in 1 2 3 4; do
 krm $D corvd$i.pic; kcp $D pics/corvd$i.pic 0:corvd$i.pic
 done
