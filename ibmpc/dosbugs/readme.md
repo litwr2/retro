@@ -27,7 +27,7 @@ command sequence in the end of each (?) hardware interrupt.  This sequence is th
 
 I may be wrong about the details, but I'm pretty sure that IRQERR.COM crashes FreeDOS and other DOSes, but not MS-DOS.
 
-I tested this problem on several PCs, including ones based on 486DX4@120MHz, Pentium@90MHz, Celeron@766MHz and AMD-Phenom@3.2GHz, among others.
+I tested this problem on several PCs, including ones based on 486DX4@120MHz, Pentium@90MHz, Celeron@766MHz and AMD/Phenom@3.2GHz, among others.
 
 
 ## Appendix
