@@ -21,8 +21,7 @@ This crash was caused by the PIC (Programmable Interrupt Controller) 8259, the b
 I resolved this problem by using IMR in my interrupt 9 handler.  I mask IRQ 0 before calling the system keyboard handler, which I call using CALL FAR, and then I restore the IMR.  However, this "solution" raises a new question about the stability of IRQs with a priority of less than 1 (COM1, COM2, FDD, etc.).
 
 I can only suppose that the problem may be in
->  MOV AL,20H
-
+>  MOV AL,20H<br>
 >  OUT 20H,AL
 
 command sequence in the end of each (?) hardware interrupt.  This sequence is the command to the PIC which must clear the set bit in the ISR (In-Service Register) with the largest IRQ priority.  Maybe it is connected with Special Mask Mode (SMM)...
