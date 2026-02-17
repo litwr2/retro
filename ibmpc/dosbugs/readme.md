@@ -51,6 +51,8 @@ Paragon         |DOS Version 7.01 Rev 9                | PTS-DOS | 7.01      | 2
 GNU             |FreeDOS kernel version 1.1.35         |         | 7.10      | 2004 | -
 GNU             |FreeDOS kernel 2043                   |         | 7.10      | 2021 | -
 
+**+** means no bug, **-** means the bug crashes DOS.
+
 ## Appendix
 
 All examples were written for the FASM assembler.  Different kernel versions of FreeDOS were used for tests.
