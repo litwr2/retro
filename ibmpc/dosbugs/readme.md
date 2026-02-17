@@ -42,7 +42,7 @@ Microsoft       |Windows Millenium [Version 4.90.3000] |         | 8.00      | 1
 IBM             |PC DOS Version 7.00 Rev 0             | 1995    | 7.00      | 1995 | +
 IBM             |PC DOS Version 7.00 Rev 1             | 2000    | 7.00      | 1995 | +
 IBM             |PC DOS Version 7.1 Rev 0              |         | 7.10      | 2003 | +
-Digital research|DR DOS 5.00                           |         | 3.31      | 1990 | -
+Digital Research|DR DOS 5.00                           |         | 3.31      | 1990 | -
 Caldera         |Caldera DR DOS 7.03                   |         | 6.00      | 1998 | -
 DeviceLogics    |DeviceLogics DR DOS 8.00              |         | 6.00      | 2004 | -
 DrDOS, Inc. Lindon,<br>Utah 84042 |DrDOS 8.1                             | DR DOS  | 6.00       | 2005 | -
