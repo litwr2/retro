@@ -14,7 +14,7 @@ I reprogrammed the timer hardware to generate an IRQ0 at 37 kHz.  I also interce
 
 The IRQERR.COM program can demonstrate the problem (type FASM IRQERR.ASM to compile the source code).  While it is running, pressing any key on the keyboard causes the scancode of that key to be displayed in the top left corner of the screen.  Press Esc to exit the program.
 
-Make any key stick in the pressed state.  After some short delay, this will produce beeps to signal the DOS keyboard buffer overflow.  With MS-DOS (versions 5.00, 6.00, 6.22 and 7.xx), I can hold down any key for any period of time without encountering any problems.  With any other tested DOS (Free, DR 7/8, PTS), the system will crash after several seconds.  MS-DOS 8 crashed too.  However, neither MS-DOS 8 nor FreeDOS (nor any other DOS!) crashed when used under VirtualBox!  Neither did DOSbox.
+Make any key stick in the pressed state.  After some short delay, this will produce beeps to signal the DOS keyboard buffer overflow.  With MS-DOS (versions 5.00, 6.00, 6.22 and 7.xx), I can hold down any key for any period of time without encountering any problems.  With any other tested DOS (Free, DR 7/8, PTS), the system will crash after several seconds.  MS-DOS 8 crashed too.  However, neither MS-DOS 8 nor FreeDOS (nor any other DOS!) crashed when used under VirtualBox!  Neither this happened under DOSbox.
 
 This crash was caused by the PIC (Programmable Interrupt Controller) 8259, the bits of which corresponded to IRQ1 in IRR (Interrupt Request Register) and IMR (Interrupt Mask Register) are sometimes remain set after the end of interrupt 9.  The IRQERRX.COM program can demonstrate this.  These set bits prevent interrupt 9 from occurring and therefore lock the keyboard.
 
