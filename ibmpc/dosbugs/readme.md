@@ -45,7 +45,7 @@ IBM             |PC DOS Version 7.1 Rev 0              |         | 7.10      | 2
 Digital research|DR DOS 5.00                           |         | 3.31      | 1990 | -
 Caldera         |Caldera DR DOS 7.03                   |         | 6.00      | 1998 | -
 DeviceLogics    |DeviceLogics DR DOS 8.00              |         | 6.00      | 2004 | -
-DrDOS, Inc. Lindon,<br>Utah 84042 |DrDOS 8.1                             |         | 6.00       | 2005 | -
+DrDOS, Inc. Lindon,<br>Utah 84042 |DrDOS 8.1                             | DR DOS  | 6.00       | 2005 | -
 Физтех-софт     |Версия PTS-DOS 6.70                   |         | 6.70      | 1998 | -
 Paragon         |DOS Version 7.01 Rev 9                | PTS-DOS | 7.01      | 2000 | -
 GNU             |FreeDOS kernel version 1.1.35         |         | 7.10      | 2004 | -
