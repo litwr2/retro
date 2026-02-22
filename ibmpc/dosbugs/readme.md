@@ -40,7 +40,7 @@ Microsoft       |MS-DOS Version 6.22                   |         | 6.22      | 1
 Microsoft       |Windows 98 [Version 4.10.2222]        |         | 7.10      | 1999 | +
 Microsoft       |Windows Millenium [Version 4.90.3000] |         | 8.00      | 1999 | -
 IBM             |PC DOS Version 7.00 Rev 0             | 1995    | 7.00      | 1995 | +
-IBM             |PC DOS Version 7.00 Rev 1             | 2000    | 7.00      | 1995 | +
+IBM             |PC DOS Version 7.00 Rev 1             | 2000    | 7.00      | 1998 | +
 IBM             |PC DOS Version 7.1 Rev 0              |         | 7.10      | 2003 | +
 Digital Research|DR DOS 5.00                           |         | 3.31      | 1990 | -
 Caldera         |Caldera DR DOS 7.03                   |         | 6.00      | 1998 | -
