@@ -29,7 +29,7 @@ MLOOP:          CALL    SHOW_REGS
                 RETF
 
                 INCLUDE 'IRQ1X.ASM'
-                INCLUDE '..\IRQ0.ASM'
+                INCLUDE 'IRQ0.ASM'
 
 ENDFLAG         DB      0
 MSG             DB      'IMR=00 ISR=00 IRR=00 '
