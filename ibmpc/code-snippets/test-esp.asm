@@ -2,8 +2,7 @@
 format ELF executable 3
 segment readable executable
 
-macro outesp {
-         mov eax,esp
+macro outeax {
          push eax
          rol eax,16
          call hexax
@@ -14,13 +13,19 @@ macro outesp {
 }
 entry $
          mov edi,wb  ;the text buffer
-         outesp
+         mov eax,esp
+         outeax
+         mov ebx,esp  ;saves esp
          pushad
-         outesp
+         mov eax,esp
+         outeax
+         mov dword [esp+12],0  ;saved esp is changed to 0
          db 67h
          popad
+         mov eax,esp
+         mov esp,ebx  ;restore esp
          add edi,9
-         outesp
+         outeax
 	     mov	edx,3*9     ;length
          mov	ecx,wb
          mov	ebx,1		;STDOUT
@@ -53,5 +58,5 @@ hex:    add al,'0'
 
 segment readable writeable
     align 4
-wb  rb 28
+wb  rb 37
 
