@@ -1,5 +1,4 @@
 ;for fasm assembler
-
 format ELF executable 3
 segment readable executable
 
@@ -14,14 +13,14 @@ macro outesp {
          stosb
 }
 entry $
-         mov edi,wb
+         mov edi,wb  ;the text buffer
          outesp
          pushad
          outesp
          popad
          add edi,9
          outesp
-	     mov	edx,3*9
+	     mov	edx,3*9     ;length
          mov	ecx,wb
          mov	ebx,1		;STDOUT
          mov	eax,4		;sys_write
