@@ -9,7 +9,7 @@ macro outesp {
          call hexax
          pop eax
          call hexax
-         mov al,10
+         mov al,10  ;nl
          stosb
 }
 entry $
