@@ -17,6 +17,7 @@ entry $
          outesp
          pushad
          outesp
+         db 67h
          popad
          add edi,9
          outesp
