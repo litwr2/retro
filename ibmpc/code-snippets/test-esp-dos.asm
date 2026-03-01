@@ -27,7 +27,6 @@ start:   mov eax,esp
          popad
          mov eax,esp
          mov esp,ebx  ;restore esp
-         add edi,9
          outeax
 
 	 int    0x20   ;finish
