@@ -1,0 +1,3 @@
+#it helps to get a listing using FASM
+N=${1%.asm}
+fasm $N.asm -s $N.fas && fasm-listing $N.fas $N.lst && rm $N.fas
