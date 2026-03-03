@@ -44,7 +44,6 @@ to_unreal:
          outeax
          mov ebx,esp  ;saves esp
          pushad
-         mov dword [0x8000-0x20],77777777h
          mov eax,esp
          outeax
 
