@@ -23,7 +23,6 @@ start:   mov eax,esp
          mov eax,esp
          outeax
          mov dword [esp+12],0x77777777  ;saved esp is changed
-         db 67h
          popad
          mov eax,esp
          mov esp,ebx  ;restore esp
