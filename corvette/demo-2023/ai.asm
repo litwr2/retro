@@ -1,3 +1,5 @@
+;v3, 2026 - compatibility with extROM
+;v2, 2026 - it support ROM 1.1, slightly different timings for the music
 BDOS equ 5
 
 GRBASE  EQU     04000H  ;DOSG1
@@ -1316,13 +1318,14 @@ l2     push af
        or a
        jp p,l4
 
-    xor a
+    ld a,(sPIC2)
     ld (IOBASE+PIC2),a
     inc hl
     jp l5
     
 l4     dec hl
-    ld a,8
+    ld a,(sPIC2)
+    or 8
     ld (IOBASE+PIC2),a
        ld a,$36
        ld (IOBASE+SOUNDM),a
@@ -1612,6 +1615,9 @@ l43 ld a,(de)
 
 init proc
     local exit0
+    ld a,(IOBASE+PIC2)
+    and $f7
+    ld (sPIC2),a
     ld hl,($f7d0)
     ld (intera+1),hl
     call setintr
@@ -1645,7 +1651,6 @@ init proc
     ld de,msg2
     ;ld c,9
     ;call BDOS
-    ;ld de,msg2m
     call widetxtout
     xor a
     ld hl,fcb_drive+6
@@ -1736,7 +1741,8 @@ l3  ld a,c
     jp nc,$+5
     ld d,0
     ld c,a
-    ld a,d
+    ld a,(sPIC2)
+    or d
     ld (IOBASE+PIC2),a
     call vdelay
     dec b
@@ -1808,7 +1814,9 @@ l3  ld a,c  ;5
     jp nc,$+5 ;10
     ld d,0    ;7
     ld c,a    ;5
-    ld a,d    ;5
+    ;ld a,d    ;5
+    ld a,(sPIC2)  ;+13
+    or d   ;4  ;-1
     ld (IOBASE+PIC2),a ;13   ;average 269 ticks, approx 9300 Hz
     call vdelay    ;17
     dec b          ;5
@@ -1893,6 +1901,8 @@ final proc
     ld c,2
     jp BDOS
     endp
+
+sPIC2 db 0
 
 fcb_drive db 0
 fcb_fn    db "CORVD1  PIC"

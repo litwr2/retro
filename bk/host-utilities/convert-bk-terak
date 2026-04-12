@@ -1,7 +1,7 @@
 #for bk-terak emu, send keys to the emu, gawk code
 A=`wmctrl -l|awk '/BK-001/{print $1}'`
 awk 'BEGIN {
-   delay = 90
+   delay = 90 #30 - for fullthrottle, 90 - normal
    for (i = 0; i < 255; i++) v[sprintf("%c", i)] = i
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
