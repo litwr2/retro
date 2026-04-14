@@ -369,7 +369,7 @@ int flag;
 				fprintf( stderr, _("\nDouble trap @ %04x.\n"), oldpc);
 				lc_word(0177716, &p->regs[PC]);
 				p->regs[PC] &= 0177400;
-				/*p->regs[SP] = 01000;*/	/* whatever */
+				//p->regs[SP] = 01000;	/* whatever */
 			}
 		}
 
@@ -511,9 +511,11 @@ void intr_hand()
 void
 showemuhelp()
 {
-    fprintf(stderr, _("Emulator window hotkeys:\n\n"));
+    fprintf(stderr, _("Emulator window hotkeys:\n"));
     fprintf(stderr, _(" ScrollLock - Toggle video mode (B/W, Color)\n"));
-    fprintf(stderr, _(" Left Super+F11 - Reset emulated machine\n"));
+    fprintf(stderr, _(" Right Super+F11 - Reset emulated machine\n"));
+    fprintf(stderr, _(" Right Super+F10 - Togglew fullthrottle mode\n"));
+    fprintf(stderr, _(" Alt+F11 - Togglew fullscreen mode\n"));
     fprintf(stderr, _(" F12 - Load a file into BK memory\n\n"));
 }
 

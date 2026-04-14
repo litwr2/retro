@@ -1,5 +1,5 @@
-;v3, 2026 - compatibility with extROM
-;v2, 2026 - it support ROM 1.1, slightly different timings for the music
+;v3, IV-2026 - compatibility with extROM
+;v2, II-2026 - supports ROM 1.1, slightly different timings for the music
 BDOS equ 5
 
 GRBASE  EQU     04000H  ;DOSG1
@@ -18,6 +18,7 @@ VIREG   EQU     3AH   ;image control register
 SOUNDM  EQU     3     ;timer control register
 SOUNDD  EQU     0     ;timer counter
 PIC2    EQU     32H   ;timer output enable/disable, port C
+PIMC2	EQU		33H   ;control register for PIC2
 
 AUTOFILL equ 0
 ENGLISH equ 0
@@ -1318,15 +1319,19 @@ l2     push af
        or a
        jp p,l4
 
-    ld a,(sPIC2)
-    ld (IOBASE+PIC2),a
+    ;;ld a,(sPIC2)
+    ld a,6
+    ;;ld (IOBASE+PIC2),a
+    ld (IOBASE+PIMC2),a
     inc hl
     jp l5
     
 l4     dec hl
-    ld a,(sPIC2)
-    or 8
-    ld (IOBASE+PIC2),a
+    ;;ld a,(sPIC2)
+    ;;or 8
+    ld a,7
+    ;;ld (IOBASE+PIC2),a
+    ld (IOBASE+PIMC2),a
        ld a,$36
        ld (IOBASE+SOUNDM),a
        ld a,(hl)
@@ -1615,9 +1620,9 @@ l43 ld a,(de)
 
 init proc
     local exit0
-    ld a,(IOBASE+PIC2)
-    and $f7
-    ld (sPIC2),a
+    ;;ld a,(IOBASE+PIC2)
+    ;;and $f7
+    ;;ld (sPIC2),a
     ld hl,($f7d0)
     ld (intera+1),hl
     call setintr
@@ -1736,14 +1741,18 @@ voice2p proc
 l2  ld b,8
     ld c,(hl)
 l3  ld a,c
-    ld d,8
+    ;ld d,8
+    ld d,7
     rrca
-    jp nc,$+5
-    ld d,0
+    ;;jp nc,$+5
+    jp nc,$+4
+    ;;ld d,0
+    dec d
     ld c,a
-    ld a,(sPIC2)
-    or d
-    ld (IOBASE+PIC2),a
+    ;;ld a,(sPIC2)
+    ld a,d
+    ;;ld (IOBASE+PIC2),a
+    ld (IOBASE+PIMC2),a
     call vdelay
     dec b
     jp nz,l5
@@ -1809,15 +1818,20 @@ extra proc
 l2  ld b,8    ;7
     ld c,(hl) ;7
 l3  ld a,c  ;5    
-    ld d,8  ;7
+    ;;ld d,8  ;7
+    ld d,7
     rrca    ;4
-    jp nc,$+5 ;10
-    ld d,0    ;7
+    ;;jp nc,$+5 ;10
+    jp nc,$+4 ;10
+    ;;ld d,0    ;7
+    dec d  ;4
     ld c,a    ;5
-    ;ld a,d    ;5
-    ld a,(sPIC2)  ;+13
-    or d   ;4  ;-1
-    ld (IOBASE+PIC2),a ;13   ;average 269 ticks, approx 9300 Hz
+    ld a,d    ;5
+;;sPIC2 equ $+1
+    ;;ld a,0  ;+7
+    ;;or d   ;4  ;-1
+    ;;ld (IOBASE+PIC2),a ;13   ;average 269 ticks, approx 9300 Hz
+    ld (IOBASE+PIMC2),a ;13    ;-1.5
     call vdelay    ;17
     dec b          ;5
     jp nz,l5       ;10
@@ -1901,8 +1915,6 @@ final proc
     ld c,2
     jp BDOS
     endp
-
-sPIC2 db 0
 
 fcb_drive db 0
 fcb_fn    db "CORVD1  PIC"

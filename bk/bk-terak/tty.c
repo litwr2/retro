@@ -46,7 +46,7 @@ flag_t timer_intr_enabled = 0;
 int special_keys[SDLK_LAST], shifted[256];
 
 static int tty_pending_int = 0;
-unsigned long pending_interrupts;
+extern unsigned long pending_interrupts;
 
 void
 tty_open()
@@ -414,3 +414,4 @@ tty_recv()
     }
     /* fprintf(stderr, "done\n"); */
 }
+
