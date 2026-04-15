@@ -6,7 +6,7 @@
             .dsabl gbl
             .asect
             .=512   ;start of test code
-    mov #10,R1   
+    mov #10,R1
     mov #20,R2
     call @#POINT
 
