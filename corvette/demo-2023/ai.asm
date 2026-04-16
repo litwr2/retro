@@ -1,5 +1,6 @@
-;v3, IV-2026 - compatibility with extROM
+;v3, IV-2026 - compatibility with extROM; thanks to Pyk for recommending the use of PIC commands to manipulate port C bits
 ;v2, II-2026 - supports ROM 1.1, slightly different timings for the music
+
 BDOS equ 5
 
 GRBASE  EQU     04000H  ;DOSG1
