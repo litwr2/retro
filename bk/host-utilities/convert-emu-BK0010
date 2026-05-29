@@ -1,6 +1,7 @@
 #for BK2010 emu
 A=`wmctrl -l|awk '/BK001/{print $1}'`
 awk 'BEGIN {
+   delay = 90
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
        t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
@@ -41,7 +42,7 @@ awk 'BEGIN {
    t["~"] = "asciitilde"
 }
 {
-  printf "xdotool windowactivate --sync '$A'  key --delay 90 "
+  printf "xdotool windowactivate --sync '$A' key --delay %d ", delay
   for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
-  print " Return"
+  print " Return Return"
 }' $1
