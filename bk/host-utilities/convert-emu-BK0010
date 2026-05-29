@@ -1,0 +1,47 @@
+#for BK2010 emu
+A=`wmctrl -l|awk '/BK001/{print $1}'`
+awk 'BEGIN {
+   for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
+   for (i = 0; i < 26; i++) {
+       t[sprintf("%c", i + 65)] = sprintf("%c", i + 97)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 65)
+   }
+   t[" "] = "space"
+   t["!"] = "exclam"
+   t["\""] = "at"      #"quotedbl"
+   t["#"] = "numbersign"
+   t["$"] = "dollar"
+   t["%"] = "percent"
+   t["&"] = "asciicircum"   #"comma"
+   t[sprintf("%c", 39)] = "ampersand"   #"period"
+   t[")"] = "parenleft"
+   t["("] = "asterisk"   #"semicolon"
+   t["*"] = "colon"   #"Prior"   ##ini!
+   t["+"] = "plus"
+   t[","] = "comma"   #"Next"    ##ini!
+   t["-"] = "minus"
+   t["."] = "period"  #"Insert"  ##ini!
+   t["/"] = "slash"
+   t[":"] = "semicolon"  #"End"     ##ini!
+   t[";"] = "equal"
+   t["<"] = "less"
+   t["="] = "underscore"
+   t[">"] = "greater"
+   t["?"] = "question"
+   t["@"] = "Delete"   ##ini!
+   t["["] = "bracketleft"
+   t["\\"] = "backslash"
+   t["]"] = "bracketright"
+   t["`"] = "Home"    ##ini!
+   t["_"] = "apostrophe"
+   t["^"] = "grave"
+   t["{"] = "braceleft"
+   t["|"] = "bar"
+   t["}"] = "braceright"
+   t["~"] = "asciitilde"
+}
+{
+  printf "xdotool windowactivate --sync '$A'  key --delay 90 "
+  for (i = 1; i <= length($0); i++) printf " %s", t[substr($0, i, 1)]
+  print " Return"
+}' $1

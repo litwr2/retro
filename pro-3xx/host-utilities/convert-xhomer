@@ -6,7 +6,7 @@ awk 'BEGIN {
    for (i = 0; i < 10; i++) t[sprintf("%d", i)] = sprintf("%d", i)
    for (i = 0; i < 26; i++) {
        t[sprintf("%c", i + 65)] = "Shift+" sprintf("%c", i + 65)
-       t[sprintf("%c", i + 97)] = sprintf("%c", i + 97)
+       t[sprintf("%c", i + 97)] = sprintf("%c", i + 65)
    }
    t[sprintf("%c", 9)] = "space"
    t[" "] = "space"
@@ -36,7 +36,7 @@ awk 'BEGIN {
    t["\\"] = "backslash"
    t["]"] = "bracketright"
    t["`"] = "grave"
-   t["_"] = "underscore"
+   t["_"] = "Shift+underscore"
    t["^"] = "Shift+asciicircum"
    t["{"] = "Shift+bracketleft"
    t["|"] = "Shift+backslash"
