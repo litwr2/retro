@@ -1,4 +1,4 @@
-#for BK2010 emu
+#for BK2010 emu, disable all additional keyboard layouts!!!
 A=`wmctrl -l|awk '/BK001/{print $1}'`
 awk 'BEGIN {
    delay = 90
