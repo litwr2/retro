@@ -1,9 +1,6 @@
 ;rb - free
-.include "cbm35basic.mac"
 gabase = $18
 gbase = $20
-
-   * = $1100
 
 fmplot ;in x - dx, y - dy; bit 7 - left, bit 0 - right
 .block
@@ -231,7 +228,7 @@ l1  adc r0h  ;C=0
 .bend
     rts
 
-gmplot ;in x - r8l, y - r1h, a = cs (0 - bg, 1 - fg); use r0l, r5, r8h
+gmplot ;in x - r8l, y - r1h, a = cs (0 - bg, 1 - fg) - must be the first!;  use r0l, r5, r8h
 .block  ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 x0l = r8l
 x0h = r8h
@@ -240,7 +237,6 @@ p = r5l
 m8 = rcl
 c8 = rch
 yh = r6h
-    sta c8
     beq l1
 
     cmp #3
@@ -257,7 +253,7 @@ l1  lda #gbase/2
     and #7
     sta m2
     lda y0
-    sta yh  ;fmplot!
+    sta yh
     and #$f8
     tay
     jsr mul40
@@ -282,7 +278,7 @@ m2 = * + 1
     and #3
     tax
     lda pow2im,x
-    sta m8   ;fmplot!??
+    sta m8
     ldy #0
     and (r5l),y
     ora c8
@@ -317,8 +313,8 @@ m1 = * + 1
 ertsm rts
 
 drawmline ;in x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, a = cs (0 - bg, 1 - fg)
-          ;sx:sy - m:m; err - r4; e2 - m:r6l; dy:dx - r1l:r7l
-.block   ;e2h - zp!! sy - zp!!
+          ;sx:sy - m:m; err - r4; e2 - r2h:r6l; dy:dx - r1l:r7l
+.block   ;sy - zp!!
 x0 = r8l
 y0 = r1h
 x1 = r2l
@@ -326,10 +322,12 @@ y1 = r6h
 errl = r4l
 errh = r4h
 e2l = r6l
+e2h = r2h
 dy = r1l
 dx = r7l
 cnt = r2l
-    sta m3  ;pha??, c8??
+c8 = rch
+    sta c8
     lda x0
     cmp x1
     bcc l1  ;x0 < x1
@@ -375,8 +373,7 @@ l4  stx sy
     cmp dy
     bcs *+4
     sta cnt
-m3 = * + 1
-    lda #0
+    lda c8
     jsr gmplot
     inc cnt
 l5
@@ -410,8 +407,7 @@ l7  ldy #0
     lda dx
     cmp e2l
     lda #0
-e2h = * + 1
-    sbc #0
+    sbc e2h
     bmi l14
 
     clc   ;e2 <= dx

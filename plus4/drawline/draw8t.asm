@@ -1,15 +1,14 @@
-.include "cbm35basic.mac"
-drawmline = $12dc
-;fmplot = $1100
-;gmplot = $1250
+.include "registers.mac"
 
     * = $4001
-.byte $18,$40,$a,0,$de  ;graphic
-.text "4,1:"
-.byte $e7  ;color
-.text "0,5,3:"
+.byte $19,$40,$a,0,$de  ;graphic
+.text "3,1:"
 .byte $9e  ;sys
-.text "16512"
+.text "16512:"
+.byte $a1,$f9,$41,$24  ;getkeya$
+.text ":"
+.byte $de  ;graphic
+.text "0"
 .byte 0,0,0
 
 * = $4080
@@ -21,8 +20,8 @@ start
     sta rah
 iter = 40
 cs = 1
-    lda #$74
-    sta $ff15   ;color0
+    ;lda #$74
+    ;sta $ff15   ;color0
     lda #$73
     sta $86   ;color1
     lda #$36
@@ -44,7 +43,7 @@ gl1 pha
     sta r2l
     lda #y1i
     sta r6h
-    lda #0
+    lda #1
     jsr drawmline
     pla
     clc
@@ -200,4 +199,6 @@ l1  pha
 .bend
 .endif
     rts
+
+.include "draw8.asm"
 

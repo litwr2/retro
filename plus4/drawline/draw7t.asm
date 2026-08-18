@@ -1,15 +1,14 @@
-.include "cbm35basic.mac"
-drawhline = $12b2
-;ghplot = $121e
-;fhplot0 = $128e
+.include "registers.mac"
 
     * = $4001
-.byte $18,$40,$a,0,$de  ;graphic
-.text "2,1:"
-.byte $e7  ;color
-.text "0,5,3:"
+.byte $19,$40,$a,0,$de  ;graphic
+.text "1,1:"
 .byte $9e  ;sys
-.text "16512"
+.text "16512:"
+.byte $a1,$f9,$41,$24  ;getkeya$
+.text ":"
+.byte $de  ;graphic
+.text "0"
 .byte 0,0,0
 
 * = $4080
@@ -19,6 +18,10 @@ start
     sta r3l
     sta r9l
     sta rah
+    lda #$35
+    sta $86   ;color1
+    ;lda #$58
+    ;sta $ff15  ;color0
 .if 1
 x0i = 319
 x1i = 0
@@ -53,10 +56,6 @@ gl1 pha
     sta r8h
     lda #y0i
     sta r1h
-    lda #$35
-    sta $86
-    ;lda #$58
-    ;sta $ff15
     lda #cs
     jsr ghplot
     lda #iter
@@ -212,4 +211,6 @@ l1    pha
 .bend
 .endif
     rts
+
+.include "draw7.asm"
 

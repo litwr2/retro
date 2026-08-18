@@ -1,9 +1,6 @@
 ;rb - free
-.include "cbm35basic.mac"
 gabase = $18
 gbase = $20
-
-   * = $1100
 
 fhplot ;in x - dx, y - dy; bit 7 - left, bit 0 - right
 .block
@@ -138,7 +135,6 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral;  use: r5h
 x0l = r8l
 x0h = r8h
 y0 = r1h
-
     lda x0h
     lsr
     lda x0l
@@ -227,7 +223,6 @@ p = r5l
 m8 = rcl
 c8 = rch
 yh = r6h
-    sta c8
     jsr ctplot
     lda y0
     and #7
@@ -307,8 +302,8 @@ dxl = r7l
 dxh = r7h
 cntl = r2l
 cnth = r2h
-
-    sta m3
+c8 = rch
+    sta c8
     lda x0h
     cmp x1h
     bcc l1  ;x0 < x1
@@ -373,8 +368,7 @@ l4  stx sy
 
     sta cntl
 l15
-m3 = * + 1
-    lda #0
+    lda c8
     jsr ghplot
 l5
     lda cntl  ;if (cnt-- == 0) break
