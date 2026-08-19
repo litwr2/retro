@@ -77,28 +77,6 @@ l2  sta x1
     bne l1    
 .endif
 .if 0
-x0i = 159
-y0i = 159
-x1i = 0
-y1i = 0
-    lda #0
-gl1 pha
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #x1i
-    sta r2l
-    lda #y1i
-    sta r6h
-    lda #1
-    jsr drawmline
-    pla
-    clc
-    adc #1
-    bne gl1
-.endif
-.if 0
 x0i = 76
 y0i = 72
 .block
