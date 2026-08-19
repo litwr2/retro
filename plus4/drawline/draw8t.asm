@@ -4,11 +4,14 @@
 .byte <(eob-2),>(eob-2),$a,0
 .byte $9e  ;sys
 .text "4160:"
+.byte $41,$b2,$54,$49  ;a=ti
+.text ":"
 .byte $de  ;graphic
 .text "3,1:"
 .byte $9e  ;sys
 .text "4224:"
-.byte $a1,$f9,$41,$24  ;getkeya$
+.byte $99,$54,$49,$ab,$41  ;print ti-a
+;.byte $a1,$f9,$41,$24  ;getkeya$
 .text ":"
 .byte $de  ;graphic
 .text "0"
@@ -37,13 +40,43 @@ iter = 40
 cs = 1
     ;lda #$74
     ;sta $ff15   ;color0
-    lda #$73
-    sta $86   ;color1
-    lda #$36
+    ;lda #$73
+    ;sta $86   ;color1
+    lda #$45
     sta $85   ;color2
-    lda #$5e
+    lda #$44
     sta $ff16   ;color3
 .if 1
+    lda #5
+l1  pha
+    lda #0
+l2  sta x1
+    sta r8l
+    lda #159
+    sec
+    sbc x1
+    sta r2l
+    lda #0
+    sta r1h
+    lda #199
+    sta r6h
+    lda $ff1e
+    lsr
+    and #3
+    jsr drawmline
+    lda x1
+    clc
+    adc #4
+    cmp #160
+    bcc l2
+
+    pla
+    tax
+    dex
+    txa
+    bne l1    
+.endif
+.if 0
 x0i = 159
 y0i = 159
 x1i = 0
@@ -63,7 +96,7 @@ gl1 pha
     pla
     clc
     adc #1
-    ;bne gl1
+    bne gl1
 .endif
 .if 0
 x0i = 76
@@ -214,6 +247,8 @@ l1  pha
 .bend
 .endif
     rts
+
+x1 .byte 0
 
 .include "draw8.asm"
 

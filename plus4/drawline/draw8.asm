@@ -108,7 +108,8 @@ l7  ldy #0
     lda c8
     beq lb
 
-    cmp #3
+    eor #$ff
+    cmp m8
     beq lb
 
     jmp mtplot
@@ -369,9 +370,9 @@ l4  stx sy
     sbc #0
     sta errh
 
-    lda dx  ;if (dx < dy) cnt = dy; else cnt = dx
-    cmp dy
-    bcs *+4
+    lda dy  ;if (dx < dy) cnt = dy; else cnt = dx
+    cmp dx
+    bcc *+4
     sta cnt
     lda c8
     jsr gmplot
