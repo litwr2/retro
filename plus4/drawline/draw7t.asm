@@ -1,18 +1,33 @@
 .include "registers.mac"
 
-    * = $4001
-.byte $19,$40,$a,0,$de  ;graphic
+    * = $1001
+.byte <(eob-2),>(eob-2),$a,0
+.byte $9e  ;sys
+.text "4160:"
+.byte $de  ;graphic
 .text "1,1:"
 .byte $9e  ;sys
-.text "16512:"
+.text "4224:"
 .byte $a1,$f9,$41,$24  ;getkeya$
 .text ":"
 .byte $de  ;graphic
 .text "0"
 .byte 0,0,0
+eob
 
-* = $4080
+* = $1040
+init
+    lda #<eob
+    sta $2d
+    sta $2f
+    sta $31
+    lda #>eob
+    sta $2e
+    sta $30
+    sta $32
+    rts
 
+* = $1080
 start
     lda #0
     sta r3l
