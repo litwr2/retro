@@ -214,6 +214,9 @@ bg  and #$f
     sta rah
     rts
 
+pow2 .byte 128,64,32,16,8,4,2,1
+pow2i .byte 127,191,223,239,247,251,253,254
+
 ghplot ;in x - r8, y - r1h, a = cs (0 - bg, 1 - fg); use r0l, r5
 .block  ;40*(y & $f8) + (y&7) + (x & f8)
 x0l = r8l
@@ -256,32 +259,6 @@ l1  lda pow2i,x
     and (r5l),y
     ora c8
     sta (r5l),y
-    rts
-.bend
-
-pow2 .byte 128,64,32,16,8,4,2,1
-pow2i .byte 127,191,223,239,247,251,253,254
-
-mul40   ;in y; out r5h:a, C=0
-.block
-    lda #0
-    sta r5h
-    sty m1
-    tya
-    asl
-    rol r5h
-    asl
-    rol r5h
-m1 = * + 1
-    adc #0
-    bcc *+4
-    inc r5h
-    asl
-    rol r5h
-    asl
-    rol r5h
-    asl
-    rol r5h
 .bend
 erts rts
 

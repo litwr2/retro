@@ -44,6 +44,7 @@ start
     lda #5
 l1  pha
     lda #0
+    sta x1
     sta x1+1
 l2  lda x1
     sta r8l
@@ -275,5 +276,6 @@ l1    pha
 
 x1 .byte 0,0
 
-.include "draw7.asm"
+.include "mul40.inc"
+.include "drawh.inc"
 

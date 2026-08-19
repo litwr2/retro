@@ -145,6 +145,7 @@ l5  inc yh
 
 l2  inc p
     bne l7
+
     inc p+1
     bne l7  ;always
 .bend
@@ -229,6 +230,9 @@ l1  adc r0h  ;C=0
 .bend
     rts
 
+pow2m .byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
+pow2im .byte $3f,$cf,$f3,$fc
+
 gmplot ;in x - r8l, y - r1h, a = cs (0 - bg, 1 - fg) - must be the first!;  use r0l, r5, r8h
 .block  ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 x0l = r8l
@@ -284,32 +288,6 @@ m2 = * + 1
     and (r5l),y
     ora c8
     sta (r5l),y
-    rts
-.bend
-
-pow2m .byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
-pow2im .byte $3f,$cf,$f3,$fc
-
-mul40   ;in y; out r5h:a, C=0
-.block
-    lda #0
-    sta r5h
-    sty m1
-    tya
-    asl
-    rol r5h
-    asl
-    rol r5h
-m1 = * + 1
-    adc #0
-    bcc *+4
-    inc r5h
-    asl
-    rol r5h
-    asl
-    rol r5h
-    asl
-    rol r5h
 .bend
 ertsm rts
 

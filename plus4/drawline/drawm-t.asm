@@ -250,5 +250,6 @@ l1  pha
 
 x1 .byte 0
 
-.include "draw8.asm"
+.include "mul40.inc"
+.include "drawm.inc"
 
