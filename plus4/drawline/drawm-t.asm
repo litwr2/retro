@@ -1,13 +1,22 @@
+;tmpx assembler
 .include "registers.mac"
+gabase = $18   ;attributes
+gbase = $20    ;bitmap
+
+test1 = 1  ;main
+test2 = 0  ;diagonal line benchmark, it uses cs
+test3 = 0  ;vector sight, it uses cs
+cs = 1     ;0 - mc1, 1 - fg, 2 - bg, 3 - mc2
+iter = 40  ;vector length
 
     * = $1001
 .byte <(eob-2),>(eob-2),$a,0
 .byte $9e  ;sys
 .text "4160:"
-.byte $41,$b2,$54,$49  ;a=ti
-.text ":"
 .byte $de  ;graphic
 .text "3,1:"
+.byte $41,$b2,$54,$49  ;a=ti
+.text ":"
 .byte $9e  ;sys
 .text "4224:"
 .byte $99,$54,$49,$ab,$41  ;print ti-a
@@ -36,8 +45,6 @@ start
     sta r3l
     sta r9l
     sta rah
-iter = 40
-cs = 1
     ;lda #$74
     ;sta $ff15   ;color0
     ;lda #$73
@@ -46,7 +53,7 @@ cs = 1
     sta $85   ;color2
     lda #$44
     sta $ff16   ;color3
-.if 1
+.if test1
     lda #5
 l1  pha
     lda #0
@@ -76,7 +83,29 @@ l2  sta x1
     txa
     bne l1    
 .endif
-.if 0
+ .if test2
+x0i = 159
+y0i = 199
+x1i = 0
+y1i = 0
+    lda #0
+gl1 pha
+    lda #x0i
+    sta r8l
+    lda #y0i
+    sta r1h
+    lda #x1i
+    sta r2l
+    lda #y1i
+    sta r6h
+    lda #0
+    jsr drawmline
+    pla
+    clc
+    adc #1
+    bne gl1
+.endif
+.if test3
 x0i = 76
 y0i = 72
 .block

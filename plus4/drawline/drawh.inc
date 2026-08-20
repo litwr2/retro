@@ -1,6 +1,5 @@
+;tmpx assembler
 ;rb - free
-gabase = $18
-gbase = $20
 
 fhplot ;in x - dx, y - dy; bit 7 - left, bit 0 - right
 .block
@@ -42,7 +41,6 @@ l1  sec
     ror m8
     bcs la
 
-    ;lsr m8  ;check C!
     lda p
     adc #8  ;C=0
     sta p
@@ -85,14 +83,15 @@ l3  tya
 
     dec r3h
     dec r9h
-l7  lda rah  ;immediate?
-    beq *+5
-    jsr tplot
-    ldy #0
+l7  ldy #0
     lda (p),y
     and m8
     ora c8
     sta (p),y
+    lda rah
+    beq *+7
+    sty rah
+    jmp tplot
     rts 
 
 l6  lda p
@@ -192,7 +191,7 @@ c8 = rch
     asl
     asl
     clc
-    adc r0h
+    adc r0h  ;C=0
     sta (r9l),y
     rts
 
@@ -200,7 +199,8 @@ bg  and #$f
     sta r0h
     lda $ff15
     and #$70
-    adc r0h  ;C=0, sets C=0
+    clc
+    adc r0h  ;sets C=0
     sta (r3l),y
     lda (r9l),y
     and #$70
@@ -209,10 +209,8 @@ bg  and #$f
     and #$f
     adc r0h  ;C=0
     sta (r9l),y
-.bend
-    lda #0
-    sta rah
     rts
+.bend
 
 pow2 .byte 128,64,32,16,8,4,2,1
 pow2i .byte 127,191,223,239,247,251,253,254

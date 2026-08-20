@@ -1,6 +1,5 @@
+;tmpx assembler
 ;rb - free
-gabase = $18
-gbase = $20
 
 fmplot ;in x - dx, y - dy; bit 7 - left, bit 0 - right
 .block
@@ -210,7 +209,9 @@ c8 = rch
     asl
     asl
     clc
-    bcc l1
+    adc r0h  ;C=0
+    sta (r9l),y
+    rts
 
 bg  lda (r3l),y
     and #$f
@@ -225,10 +226,10 @@ bg  lda (r3l),y
     sta r0h
     lda $85
     and #$f
-l1  adc r0h  ;C=0
+    adc r0h  ;C=0
     sta (r9l),y
-.bend
     rts
+.bend
 
 pow2m .byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im .byte $3f,$cf,$f3,$fc
