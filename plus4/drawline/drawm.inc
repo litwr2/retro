@@ -234,7 +234,7 @@ bg  lda (r3l),y
 pow2m .byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im .byte $3f,$cf,$f3,$fc
 
-gmplot ;in x - r8l, y - r1h, a = cs (0 - bg, 1 - fg) - must be the first!;  use r0l, r5, r8h
+gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2) - must be the first!;  use r0l, r5, r8h
 .block  ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 x0l = r8l
 x0h = r8h
@@ -292,7 +292,7 @@ m2 = * + 1
 .bend
 ertsm rts
 
-drawmline ;in x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, a = cs (0 - bg, 1 - fg)
+drawmline ;in x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2)
           ;sx:sy - m:m; err - r4; e2 - r2h:r6l; dy:dx - r1l:r7l
 .block   ;sy - zp!!
 x0 = r8l
@@ -307,7 +307,6 @@ dy = r1l
 dx = r7l
 cnt = r2l
 c8 = rch
-    sta c8
     lda x0
     cmp x1
     bcc l1  ;x0 < x1

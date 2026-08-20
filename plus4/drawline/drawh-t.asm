@@ -12,13 +12,13 @@ iter = 40  ;vector length
     * = $1001
 .byte <(eob-2),>(eob-2),$a,0
 .byte $9e  ;sys
-.text "4160:"
+.text "4160:"  ;$1040
 .byte $de  ;graphic
 .text "1,1:"
 .byte $41,$b2,$54,$49  ;a=ti
 .text ":"
 .byte $9e  ;sys
-.text "4224:"
+.text "4224:"  ;$1080
 .byte $99,$54,$49,$ab,$41  ;print ti-a
 ;.byte $a1,$f9,$41,$24  ;getkeya$
 .text ":"
@@ -73,6 +73,7 @@ l2  lda x1
     lda $ff1e
     lsr
     and #1
+    sta rch
     jsr drawhline
     lda x1
     clc
@@ -113,6 +114,7 @@ gl1 pha
     lda #y1i
     sta r6h
     lda #cs
+    sta rch
     jsr drawhline
     pla
     clc
@@ -120,6 +122,8 @@ gl1 pha
     bne gl1
 .endif
 .if test3
+x0i = 160
+y0i = 100
 .block
     lda #<x0i
     sta r8l
@@ -128,6 +132,7 @@ gl1 pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -148,6 +153,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -168,6 +174,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -188,6 +195,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -208,6 +216,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -228,6 +237,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -248,6 +258,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha
@@ -268,6 +279,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr ghplot
     lda #iter
 l1    pha

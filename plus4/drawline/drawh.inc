@@ -215,7 +215,7 @@ bg  and #$f
 pow2 .byte 128,64,32,16,8,4,2,1
 pow2i .byte 127,191,223,239,247,251,253,254
 
-ghplot ;in x - r8, y - r1h, a = cs (0 - bg, 1 - fg); use r0l, r5
+ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg); use r0l, r5
 .block  ;40*(y & $f8) + (y&7) + (x & f8)
 x0l = r8l
 x0h = r8h
@@ -260,7 +260,7 @@ l1  lda pow2i,x
 .bend
 erts rts
 
-drawhline ;in x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, a = cs (0 - bg, 1 - fg)
+drawhline ;in x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;sx:sy - m:m; err - r4; e2 - m:r6l; dy:dx - r1l:r7
 .block
 x0l = r8l
@@ -278,7 +278,6 @@ dxh = r7h
 cntl = r2l
 cnth = r2h
 c8 = rch
-    sta c8
     lda x0h
     cmp x1h
     bcc l1  ;x0 < x1

@@ -5,20 +5,20 @@ gbase = $20    ;bitmap
 
 test1 = 1  ;main
 test2 = 0  ;diagonal line benchmark, it uses cs
-test3 = 0  ;vector sight, it uses cs
+test3 = 0  ;vector sight, it uses cs and iter
 cs = 1     ;0 - mc1, 1 - fg, 2 - bg, 3 - mc2
 iter = 40  ;vector length
 
     * = $1001
 .byte <(eob-2),>(eob-2),$a,0
 .byte $9e  ;sys
-.text "4160:"
+.text "4160:"  ;$1040
 .byte $de  ;graphic
 .text "3,1:"
 .byte $41,$b2,$54,$49  ;a=ti
 .text ":"
 .byte $9e  ;sys
-.text "4224:"
+.text "4224:"  ;$1080
 .byte $99,$54,$49,$ab,$41  ;print ti-a
 ;.byte $a1,$f9,$41,$24  ;getkeya$
 .text ":"
@@ -70,6 +70,7 @@ l2  sta x1
     lda $ff1e
     lsr
     and #3
+    sta rch
     jsr drawmline
     lda x1
     clc
@@ -99,6 +100,7 @@ gl1 pha
     lda #y1i
     sta r6h
     lda #cs
+    sta rch
     jsr drawmline
     pla
     clc
@@ -114,6 +116,7 @@ y0i = 72
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -132,6 +135,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -150,6 +154,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -168,6 +173,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -186,6 +192,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -204,6 +211,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -222,6 +230,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1    pha
@@ -240,6 +249,7 @@ l1    pha
     lda #y0i
     sta r1h
     lda #cs
+    sta rch
     jsr gmplot
     lda #iter
 l1  pha
