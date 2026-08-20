@@ -98,7 +98,7 @@ gl1 pha
     sta r2l
     lda #y1i
     sta r6h
-    lda #0
+    lda #cs
     jsr drawmline
     pla
     clc
