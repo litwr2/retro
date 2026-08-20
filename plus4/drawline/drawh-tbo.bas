@@ -1,4 +1,4 @@
-10 a=ti:graphic1,1
+10 graphic1,1:a=ti
 15 for i=1 to 5
 20 x=0:do
 30 cs=(peek(65310)/2)and1
