@@ -92,7 +92,7 @@ l2  lda x1
     tax
     dex
     txa
-    bne l1    
+    bne l1
 .endif
 .if test2
 x0i = 319
