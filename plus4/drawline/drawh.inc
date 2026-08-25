@@ -27,7 +27,7 @@ yh = r6h
     dec r3h
     dec r9h
     dec ral
-    inc rah
+    stx rah
     lda #$fe
     sta m8
     bne l3  ;always
@@ -46,7 +46,7 @@ l1  sec
     sta p
     bcc *+4
     inc p+1
-    inc rah
+    stx rah
     lsr c8
     ror c8
     lda #$7f
@@ -75,7 +75,7 @@ l3  tya
     lda p+1
     sbc #>313  ;sets C=1
     sta p+1
-    inc rah
+    sty rah
     lda ral
     sbc #40
     sta ral
@@ -92,7 +92,7 @@ l7  ldy #0
     beq *+7
     sty rah
     jmp tplot
-    rts 
+    rts
 
 l6  lda p
     bne *+4
@@ -112,7 +112,7 @@ l5  inc yh
     lda p+1
     adc #>313
     sta p+1
-    inc rah
+    sty rah
     lda ral
     adc #40  ;C=0
     sta ral

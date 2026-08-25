@@ -30,7 +30,7 @@ yh = r6h
     dec r3h
     dec r9h
     dec ral
-    inc rah
+    stx rah
     lda #$fc
     sta m8
     bne l3  ;always
@@ -52,7 +52,7 @@ l1  sec
     sta p
     bcc *+4
     inc p+1
-    inc rah
+    stx rah
     lda c8
     lsr
     ror
@@ -86,7 +86,7 @@ l3  tya
     lda p+1
     sbc #>313  ;sets C=1
     sta p+1
-    inc rah
+    sty rah
     lda ral
     sbc #40
     sta ral
@@ -132,7 +132,7 @@ l5  inc yh
     lda p+1
     adc #>313
     sta p+1
-    inc rah
+    sty rah
     lda ral
     adc #40  ;C=0
     sta ral
