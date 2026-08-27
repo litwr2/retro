@@ -108,164 +108,256 @@ gl1 pha
     bne gl1
 .endif
 .if test3
-x0i = 76
-y0i = 72
-.block
+x0i = 80
+y0i = 100
     lda #x0i
-    sta r8l
+    sta x1
     lda #y0i
-    sta r1h
+    sta y1
     lda #cs
+    sta pcs
+    lda #0
+gl3 pha
+    lda x1  ;dx=0, dy--
+    sta r8l
+    sta r2l
+    lda y1
+    sta r1h
+    sec
+    sbc #iter
+    sta r6h
+    lda pcs
     sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #$0
-    ldy #$80
-    jsr fmplot
+    jsr drawmline
+
+    lda x1  ;dx++, dy--
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sbc #iter-1  ;C=0
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx++, dy=0
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx++, dy++
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    adc #iter  ;C=0
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx=0, dy++
+    sta r8l
+    sta r2l
+    lda y1
+    sta r1h
+    clc
+    adc #iter
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy++
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    adc #iter-1  ;C=1
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy=0
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy--
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sbc #iter  ;C=1
+    sta r6h
+    lda pcs
+    sta rch
+    jsr drawmline
+;--
+    lda x1  ;dx=0, dy--
+    sta r8l
+    sta r2l
+    lda y1
+    sta r1h
+    sec
+    sbc #iter
+    sta r6h
+    lda #0
+    sta rch
+    jsr drawmline
+
+    lda x1  ;dx++, dy--
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sbc #iter-1  ;C=0
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx++, dy=0
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx++, dy++
+    sta r8l
+    clc
+    adc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    adc #iter  ;C=0
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx=0, dy++
+    sta r8l
+    sta r2l
+    lda y1
+    sta r1h
+    clc
+    adc #iter
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy++
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    adc #iter-1  ;C=1
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy=0
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+
+    lda x1  ;dx--, dy--
+    sta r8l
+    sec
+    sbc #iter
+    sta r2l
+    lda y1
+    sta r1h
+    sbc #iter  ;C=1
+    sta r6h
+    ;lda pcs
+    ;sta rch
+    jsr drawmline
+;--
+    lda $ff1e
+    lsr
+    lsr
+    and #3
+    tax
+    lda crnd,x
+    clc
+    adc x1
+    sta x1
+
+    lda $ff1e
+    lsr
+    lsr
+    and #3
+    tax
+    lda crnd,x
+    clc
+    adc y1
+    sta y1
+
+    lda $ff1e
+    lsr
+    and #3
+    bne *+4
+    lda #1
+    sta pcs
+
     pla
     tax
-    dex
+    inx
     txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #1
-    ldy #$80
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #1
-    ldy #$0
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #$1
-    ldy #$1
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #0
-    ldy #$1
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #$80
-    ldy #$1
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1    pha
-    ldx #$80
-    ldy #$0
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
-.block
-    lda #x0i
-    sta r8l
-    lda #y0i
-    sta r1h
-    lda #cs
-    sta rch
-    jsr gmplot
-    lda #iter
-l1  pha
-    ldx #$80
-    ldy #$80
-    jsr fmplot
-    pla
-    tax
-    dex
-    txa
-    bne l1
-.bend
+    beq *+5
+    jmp gl3
 .endif
     rts
 
 x1 .byte 0
+y1 .byte 0
+pcs .byte 0
+crnd .byte 255,1,255,1
 
 .include "mul40.inc"
 .include "drawm.inc"

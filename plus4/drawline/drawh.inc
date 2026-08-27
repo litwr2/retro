@@ -9,35 +9,8 @@ c8 = rch
 yh = r6h
     txa
     beq l3
-    bpl l1
-
-    lda m8
-    bmi l9
 
     sec
-    lda p
-    sbc #8
-    sta p
-    bcs *+4
-    dec p+1
-    asl c8
-    rol c8
-    lda ral
-    bne *+6
-    dec r3h
-    dec r9h
-    dec ral
-    stx rah
-    lda #$fe
-    sta m8
-    bne l3  ;always
-
-l9  asl c8
-    sec
-    rol m8
-    bne l3  ;always
-
-l1  sec
     ror m8
     bcs la
 
@@ -261,7 +234,7 @@ l1  lda pow2i,x
 erts rts
 
 drawhline ;in x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;sx:sy - m:m; err - r4; e2 - m:r6l; dy:dx - r1l:r7
+          ;sx:sy - 1:m; err - r4; e2 - m:r6l; dy:dx - r1l:r7
 .block
 x0l = r8l
 x0h = r8h
@@ -288,26 +261,27 @@ c8 = rch
     bcc l1
 
 l12 lda x0l  ;x0 >= x1
-    sbc x1l  ;C=1
-    pha
+    ldx x1l
+    stx x0l
+    sta x1l
     lda x0h
-    sbc x1h  ;x0 - x1
-    ldx #$80
-    bmi l3  ;always
+    ldx x1h
+    stx x0h
+    sta x1h
+    lda y0
+    ldx y1
+    stx y0
+    sta y1
 
 l1  lda x1l
     sec
     sbc x0l
-    pha
-    lda x1h
-    sbc x0h  ;x1 - x0
-    ldx #1
-l3  stx sx
-    sta dxh
-    sta cnth
-    pla
     sta dxl
     sta cntl
+    lda x1h
+    sbc x0h  ;x1 - x0
+    sta dxh
+    sta cnth
 
     lda y0
     cmp y1
@@ -349,8 +323,8 @@ l5
     bne *+6
     dec cnth
     bmi erts
-    dec cntl
 
+    dec cntl
     lda errl  ;e2 = 2*err
     asl
     sta e2l
@@ -372,8 +346,7 @@ l5
     sta errl  ;err += dy
     bcs *+4
     dec errh
-sx = * + 1
-    ldx #0
+    ldx #1
 l7  ldy #0
 
     lda dxl
