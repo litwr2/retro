@@ -320,7 +320,7 @@ l4  stx sy
     cmp dx
     bcc *+4
     sta cnt
-    lda c8
+    ;lda c8
     jsr gmplot
     inc cnt
 l5

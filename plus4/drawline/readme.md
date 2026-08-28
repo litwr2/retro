@@ -9,5 +9,5 @@ Mode       |Basic   |Basic compiled by Austrospeed|Assembly
 HiRes      |3444    |3045                         |958
 Multicolor |1617    |1421                         |395
 
-The code size is 545(hr)/544(mc) bytes +30 bytes for the multiplication routine.
+The code size is 543(hr)/542(mc) bytes +30 bytes for the multiplication routine.
 

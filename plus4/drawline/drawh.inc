@@ -316,7 +316,7 @@ l4  stx sy
 
     sta cntl
 l15
-    lda c8
+    ;lda c8
     jsr ghplot
 l5
     lda cntl  ;if (cnt-- == 0) break
