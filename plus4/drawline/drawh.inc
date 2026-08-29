@@ -1,5 +1,5 @@
-;thanks to Crown and MMS for hints
 ;tmpx assembler
+;thanks to Crown and MMS for hints
 ;r4h,r7,rb - free
 
 fhplot ;in: x - dx, y - dy, r6l - yh, rc - m8/c8, r5 - p, ral; bit 7 - left, bit 0 - right
@@ -190,7 +190,7 @@ bg  and #$f
 pow2 .byte 128,64,32,16,8,4,2,1
 pow2i .byte 127,191,223,239,247,251,253,254
 
-ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6h;  use r0l, r5
+ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6l;  use r0l, r5
 .block  ;40*(y & $f8) + (y&7) + (x & f8)
 x0l = r8l
 x0h = r8h
@@ -236,7 +236,7 @@ l1  lda pow2i,x
 erts rts
 
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r0*, r1, r2, r3*, r4l, r5*, r6 (r6l*), r8, r9*, ra*, rc
+          ;use: r0*, r1, r2, r3*, r4l, r5*, r6 (r6l*), r8, r9*, ra*, rc (rcl*)
 .block
 x0l = r8l
 x0h = r8h
@@ -253,7 +253,6 @@ dxl = r2l
 dxh = r2h
 cntl = r1l
 cnth = r1h
-c8 = rch
     lda #1
     sta m2
     sta m3

@@ -7,7 +7,7 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 Mode       |Basic   |Basic compiled by Austrospeed|Assembly
 -----------|-------:|----------------------------:|-------:
 HiRes      |3444    |3045                         |678
-Multicolor |1617    |1421                         |395
+Multicolor |1617    |1421                         |295
 
-The code size is 611(hr)/542(mc) bytes +30 bytes for the multiplication routine.
+The code size is 611(hr)/616(mc) bytes +30 bytes for the multiplication routine.
 
