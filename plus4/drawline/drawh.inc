@@ -1,12 +1,14 @@
+;thanks to Crown and MMS for hints
 ;tmpx assembler
-;rb - free
+;r4h,r7,rb - free
 
-fhplot ;in x - dx, y - dy; bit 7 - left, bit 0 - right
+fhplot ;in: x - dx, y - dy, r6l - yh, rc - m8/c8, r5 - p, ral; bit 7 - left, bit 0 - right
+       ;use: ra
 .block
 p = r5l
 m8 = rcl
 c8 = rch
-yh = r6h
+yh = r6l
     txa
     beq l3
 
@@ -102,8 +104,8 @@ l2  inc p
     bne l7  ;always
 .bend
 
-ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral;  use: r5h
-.block  ;remove r5h!!
+ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral
+.block
 x0l = r8l
 x0h = r8h
 y0 = r1h
@@ -115,23 +117,23 @@ y0 = r1h
     lsr
     sta ral
     lda #0
-    sta r5h
+    sta r3h
     lda y0
     and #$f8
     sta m1
     asl
-    rol r5h
+    rol r3h
     asl
-    rol r5h  ;set C=0
+    rol r3h  ;set C=0
 m1 = * + 1
     adc #0  ;C=0
     bcc *+4
-    inc r5h
+    inc r3h
     clc
     adc ral  ;sets C
     sta ral
     lda #gabase
-    adc r5h   ;sets C=0
+    adc r3h   ;sets C=0
     sta r3h
     adc #4   ;C=0, sets C=0
     sta r9h
@@ -188,7 +190,7 @@ bg  and #$f
 pow2 .byte 128,64,32,16,8,4,2,1
 pow2i .byte 127,191,223,239,247,251,253,254
 
-ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg); use r0l, r5
+ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6h;  use r0l, r5
 .block  ;40*(y & $f8) + (y&7) + (x & f8)
 x0l = r8l
 x0h = r8h
@@ -196,7 +198,7 @@ y0 = r1h
 p = r5l
 m8 = rcl
 c8 = rch
-yh = r6h
+yh = r6l
     jsr ctplot
     lda y0
     and #7
@@ -233,8 +235,8 @@ l1  lda pow2i,x
 .bend
 erts rts
 
-drawhline ;in x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;sx:sy - 1:m; err - r4; e2 - m:r6l; dy:dx - r1l:r7
+drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
+          ;use: r0*, r1, r2, r3*, r4l, r5*, r6 (r6l*), r8, r9*, ra*, rc
 .block
 x0l = r8l
 x0h = r8h
@@ -242,15 +244,19 @@ y0 = r1h
 x1l = r2l
 x1h = r2h
 y1 = r6h
-errl = r4l
-errh = r4h
-e2l = r6l
-dy = r1l
-dxl = r7l
-dxh = r7h
-cntl = r2l
-cnth = r2h
+xyl = r4l
+;xyh = m
+vl = r8l
+vh = r8h
+dy = r6h
+dxl = r2l
+dxh = r2h
+cntl = r1l
+cnth = r1h
 c8 = rch
+    lda #1
+    sta m2
+    sta m3
     lda x0h
     cmp x1h
     bcc l1  ;x0 < x1
@@ -261,7 +267,7 @@ c8 = rch
     bcc l1
 
 l12 lda x0l  ;x0 >= x1
-    ldx x1l
+    ldx x1l  ;swap(x0, x1), swap(y0, y1)
     stx x0l
     sta x1l
     lda x0h
@@ -281,91 +287,128 @@ l1  lda x1l
     lda x1h
     sbc x0h  ;x1 - x0
     sta dxh
-    sta cnth
 
-    lda y0
-    cmp y1
-    bcc l2  ;y0 < y1
-
-    ;lda y0  ;y0 >= y1
-    sbc y1  ;C=1
-    ldx #$80
-    bne l4  ;always
-
-l2  sec
+    jsr ghplot  ;plot(x, y, c)
     lda y1
-    sbc y0
-    ldx #1
-l4  stx sy
-    sta dy
-
-    lda dxl   ;err = dx - dy
     sec
-    sbc dy
-    sta errl
-    lda dxh
-    sbc #0
-    sta errh
+    sbc y0
+    bcc l2  ;y1 < y0
 
-    lda dxh  ;if (dx < dy) cnt = dy; else cnt = dx
-    bne l15
+l7  sta dy  ;y1 >= y0
+    ldx dxh
+    bne l3  ;dx > dy
 
-    lda dy
     cmp dxl
-    bcc l15
+    bcs l4  ;dx <= dy
 
-    sta cntl
-l15
-    ;lda c8
-    jsr ghplot
-l5
-    lda cntl  ;if (cnt-- == 0) break
+l3  lda dxl  ;dy < dx
+    sec  ;xy = dx - dy
+    sbc dy
+    sta xyl
+    lda dxh
+    sta cnth
+    sbc #0
+    sta xyh
+    lda dxh  ;d = dy - dx/2
+    lsr
+    lda dxl
+    ror
+    sta m1
+    lda dy
+    sec
+m1 = * + 1
+    sbc #0
+    sta vl
+    lda #0
+    sbc #0
+    sta vh
+l5a lda cntl
     bne *+6
     dec cnth
-    bmi erts
+    bmi e1  ;erts
 
     dec cntl
-    lda errl  ;e2 = 2*err
-    asl
-    sta e2l
-    lda errh
-    rol
-    sta e2h
-
-    ldx #0
-    lda e2l
-    clc
-    adc dy
-    lda e2h
-    adc #0
-    bmi l7  ;e2 < -dy
-
-    lda errl  ;e2 >= dy
-    sec
-    sbc dy
-    sta errl  ;err += dy
-    bcs *+4
-    dec errh
-    ldx #1
-l7  ldy #0
-
-    lda dxl
-    cmp e2l
-    lda dxh
-e2h = * + 1
-    sbc #0
-    bmi l14
-
-    clc   ;e2 <= dx
-    lda dxl
-    adc errl
-    sta errl
-    lda dxh
-    adc errh
-    sta errh
-sy = * + 1
+    ldx #1  ;x++
     ldy #0
-l14 jsr fhplot
-    jmp l5
+    lda vh
+    bpl l6x
+
+    lda vl  ;d < 0
+    clc  ;v += dy
+    adc dy
+    sta vl
+    bcc *+4
+    inc vh
+    jsr fhplot
+    jmp l5a
+
+l2  eor #$ff  ;y1 < y0
+    adc #1  ;C=0
+    ldx #$80
+    stx m2
+    stx m3
+    bne l7  ;always
+
+l6x lda vl  ;v >= 0
+    sec   ;v -= xy
+    sbc xyl
+    sta vl
+    lda vh
+xyh = * + 1
+    sbc #0
+    sta vh
+m2 = * + 1
+    ldy #1  ;y++
+    jsr fhplot
+    jmp l5a
+
+l4  ;lda dy  ;dy >= dx
+    sta cntl
+    ;sec  ;xy = dy - dx
+    sbc dxl  ;C=1
+    sta xyl
+
+    lda dy  ;v = dx - dy/2
+    lsr
+    sta m4
+    lda dxl
+    sec
+m4 = * + 1
+    sbc #0
+    sta vl
+    lda #0
+    sbc #0
+    sta vh
+    inc cntl
+l5b dec cntl
+    bne *+3
+e1  rts
+
+    ;dec cntl
+m3 = * + 1
+    ldy #1  ;y++
+    lda vl
+    ldx #0
+    cpx vh
+    bcs l6y
+
+    ;lda vl  ;v < 0
+    ;clc  ;v += dy
+    adc dxl
+    sta vl
+    bcc *+4
+    inc vh
+    jsr fhplot
+    jmp l5b
+
+l6y ;lda vl  ;v >= 0
+    ;sec
+    sbc xyl  ;v -= xy
+    sta vl
+    bcs *+4
+    dec vh
+    ldx #1  ;x++
+    jsr fhplot
+    jmp l5b
 .bend
 
