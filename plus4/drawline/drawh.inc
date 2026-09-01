@@ -64,10 +64,11 @@ l7  ldy #0
     ora c8
     sta (p),y
     lda rah
-    beq *+7
+    bne *+3
+    rts
+
     sty rah
     jmp tplot
-    rts
 
 l6  lda p
     bne *+4
@@ -338,7 +339,7 @@ l5a lda cntl
     sta vl
     bcc *+4
     inc vh
-    jsr fhplot
+    jsr fhplot  ;x
     jmp l5a
 
 l2  eor #$ff  ;y1 < y0
@@ -358,7 +359,7 @@ xyh = * + 1
     sta vh
 m2 = * + 1
     ldy #1  ;y++
-    jsr fhplot
+    jsr fhplot  ;xy
     jmp l5a
 
 l4  ;lda dy  ;dy >= dx
@@ -383,7 +384,6 @@ l5b dec cntl
     bne *+3
 e1  rts
 
-    ;dec cntl
 m3 = * + 1
     ldy #1  ;y++
     lda vl
@@ -397,7 +397,7 @@ m3 = * + 1
     sta vl
     bcc *+4
     inc vh
-    jsr fhplot
+    jsr fhplot  ;y
     jmp l5b
 
 l6y ;lda vl  ;v >= 0
@@ -407,7 +407,7 @@ l6y ;lda vl  ;v >= 0
     bcs *+4
     dec vh
     ldx #1  ;x++
-    jsr fhplot
+    jsr fhplot  ;xy
     jmp l5b
 .bend
 
