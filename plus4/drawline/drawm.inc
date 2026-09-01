@@ -78,10 +78,9 @@ l7  ldy #0
 
     eor #$ff
     cmp m8
-    beq lb
-
+    bne *+3
+lb  rts
     jmp mtplot
-lb  rts 
 
 l6  lda p
     bne *+4
