@@ -21,10 +21,10 @@ yh = r6l
     sta p
     bcc *+4
     inc p+1
-    stx rah
     lsr c8
     ror c8
     lda #$7f
+    sta rah
     sta m8
     inc ral
     bne l3
@@ -48,9 +48,9 @@ l3  tya
     sbc #<313
     sta p
     lda p+1
+    sta rah
     sbc #>313  ;sets C=1
     sta p+1
-    sty rah
     lda ral
     sbc #40
     sta ral
@@ -85,9 +85,9 @@ l5  inc yh
     adc #<313
     sta p
     lda p+1
+    sta rah
     adc #>313
     sta p+1
-    sty rah
     lda ral
     adc #40  ;C=0
     sta ral
