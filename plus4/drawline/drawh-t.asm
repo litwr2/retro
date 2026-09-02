@@ -1,5 +1,5 @@
-;tmpx assembler
-.include "registers.mac"
+;vasm6502-oldstyle assembler
+  include "registers.mac"
 gabase = $18   ;attributes
 gbase = $20    ;bitmap
 
@@ -10,21 +10,21 @@ cs = 1     ;0 - bg, 1 - fg
 iter = 40  ;vector length
 
     * = $1001
-.byte <(eob-2),>(eob-2),$a,0
-.byte $9e  ;sys
-.text "4160:"  ;$1040
-.byte $de  ;graphic
-.text "1,1:"
-.byte $41,$b2,$54,$49  ;a=ti
-.text ":"
-.byte $9e  ;sys
-.text "4224:"  ;$1080
-.byte $99,$54,$49,$ab,$41  ;print ti-a
-;.byte $a1,$f9,$41,$24  ;getkeya$
-.text ":"
-.byte $de  ;graphic
-.text "0"
-.byte 0,0,0
+ byte <(eob-2),>(eob-2),$a,0
+ byte $9e  ;sys
+ text "4160:"  ;$1040
+ byte $de  ;graphic
+ text "1,1:"
+ byte $41,$b2,$54,$49  ;a=ti
+ byte ":"
+ byte $9e  ;sys
+ text "4224:"  ;$1080
+ byte $99,$54,$49,$ab,$41  ;print ti-a
+;byte $a1,$f9,$41,$24  ;getkeya$
+ byte ":"
+ byte $de  ;graphic
+ byte "0"
+ byte 0,0,0
 eob
 
 * = $1040
@@ -49,7 +49,7 @@ start
     ;sta $86   ;color1
     ;lda #$58
     ;sta $ff15  ;color0
-.if test1
+  if test1
     lda #5
 l1  pha
     lda #0
@@ -93,8 +93,8 @@ l2  lda x1
     dex
     txa
     bne l1
-.endif
-.if test2
+  endif
+  if test2
 x0i = 319
 y0i = 199
 x1i = 0
@@ -120,8 +120,8 @@ gl1 pha
     clc
     adc #1
     bne gl1
-.endif
-.if test3
+  endif
+  if test3
 x0i = 160
 y0i = 100
     lda #<x0i
@@ -424,13 +424,13 @@ gl3 pha
     txa
     beq *+5
     jmp gl3
-.endif
+  endif
     rts
 
-x1 .byte 0,0
-y1 .byte 0
-crnd .byte 255,1,255,1
+x1 byte 0,0
+y1 byte 0
+crnd byte 255,1,255,1
 
-.include "mul40.inc"
-.include "drawh.inc"
+  include "mul40.inc"
+  include "drawh.inc"
 
