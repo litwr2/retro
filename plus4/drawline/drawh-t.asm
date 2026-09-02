@@ -4,10 +4,8 @@ gabase = $18   ;attributes
 gbase = $20    ;bitmap
 
 test1 = 1  ;main
-test2 = 0  ;diagonal line benchmark, it uses cs
-test3 = 0  ;vector sight, it uses cs and iter
-cs = 1     ;0 - bg, 1 - fg
-iter = 40  ;vector length
+test2 = 0  ;diagonal line benchmark
+test3 = 0  ;vector sight
 
     * = $1001
  byte <(eob-2),>(eob-2),$a,0
@@ -99,6 +97,7 @@ x0i = 319
 y0i = 199
 x1i = 0
 y1i = 0
+cs = 1     ;0 - bg, 1 - fg
     lda #0
 gl1 pha
     lda #<x0i
@@ -122,8 +121,9 @@ gl1 pha
     bne gl1
   endif
   if test3
-x0i = 160
+x0i = 160  ;origin
 y0i = 100
+iter = 40  ;vector length
     lda #<x0i
     sta x1
     lda #>x0i
@@ -143,7 +143,7 @@ gl3 pha
     sec
     sbc #iter
     sta r6h
-    lda #cs
+    lda #1
     sta rch
     jsr drawhline
 
@@ -160,7 +160,7 @@ gl3 pha
     sta r1h
     sbc #iter-1  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -176,7 +176,7 @@ gl3 pha
     lda y1
     sta r1h
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -193,7 +193,7 @@ gl3 pha
     sta r1h
     adc #iter  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -207,7 +207,7 @@ gl3 pha
     sta r1h
     adc #iter  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -224,7 +224,7 @@ gl3 pha
     sta r1h
     adc #iter-1  ;C=1
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -240,7 +240,7 @@ gl3 pha
     lda y1
     sta r1h
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 
@@ -257,7 +257,7 @@ gl3 pha
     sta r1h
     sbc #iter  ;C=1
     sta r6h
-    ;lda #cs
+    ;lda #1
     ;sta rch
     jsr drawhline
 ;--
@@ -289,7 +289,7 @@ gl3 pha
     sta r1h
     sbc #iter-1  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -305,7 +305,7 @@ gl3 pha
     lda y1
     sta r1h
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -322,7 +322,7 @@ gl3 pha
     sta r1h
     adc #iter  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -336,7 +336,7 @@ gl3 pha
     sta r1h
     adc #iter  ;C=0
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -353,7 +353,7 @@ gl3 pha
     sta r1h
     adc #iter-1  ;C=1
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -369,7 +369,7 @@ gl3 pha
     lda y1
     sta r1h
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -386,7 +386,7 @@ gl3 pha
     sta r1h
     sbc #iter  ;C=1
     sta r6h
-    ;lda #cs
+    ;lda #0
     ;sta rch
     jsr drawhline
 
@@ -431,6 +431,7 @@ x1 byte 0,0
 y1 byte 0
 crnd byte 255,1,255,1
 
+  * = $1400
   include "mul40.inc"
   include "drawh.inc"
 

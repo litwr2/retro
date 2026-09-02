@@ -2,107 +2,6 @@
 ;thanks to Crown and MMS for hints
 ;r4h,r7,rb - free
 
-fhplot ;in: x - dx, y - dy, r6l - yh, rc - m8/c8, r5 - p, ral; bit 7 - left, bit 0 - right
-       ;use: ra
-.p = r5l
-.m8 = rcl
-.c8 = rch
-.yh = r6l
-    txa
-    beq .l3
-
-    sec
-    ror .m8
-    bcs .la
-
-    lda .p
-    adc #8  ;C=0
-    sta .p
-    bcc *+4
-    inc .p+1
-    lsr .c8
-    ror .c8
-    lda #$7f
-    sta rah
-    sta .m8
-    inc ral
-    bne .l3
-
-    inc r3h
-    inc r9h
-    bne .l3  ;always
-
-.la lsr .c8
-.l3 tya
-    beq .l7
-    bpl .l5
-
-    lda .yh
-    dec .yh
-    and #7
-    bne .l6
-
-    sec
-    lda .p
-    sbc #<313
-    sta .p
-    lda .p+1
-    sta rah
-    sbc #>313  ;sets C=1
-    sta .p+1
-    lda ral
-    sbc #40
-    sta ral
-    bcs .l7
-
-    dec r3h
-    dec r9h
-.l7 ldy #0
-    lda (.p),y
-    and .m8
-    ora .c8
-    sta (.p),y
-    lda rah
-    bne *+3
-    rts
-
-    sty rah
-    jmp tplot
-
-.l6 lda .p
-    bne *+4
-    dec .p+1
-    dec .p
-    jmp .l7
-
-.l5 inc .yh
-    lda .yh
-    and #7
-    bne .l2
-
-    lda .p
-    clc
-    adc #<313
-    sta .p
-    lda .p+1
-    sta rah
-    adc #>313
-    sta .p+1
-    lda ral
-    adc #40  ;C=0
-    sta ral
-    bcc .l7
-
-    inc r3h
-    inc r9h
-    bne .l7  ;always
-
-.l2 inc .p
-    bne .l7
-
-    inc .p+1
-    bne .l7  ;always
-
 ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral
 .x0l = r8l
 .x0h = r8h
@@ -125,7 +24,7 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral
     rol r3h  ;set C=0
 .m1 = * + 1
     adc #0  ;C=0
-    bcc *+4
+    bcc *+5
     inc r3h
     clc
     adc ral  ;sets C
@@ -150,8 +49,7 @@ tplot  ;use: r0h
     lsr
     lsr
     lsr
-    clc
-    adc r0h  ;sets C=0
+    ora r0h
     sta (r3l),y
     lda (r9l),y
     and #$f
@@ -161,8 +59,7 @@ tplot  ;use: r0h
     asl
     asl
     asl
-    clc
-    adc r0h  ;C=0
+    ora r0h  ;C=0
     sta (r9l),y
     rts
 
@@ -170,15 +67,14 @@ tplot  ;use: r0h
     sta r0h
     lda $ff15
     and #$70
-    clc
-    adc r0h  ;sets C=0
+    ora r0h
     sta (r3l),y
     lda (r9l),y
     and #$70
     sta r0h
     lda $ff15
     and #$f
-    adc r0h  ;C=0
+    ora r0h
     sta (r9l),y
     rts
 
@@ -246,8 +142,11 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .dxh = r2h
 .cntl = r1l
 .cnth = r1h
-    lda #1
-    sta .m2
+.p = r5l
+.m8 = rcl
+.c8 = rch
+.yh = r6l
+    lda #<.l5
     sta .m3
     lda .x0h
     cmp .x1h
@@ -314,14 +213,19 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda #0
     sbc #0
     sta .vh
+    lda #<.l5a
+    sta .lb+1
+
+  assert >.l5a == >.l5b, WRONG ALIGNMENT
+    ;lda #>.l5a
+    ;sta .lb+2
 .l5a lda .cntl
     bne *+6
     dec .cnth
     bmi .e1  ;erts
 
     dec .cntl
-    ldx #1  ;x++
-    ldy #0
+    ;x++
     lda .vh
     bpl .l6x
 
@@ -329,17 +233,27 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     clc  ;v += dy
     adc .dy
     sta .vl
-    bcc *+4
+    bcc * + 4
     inc .vh
-    jsr fhplot  ;x
-    jmp .l5a
+    ;jsr fhplot  ;x
+    sec
+    ror .m8
+    bcs .lxa
+
+    jsr .px
+    bne * + 6  ;.ly7
+    inc r3h
+    inc r9h
+    jmp .ly7
+
+.lxa lsr .c8
+    jmp .ly7
 
 .l2 eor #$ff  ;y1 < y0
     adc #1  ;C=0
-    ldx #$80
-    stx .m2
+    ldx #<.l0
     stx .m3
-    bne .l7  ;always
+    jmp .l7
 
 .l6x lda .vl  ;v >= 0
     sec   ;v -= xy
@@ -349,10 +263,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .xyh = * + 1
     sbc #0
     sta .vh
-.m2 = * + 1
-    ldy #1  ;y++
-    jsr fhplot  ;xy
-    jmp .l5a
+    jmp .lyx
 
 .l4  ;lda .dy  ;dy >= dx
     sta .cntl
@@ -372,12 +283,14 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc #0
     sta .vh
     inc .cntl
+    lda #<.l5b
+    sta .lb+1
+    ;lda #>.l5b
+    ;sta .lb+2
 .l5b dec .cntl
     bne *+3
 .e1  rts
 
-.m3 = * + 1
-    ldy #1  ;y++
     lda .vl
     ldx #0
     cpx .vh
@@ -385,20 +298,117 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     ;lda .vl  ;v < 0
     ;clc  ;v += dy
-    adc .dxl
+    adc .dxl  ;C=0
     sta .vl
-    bcc *+4
+    bcc .ly3
+
     inc .vh
-    jsr fhplot  ;y
-    jmp .l5b
+    ;jsr fhplot  ;y
+    jmp .ly3
 
 .l6y ;lda .vl  ;v >= 0
-    ;sec
+    ;sec  ;C=1
     sbc .xyl  ;v -= xy
     sta .vl
-    bcs *+4
+    bcs *+5
     dec .vh
-    ldx #1  ;x++
-    jsr fhplot  ;xy
-    jmp .l5b
+    ;x++
+.lyx sec  ;remove??
+    ror .m8
+    bcs .la
+
+    jsr .px
+    bne .ly3
+
+    inc r3h
+    inc r9h
+    bne .ly3  ;always
+
+.px lda .p
+    adc #8  ;C=0
+    sta .p
+    bcc *+4
+    inc .p+1
+    lsr .c8
+    ror .c8
+    lda #$7f
+    sta rah
+    sta .m8
+    inc ral
+    rts
+
+.la lsr .c8
+.ly3 ;jsr fhplot  ;xy
+.m3 = * + 1
+;    ldy #1  ;y++
+;    bpl .l5
+    jmp .l0
+
+   assert >.l0 == >.l5,BAD ALIGNMENT
+.l0 lda .yh
+    dec .yh
+    and #7
+    bne .l6
+
+    sec
+    lda .p
+    sbc #<313
+    sta .p
+    lda .p+1
+    sta rah
+    sbc #>313  ;sets C=1
+    sta .p+1
+    lda ral
+    sbc #40
+    sta ral
+    bcs .ly7
+
+    dec r3h
+    dec r9h
+.ly7 ldy #0
+    lda (.p),y
+    and .m8
+    ora .c8
+    sta (.p),y
+    lda rah
+    beq .lb
+
+    sty rah
+    jsr tplot
+.lb jmp .l5a
+
+.l6 lda .p
+    bne *+4
+    dec .p+1
+    dec .p
+    jmp .ly7
+
+.l5 inc .yh
+    lda .yh
+    and #7
+    bne .ly2
+
+    lda .p
+    clc
+    adc #<313
+    sta .p
+    lda .p+1
+    sta rah
+    adc #>313
+    sta .p+1
+    lda ral
+    adc #40  ;C=0
+    sta ral
+    bcc .ly7
+
+    inc r3h
+    inc r9h
+    bne .ly7  ;always
+
+.ly2 inc .p
+    bne .ly7
+
+    inc .p+1
+    bne .ly7  ;always
+
 

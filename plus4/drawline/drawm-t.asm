@@ -4,10 +4,8 @@ gabase = $18   ;attributes
 gbase = $20    ;bitmap
 
 test1 = 1  ;main
-test2 = 0  ;diagonal line benchmark, it uses cs
-test3 = 0  ;vector sight, it uses cs and iter
-cs = 1     ;0 - mc1, 1 - fg, 2 - bg, 3 - mc2
-iter = 40  ;vector length
+test2 = 0  ;diagonal line benchmark
+test3 = 0  ;vector sight, it uses iter
 
     * = $1001
  byte <(eob-2),>(eob-2),$a,0
@@ -89,6 +87,7 @@ x0i = 159
 y0i = 199
 x1i = 0
 y1i = 0
+cs = 1     ;0 - mc1, 1 - fg, 2 - bg, 3 - mc2
     lda #0
 gl1 pha
     lda #x0i
@@ -108,16 +107,22 @@ gl1 pha
     bne gl1
   endif
   if test3
-x0i = 80
+x0i = 80  ;origin
 y0i = 100
+iter = 40  ;vector length
     lda #x0i
     sta x1
     lda #y0i
     sta y1
-    lda #cs
-    sta pcs
     lda #0
 gl3 pha
+    lda $ff1e
+    lsr
+    and #3
+    bne *+4
+    lda #1
+    sta pcs
+
     lda x1  ;dx=0, dy--
     sta r8l
     sta r2l
@@ -338,13 +343,6 @@ gl3 pha
     adc y1
     sta y1
 
-    lda $ff1e
-    lsr
-    and #3
-    bne *+4
-    lda #1
-    sta pcs
-
     pla
     tax
     inx
@@ -359,6 +357,7 @@ y1 byte 0
 pcs byte 0
 crnd byte 255,1,255,1
 
+    * = $1400
   include "mul40.inc"
   include "drawm.inc"
 
