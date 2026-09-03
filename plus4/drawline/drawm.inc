@@ -247,9 +247,9 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sec   ;v -= xy
     sbc .xy
     sta .vl
-    lda .vh
-    sbc #0
-    sta .vh
+    bcs .lyx
+
+    dec .vh
     ;jsr fmplot  ;xy
     jmp .lyx
 
@@ -301,7 +301,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     dec .vh
     ;x++
     ;jsr fmplot  ;xy
-.lyx    sec  ;remove??
+.lyx    sec
     ror .m8
     bcs .la
 
@@ -386,7 +386,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bne .ly2
 
     lda .p
-    clc  ;remove??
+    clc
     adc #<313
     sta .p
     lda .p+1

@@ -313,7 +313,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs *+5
     dec .vh
     ;x++
-.lyx sec  ;remove??
+.lyx sec
     ror .m8
     bcs .la
 

@@ -5,7 +5,8 @@ gbase = $20    ;bitmap
 
 test1 = 1  ;main
 test2 = 0  ;diagonal line benchmark
-test3 = 0  ;vector sight, it uses iter
+test3 = 0  ;vector sight
+test4 = 0  ;main rotated
 
     * = $1001
  byte <(eob-2),>(eob-2),$a,0
@@ -74,6 +75,37 @@ l2  sta x1
     clc
     adc #4
     cmp #160
+    bcc l2
+
+    pla
+    tax
+    dex
+    txa
+    bne l1
+  endif
+  if test4
+    lda #5
+l1  pha
+    lda #0
+l2  sta y1
+    sta r1h
+    lda #199
+    sec
+    sbc y1
+    sta r6h
+    lda #0
+    sta r8l
+    lda #159
+    sta r2l
+    lda $ff1e
+    lsr
+    and #3
+    sta rch
+    jsr drawmline
+    lda y1
+    clc
+    adc #4
+    cmp #200
     bcc l2
 
     pla

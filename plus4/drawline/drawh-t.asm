@@ -6,6 +6,7 @@ gbase = $20    ;bitmap
 test1 = 1  ;main
 test2 = 0  ;diagonal line benchmark
 test3 = 0  ;vector sight
+test4 = 0  ;main rotated
 
     * = $1001
  byte <(eob-2),>(eob-2),$a,0
@@ -84,6 +85,40 @@ l2  lda x1
 
     lda x1
     cmp #<320
+    bcc l2
+
+    pla
+    tax
+    dex
+    txa
+    bne l1
+  endif
+  if test4
+    lda #5
+l1  pha
+    lda #0
+l2  sta y1
+    sta r1h
+    lda #199
+    sec
+    sbc y1
+    sta r6h
+    lda #0
+    sta r8l
+    sta r8h
+    lda #<319
+    sta r2l
+    lda #>319
+    sta r2h
+    lda $ff1e
+    lsr
+    and #1
+    sta rch
+    jsr drawhline
+    lda y1
+    clc
+    adc #4
+    cmp #200
     bcc l2
 
     pla
