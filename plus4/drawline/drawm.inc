@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r2h,r4h,r7,rb - free
+;r4h,r7,rb - free
 
 mctplot  ;in: x - r8l, y - r1h;  out: r3h, r9h, ral
 .x0 = r8l
@@ -89,12 +89,15 @@ x0h = r8h
 .m8 = rcl
 .c8 = rch
 .yh = r6l
+    lda #0
+    sta r2h
     lda .c8
     beq .l1
 
     cmp #3
     beq .l1
 
+    sta r2h
     jsr mctplot
 .l1  lda #gbase/2
     sta x0h
@@ -365,12 +368,9 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     beq .lb
 
     sty rah
-    lda .c8
+    lda r2h
     beq .lb
 
-    eor #$ff
-    cmp .m8
-    beq .lb
     jsr mtplot
 .lb jmp .l5a
 
