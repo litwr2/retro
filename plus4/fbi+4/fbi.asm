@@ -1,6 +1,12 @@
 ;vasm-oldstyle
 ;$4A5-$4E6 free
 
+dsbug = 1
+rs232cbug1 = 1
+rs232cbug2 = 1
+ff28bug = 1
+multbug = 1
+
     * = $1001
 pbasic
   word .pli20,10
@@ -50,7 +56,10 @@ loop4
   INX
   BNE loop4
 
-  stx $8fc5  ;ds bug
+  if dsbug
+    stx $8fc5  ;ds bug
+  endif
+
   LDA #$B1  ;lda (zp),y
   STA $A324
   STA $AD8E
@@ -361,45 +370,55 @@ loop5
   LDA #$3F
   sta $fff7  ;reset
 
-  ldx #2   ;RS-232 routine fix, from Your Commodore 8/1987 pages 78-84
+  if rs232cbug1
+    ldx #2   ;RS-232 routine fix, from Your Commodore 8/1987 pages 78-84
 loop6
-  lda LEB1B,x
-  sta $eb1b,x
-  dex
-  bpl loop6
+    lda LEB1B,x
+    sta $eb1b,x
+    dex
+    bpl loop6
 
-  ldx #6
+    ldx #6
 loop7
-  lda PCH,x
-  sta $cec5,x
-  dex
-  bpl loop7
+    lda PCH,x
+    sta $cec5,x
+    dex
+    bpl loop7
+  endif
 
-  ldx #4   ;RS-232C routine fix from seff, https://plus4world.powweb.com/forum/45313#post21
+  if rs232cbug2
+    ldx #4   ;RS-232C routine fix from seff, https://plus4world.powweb.com/forum/45313#post21
 loop10
-  lda LEAA7,x
-  sta $eaa7,x
-  dex
-  bpl loop10
+    lda LEAA7,x
+    sta $eaa7,x
+    dex
+    bpl loop10
+  endif
 
-  lda #$d0  ;ff28 bug fix from seff, https://plus4world.powweb.com/forum/45313#post27
-  sta $f580
-  lda #$fc
-  sta $f581
+  if ff28bug
+    lda #$d0  ;ff28 bug fix from seff, https://plus4world.powweb.com/forum/45313#post27
+    sta $f580
+    lda #$fc
+    sta $f581
 
-  ldx #6
+    ldx #6
 loop11
-  lda LFCD1,x
-  sta $fcd1,x
-  dex
-  bpl loop11
+    lda LFCD1,x
+    sta $fcd1,x
+    dex
+    bpl loop11
+  endif
 
-  lda #$ae  ;https://www.c64-wiki.com/wiki/Multiply_bug
-  sta $a090  ;the C64 $ba28 corresponds the C+4 $a078
-  sta $a09f  ;this fix slightly slows down arithmetical ops
+  if multbug
+    lda #$ae  ;https://www.c64-wiki.com/wiki/Multiply_bug
+    sta $a090  ;the C64 $ba28 corresponds the C+4 $a078
+    sta $a09f  ;this fix slightly slows down arithmetical ops
+  endif
 
-  lda #$c9  ;ds bug: https://plus4world.powweb.com/plus4encyclopedia/500292
-  sta $8fc4
+  if dsbug
+    lda #$c9  ;ds bug: https://plus4world.powweb.com/plus4encyclopedia/500292
+    sta $8fc4
+  endif
 
   STA $FF3F
   JMP $FFF6
