@@ -1,3 +1,2 @@
-tmpx fbi.asm
-petcat -w3 fbi.bas >fbib.prg
-echo load fbib.prg, then load fbi.prg, then save fbi+4.prg
+F=fbi
+vasm6502_oldstyle $F.asm -Fbin -cbm-prg -o $F.prg -L $F.lst

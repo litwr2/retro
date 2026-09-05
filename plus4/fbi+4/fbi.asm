@@ -1,6 +1,35 @@
-;tmpx assembler
-  *=$1100
+;vasm-oldstyle
+;$4A5-$4E6 free
 
+    * = $1001
+pbasic
+  word .pli20,10
+  byte $8f," ** FBI+4 V2 ***",0
+.pli20
+  word .pli30,20
+  byte $8f," ****** - ******",0
+.pli30
+  word .pli40,30
+  byte $8f," ** FASTER *****",0
+.pli40
+  word .pli50,40
+  byte $8f," **** BASIC ****",0
+.pli50
+  word .pli60,50
+  byte $8f," * INTERPRETER *",0
+.pli60
+  word .pli70,60
+  byte $8f," ** BY LITWR ***",0
+.pli70
+  word .pli80,70
+  byte $8f," ** 2020, 26 ***",0
+.pli80
+  word .eob-2,80
+  byte $9e,start/1000+"0",start%1000/100+"0",start%100/10+"0",start%10+"0",0  ;sys
+  byte 0,0,0
+.eob
+
+start
   LDX  #0
 loop1
   LDA $8000, X
@@ -21,10 +50,11 @@ loop4
   INX
   BNE loop4
 
-  INX
-  LDA #$B1
-  STA $497
+  stx $8fc5  ;ds bug
+  LDA #$B1  ;lda (zp),y
   STA $A324
+  STA $AD8E
+  INX
 loop0
   STA $878D,X
   STA $87D6,X
@@ -152,13 +182,14 @@ loop0
   STA $AF0D,X
   STA $AF16,X
   STA $B692,X
-  LDA #$EA
+  LDA #$EA  ;nop
   DEX
-  BMI ex1
+  BMI *+5
   JMP loop0
 
-ex1
   LDA #$3B
+  STA $AD8F
+
   STA $878D+2
   STA $87D6+2
   STA $8A11+2
@@ -285,42 +316,157 @@ ex1
   STA $AF0D+2
   STA $AF16+2
   STA $B692+2
+
   LDA #$7D
   STA $8EF8
-  LDA #$98
-  STA $495
   LDA #$60   ;RTS
-  STA $499
   STA $A326
+  STA $AD90
   LDA #$22
   STA $A325
-  LDX #3
-loop2
-  LDA $47D,X
-  STA $479,X
-  DEX
-  BPL loop2
-loop3
-  INX
-  LDA $485,X
-  STA $47D,X
-  CMP #$60
-  BNE loop3
 
-  LDA #$EE
-  STA $484
-  LDA #$3F
-  STA $7E1
-  LDX #$80
-  STX $34
-  STX $38
+  lda #$80  ;memtop
+  sta $f392
+
+  LDX #0
+loop2
+  LDA L0473,X
+  STA $8123,X
+  INX
+  CMP #$60
+  BNE loop2
+
+  LDX #L0494.E-L0494-1
+loop3
+  LDA L0494,X
+  STA $8144,X
   DEX
-  STX $36
-  LDA #0
-  STA $33
-  STA $37
-  LDA #$FE
-  STA $35
+  BPL loop3
+
+  ldx #5
+loop8
+  lda SYMSG,x
+  sta $80e3,x
+  dex
+  bpl loop8
+
+  LDX #0
+loop5
+  LDA L07D9,X
+  STA $cfb3,X
+  INX
+  CMP #$60
+  BNE loop5
+
+  LDA #$3F
+  sta $fff7  ;reset
+
+  ldx #2   ;RS-232 routine fix, from Your Commodore 8/1987 pages 78-84
+loop6
+  lda LEB1B,x
+  sta $eb1b,x
+  dex
+  bpl loop6
+
+  ldx #6
+loop7
+  lda PCH,x
+  sta $cec5,x
+  dex
+  bpl loop7
+
+  ldx #4   ;RS-232C routine fix from seff, https://plus4world.powweb.com/forum/45313#post21
+loop10
+  lda LEAA7,x
+  sta $eaa7,x
+  dex
+  bpl loop10
+
+  lda #$d0  ;ff28 bug fix from seff, https://plus4world.powweb.com/forum/45313#post27
+  sta $f580
+  lda #$fc
+  sta $f581
+
+  ldx #6
+loop11
+  lda LFCD1,x
+  sta $fcd1,x
+  dex
+  bpl loop11
+
+  lda #$ae  ;https://www.c64-wiki.com/wiki/Multiply_bug
+  sta $a090  ;the C64 $ba28 corresponds the C+4 $a078
+  sta $a09f  ;this fix slightly slows down arithmetical ops
+
+  lda #$c9  ;ds bug: https://plus4world.powweb.com/plus4encyclopedia/500292
+  sta $8fc4
+
   STA $FF3F
-  RTS
+  JMP $FFF6
+
+L0473  ;at $8123
+   INC  $3B
+   BNE  *+4
+   INC  $3C
+   ;SEI
+   ;STA  $FF3F
+   LDY  #$00
+   LDA  ($3B), Y
+   ;STA  $FF3E
+   ;CLI
+   CMP  #$3A
+   BCS  .L2
+   CMP  #$20
+   BEQ  L0473
+   SEC
+   SBC  #$30
+   SEC
+   SBC  #$D0
+.L2 RTS
+
+L0494  ;at $8144
+   rorg $494
+.S
+   STA  .M1
+   ;SEI
+   ;STA  $FF3F
+.M1 = * + 1
+   LDA  ($3B),Y
+   ;STA  $FF3E
+   ;CLI
+   RTS
+.PMSG
+   LDA $37
+   SEC
+   SBC $2b
+   JMP $80ea
+   rend
+.E
+
+L07D9  ;at $cfb3
+   rorg $7d9
+   PHP
+   JMP .L1
+   SEI
+   ;STA  $FF3F
+.L1 LDA  ($00), Y
+   ;STA  $FF3E
+   PLP
+   RTS
+   rend
+
+LEB1B JMP $CEC5
+
+PCH STA $7CF
+    PLA
+    JMP $EB1E
+
+LEAA7 BYTE $8d,$d5,7,$f0,$16
+
+LFCD1 lda #0
+      sta $79
+      jmp $8003
+
+SYMSG BYTE "F ",0
+    jmp L0494.PMSG-L0494.S+$8144
 
