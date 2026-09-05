@@ -9,7 +9,7 @@ Version 2 optimizes one more system call that gives a slight (hard to notice) sp
 * [RS-232C #2](https://plus4world.powweb.com/forum/45313#post21);
 * [28FF](https://plus4world.powweb.com/forum/45313#post27), [more details](https://plus4world.powweb.com/plus4encyclopedia/500015);
 * [DS](https://plus4world.powweb.com/plus4encyclopedia/500292);
-* [Multiply](https://www.c64-wiki.com/wiki/Multiply_bug) - it is fixed in the same way as on the C128, but this slows down some mathematical ops by a few percent.
+* [Multiply](https://www.c64-wiki.com/wiki/Multiply_bug) - it is fixed in the same way as on the C128, but this slows down some mathematical ops by a few percent.  If you don't want this fix, use two pokes: POKE41104,169:POKE41119,169 - this makes the performance slightly above v1. 
 
 This version modifies the system initial message and let us use the reset switch.
 
