@@ -7,7 +7,7 @@ Version 2 optimizes one more system call that gives a slight (hard to notice) sp
 
 * [RS-232C #1](https://archive.org/details/YourCommodoreIssue35Aug87/page/n77/mode/2up) - Your Commodore 8/1987 pages 78-84;
 * [RS-232C #2](https://plus4world.powweb.com/forum/45313#post21);
-* [28FF](https://plus4world.powweb.com/forum/45313#post27);
+* [28FF](https://plus4world.powweb.com/forum/45313#post27), [more details](https://plus4world.powweb.com/plus4encyclopedia/500015);
 * [DS](https://plus4world.powweb.com/plus4encyclopedia/500292);
 * [Multiply](https://www.c64-wiki.com/wiki/Multiply_bug) - it is fixed in the same way as on the C128, but this slows down some mathematical ops by a few percent.
 
