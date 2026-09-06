@@ -474,17 +474,23 @@ L07D9  ;at $cfb3
    RTS
    rend
 
+  if rs232cbug1
 LEB1B JMP $CEC5
 
 PCH STA $7CF
     PLA
     JMP $EB1E
+  endif
 
+  if rs232cbug2
 LEAA7 BYTE $8d,$d5,7,$f0,$16
+  endif
 
+  if ff28bug
 LFCD1 lda #0
       sta $79
       jmp $8003
+  endif
 
 SYMSG BYTE "F ",0
     jmp L0494.PMSG-L0494.S+$8144
