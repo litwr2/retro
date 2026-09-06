@@ -66,7 +66,8 @@ h8000 ffff 4c b0 04 -> b1 3b 60 : jmp $4a5 -> lda ($22),y  rts
 3f -> fff7  reset
 
 eb1b 8d cf 07 -> 4c c5 ce : sta $7cf -> jmp $cec5
-cec5 ea ea ea ea ea ea ea -> 8d cf 07 68 4c 1e eb  RS-232C bug #1
+cec5 ea ea ea ea ea ea ea -> 8d cf 07 68 4c 1e eb :
+  -> sta $7cf  pla  jmp $eb1e  RS-232C bug #1
 
 eae7 f0 19 8d d5 07 -> 8d d5 07 f0 16 :
   beq $eac2  sta $7d5 -> sta $7d5  beq $eac2  RS-232C bug #2
@@ -81,7 +82,7 @@ c9 -> 8fc4
 0 -> 8fc5  ds bug
 
 80e3 20 00 a5 37 38 e5 -> 46 20 00 4c 4a 81 :
-  " "  0  lda $37  SEC  $e5  -> jmp $814a
+  " "  0  lda $37  SEC  $e5  -> "F " 0 jmp $814a
 814a ff b1 00 8d 3e ff 58 60 -> a5 37 38 e5 2b 4c ea 80 :
   -> lda $37  sec  sbc $2b  jmp $80ea  system initial message
 
