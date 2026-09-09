@@ -11,7 +11,7 @@ Version 2 optimizes one more system call that gives a slight (hard to notice) sp
 * [DS](https://plus4world.powweb.com/plus4encyclopedia/500292);
 * [Multiply](https://www.c64-wiki.com/wiki/Multiply_bug) - it is fixed in the same way as on the C128, but this slows down some mathematical ops by a few percent.  If you don't want this fix, use two pokes: POKE41104,169:POKE41119,169 - this restores the bug and makes the performance slightly above v1. 
 
-This version modifies the system initial message and let us use the reset switch.
+This version modifies the system initial message and let us use the reset switch.  If you need original ROM Basic use POKE65527,62 before reset.
 
 The results of several benchmarks are below.
 
