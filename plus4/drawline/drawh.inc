@@ -78,7 +78,7 @@ tplot  ;use: r0h
     sta (r9l),y
     rts
 
-pow2 byte 128,64,32,16,8,4,2,1
+pow2 byte 128,64,32,16,8,4,2,1 ;= $C289  ;or $DF7A ;in ROM
 pow2i byte 127,191,223,239,247,251,253,254
 
 ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6l;  use r0l, r5
@@ -410,5 +410,4 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     inc .p+1
     bne .ly7  ;always
-
 
