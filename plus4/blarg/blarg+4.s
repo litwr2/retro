@@ -58,8 +58,8 @@ YC       = rah
 RADIUS   = rbh
 LCOL     = r9l            ;Left column
 RCOL     = r9h
-TROW     = $f5            ;Top row
-BROW     = $f6            ;Bottom row
+TROW     = rdl            ;Top row
+BROW     = rdh            ;Bottom row
 
  byte <(eob-2),>(eob-2),$a,0
  byte $9e  ;sys
@@ -574,10 +574,6 @@ LINE
          STA OLDCHUNK
          STA CHUNK
 
-         ;SEI              ;Get underneath ROM
-         ;LDA #$34
-         ;STA $01
-
          LDX DY
          CPX DX           ;Who's bigger. dy or dx?
          BCC STEPINX      ;If dx, then...
@@ -642,11 +638,7 @@ YCONT2   LDA (POINT),Y    ;Plot endpoint
          AND CHUNK
          EOR (POINT),Y
          STA (POINT),Y
-YDONE
-         ;LDA #$37
-         ;STA $01
-         ;CLI
-         RTS
+YDONE    RTS
 
 YFIXX                     ;x=x+1
          ADC DY
@@ -696,20 +688,18 @@ STEPINX
 XLOOP
          LSR CHUNK
          BEQ XFIXC        ;If we pass a column boundary...
+
 XCONT1   SBC DY
          BCC XFIXY        ;Time to step in Y?
 
 XCONT2   DEX
          BNE XLOOP
+
          DEC COUNTHI      ;High bits set?
          BPL XLOOP
 XDONE
          LSR CHUNK        ;Advance to last point
-         JSR LINEPLOT     ;Plot the last chunk
-EXIT     ;LDA #$37
-         ;STA $01
-         ;CLI
-         RTS
+         JMP LINEPLOT     ;Plot the last chunk
 ;
 ; CHUNK has passed a column, so plot and increment pointer
 ; and fix up CHUNK, OLDCHUNK.
@@ -765,10 +755,9 @@ XINCDEC  INY              ;Y-coord
 ; room, gray hair, etc.)
 ;
 LINEPLOT                  ;Plot the line chunk
-
          LDA CX
          ORA CY
-         BMI .SKIP
+         BMI EXIT
 
          LDA (POINT),Y    ;Otherwise plot
          EOR BITMASK
@@ -777,8 +766,7 @@ LINEPLOT                  ;Plot the line chunk
          EOR CHUNK
          EOR (POINT),Y
          STA (POINT),Y
-.SKIP
-         RTS
+EXIT     RTS
 
 ;
 ; Subroutine to fix up pointer when Y decreases through
@@ -825,7 +813,7 @@ FIXY     CPY #255         ;Y=255 or Y=8
 
 .TOAST   PLA              ;Remove old return address
          PLA
-         JMP EXIT         ;Restore interrupts, etc.
+         RTS
 
 ;
 ; CIRCLE draws a circle of course, using my
@@ -833,8 +821,7 @@ FIXY     CPY #255         ;Y=255 or Y=8
 ;   CIRCLE cx,cy,radius (16,8,8)
 ;
 
-CIRCLE
-         JSR GETPAR
+CIRCLE   JSR GETPAR
          STX CY           ;CX,CY = center
 
          LDA X1
@@ -843,7 +830,7 @@ CIRCLE
          STA CX
          STA X1
          LDA X1+1
-         SBC #00
+         SBC #0
          STA CX+1
          STA X1+1
          PHP              ;Save carry
@@ -964,10 +951,6 @@ CIRCENT                   ;Alternative entry point
          LDA POINT+1      ;low-pointer
          STA X1+1         ;POINT will be forwards
 
-         SEI              ;Get underneath ROM
-         LDA #$34
-         STA $01
-
          LDA YC
          LSR              ;A=r/2
          LDX #00
@@ -1064,9 +1047,6 @@ NEXTHALF
          BCS .LOOP
 .DONE
 CIRCEXIT                  ;Restore interrupts
-         ;LDA #$37
-         ;STA $01
-         ;CLI
          LDA #1           ;Re-enable plotting
          STA DONTPLOT
          RTS
@@ -1266,6 +1246,7 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          BEQ .l1
 
          JSR GETPAR       ;Get bg color for buffer 1
+         dex
          stx r2l
          lda LINNUM
          asl
@@ -1275,6 +1256,7 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          sta r2h
          jsr CHKCOM
          JSR GETPAR       ;Get fg color for buffer 1
+         dex
          txa
          asl
          asl
