@@ -37,15 +37,15 @@ CHKCOM   = $9491
 LINNUM   = $14            ;Number returned by GETPAR, r6l, 2 bytes
 ;--
 TEMP     = r5h
-TEMP2    = r4l  ;2 bytes
+TEMP2    = r8l  ;2 bytes
 POINT    = r0l  ;2 bytes
 Y1       = rbl
 X1       = LINNUM    ;2 bytes
-X2       = r8l  ;2 bytes
+X2       = r2l  ;2 bytes
 Y2       = r3l
 DY       = r3h
-DX       = r1l  ;2 bytes
-CX       = r2l  ;2 bytes
+DX       = r4l  ;2 bytes
+CX       = r1l  ;2 bytes
 CY       = r5l
 BUF      = $200          ;Input buffer
 
@@ -145,6 +145,7 @@ HITOKEN  EQU $E9
 ;
 CRUNCH
          JSR JMPCRUN      ;First crunch line normally
+         sty r2l
          LDY #0
 .LOOP    STY TEMP
          JSR ISWORD       ;Are we at a keyword?
@@ -153,8 +154,9 @@ CRUNCH
          JSR NEXTCHAR
          BNE .LOOP        ;Null byte marks end
 
-         dey
-         dey
+         ;dey
+         ;dey
+         ldy r2l
          RTS              ;Buh-bye
 ; Insert token and crunch line
 .GOTCHA
@@ -162,6 +164,14 @@ CRUNCH
          STA BUF+1,X
          lda #$fe
          sta BUF,x
+         sty r2h
+         txa
+         clc  ;??remove
+         adc r2l
+         adc #2
+         sec
+         sbc r2h
+         sta r2l
          inx
 .MOVE    INX
          iny
@@ -389,7 +399,8 @@ SETPOINT                  ;Alternative entry point
          LSR
          LSR
          LSR
-         ADC BASE         ;Base of bitmap
+BASE = * + 1         ;Address of bitmap, hi byte
+         ADC #$20
          STA POINT+1
          LDA #00
          ASL POINT
@@ -1240,8 +1251,6 @@ PCHUNK2
 .SKIP2
          RTS
 
-BASE     DFB $20          ;Address of bitmap, hi byte
-
 CLEAR    JSR CHRGOT       ;See if there's a color
          BEQ .l1
 
@@ -1263,7 +1272,7 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          asl
          asl
          ora r2l
-         sta .m1
+         sta r2l
          lda LINNUM
          jmp .l2
 .l1
@@ -1280,14 +1289,14 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          asl
          asl
          ora r2l
-         sta .m1
+         sta r2l
          lda $86
          lsr
          lsr
          lsr
          lsr
 .l2      ora r2h
-         sta .LOOP+1
+         sta r2h
          LDA MODENUM
          CMP #18
          BNE .rts
@@ -1301,10 +1310,9 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          sta TEMP2+1
 
          LDX #4
-.LOOP    lda #0
+.LOOP    lda r2h
          STA (POINT),Y
-.m1 = * + 1
-         lda #0
+         lda r2l
          sta (TEMP2),Y
          INY
          BNE .LOOP
@@ -1369,8 +1377,6 @@ MODE     JSR GETBYT
          lda #$68
          ldx #$40
          stx BASE
-         ;ldy #0
-         ;sty $6000
          jmp relocate
 
 .C17     CPX #17
@@ -1383,8 +1389,6 @@ MODE17   STX MODENUM
          sta $63
          lda #$40
          ldx #$68
-         ;ldy #0
-         ;sty $4000
          jmp relocate
 
 MODEDONE STX BITMASK
