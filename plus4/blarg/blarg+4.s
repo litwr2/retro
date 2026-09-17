@@ -3,7 +3,7 @@
 ;
 ; A graphics extension for C+4 BASIC
 ; Litwr 2026
-; v1.0
+;
 ; based on
 ;
 ; GRABAS
@@ -78,13 +78,17 @@ ORGX = eob - 2
 ORGY = eob - 1
 
 start
+         lda #<EXECUTE
+         sta $310
+         lda #>EXECUTE
+         sta $311
          ;JMP INIT
 
 ;
 ; Init routine -- modify vectors
 ; and set up values.
 ;
-INIT     LDX #5           ;Copy vectors
+INIT     LDX #3           ;Copy vectors
 .LOOP    LDA .TABLE,X
          STA ICRUNCH,X
          DEX
@@ -93,11 +97,11 @@ INIT     LDX #5           ;Copy vectors
 
 .TABLE   DFW CRUNCH
          DFW LIST
-         DFW EXECUTE
+         ;DFW EXECUTE
 JMPCRUN  DFB $4C          ;JMP
 OLDCRNCH DS 2             ;Old CRUNCH vector
 OLDLIST  DS 2
-OLDEXEC  DS 2
+;OLDEXEC  DS 2
 
 ;
 ; Keyword list
@@ -304,35 +308,14 @@ LIST     CMP #$fE
          INY
          BNE .DONE
 
-pesc lda TXTPTR
-     bne *+4
-     dec TXTPTR+1
-     dec TXTPTR
-     lda #$fe
-     jmp EXECUTE.e1
 ;
 ; EXECUTE -- if this is one of my
 ; tokens, then execute it.
 ;
-EXECUTE  JSR CHRGET
-.e1      PHP
-         CMP #$fE
-         Bne .NOTMINE
+EXECUTE  EOR #$E0
+         CMP #HITOKEN-$e0
+         BCS NEXTCHAR.DONE
 
-         ldy #1
-         jsr $4a5
-         ;CMP #$E0
-         ;BCC .NOTMINE
-
-         CMP #HITOKEN
-         BCS .NOTMINE
-
-         PLP
-         jsr CHRGET   ;inc $3b??
-         JSR .DISP
-         JMP $8bdc  ;$A7AE        ;Exit through NEWSTT
-.DISP
-         EOR #$E0
          ASL              ;Mult by two
          TAX
          LDA TOKENLOC+1,X
@@ -340,10 +323,6 @@ EXECUTE  JSR CHRGET
          LDA TOKENLOC,X
          PHA
          JMP CHRGET       ;Exit to routine
-
-.NOTMINE PLP
-         JMP $8bd9  ;$A7E7        ;Normal routine
-
 ;
 ; PLOT -- plot a point!
 ;
@@ -450,7 +429,6 @@ BITMASK  DFB $FF         ;Set point
 ; positive when the point is within the visible screen.
 
 ; Little bit position table
-;BITCHUNK HEX FF7F3F1F0F070301
 BITCHUNK BYTE $FF,$7F,$3F,$1F,$0F,$07,$03,$01
 CHUNK    EQU X2
 OLDCHUNK EQU X2+1
@@ -567,7 +545,7 @@ LINE
          AND #$07
          TAX              ;Start in 1st row
 .CONT2
-         LDA #00
+         LDA #0
          STA DONTPLOT
          JSR SETPOINT     ;Set up X,Y and POINT
          INC DONTPLOT
@@ -1047,8 +1025,7 @@ NEXTHALF
 .CONT4   ASL OLDCH2
          BCS .LOOP
 .DONE
-CIRCEXIT                  ;Restore interrupts
-         LDA #1           ;Re-enable plotting
+CIRCEXIT LDA #1           ;Re-enable plotting
          STA DONTPLOT
          RTS
 ;
@@ -1083,7 +1060,7 @@ DECYOFF
          RTS
 EXIT2    PLA              ;Grab return address
          PLA
-         JMP CIRCEXIT     ;Restore interrupts, etc.
+         JMP CIRCEXIT
 
 ; Increment lower pointers
 INCYOFF
@@ -1517,16 +1494,11 @@ init
     sta $2e
     sta $30
     sta $32
-         LDX #5           ;Copy CURRENT vectors
+         LDX #3           ;Copy CURRENT vectors
 .LOOP3   LDA ICRUNCH,X
          STA OLDCRNCH,X
          DEX
          BPL .LOOP3
-
-         lda #<pesc
-         sta $310
-         lda #>pesc
-         sta $311
     rts
 
 PEND                      ;To get that label right :)
