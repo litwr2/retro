@@ -20,7 +20,7 @@ New statements are added to Basic 3.5:
 
 **FCOL** n &ndash; Fast Color - FCOL 1 sets the drawing color to the foreground color; COLOR 0 sets it to background.
 
-**ORIGIN** CX, CY &ndash; Sets the upper-left corner of the screen to have oordinates CX,CY.  More precisely, commands will subtract CX,CY from coordinates passed into it.  Among other things, this provides a mechanism for negative numbers to be handled &ndash; LINE -10,0,40,99 will not work, but ORIGIN 10,0:LINE 0,0,50,99 will.
+**ORIGIN** CX, CY &ndash; Sets the upper-left corner of the screen to have coordinates CX,CY.  More precisely, commands will subtract CX,CY from coordinates passed into it.  Among other things, this provides a mechanism for negative numbers to be handled &ndash; LINE -10,0,40,99 will not work, but ORIGIN 10,0:LINE 0,0,50,99 will.  CX is limited to 0..255.
 
 **PLOT** X,Y &ndash; Sticks a point at coordinates X,Y.  (Actually at coordinates X-XC, Y-YC).  X may be in the range 0..319 and Y may be 0..199; points outside this range will not be plotted.
 

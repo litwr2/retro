@@ -45,7 +45,7 @@ X2       = r2l  ;2 bytes
 Y2       = r3l
 DY       = r3h
 DX       = r4l  ;2 bytes
-CX       = r1l  ;2 bytes
+CX       = r1l  ;2 bytes, actually 1
 CY       = r5l
 BUF      = $200          ;Input buffer
 
@@ -65,7 +65,7 @@ BROW     = rdh            ;Bottom row
  byte $9e  ;sys
  byte init/1000+48, init/100%10+48, init/10%10+48, init%10+48, ":"
  byte $de  ;graphic
- text "1,1:"
+ text "1:"
  byte $9e  ;sys
  byte start/1000+48, start/100%10+48, start/10%10+48, start%10+48, ":"
  byte $de  ;graphic
@@ -78,10 +78,6 @@ ORGX = eob - 2
 ORGY = eob - 1
 
 start
-         lda #<pesc
-         sta $310
-         lda #>pesc
-         sta $311
          ;JMP INIT
 
 ;
@@ -135,7 +131,7 @@ TOKENLOC
 .T3      DFW MODE-1        ;+
 .T4      DFW ORIGIN-1      ;+
 .T5      DFW CLEAR-1       ;+
-.T6      DFW BUFFER-1      ;
+.T6      DFW BUFFER-1      ;+
 .T7      DFW SWAP-1        ;+
 .T8      DFW COLOR-1       ;+
 HITOKEN  EQU $E9
@@ -154,8 +150,6 @@ CRUNCH
          JSR NEXTCHAR
          BNE .LOOP        ;Null byte marks end
 
-         ;dey
-         ;dey
          ldy r2l
          RTS              ;Buh-bye
 ; Insert token and crunch line
@@ -166,17 +160,14 @@ CRUNCH
          sta BUF,x
          sty r2h
          txa
-         clc  ;??remove
          adc r2l
-         adc #2
-         sec
-         sbc r2h
+         adc #2   ;C=1
+         sbc r2h  ;C=0
          sta r2l
-         inx
 .MOVE    INX
          iny
          LDA BUF-1,Y
-         STA BUF,X      ;Move text backwards
+         STA BUF+1,X      ;Move text backwards
          Bne .MOVE
          BEQ .NEXT
 ;
@@ -313,10 +304,10 @@ LIST     CMP #$fE
          INY
          BNE .DONE
 
-pesc lda $3b
+pesc lda TXTPTR
      bne *+4
-     dec $3c
-     dec $3b
+     dec TXTPTR+1
+     dec TXTPTR
      lda #$fe
      jmp EXECUTE.e1
 ;
@@ -421,6 +412,7 @@ BASE = * + 1         ;Address of bitmap, hi byte
          ADC POINT
          STA POINT
          BCC SETPIXEL
+
          INC POINT+1
 SETPIXEL
          LDA LINNUM
@@ -545,8 +537,6 @@ LINE
          STA X1
          LDA #00
          STA X1+1
-         ;LDA CX     ;remove??
-
 .CONT1   LDA Y1           ;Now do the same for Y
          SEC
          SBC ORGY
@@ -842,7 +832,7 @@ CIRCLE   JSR GETPAR
          STA X1
          LDA X1+1
          SBC #0
-         STA CX+1
+         ;STA CX+1
          STA X1+1
          PHP              ;Save carry
          LSR              ;Compute which column we start
@@ -1220,8 +1210,7 @@ PCHUNK1
 ;
 ; Plot left-moving chunk pairs for circle routine
 ;
-PCHUNK2
-         LDA LCOL         ;Range check in X
+PCHUNK2  LDA LCOL         ;Range check in X
          CMP #40
          BCS .SKIP2
 
@@ -1248,8 +1237,7 @@ PCHUNK2
          AND TEMP
          EOR (X2),Y
          STA (X2),Y
-.SKIP2
-         RTS
+.SKIP2   RTS
 
 CLEAR    JSR CHRGOT       ;See if there's a color
          BEQ .l1
@@ -1297,17 +1285,19 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          lsr
 .l2      ora r2h
          sta r2h
-         LDA MODENUM
-         CMP #18
-         BNE .rts
 
+         ldx #$60
+         ldy #$64
+         lda BASE
+         cmp #$40
+         beq *+6
+         ldx #$18
+         ldy #$1c
+         stx POINT+1
+         sty TEMP2+1
          LDY #0          ;Low byte of base address
          STY POINT
          sty TEMP2
-         LDA #$60        ;Colormap is fixed for buffer 1
-         STA POINT+1
-         LDA #$64        ;colors
-         sta TEMP2+1
 
          LDX #4
 .LOOP    lda r2h
@@ -1322,7 +1312,7 @@ CLEAR    JSR CHRGOT       ;See if there's a color
          DEX
          BNE .LOOP
 
-         LDA #$40         ;Now clear bitmap for buffer 1
+         lda BASE
          STA POINT+1
          LDX #32
          TYA
@@ -1366,6 +1356,7 @@ MODE     JSR GETBYT
 .C18     cpx MODENUM
          beq COLENT.RTS
 
+         jsr $8c1a   ;saves TXTPTR to $25b
          CPX #18          ;Double-buffer mode!
          BNE .C17
 
@@ -1376,20 +1367,17 @@ MODE     JSR GETBYT
          sta $63
          lda #$68
          ldx #$40
-         stx BASE
-         jmp relocate
+         bne relocate  ;always
 
 .C17     CPX #17
          BNE MODEDONE
 
 MODE17   STX MODENUM
-         LDA #$20
-         STA BASE
          lda #$d8
          sta $63
          lda #$40
          ldx #$68
-         jmp relocate
+         bne relocate  ;always
 
 MODEDONE STX BITMASK
          RTS
@@ -1403,7 +1391,7 @@ write22 inc $22
 relocate ldy #0
          sta $23
          sta $2c
-         stx $3c
+         stx TXTPTR+1
          lda $2e
          clc
          adc $63
@@ -1416,14 +1404,14 @@ relocate ldy #0
          clc
          adc $63
          sta $32
-         sty $3b
+         sty TXTPTR
          sty $22
          tya
          sta ($22),y
 .l2      jsr $ad88
          jsr write22
          jsr $ad88
-         beq write22
+         beq .final
 
          clc
          adc $63
@@ -1441,6 +1429,27 @@ relocate ldy #0
          bne .l4
          beq .l2
 
+.final   jsr write22
+.l7      jsr $ad88
+         jsr write22
+         lda TXTPTR
+         cmp $31
+         bne .l7
+
+         lda TXTPTR+1
+         cmp $32
+         bne .l7
+
+         jsr $921d  ;restores TXTPTR from $25b
+         tya
+         ldx $81
+         beq .l8
+        
+         clc
+         adc #$28
+.l8      sta TXTPTR+1
+         rts
+        
 ;
 ; BUFFER -- Sets the current drawing buffer to 1 or 2,
 ;   depending on arg being even or odd.  If double-
@@ -1476,14 +1485,16 @@ SWAP     LDA MODENUM
          CMP #18
          BNE .PUNT
 
+;         lda $ff1d
+;         cmp #$ff
+;         bne *-5
+
          lda $ff12
          eor #$18
          sta $ff12
          lda $ff14
-         eor #$50
-         sta $ff14
-         lda $7fb
          eor #$78
+         sta $ff14
          sta $7fb
 .PUNT    RTS
 
@@ -1491,11 +1502,9 @@ SWAP     LDA MODENUM
 ; ORIGIN -- Set upper-left corner of the screen to
 ;   new coordinate offset.
 ;
-ORIGIN
-         JSR GETBYT
-         STX ORGX
-         JSR CHKCOM
-         JSR GETBYT
+ORIGIN   jsr GETPAR
+         lda LINNUM
+         sta ORGX
          STX ORGY
          RTS
 
@@ -1513,6 +1522,11 @@ init
          STA OLDCRNCH,X
          DEX
          BPL .LOOP3
+
+         lda #<pesc
+         sta $310
+         lda #>pesc
+         sta $311
     rts
 
 PEND                      ;To get that label right :)
