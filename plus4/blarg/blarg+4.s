@@ -1382,7 +1382,7 @@ MODE17   STX MODENUM
 MODEDONE STX BITMASK
          RTS
 
-write22 inc $22
+write22 inc $22   ;@$9fab $62-63
         bne *+4
         inc $23
         sta ($22),y
