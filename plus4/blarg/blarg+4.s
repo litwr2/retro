@@ -82,13 +82,17 @@ start
          sta $310
          lda #>EXECUTE
          sta $311
+         lda #<LIST
+         sta $30e
+         lda #>LIST
+         sta $30f
          ;JMP INIT
 
 ;
 ; Init routine -- modify vectors
 ; and set up values.
 ;
-INIT     LDX #3           ;Copy vectors
+INIT     LDX #1           ;Copy vectors
 .LOOP    LDA .TABLE,X
          STA ICRUNCH,X
          DEX
@@ -96,11 +100,11 @@ INIT     LDX #3           ;Copy vectors
          rts
 
 .TABLE   DFW CRUNCH
-         DFW LIST
+         ;DFW LIST
          ;DFW EXECUTE
 JMPCRUN  DFB $4C          ;JMP
 OLDCRNCH DS 2             ;Old CRUNCH vector
-OLDLIST  DS 2
+;OLDLIST  DS 2
 ;OLDEXEC  DS 2
 
 ;
@@ -251,24 +255,16 @@ NEXTCHAR
 ; LIST -- patches the LIST routine
 ; to list my tokens correctly.
 ;
-LIST     CMP #$fE
-         Bne .NOTMINE     ;Not my token
-
-         iny
-         jsr $4d1
-         dey
-
-         CMP #HITOKEN
+LIST     eor #$e0
+         CMP #HITOKEN-$e0
          BCS .NOTMINE
 
          BIT $0F          ;Check for quote mode
          BMI .NOTMINE
 
-         iny
-         SEC
-         SBC #$DF         ;Find the corresponding text
-         TAX
-         STY $49
+         sty r3l
+         TAX  ;Find the corresponding text
+         inx
          LDY #0
 .LOOP    DEX
          BEQ .DONE
@@ -291,22 +287,19 @@ LIST     CMP #$fE
 .OUT     CMP #$B0         ;OR
          BEQ .OR
 
-         CMP #$E0         ;It might be BASIC token
-         BCS .CONT        ;e.g. GRON
+         LDY r3l
+         JMP $8B5C   ;Normal exit
 
-         LDY $49
-.NOTMINE AND #$FF
-         JMP (OLDLIST)    ;QPLOP
-
-.CONT    LDY $49
-         JMP $8B5C   ;$A700        ;Normal exit
+         LDY r3l
+.NOTMINE eor #$e0
+         JMP (IQPLOP)    ;QPLOP
 
 .OR      LDA #'O'         ;For ORIGIN
          JSR CHROUT
          LDA #'R'
          JSR CHROUT
          INY
-         BNE .DONE
+         BNE .DONE  ;always
 
 ;
 ; EXECUTE -- if this is one of my
@@ -1494,7 +1487,7 @@ init
     sta $2e
     sta $30
     sta $32
-         LDX #3           ;Copy CURRENT vectors
+         LDX #1           ;Copy CURRENT vectors
 .LOOP3   LDA ICRUNCH,X
          STA OLDCRNCH,X
          DEX
