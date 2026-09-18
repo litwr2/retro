@@ -19,10 +19,10 @@
 ; Constants
 
 TXTPTR   = $3b            ;BASIC text pointer  $7a
-;IERROR   = $300
 ICRUNCH  = $304          ;Crunch ASCII into token
 IQPLOP   = $306          ;List
-IGONE    = $308          ;Execute next BASIC token
+IESCPR   = $30e          ;List for additional tokens
+IESCEX   = $310          ;Execute next BASIC token
 
 CHRGET   = $473
 CHRGOT   = $479
@@ -31,8 +31,8 @@ CHROUT   = $FFD2
 BITTAB = $C289  ;or $DF7A
 
 GETBYT   = $9D84  ;BASIC routine formula to FAC
-GETPAR   = $9dd2   ;Get a 16,8 pair of numbers
-CHKCOM   = $9491
+GETPAR   = $9dd2  ;Get a 16,8 pair of numbers
+CHKCOM   = $9491  ;Get a comma
 
 LINNUM   = $14            ;Number returned by GETPAR, r6l, 2 bytes
 ;--
@@ -76,36 +76,22 @@ eob
 
 ORGX = eob - 2
 ORGY = eob - 1
-
+DONTPLOT = eob - 4        ;0=Don't plot point, just compute
+                          ;coordinates (used by e.g. circles)
 start
          lda #<EXECUTE
-         sta $310
+         sta IESCEX
          lda #>EXECUTE
-         sta $311
+         sta IESCEX+1
          lda #<LIST
-         sta $30e
+         sta IESCPR
          lda #>LIST
-         sta $30f
-         ;JMP INIT
-
-;
-; Init routine -- modify vectors
-; and set up values.
-;
-INIT     LDX #1           ;Copy vectors
-.LOOP    LDA .TABLE,X
-         STA ICRUNCH,X
-         DEX
-         BPL .LOOP
+         sta IESCPR+1
+         lda #<CRUNCH
+         sta ICRUNCH
+         lda #>CRUNCH
+         sta ICRUNCH+1
          rts
-
-.TABLE   DFW CRUNCH
-         ;DFW LIST
-         ;DFW EXECUTE
-JMPCRUN  DFB $4C          ;JMP
-OLDCRNCH DS 2             ;Old CRUNCH vector
-;OLDLIST  DS 2
-;OLDEXEC  DS 2
 
 ;
 ; Keyword list
@@ -147,8 +133,7 @@ HITOKEN  EQU $E9
 ;
 ; CRUNCH -- If this is one of our keywords, then tokenize it
 ;
-CRUNCH
-         JSR JMPCRUN      ;First crunch line normally
+CRUNCH   JSR 0      ;First crunch line normally
          sty r2l
          LDY #0
 .LOOP    STY TEMP
@@ -319,8 +304,6 @@ EXECUTE  EOR #$E0
 ;
 ; PLOT -- plot a point!
 ;
-DONTPLOT DFB 1           ;0=Don't plot point, just compute
-                          ;coordinates (used by e.g. circles)
 
 PLOT     JSR GETPAR       ;Get coordinate pair
          LDA LINNUM       ;Add in origin offset
@@ -347,13 +330,9 @@ PLOT     JSR GETPAR       ;Get coordinate pair
          SBC #>320
          BCC SETPOINT
 .ERROR   RTS              ;Just don't plot point
-;.ERROR LDX #14
-; JMP (IERROR)
+
 SETPOINT                  ;Alternative entry point
                           ;X=y-coord, LINNUM=x-coord
-; ;X is preserved
-; STX TEMP2
-; STY TEMP2+1
                           ;On exit, X,Y are AND #$07
                           ;i.e. are set up correctly.
          TXA
@@ -581,7 +560,6 @@ STEPINY
 ; Main loop
 ;
 YLOOP    STA TEMP
-; JSR LINEPLOT
 
          LDA CX           ;Range check
          ORA CY
@@ -1489,7 +1467,7 @@ init
     sta $32
          LDX #1           ;Copy CURRENT vectors
 .LOOP3   LDA ICRUNCH,X
-         STA OLDCRNCH,X
+         STA CRUNCH+1,X
          DEX
          BPL .LOOP3
     rts

@@ -5,7 +5,7 @@
 6 c(i)=130*(1+cos(p))+10*(1+cos(12*p)):s(i)=95*(1+sin(2*p))+4*(1+sin(6*p))
 7 print"{home}"i;:next
 8 fori=0to20:r(i)=0:next
-10 mode18:graphic1:clear:buffer0:clear
+10 mode18:graphic1:buffer2:clear:buffer0:clear
 20 b=0:a=2.8:fcol1
 30 fori=19to0step-1
 35 if r(i)=0 then 50
