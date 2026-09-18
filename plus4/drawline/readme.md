@@ -4,9 +4,9 @@ The routines require approximately 95-125 CPU cycles per pixel.  This delivers a
 
 The repo contains Basic programs that implement the same algos as the 'test1' tests in assembly.  Let's check the benchmark results in 1/60s on the C+4 PAL.
 
-Mode       |Basic   |Basic compiled by Austrospeed|BLARG+4|Assembly
+Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223    |3213                         |828    |582
+HiRes      |3223    |3213                         |827    |582
 Multicolor |1508    |1503                         |-      |249
 
 The code size is 613(hr)/617(mc) bytes +30 bytes for the multiplication routine.
