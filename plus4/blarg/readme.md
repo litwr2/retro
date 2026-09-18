@@ -28,9 +28,9 @@ New statements are added to Basic 3.5:
 
 **MODE** n &ndash; New graphics MODE.
 
-* MODE 17 &ndash; Normal mode.  Bitmap &#8954; $2000, attributes &#8954; $1800, text screen &#8954; $0800.  It is default.
+* MODE 17 &ndash; Normal mode.  Bitmap &#8594; $2000, attributes &#8594; $1800, text screen &#8594; $0800.  It is default.
 
-* MODE 18 &ndash; Double buffer mode.  The additional bitmap (buffer 1) &#8954; $4000, attributes &#8954; $6000.
+* MODE 18 &ndash; Double buffer mode.  The additional bitmap (buffer 1) &#8594; $4000, attributes &#8594; $6000.
 
 Any other MODE parameter will be set to the BITMASK parameter.  What is BITMASK?  Anything drawn to the screen is first ANDed with BITMASK.  (Try MODE 85 sometime).
 
