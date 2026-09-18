@@ -1,6 +1,6 @@
 # BLARG &ndash; Basic Language Graphics extension for the Commodore+4
 
-It is based on [BLARG v1.0 or the Commodore 64](http://www.ffd2.com/fridge/programs/blarg/).
+It is based on [BLARG v1.0 for the Commodore 64](http://www.ffd2.com/fridge/programs/blarg/).
 
 BLARG is a little BASIC extension which adds some new graphics commands to the normal C+4 BASIC.  It is free for use in your own programs, so feel free to do so!
 
