@@ -50,3 +50,5 @@ The differences from BLARG for the C64:
 
 * CIRCLE is replaced with FCIRC, and COLOR is replaced with FCOL.
 
+Executables are [here](https://litwr2.github.io/plus4/plus4.html?item=36).
+
