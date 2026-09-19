@@ -2,145 +2,6 @@
 ;thanks to Crown and MMS for hints
 ;r4h,r7,rb - free
 
-mctplot  ;in: x - r8l, y - r1h;  out: r3h, r9h, ral
-.x0 = r8l
-.y0 = r1h
-    lda .x0
-    lsr
-    lsr
-    sta ral
-    lda #0
-    sta r3h
-    lda .y0
-    and #$f8
-    sta .m1
-    asl
-    rol r3h
-    asl
-    rol r3h  ;sets C=0
-.m1 = * + 1
-    adc #0  ;C=0
-    bcc *+5
-    inc r3h
-    clc
-    adc ral  ;sets C=0
-    sta ral
-    lda #gabase
-    adc r3h   ;sets C=0
-    sta r3h
-    adc #4   ;C=0, sets C=0
-    sta r9h
-
-mtplot  ;use: r0h
-.c8 = rch
-    ldy ral
-    lda .c8
-    and #$55
-    beq bg
-
-    lda (r3l),y
-    and #$f0
-    sta r0h
-    lda $86
-    lsr
-    lsr
-    lsr
-    lsr
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
-    and #$f
-    sta r0h
-    lda $86
-    asl
-    asl
-    asl
-    asl
-    ora r0h  ;C=0
-    sta (r9l),y
-    rts
-
-bg  lda (r3l),y
-    and #$f
-    sta r0h
-    lda $85
-    and #$70
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
-    and #$70
-    sta r0h
-    lda $85
-    and #$f
-    ora r0h
-    sta (r9l),y
-    rts
-
-pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
-pow2im byte $3f,$cf,$f3,$fc
-
-gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
-       ;out: r6l;  use: r0l, r5, r8h
-       ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
-x0l = r8l
-x0h = r8h
-.y0 = r1h
-.p = r5l
-.m8 = rcl
-.c8 = rch
-.yh = r6l
-    lda #0
-    sta r2h
-    lda .c8
-    beq .l1
-
-    cmp #3
-    beq .l1
-
-    sta r2h
-    jsr mctplot
-.l1  lda #gbase/2
-    sta x0h
-    lda x0l
-    asl
-    sta .m1
-    rol x0h
-    lda .y0
-    and #7
-    sta .m2
-    lda .y0
-    sta .yh
-    and #$f8
-    tay
-    jsr mul40
-.m1 = * + 1
-    adc #0   ;C=0
-    and #$f8
-.m2 = * + 1
-    ora #0
-    sta r5l
-    lda r5h
-    adc x0h
-    sta r5h
-
-    lda .m1
-    and #6
-    asl
-    ora .c8
-    tax
-    lda pow2m,x
-    sta .c8
-    lda x0l
-    and #3
-    tax
-    lda pow2im,x
-    sta .m8
-    ldy #0
-    and (r5l),y
-    ora .c8
-    sta (r5l),y
-    rts
-
 drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r0*, r1l, r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
 .x0 = r8l
@@ -208,7 +69,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda #<.l5a
     sta .lb+1
 
-  assert >.l5a == >.l5b, WRONG ALIGNMENT
+  assert >.l5a == >.l5b, WRONG_ALIGNMENT
     ;lda #>.l5a
     ;sta .lb+2
 .l5a dec .cnt
@@ -338,7 +199,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .m3 = * + 1
     jmp .l0
 
-;   assert >.l0 == >.l5,BAD ALIGNMENT
+   assert >.l0 == >.l5,BAD_ALIGNMENT
 .l0 lda .yh
     dec .yh
     and #7
@@ -407,4 +268,152 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     inc .p+1
     bne .ly7  ;always
+
+gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
+       ;out: r6l;  use: r0l, r5
+       ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
+.x0l = r8l
+;.x0h = r8h
+.y0 = r1h
+.p = r5l
+.m8 = rcl
+.c8 = rch
+.yh = r6l
+    lda #0
+    sta r2h
+    lda .c8
+    beq .l1
+
+    cmp #3
+    beq .l1
+
+    sta r2h
+    jsr mctplot
+.l1 lda .y0
+    and #7
+    sta .m2
+    lda .y0
+    sta .yh  ;fmplot!
+    and #$f8
+    sta r5l
+    lsr
+    lsr
+    lsr
+    sta r5h
+    lda #gbase/8
+     asl r5l
+     rol
+     asl r5l
+     rol
+     asl r5l
+     rol
+     adc r5h  ;C=0
+     asl .x0l
+     adc #0
+     sta r5h
+     lda .x0l
+     and #$f8
+.m2 = * + 1
+     ora #0
+     adc r5l  ;C=0
+     sta r5l
+     bcc *+4
+     inc r5h
+
+    lda .x0l
+    lsr .x0l
+    and #6
+    asl
+    ora .c8
+    tax
+    lda pow2m,x
+    sta .c8
+    lda .x0l
+    and #3
+    tax
+    lda pow2im,x
+    sta .m8
+    ldy #0
+    and (r5l),y
+    ora .c8
+    sta (r5l),y
+    rts
+
+
+pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
+pow2im byte $3f,$cf,$f3,$fc
+
+mctplot  ;in: x - r8l, y - r1h;  out: r3h, r9h, ral
+.x0 = r8l
+.y0 = r1h
+    lda .x0
+    lsr
+    lsr
+    sta ral
+    lda #0
+    sta r3h
+    lda .y0
+    and #$f8
+    sta .m1
+    asl
+    rol r3h
+    asl
+    rol r3h  ;sets C=0
+.m1 = * + 1
+    adc #0  ;C=0
+    bcc *+5
+    inc r3h
+    clc
+    adc ral  ;sets C=0
+    sta ral
+    lda #gabase
+    adc r3h   ;sets C=0
+    sta r3h
+    adc #4   ;C=0, sets C=0
+    sta r9h
+
+mtplot  ;use: r0h
+.c8 = rch
+    ldy ral
+    lda .c8
+    and #$55
+    beq bg
+
+    lda (r3l),y
+    and #$f0
+    sta r0h
+    lda $86
+    lsr
+    lsr
+    lsr
+    lsr
+    ora r0h
+    sta (r3l),y
+    lda (r9l),y
+    and #$f
+    sta r0h
+    lda $86
+    asl
+    asl
+    asl
+    asl
+    ora r0h  ;C=0
+    sta (r9l),y
+    rts
+
+bg  lda (r3l),y
+    and #$f
+    sta r0h
+    lda $85
+    and #$70
+    ora r0h
+    sta (r3l),y
+    lda (r9l),y
+    and #$70
+    sta r0h
+    lda $85
+    and #$f
+    ora r0h
+    sta (r9l),y
+    rts
 

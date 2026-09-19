@@ -97,17 +97,29 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6l;  use r0l,
     lda .y0
     sta .yh  ;fhplot!
     and #$f8
-    tay
-    jsr mul40
-    adc .x0l   ;C=0
-    and #$f8
-.m2 = * + 1
-    ora #0
     sta r5l
-    lda r5h
-    adc .x0h  ;sets C=0
-    adc #gbase  ;C=0, sets C=0
+    lsr
+    lsr
+    lsr
+    adc .x0h  ;C=0
     sta r5h
+    lda #gbase/8
+     asl r5l
+     rol
+     asl r5l
+     rol
+     asl r5l
+     rol
+     adc r5h  ;C=0
+     sta r5h
+     lda .x0l
+     and #$f8
+.m2 = * + 1
+     ora #0
+     adc r5l
+     sta r5l
+     bcc *+4
+     inc r5h
 
     lda .x0l
     and #7
@@ -216,7 +228,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda #<.l5a
     sta .lb+1
 
-  assert >.l5a == >.l5b, WRONG ALIGNMENT
+  assert >.l5a == >.l5b, WRONG_ALIGNMENT
     ;lda #>.l5a
     ;sta .lb+2
 .l5a lda .cntl
@@ -344,7 +356,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 ;    bpl .l5
     jmp .l0
 
-   assert >.l0 == >.l5,BAD ALIGNMENT
+   assert >.l0 == >.l5,BAD_ALIGNMENT
 .l0 lda .yh
     dec .yh
     and #7

@@ -478,6 +478,7 @@ LINE
          STA CX           ;X-column
          PLP
          BCC .NEGX        ;If negative, then fix up
+
          CMP #40          ;If past column 40, then punt!
          BCC .CONT1
          RTS

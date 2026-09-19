@@ -390,6 +390,6 @@ pcs byte 0
 crnd byte 255,1,255,1
 
     * = $1400
-  include "mul40.inc"
+  
   include "drawm.inc"
 

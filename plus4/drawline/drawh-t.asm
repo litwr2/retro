@@ -451,8 +451,7 @@ gl3 pha
     adc y1
     sta y1
 
-    inc $86    
-
+    inc $86
     pla
     tax
     dex
@@ -467,6 +466,5 @@ y1 byte 0
 crnd byte 255,1,255,1
 
   * = $1400
-  include "mul40.inc"
   include "drawh.inc"
 
