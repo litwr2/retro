@@ -163,8 +163,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vl
     bcs *+5
     dec .vh
-    ;x++
-    ;jsr fmplot  ;xy
+
 .lyx    sec
     ror .m8
     bcs .la
@@ -195,7 +194,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .la  ror .m8  ;C=1
     lsr .c8
     lsr .c8
-.ly3 ;jsr fhplot  ;xy
+.ly3
 .m3 = * + 1
     jmp .l0
 
@@ -323,7 +322,6 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
     sta (.p),y
     rts
 
-
 pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im byte $3f,$cf,$f3,$fc
 
@@ -331,6 +329,7 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 .x0 = r8l
 .y0 = r1h
 .p = r5l
+.c8 = rch
     lda .x0
     lsr
     lsr
@@ -352,48 +351,50 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
     adc #4   ;C=0, sets C=0
     sta r9h
 
-mtplot  ;use: r0h
-.c8 = rch
-    ldy ral
+    ldx #$f0
+    ldy #$f
     lda .c8
     and #$55
-    beq bg
+    beq .bg
 
+    stx mtplot.m1
+    sty mtplot.m2
+    lda $86
+    lsr
+    lsr
+    lsr
+    lsr
+    sta mtplot.a1
+    lda $86
+    asl
+    asl
+    asl
+    asl
+    jmp .l1
+.bg
+    stx mtplot.m2
+    sty mtplot.m1
+    lda $85
+    and #$70
+    sta mtplot.a1
+    lda $85
+    and #$f
+.l1
+    sta mtplot.a2
+
+mtplot
+    ldy ral
     lda (r3l),y
-    and #$f0
-    sta r0h
-    lda $86
-    lsr
-    lsr
-    lsr
-    lsr
-    ora r0h
+.m1 = * + 1
+    and #0
+.a1 = * + 1
+    ora #0
     sta (r3l),y
     lda (r9l),y
-    and #$f
-    sta r0h
-    lda $86
-    asl
-    asl
-    asl
-    asl
-    ora r0h  ;C=0
-    sta (r9l),y
-    rts
-
-bg  lda (r3l),y
-    and #$f
-    sta r0h
-    lda $85
-    and #$70
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
-    and #$70
-    sta r0h
-    lda $85
-    and #$f
-    ora r0h
+.m2 = * + 1
+    and #0
+.a2 = * + 1
+    ora #0
     sta (r9l),y
     rts
 

@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r4h,r7,rb - free
+;r0h,r4h,r7,rb - free
 
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r0*, r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
@@ -68,8 +68,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     cmp .dxl
     bcs .l4  ;dx <= dy
-    ;bcc *+5
-    ;jmp .l4
 
 .l3 lda .dxl  ;dy < dx
     sec  ;xy = dx - dy
@@ -122,7 +120,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs .lxa
 
     jsr .px
-    bne * + 6  ;.ly7??
+    bne * + 6  ;.ly7
     inc r3h
     inc r9h
     jmp .ly7
@@ -184,7 +182,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcc .ly3
 
     inc .vh
-    ;jsr fhplot  ;y
     jmp .ly3
 
 .l6y ;lda .vl  ;v >= 0
@@ -206,7 +203,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bne .ly3  ;always
 
 .la lsr .c8
-.ly3 ;jsr fhplot  ;xy
+.ly3
 .m3 = * + 1
     jmp .l0
 
@@ -235,7 +232,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     ora .c8
     sta (.p),y
     lda rah
-    beq .lb   ;.l5a??
+    beq .lb
 
     lda #0
     sta rah
@@ -336,6 +333,7 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
 .x0h = r8h
 .y0 = r1h
 .p = r5l
+.c8 = rch
     lda .x0h
     lsr
     lda .x0l
@@ -362,46 +360,49 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     adc #4   ;C=0, sets C=0
     sta r9h
 
-tplot  ;use: r0h
-.c8 = rch
-    ldy ral
-    lda (r3l),y
+    lda #$f0
+    ldy #$f
     ldx .c8
     beq .bg
 
-    and #$f0
-    sta r0h
+    sta tplot.m1
+    sty tplot.m2
     lda $86
     lsr
     lsr
     lsr
     lsr
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
+    sta tplot.a1
+    lda $86
+    asl
+    asl
+    asl
+    asl
+    jmp .l1
+.bg
+    sta tplot.m2
+    sty tplot.m1
+    lda $ff15
+    and #$70
+    sta tplot.a1
+    lda $ff15
     and #$f
-    sta r0h
-    lda $86
-    asl
-    asl
-    asl
-    asl
-    ora r0h  ;C=0
-    sta (r9l),y
-    rts
+.l1
+    sta tplot.a2
 
-.bg and #$f
-    sta r0h
-    lda $ff15
-    and #$70
-    ora r0h
+tplot
+    ldy ral
+    lda (r3l),y
+.m1 = * + 1
+    and #0
+.a1 = * + 1
+    ora #0
     sta (r3l),y
     lda (r9l),y
-    and #$70
-    sta r0h
-    lda $ff15
-    and #$f
-    ora r0h
+.m2 = * + 1
+    and #0
+.a2 = * + 1
+    ora #0
     sta (r9l),y
     rts
 
