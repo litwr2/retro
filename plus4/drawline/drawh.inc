@@ -2,143 +2,8 @@
 ;thanks to Crown and MMS for hints
 ;r4h,r7,rb - free
 
-ctplot  ;in: x - r8, y - r1h;  out: r3h, r9h, ral
-.x0l = r8l
-.x0h = r8h
-.y0 = r1h
-    lda .x0h
-    lsr
-    lda .x0l
-    ror
-    lsr
-    lsr
-    sta ral
-    lda #0
-    sta r3h
-    lda .y0
-    and #$f8
-    sta .m1
-    asl
-    rol r3h
-    asl
-    rol r3h  ;set C=0
-.m1 = * + 1
-    adc #0  ;C=0
-    bcc *+5
-    inc r3h
-    clc
-    adc ral  ;sets C
-    sta ral
-    lda #gabase
-    adc r3h   ;sets C=0
-    sta r3h
-    adc #4   ;C=0, sets C=0
-    sta r9h
-
-tplot  ;use: r0h
-.c8 = rch
-    ldy ral
-    lda (r3l),y
-    ldx .c8
-    beq .bg
-
-    and #$f0
-    sta r0h
-    lda $86
-    lsr
-    lsr
-    lsr
-    lsr
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
-    and #$f
-    sta r0h
-    lda $86
-    asl
-    asl
-    asl
-    asl
-    ora r0h  ;C=0
-    sta (r9l),y
-    rts
-
-.bg and #$f
-    sta r0h
-    lda $ff15
-    and #$70
-    ora r0h
-    sta (r3l),y
-    lda (r9l),y
-    and #$70
-    sta r0h
-    lda $ff15
-    and #$f
-    ora r0h
-    sta (r9l),y
-    rts
-
-pow2 byte 128,64,32,16,8,4,2,1 ;= $C289  ;or $DF7A ;in ROM
-pow2i byte 127,191,223,239,247,251,253,254
-
-ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl;  out: r6l;  use r0l, r5
-   ;40*(y & $f8) + (y&7) + (x & f8)
-.x0l = r8l
-.x0h = r8h
-.y0 = r1h
-.p = r5l
-.m8 = rcl
-.c8 = rch
-.yh = r6l
-    jsr ctplot
-    lda .y0
-    and #7
-    sta .m2
-    lda .y0
-    sta .yh  ;fhplot!
-    and #$f8
-    sta r5l
-    lsr
-    lsr
-    lsr
-    adc .x0h  ;C=0
-    sta r5h
-    lda #gbase/8
-     asl r5l
-     rol
-     asl r5l
-     rol
-     asl r5l
-     rol
-     adc r5h  ;C=0
-     sta r5h
-     lda .x0l
-     and #$f8
-.m2 = * + 1
-     ora #0
-     adc r5l
-     sta r5l
-     bcc *+4
-     inc r5h
-
-    lda .x0l
-    and #7
-    tax
-    ldy .c8
-    beq .l1
-
-    lda pow2,x
-    sta .c8
-.l1 lda pow2i,x
-    sta .m8   ;fhplot!
-    ldy #0
-    and (r5l),y
-    ora .c8
-    sta (r5l),y
-.erts rts
-
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r0*, r1, r2, r3*, r4l, r5*, r6 (r6l*), r8, r9*, ra*, rc (rcl*)
+          ;use: r0*, r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
 .x0l = r8l
 .x0h = r8h
 .y0 = r1h
@@ -191,7 +56,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc .x0h  ;x1 - x0
     sta .dxh
 
-    jsr ghplot  ;plot(x, y, c)
+    jsr ghplot  ;plot(x, y, c), sets Y
     lda .y1
     sec
     sbc .y0
@@ -253,7 +118,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs .lxa
 
     jsr .px
-    bne * + 6  ;.ly7
+    bne * + 6  ;.ly7??
     inc r3h
     inc r9h
     jmp .ly7
@@ -352,23 +217,21 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .la lsr .c8
 .ly3 ;jsr fhplot  ;xy
 .m3 = * + 1
-;    ldy #1  ;y++
-;    bpl .l5
     jmp .l0
 
    assert >.l0 == >.l5,BAD_ALIGNMENT
-.l0 lda .yh
-    dec .yh
-    and #7
-    bne .l6
+.l0 ;ldy .yh
+    dey
+    bpl .ly7
 
+    ldy #7
     sec
     lda .p
-    sbc #<313
+    sbc #<320
     sta .p
     lda .p+1
     sta rah
-    sbc #>313  ;sets C=1
+    sbc #>320  ;sets C=1
     sta .p+1
     lda ral
     sbc #40
@@ -377,36 +240,35 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     dec r3h
     dec r9h
-.ly7 ldy #0
+.ly7
+    ;sty .yh
     lda (.p),y
     and .m8
     ora .c8
     sta (.p),y
     lda rah
-    beq .lb
+    beq .lb   ;.l5a??
 
+    sty .yh
+    ldy #0
     sty rah
     jsr tplot
+    ldy .yh
 .lb jmp .l5a
 
-.l6 lda .p
-    bne *+4
-    dec .p+1
-    dec .p
-    jmp .ly7
+.l5 ;ldy .yh
+    iny
+    cpy #8
+    bne .ly7
 
-.l5 inc .yh
-    lda .yh
-    and #7
-    bne .ly2
-
+    ldy #0
     lda .p
-    clc
-    adc #<313
+    ;clc
+    adc #<319  ;C=1
     sta .p
     lda .p+1
     sta rah
-    adc #>313
+    adc #>320
     sta .p+1
     lda ral
     adc #40  ;C=0
@@ -417,9 +279,129 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     bne .ly7  ;always
 
-.ly2 inc .p
-    bne .ly7
+pow2 byte 128,64,32,16,8,4,2,1 ;= $C289  ;or $DF7A ;in ROM
+pow2i byte 127,191,223,239,247,251,253,254
 
-    inc .p+1
-    bne .ly7  ;always
+ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r0l, r5
+   ;40*(y & $f8) + (y&7) + (x & f8)
+.x0l = r8l
+.x0h = r8h
+.y0 = r1h
+.p = r5l
+.m8 = rcl
+.c8 = rch
+.yh = r6l
+    jsr ctplot
+    lda .y0
+    and #7
+    tay
+    lda r5l
+    lsr
+    lsr
+    lsr
+    adc .x0h  ;C=0
+    sta r5h
+    lda #gbase/8
+     asl r5l
+     rol
+     asl r5l
+     rol
+     asl r5l
+     rol
+     adc r5h  ;C=0
+     sta r5h
+     lda .x0l
+     and #$f8
+     adc r5l
+     sta r5l
+     bcc *+4
+     inc r5h
+
+    lda .x0l
+    and #7
+    tax
+    lda .c8
+    beq .l1
+
+    lda pow2,x
+    sta .c8
+.l1 lda pow2i,x
+    sta .m8   ;fhplot!
+    and (r5l),y
+    ora .c8
+    sta (r5l),y
+.erts rts
+
+ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
+.x0l = r8l
+.x0h = r8h
+.y0 = r1h
+    lda .x0h
+    lsr
+    lda .x0l
+    ror
+    lsr
+    lsr
+    sta ral
+    lda #gabase/4
+    sta r3h
+    lda .y0
+    and #$f8
+    sta r5l
+    asl
+    rol r3h
+    asl
+    rol r3h  ;sets C=0
+    adc r5l  ;C=0
+    bcc *+5
+    inc r3h
+    clc
+    adc ral  ;sets C=0
+    sta ral
+    lda r3h
+    adc #4   ;C=0, sets C=0
+    sta r9h
+
+tplot  ;use: r0h
+.c8 = rch
+    ldy ral
+    lda (r3l),y
+    ldx .c8
+    beq .bg
+
+    and #$f0
+    sta r0h
+    lda $86
+    lsr
+    lsr
+    lsr
+    lsr
+    ora r0h
+    sta (r3l),y
+    lda (r9l),y
+    and #$f
+    sta r0h
+    lda $86
+    asl
+    asl
+    asl
+    asl
+    ora r0h  ;C=0
+    sta (r9l),y
+    rts
+
+.bg and #$f
+    sta r0h
+    lda $ff15
+    and #$70
+    ora r0h
+    sta (r3l),y
+    lda (r9l),y
+    and #$70
+    sta r0h
+    lda $ff15
+    and #$f
+    ora r0h
+    sta (r9l),y
+    rts
 

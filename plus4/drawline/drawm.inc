@@ -40,7 +40,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .dx  ;x1 - x0
     sta .cnt
 
-    jsr gmplot  ;plot(x, y, c)
+    jsr gmplot  ;plot(x, y, c), sets YR
     lda .y1
     sec
     sbc .y0
@@ -200,18 +200,17 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     jmp .l0
 
    assert >.l0 == >.l5,BAD_ALIGNMENT
-.l0 lda .yh
-    dec .yh
-    and #7
-    bne .l6
+.l0 dey
+    bpl .ly7
 
+    ldy #7
     sec
     lda .p
-    sbc #<313
+    sbc #<320
     sta .p
     lda .p+1
     sta rah
-    sbc #>313  ;sets C=1
+    sbc #>320  ;sets C=1
     sta .p+1
     lda ral
     sbc #40   ;C=1
@@ -220,39 +219,35 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     dec r3h
     dec r9h
-.ly7 ldy #0
-    lda (.p),y
+.ly7 lda (.p),y
     and .m8
     ora .c8
     sta (.p),y
     lda rah
     beq .lb
 
-    sty rah
+    lda #0
+    sta rah
     lda r2h
     beq .lb
 
+    sty .yh
     jsr mtplot
+    ldy .yh
 .lb jmp .l5a
 
-.l6 lda .p
-    bne *+4
-    dec .p+1
-    dec .p
-    jmp .ly7
+.l5 iny
+    cpy #8
+    bne .ly7
 
-.l5 inc .yh
-    lda .yh
-    and #7
-    bne .ly2
-
+    ldy #0
     lda .p
-    clc
-    adc #<313
+    ;clc
+    adc #<319  ;C=1
     sta .p
     lda .p+1
     sta rah
-    adc #>313
+    adc #>320
     sta .p+1
     lda ral
     adc #40  ;C=0
@@ -263,14 +258,8 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     jmp .ly7
 
-.ly2 inc .p
-    bne .ly7
-
-    inc .p+1
-    bne .ly7  ;always
-
-gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
-       ;out: r6l;  use: r0l, r5
+gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r5l;
+       ;out: YR;  use: r0l, r5
        ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 .x0l = r8l
 ;.x0h = r8h
@@ -278,9 +267,11 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
 .p = r5l
 .m8 = rcl
 .c8 = rch
-.yh = r6l
     lda #0
     sta r2h
+    lda .y0
+    and #$f8
+    sta r5l
     lda .c8
     beq .l1
 
@@ -291,11 +282,8 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
     jsr mctplot
 .l1 lda .y0
     and #7
-    sta .m2
-    lda .y0
-    sta .yh  ;fmplot!
-    and #$f8
-    sta r5l
+    tay
+    lda r5l
     lsr
     lsr
     lsr
@@ -307,14 +295,11 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
      rol
      asl r5l
      rol
-     adc r5h  ;C=0
-     asl .x0l
-     adc #0
+     asl .x0l  ;sets C
+     adc r5h
      sta r5h
      lda .x0l
      and #$f8
-.m2 = * + 1
-     ora #0
      adc r5l  ;C=0
      sta r5l
      bcc *+4
@@ -333,7 +318,6 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
     tax
     lda pow2im,x
     sta .m8
-    ldy #0
     and (r5l),y
     ora .c8
     sta (r5l),y
@@ -343,32 +327,27 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r6l;
 pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im byte $3f,$cf,$f3,$fc
 
-mctplot  ;in: x - r8l, y - r1h;  out: r3h, r9h, ral
+mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 .x0 = r8l
 .y0 = r1h
     lda .x0
     lsr
     lsr
     sta ral
-    lda #0
+    lda #gabase/4
     sta r3h
-    lda .y0
-    and #$f8
-    sta .m1
+    lda r5l
     asl
     rol r3h
     asl
     rol r3h  ;sets C=0
-.m1 = * + 1
-    adc #0  ;C=0
+    adc r5l  ;C=0
     bcc *+5
     inc r3h
     clc
     adc ral  ;sets C=0
     sta ral
-    lda #gabase
-    adc r3h   ;sets C=0
-    sta r3h
+    lda r3h
     adc #4   ;C=0, sets C=0
     sta r9h
 
