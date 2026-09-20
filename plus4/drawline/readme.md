@@ -6,7 +6,7 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223    |3213                         |827    |504
+HiRes      |3223    |3213                         |827    |498
 Multicolor |1508    |1503                         |-      |207
 
-The code size is 594(hr)/591(mc) bytes.
+The code size is 598(hr)/591(mc) bytes.

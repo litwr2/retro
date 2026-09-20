@@ -258,8 +258,8 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     jmp .ly7
 
-gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r5l;
-       ;out: YR;  use: r0l, r5
+gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
+       ;out: YR, r5l;  use: r0l, r5
        ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 .x0l = r8l
 ;.x0h = r8h
@@ -271,7 +271,7 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r5l;
     sta r2h
     lda .y0
     and #$f8
-    sta r5l
+    sta .p
     lda .c8
     beq .l1
 
@@ -283,27 +283,27 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r5l;
 .l1 lda .y0
     and #7
     tay
-    lda r5l
+    lda .p
     lsr
     lsr
     lsr
-    sta r5h
+    sta .p+1
     lda #gbase/8
-     asl r5l
+     asl .p
      rol
-     asl r5l
+     asl .p
      rol
-     asl r5l
+     asl .p
      rol
      asl .x0l  ;sets C
-     adc r5h
-     sta r5h
+     adc .p+1
+     sta .p+1
      lda .x0l
      and #$f8
-     adc r5l  ;C=0
-     sta r5l
+     adc .p  ;C=0
+     sta .p
      bcc *+4
-     inc r5h
+     inc .p+1
 
     lda .x0l
     lsr .x0l
@@ -318,9 +318,9 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2), r5l;
     tax
     lda pow2im,x
     sta .m8
-    and (r5l),y
+    and (.p),y
     ora .c8
-    sta (r5l),y
+    sta (.p),y
     rts
 
 
@@ -330,18 +330,19 @@ pow2im byte $3f,$cf,$f3,$fc
 mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 .x0 = r8l
 .y0 = r1h
+.p = r5l
     lda .x0
     lsr
     lsr
     sta ral
     lda #gabase/4
     sta r3h
-    lda r5l
+    lda .p
     asl
     rol r3h
     asl
     rol r3h  ;sets C=0
-    adc r5l  ;C=0
+    adc .p  ;C=0
     bcc *+5
     inc r3h
     clc

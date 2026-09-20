@@ -68,6 +68,8 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     cmp .dxl
     bcs .l4  ;dx <= dy
+    ;bcc *+5
+    ;jmp .l4
 
 .l3 lda .dxl  ;dy < dx
     sec  ;xy = dx - dy
@@ -92,16 +94,18 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vh
     lda #<.l5a
     sta .lb+1
+    lda #0
+    sbc .cntl  ;C=1
+    sta .cntl
 
   assert >.l5a == >.l5b, WRONG_ALIGNMENT
     ;lda #>.l5a
     ;sta .lb+2
-.l5a lda .cntl
+.l5a inc .cntl
     bne *+6
     dec .cnth
     bmi .e1  ;erts
 
-    dec .cntl
     ;x++
     lda .vh
     bpl .l6x
@@ -201,27 +205,13 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     bne .ly3  ;always
 
-.px lda .p
-    adc #8  ;C=0
-    sta .p
-    bcc *+4
-    inc .p+1
-    lsr .c8
-    ror .c8
-    lda #$7f
-    sta rah
-    sta .m8
-    inc ral
-    rts
-
 .la lsr .c8
 .ly3 ;jsr fhplot  ;xy
 .m3 = * + 1
     jmp .l0
 
    assert >.l0 == >.l5,BAD_ALIGNMENT
-.l0 ;ldy .yh
-    dey
+.l0 dey
     bpl .ly7
 
     ldy #7
@@ -240,24 +230,21 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     dec r3h
     dec r9h
-.ly7
-    ;sty .yh
-    lda (.p),y
+.ly7 lda (.p),y
     and .m8
     ora .c8
     sta (.p),y
     lda rah
     beq .lb   ;.l5a??
 
+    lda #0
+    sta rah
     sty .yh
-    ldy #0
-    sty rah
     jsr tplot
     ldy .yh
 .lb jmp .l5a
 
-.l5 ;ldy .yh
-    iny
+.l5 iny
     cpy #8
     bne .ly7
 
@@ -279,6 +266,19 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     bne .ly7  ;always
 
+.px lda .p
+    adc #8  ;C=0
+    sta .p
+    bcc *+4
+    inc .p+1
+    lsr .c8
+    ror .c8
+    lda #$7f
+    sta rah
+    sta .m8
+    inc ral
+    rts
+
 pow2 byte 128,64,32,16,8,4,2,1 ;= $C289  ;or $DF7A ;in ROM
 pow2i byte 127,191,223,239,247,251,253,254
 
@@ -290,32 +290,31 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .p = r5l
 .m8 = rcl
 .c8 = rch
-.yh = r6l
     jsr ctplot
     lda .y0
     and #7
     tay
-    lda r5l
+    lda .p
     lsr
     lsr
     lsr
     adc .x0h  ;C=0
-    sta r5h
+    sta .p+1
     lda #gbase/8
-     asl r5l
+     asl .p
      rol
-     asl r5l
+     asl .p
      rol
-     asl r5l
+     asl .p
      rol
-     adc r5h  ;C=0
-     sta r5h
+     adc .p+1  ;C=0
+     sta .p+1
      lda .x0l
      and #$f8
-     adc r5l
-     sta r5l
+     adc .p
+     sta .p
      bcc *+4
-     inc r5h
+     inc .p+1
 
     lda .x0l
     and #7
@@ -327,15 +326,16 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
     sta .c8
 .l1 lda pow2i,x
     sta .m8   ;fhplot!
-    and (r5l),y
+    and (.p),y
     ora .c8
-    sta (r5l),y
+    sta (.p),y
 .erts rts
 
 ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
 .x0l = r8l
 .x0h = r8h
 .y0 = r1h
+.p = r5l
     lda .x0h
     lsr
     lda .x0l
@@ -347,12 +347,12 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     sta r3h
     lda .y0
     and #$f8
-    sta r5l
+    sta .p
     asl
     rol r3h
     asl
     rol r3h  ;sets C=0
-    adc r5l  ;C=0
+    adc .p  ;C=0
     bcc *+5
     inc r3h
     clc
