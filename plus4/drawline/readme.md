@@ -9,4 +9,7 @@ Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/
 HiRes      |3223    |3213                         |827    |498
 Multicolor |1508    |1503                         |-      |207
 
+BLARG doesn't change attributes so its result for true comparison must be about 15% slower.
+
 The code size is 598(hr)/591(mc) bytes.
+
