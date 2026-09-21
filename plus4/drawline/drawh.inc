@@ -1,8 +1,8 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0,r4h,r6l,r7,rb - free
+;r0,r4h,r6l,r7,rah,rb - free
 
-ROMtable = 0   ;0 - RAM, 1 - ROM @$C289, 2 - ROM @$DF7A  -  ROM saves 8 bytes
+ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
 noattr = 0
 
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
@@ -219,7 +219,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc #<320
     sta .p
     lda .p+1
-    sta rah
+    sta .tr
     sbc #>320  ;sets C=1
     sta .p+1
     lda ral
@@ -233,14 +233,16 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     and .m8
     ora .c8
     sta (.p),y
-    lda rah
+.tr = * + 1
+    lda #0
     beq .lb
 
-    sty rah
+    sty .ys
     jsr tplot
-    ldy rah
+.ys = * + 1
+    ldy #0
     lda #0
-    sta rah
+    sta .tr
 .lb jmp .l5a
 
 .l5 iny
@@ -253,7 +255,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc #<319  ;C=1
     sta .p
     lda .p+1
-    sta rah
+    sta .tr
     adc #>320
     sta .p+1
     lda ral
@@ -273,19 +275,16 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lsr .c8
     ror .c8
     lda #$7f
-    sta rah
+    sta .tr
     sta .m8
     inc ral
     rts
 
-   if ROMtable = 0
+   if ROM8table = 0
 pow2 byte 128,64,32,16,8,4,2,1
    endif
-   if ROMtable = 1
-pow2 = $C289
-   endif
-   if ROMtable = 2
-pow2 = $DF7A
+   if ROM8table != 0
+pow2 = ROM8table
    endif
 pow2i byte 127,191,223,239,247,251,253,254
 

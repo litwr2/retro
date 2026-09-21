@@ -1,6 +1,17 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0,r4h,r6l,r7,rb - free
+;r0,r2h,r4h,r6l,r7,rah,rb - free
+
+ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes
+
+pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
+pow2im byte $3f,$cf,$f3,$fc
+  if ROM4table == 0
+c8st byte 0,255,255,0
+  endif
+  if ROM4table != 0
+c8st = ROM4table
+  endif
 
 drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r1l, r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
@@ -112,7 +123,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs .lyx
 
     dec .vh
-    ;jsr fmplot  ;xy
     jmp .lyx
 
 .l4  ;lda .dy  ;dy >= dx
@@ -151,6 +161,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc .dx  ;C=0
     sta .vl
     bcc .ly3
+
     inc .vh
     jmp .ly3
 
@@ -172,22 +183,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc r9h
     jmp .ly3
 
-.px lda .p
-    adc #8  ;C=0
-    sta .p
-    bcc *+4
-    inc .p+1
-    lda .c8
-    lsr
-    ror
-    ror
-    sta .c8
-    lda #$3f
-    sta rah
-    sta .m8
-    inc ral
-    rts
-
 .la  ror .m8  ;C=1
     lsr .c8
     lsr .c8
@@ -205,7 +200,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc #<320
     sta .p
     lda .p+1
-    sta rah
+    sta .tr2
     sbc #>320  ;sets C=1
     sta .p+1
     lda ral
@@ -219,15 +214,18 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     and .m8
     ora .c8
     sta (.p),y
-    lda rah
-    and r2h
+.tr2 = * + 1
+    lda #0
+.tr1 = * + 1
+    and #0
     beq .lb
 
-    sty rah
+    sty .ys
     jsr mtplot
-    ldy rah
+.ys = * + 1
+    ldy #0
     lda #0
-    sta rah
+    sta .tr2
 .lb jmp .l5a
 
 .l5 iny
@@ -240,7 +238,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc #<319  ;C=1
     sta .p
     lda .p+1
-    sta rah
+    sta .tr2
     adc #>320
     sta .p+1
     lda ral
@@ -250,7 +248,23 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     inc r3h
     inc r9h
-    jmp .ly7
+    bne .ly7  ;always
+
+.px lda .p
+    adc #8  ;C=0
+    sta .p
+    bcc *+4
+    inc .p+1
+    lda .c8
+    lsr
+    ror
+    ror
+    sta .c8
+    lda #$3f
+    sta .tr2
+    sta .m8
+    inc ral
+    rts
 
 gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
        ;out: YR, r5l;  use: r5
@@ -266,7 +280,7 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
     sta .p
     ldx .c8
     lda c8st,x
-    sta r2h
+    sta drawmline.tr1
     beq .l1
 
     jsr mctplot
@@ -312,10 +326,6 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
     ora .c8
     sta (.p),y
     rts
-
-pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
-pow2im byte $3f,$cf,$f3,$fc
-c8st byte 0,255,255,0
 
 mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 ;5*(y & $f8) + (x >> 2)
