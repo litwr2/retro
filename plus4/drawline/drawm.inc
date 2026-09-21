@@ -39,9 +39,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .dx  ;x1 - x0
     sta .cnt
 
-    lda .y0
-    and #$f8
-    sta .p
     jsr gmplot  ;plot(x, y, c), sets YR
     lda .y1
     sec
@@ -264,6 +261,9 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
 .p = r5l
 .m8 = rcl
 .c8 = rch
+    lda .y0
+    and #$f8
+    sta .p
     ldx .c8
     lda c8st,x
     sta r2h
@@ -315,9 +315,10 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
 
 pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im byte $3f,$cf,$f3,$fc
-c8st byte 0,1,1,0
+c8st byte 0,255,255,0
 
 mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
+;5*(y & $f8) + (x >> 2)
 .x0 = r8l
 .y0 = r1h
 .p = r5l
@@ -349,8 +350,8 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
     and #$55
     beq .bg
 
-    stx mtplot.m1
-    sty mtplot.m2
+    stx mtplot.ma1
+    sty mtplot.ma2
     lda $86
     lsr
     lsr
@@ -364,8 +365,8 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
     asl
     jmp .l1
 .bg
-    stx mtplot.m2
-    sty mtplot.m1
+    stx mtplot.ma2
+    sty mtplot.ma1
     lda $85
     and #$70
     sta mtplot.a1
@@ -377,13 +378,13 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 mtplot
     ldy ral
     lda (r3l),y
-.m1 = * + 1
+.ma1 = * + 1
     and #0
 .a1 = * + 1
     ora #0
     sta (r3l),y
     lda (r9l),y
-.m2 = * + 1
+.ma2 = * + 1
     and #0
 .a2 = * + 1
     ora #0

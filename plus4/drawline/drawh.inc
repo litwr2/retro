@@ -58,9 +58,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc .x0h  ;x1 - x0
     sta .dxh
 
-    lda .y0
-    and #$f8
-    sta .p
     jsr ghplot  ;plot(x, y, c), sets Y
     lda .y1
     sec
@@ -342,6 +339,7 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .erts rts
 
 ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
+;5*(y & $f8) + (x >> 3)
 .x0l = r8l
 .x0h = r8h
 .y0 = r1h
@@ -356,7 +354,9 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     sta ral
     lda #gabase/4
     sta r3h
-    lda .p
+    lda .y0
+    and #$f8
+    sta .p
     asl
     rol r3h
     asl
@@ -376,8 +376,8 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     ldx .c8
     beq .bg
 
-    sta tplot.m1
-    sty tplot.m2
+    sta tplot.ma1
+    sty tplot.ma2
     lda $86
     lsr
     lsr
@@ -391,8 +391,8 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     asl
     jmp .l1
 .bg
-    sta tplot.m2
-    sty tplot.m1
+    sta tplot.ma2
+    sty tplot.ma1
     lda $ff15
     and #$70
     sta tplot.a1
@@ -404,13 +404,13 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
 tplot
     ldy ral
     lda (r3l),y
-.m1 = * + 1
+.ma1 = * + 1
     and #0
 .a1 = * + 1
     ora #0
     sta (r3l),y
     lda (r9l),y
-.m2 = * + 1
+.ma2 = * + 1
     and #0
 .a2 = * + 1
     ora #0
