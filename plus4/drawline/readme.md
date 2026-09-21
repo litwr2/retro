@@ -11,5 +11,5 @@ Multicolor |1508    |1503                         |-      |200
 
 BLARG doesn't change attributes so its result for the true comparison must be about 15% slower.
 
-The code size is 603(hr)/594(mc) bytes.
+The code size is 605(hr)/591(mc) bytes.
 

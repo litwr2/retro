@@ -1,9 +1,12 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0h,r4h,r7,rb - free
+;r0,r4h,r6l,r7,rb - free
+
+ROMtable = 0   ;0 - RAM, 1 - ROM @$C289, 2 - ROM @$DF7A  -  ROM saves 8 bytes
+noattr = 0
 
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r0*, r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
+          ;use: r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
 .x0l = r8l
 .x0h = r8h
 .y0 = r1h
@@ -22,7 +25,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .p = r5l
 .m8 = rcl
 .c8 = rch
-.yh = r6l
     lda #<.l5
     sta .m3
     lda .x0h
@@ -56,6 +58,9 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc .x0h  ;x1 - x0
     sta .dxh
 
+    lda .y0
+    and #$f8
+    sta .p
     jsr ghplot  ;plot(x, y, c), sets Y
     lda .y1
     sec
@@ -234,11 +239,11 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda rah
     beq .lb
 
+    sty rah
+    jsr tplot
+    ldy rah
     lda #0
     sta rah
-    sty .yh
-    jsr tplot
-    ldy .yh
 .lb jmp .l5a
 
 .l5 iny
@@ -276,10 +281,18 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc ral
     rts
 
-pow2 byte 128,64,32,16,8,4,2,1 ;= $C289  ;or $DF7A ;in ROM
+   if ROMtable = 0
+pow2 byte 128,64,32,16,8,4,2,1
+   endif
+   if ROMtable = 1
+pow2 = $C289
+   endif
+   if ROMtable = 2
+pow2 = $DF7A
+   endif
 pow2i byte 127,191,223,239,247,251,253,254
 
-ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r0l, r5
+ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r5
    ;40*(y & $f8) + (y&7) + (x & f8)
 .x0l = r8l
 .x0h = r8h
@@ -322,7 +335,7 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
     lda pow2,x
     sta .c8
 .l1 lda pow2i,x
-    sta .m8   ;fhplot!
+    sta .m8
     and (.p),y
     ora .c8
     sta (.p),y
@@ -343,9 +356,7 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     sta ral
     lda #gabase/4
     sta r3h
-    lda .y0
-    and #$f8
-    sta .p
+    lda .p
     asl
     rol r3h
     asl

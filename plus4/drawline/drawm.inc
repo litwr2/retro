@@ -1,9 +1,9 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r4h,r7,rb - free
+;r0,r4h,r6l,r7,rb - free
 
 drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r0*, r1l, r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
+          ;use: r1l, r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
 .x0 = r8l
 .y0 = r1h
 .x1 = r2l
@@ -17,7 +17,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .p = r5l
 .m8 = rcl
 .c8 = rch
-.yh = r6l
     lda #<.l5
     sta .m3
 
@@ -40,6 +39,9 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .dx  ;x1 - x0
     sta .cnt
 
+    lda .y0
+    and #$f8
+    sta .p
     jsr gmplot  ;plot(x, y, c), sets YR
     lda .y1
     sec
@@ -85,7 +87,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vl
     bcc *+4
     inc .vh
-    ;jsr fmplot  ;x
     sec
     ror .m8
     bcs .lxa
@@ -154,7 +155,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vl
     bcc .ly3
     inc .vh
-    ;jsr fmplot  ;y
     jmp .ly3
 
 .l6y ;lda .vl  ;v >= 0
@@ -223,16 +223,14 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     ora .c8
     sta (.p),y
     lda rah
+    and r2h
     beq .lb
 
+    sty rah
+    jsr mtplot
+    ldy rah
     lda #0
     sta rah
-    lda r2h
-    beq .lb
-
-    sty .yh
-    jsr mtplot
-    ldy .yh
 .lb jmp .l5a
 
 .l5 iny
@@ -258,7 +256,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     jmp .ly7
 
 gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
-       ;out: YR, r5l;  use: r0l, r5
+       ;out: YR, r5l;  use: r5
        ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 .x0l = r8l
 ;.x0h = r8h
@@ -266,18 +264,11 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
 .p = r5l
 .m8 = rcl
 .c8 = rch
-    lda #0
+    ldx .c8
+    lda c8st,x
     sta r2h
-    lda .y0
-    and #$f8
-    sta .p
-    lda .c8
     beq .l1
 
-    cmp #3
-    beq .l1
-
-    sta r2h
     jsr mctplot
 .l1 lda .y0
     and #7
@@ -324,6 +315,7 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
 
 pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
 pow2im byte $3f,$cf,$f3,$fc
+c8st byte 0,1,1,0
 
 mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 .x0 = r8l
