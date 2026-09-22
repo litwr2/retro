@@ -44,5 +44,5 @@ The second function has similar options:
 
 * *mccoorcheck*.
 
-If you get the WRONG ALIGNMENT error during compilation try to move the library code.  You may just shuffle library elements.  Anyway the allocation on the page boundary must work.
+If you get the WRONG ALIGNMENT error during compilation try moving the library code.  You may just shuffle library elements.  Anyway the allocation on the page boundary must work.
 
