@@ -1,5 +1,10 @@
 ;vasm6502-oldstyle assembler
+
   include "registers.mac"
+
+ROM8table = 0  ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
+usehrattr = 1  ;1 - draw colors, 0 - bitmap only
+hrcoorcheck = 1  ;check coordinates for max
 gabase = $18   ;attributes
 gbase = $20    ;bitmap
 

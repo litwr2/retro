@@ -1,9 +1,11 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0,r4h,r6l,r7,rah,rb - free
+;r4h,rah,rb - free
 
-ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
-noattr = 0
+;include "registers.mac"
+;ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
+;usehrattr = 1
+;hrcoorcheck = 1
 
 drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
@@ -15,11 +17,11 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .y1 = r6h
 .xyl = r4l
 ;.xyh = m
-.vl = r8l
-.vh = r8h
-.dy = r6h
-.dxl = r2l
-.dxh = r2h
+.vl = r0l
+.vh = r0h
+.dy = r6l
+.dxl = r7l
+.dxh = r7h
 .cntl = r1l
 .cnth = r1h
 .p = r5l
@@ -94,19 +96,16 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vh
     lda #<.l5a
     sta .lb+1
-    lda #0
-    sbc .cntl  ;C=1
-    sta .cntl
+    jsr .xfix  ;C=1
 
   assert >.l5a == >.l5b, WRONG_ALIGNMENT
     ;lda #>.l5a
     ;sta .lb+2
 .l5a inc .cntl
     bne *+6
-    dec .cnth
-    bmi .e1  ;erts
-
-    ;x++
+    inc .cnth
+    beq .e1  ;erts
+    
     lda .vh
     bpl .l6x
 
@@ -116,15 +115,16 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .vl
     bcc * + 4
     inc .vh
-    ;jsr fhplot  ;x
     sec
     ror .m8
     bcs .lxa
 
     jsr .px
+  if usehrattr
     bne * + 6  ;.ly7
     inc r3h
     inc r9h
+  endif
     jmp .ly7
 
 .lxa lsr .c8
@@ -166,6 +166,15 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc .cntl
     lda #<.l5b
     sta .lb+1
+  if hrcoorcheck
+    lda #199
+    cmp .y1
+    bcs .l5b
+
+    lda #201
+    sbc .y0  ;C=0
+    sta .cntl
+  endif
     ;lda #>.l5b
     ;sta .lb+2
 .l5b dec .cntl
@@ -198,11 +207,15 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs .la
 
     jsr .px
+  if usehrattr
     bne .ly3
 
     inc r3h
     inc r9h
     bne .ly3  ;always
+  else
+    jmp .ly3
+  endif
 
 .la lsr .c8
 .ly3
@@ -219,20 +232,23 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc #<320
     sta .p
     lda .p+1
-    sta .tr
     sbc #>320  ;sets C=1
     sta .p+1
+  if usehrattr
+    sta .tr
     lda ral
-    sbc #40
+    sbc #40  ;C=1
     sta ral
     bcs .ly7
 
     dec r3h
     dec r9h
+  endif
 .ly7 lda (.p),y
     and .m8
     ora .c8
     sta (.p),y
+  if usehrattr
 .tr = * + 1
     lda #0
     beq .lb
@@ -243,6 +259,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     ldy #0
     lda #0
     sta .tr
+  endif
 .lb jmp .l5a
 
 .l5 iny
@@ -255,9 +272,10 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc #<319  ;C=1
     sta .p
     lda .p+1
-    sta .tr
     adc #>320
     sta .p+1
+  if usehrattr
+    sta .tr
     lda ral
     adc #40  ;C=0
     sta ral
@@ -265,6 +283,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     inc r3h
     inc r9h
+  endif
     bne .ly7  ;always
 
 .px lda .p
@@ -275,10 +294,36 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lsr .c8
     ror .c8
     lda #$7f
-    sta .tr
     sta .m8
+  if usehrattr
+    sta .tr
     inc ral
+  endif
     rts
+
+.xfix
+  if hrcoorcheck 
+    lda #<319
+    cmp .x1l
+    lda #>319
+    sbc .x1h
+    bcs .l14
+
+    lda #<320
+    sbc .x0l  ;C=0
+    sta .cntl
+    lda #>319
+    sbc .x0h
+    sta .cnth
+  endif
+.l14 
+     lda #$ff
+     sbc .cntl  ;C=1
+     sta .cntl
+     lda #$ff
+     sbc .cnth
+     sta .cnth
+     rts
 
    if ROM8table = 0
 pow2 byte 128,64,32,16,8,4,2,1
@@ -296,7 +341,13 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .p = r5l
 .m8 = rcl
 .c8 = rch
+  if usehrattr
     jsr ctplot
+  else
+    lda .y0
+    and #$f8
+    sta .p
+  endif
     lda .y0
     and #7
     tay
@@ -337,6 +388,7 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
     sta (.p),y
 .erts rts
 
+  if usehrattr
 ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
 ;5*(y & $f8) + (x >> 3)
 .x0l = r8l
@@ -415,4 +467,5 @@ tplot
     ora #0
     sta (r9l),y
     rts
+  endif
 

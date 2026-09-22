@@ -6,10 +6,10 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223    |3213                         |827    |466
-Multicolor |1508    |1503                         |-      |199
+HiRes      |3223/-  |3213/-                       |-/827  |466/375
+Multicolor |1508/-  |1503/-                       |-/-    |199/164
 
-BLARG doesn't change attributes so its result for the true comparison must be about 15% slower.
+The timer value before the slash corresponds to cases where attributes are drawn. The timer value after the slash corresponds to cases where attributes are not drawn.
 
-The code size is 608(hr)/596(mc) bytes.
+The code size is 608/432 bytes for HR graphics and 595/409 bytes for MC graphics.
 
