@@ -41,6 +41,8 @@ init
     sta $2e
     sta $30
     sta $32
+    lda #$60
+    sta init
     rts
 
 * = $1080

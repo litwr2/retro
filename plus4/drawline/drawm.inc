@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0,r2h,r4h,r6l,r7,rah,rb - free
+;r2h,r4h,r7,rah,rb - free
 
 ;ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes if usemcattr==1
 ;usemcattr = 1
@@ -24,10 +24,10 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .x1 = r2l
 .y1 = r6h
 .xy = r4l
-.vl = r8l
-.vh = r8h
-.dy = r6h
-.dx = r2l
+.vl = r0l
+.vh = r0h
+.dy = r6l
+.dx = r8h
 .cnt = r1l
 .p = r5l
 .m8 = rcl
@@ -308,8 +308,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
        ;out: YR, r5l;  use: r5
        ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
-.x0l = r8l
-;.x0h = r8h
+.x0 = r8l
 .y0 = r1h
 .p = r5l
 .m8 = rcl
@@ -339,25 +338,25 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
      rol
      asl .p
      rol
-     asl .x0l  ;sets C
+     asl .x0  ;sets C
      adc .p+1
      sta .p+1
-     lda .x0l
+     lda .x0
      and #$f8
      adc .p  ;C=0
      sta .p
      bcc *+4
      inc .p+1
 
-    lda .x0l
-    lsr .x0l
+    lda .x0
+    lsr .x0
     and #6
     asl
     ora .c8
     tax
     lda pow2m,x
     sta .c8
-    lda .x0l
+    lda .x0
     and #3
     tax
     lda pow2im,x
