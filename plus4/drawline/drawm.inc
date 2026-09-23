@@ -102,11 +102,13 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     beq .e1  ;erts
 
     ;x++
-    lda .vh
-    bpl .l6x
+    lda #0
+    cmp .vh
+    lda .vl
+    bcs .l6x
 
-    lda .vl  ;d < 0
-    clc  ;v += dy
+    ;lda .vl  ;d < 0
+    ;clc  ;v += dy
     adc .dy
     sta .vl
     bcc *+4
@@ -134,8 +136,8 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     stx .m3
     jmp .l7
 
-.l6x lda .vl  ;v >= 0
-    sec   ;v -= xy
+.l6x ;lda .vl  ;v >= 0
+    ;sec   ;v -= xy
     sbc .xy
     sta .vl
     bcs .lyx
