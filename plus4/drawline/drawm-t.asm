@@ -4,7 +4,7 @@
 
 ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes if usemcattr==1
 usemcattr = 1
-mccoorcheck = 0
+mccoorcheck = 1
 gabase = $18   ;attributes
 gbase = $20    ;bitmap
 

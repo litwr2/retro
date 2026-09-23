@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r2h,r4h,r7,rah,rb - free
+;r1l,r2h,r4h,r7,rah,rb - free
 
 ;ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes if usemcattr==1
 ;usemcattr = 1
@@ -18,7 +18,7 @@ c8st = ROM4table
   endif
 
 drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r1l, r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
+          ;use: r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
 .x0 = r8l
 .y0 = r1h
 .x1 = r2l
@@ -28,7 +28,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .vh = r0h
 .dy = r6l
 .dx = r8h
-.cnt = r1l
+;.cnt = r1l
 .p = r5l
 .m8 = rcl
 .c8 = rch
@@ -84,8 +84,9 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .lb+1
     ;lda #>.l5a
     ;sta .lb+2
-
-    inc .cnt
+.cnt = * + 1
+    ldx #0
+    inx
   if mccoorcheck
     lda #199
     cmp .x1
@@ -93,11 +94,11 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     lda #201
     sbc .x0  ;C=0
-    sta .cnt
+    tax
   endif
 
   assert >.l5a == >.l5b, WRONG_ALIGNMENT
-.l5a dec .cnt
+.l5a dex
     beq .e1  ;erts
 
     ;x++
@@ -143,7 +144,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     jmp .lyx
 
 .l4  ;lda .dy  ;dy >= dx
-    sta .cnt
+    tax
     ;sec  ;xy = dy - dx
     sbc .dx  ;C=1
     sta .xy
@@ -165,7 +166,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     ;lda #>.l5b
     ;sta .lb+2
 
-    inc .cnt
+    inx
   if mccoorcheck
     lda #199
     cmp .y1
@@ -173,15 +174,15 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     lda #201
     sbc .y0  ;C=0
-    sta .cnt
+    tax
   endif
-.l5b dec .cnt
+.l5b dex
     bne *+3
 .e1  rts
 
+    lda #0
+    cmp .vh
     lda .vl
-    ldx #0
-    cpx .vh
     bcs .l6y
 
     ;lda .vl  ;v < 0

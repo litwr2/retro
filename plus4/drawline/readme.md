@@ -6,8 +6,8 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223/-  |3213/-                       |-/827  |466/375
-Multicolor |1508/-  |1503/-                       |-/-    |200/164
+HiRes      |3223/-  |3213/-                       |-/827  |452/361
+Multicolor |1508/-  |1503/-                       |-/-    |195/158
 
 The timer value before the slash corresponds to cases where attributes are drawn. The timer value after the slash corresponds to cases where attributes are not drawn.
 
@@ -18,9 +18,9 @@ Tool                          |Timings
 Basic                         |4627/-
 Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
-Assembly                      |734/601
+Assembly                      |712/575
 
-The library code size is below 660/480 bytes for HR graphics and below 620/430 bytes for MC graphics.
+The library code size is below 650/470 bytes for HR graphics and below 620/430 bytes for MC graphics.
 
 The library provides functions:
 

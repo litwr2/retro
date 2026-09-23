@@ -101,7 +101,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
   assert >.l5a == >.l5b, WRONG_ALIGNMENT
     ;lda #>.l5a
     ;sta .lb+2
-.l5a inc .cntl
+.l5a inx
     bne *+6
     inc .cnth
     beq .e1  ;erts
@@ -147,7 +147,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     jmp .lyx
 
 .l4  ;lda .dy  ;dy >= dx
-    sta .cntl
+    tax
     ;sec  ;xy = dy - dx
     sbc .dxl  ;C=1
     sta .xyl
@@ -163,7 +163,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda #0
     sbc #0
     sta .vh
-    inc .cntl
+    inx
     lda #<.l5b
     sta .lb+1
   if hrcoorcheck
@@ -173,17 +173,17 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
     lda #201
     sbc .y0  ;C=0
-    sta .cntl
+    tax
   endif
     ;lda #>.l5b
     ;sta .lb+2
-.l5b dec .cntl
+.l5b dex
     bne *+3
 .e1  rts
 
+    lda #0
+    cmp .vh
     lda .vl
-    ldx #0
-    cpx .vh
     bcs .l6y
 
     ;lda .vl  ;v < 0
@@ -319,7 +319,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .l14 
      lda #$ff
      sbc .cntl  ;C=1
-     sta .cntl
+     tax
      lda #$ff
      sbc .cnth
      sta .cnth
@@ -343,15 +343,12 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .c8 = rch
   if usehrattr
     jsr ctplot
+    lda .p
   else
     lda .y0
     and #$f8
     sta .p
   endif
-    lda .y0
-    and #7
-    tay
-    lda .p
     lsr
     lsr
     lsr
@@ -381,7 +378,10 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 
     lda pow2,x
     sta .c8
-.l1 lda pow2i,x
+.l1 lda .y0
+    and #7
+    tay
+    lda pow2i,x
     sta .m8
     and (.p),y
     ora .c8
