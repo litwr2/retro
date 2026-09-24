@@ -2,6 +2,35 @@
 ;thanks to Crown and MMS for hints
 ;r4h,rah,rb - free
 
+;void drawline(unsigned x0, unsigned y0, unsigned x1, unsigned y1, int c) {
+;    unsigned dx, dy, cnt, v;
+;    int sy;
+;    if (x0 > x1) swap(x0, x1), swap(y0, y1);
+;    dx = x1 - x0;
+;    plot(x0, y0, c);
+;   sy = sgn((int)(y1 - y0));  //not true sgn
+;	dy = abs((int)(y1 - y0));
+;	if (dy < dx) {
+;	    if (x1 >= xmax) cnt = xmax - x0 - 1; else cnt = dx;
+;	    v = dx - dy >> 1;
+;		while (cnt-- > 0) {
+;			x0++;
+;			if ((int)(v -= dy) < 0)
+;			    v += dx, y0 += sy;
+;			plot(x0, y0, c);
+;		}
+;	} else {
+;       if (y1 >= ymax) cnt = ymax - y0 - 1; else cnt = dy;
+;	    v = dy - dx >> 1;  //uint8_t
+;		while (cnt-- > 0) {
+;			y0 += sy;
+;			if ((int)(v -= dx) < 0)
+;			    v += dy, x0++;
+;			plot(x0, y0, c);
+;		}
+;  }
+;}
+
 ;include "registers.mac"
 ;ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
 ;usehrattr = 1
@@ -29,6 +58,8 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .c8 = rch
     lda #<.l5
     sta .m3
+    lda #>.l5
+    sta .m3+1
     lda .x0h
     cmp .x1h
     bcc .l1  ;x0 < x1
@@ -70,6 +101,8 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc #1  ;C=0
     ldx #<.l0
     stx .m3
+    ldx #>.l0
+    stx .m3+1
 .l7 sta .dy  ;y1 >= y0
     ldx .dxh
     bne .l3  ;dx > dy
@@ -78,50 +111,44 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bcs .l4  ;dx <= dy
 
 .l3 lda .dxl  ;dy < dx
-    sec  ;xy = dx - dy
+    sec
     sbc .dy
-    sta .xyl
+    sta .vl
     lda .dxh
     sta .cnth
     sbc #0
-    sta .xyh
-    lda .dxh  ;d = dy - dx/2
-    lsr
-    lda .dxl
+    lsr .vl
     ror
-    sta .m1
-    lda .dy
-    sec
-.m1 = * + 1
-    sbc #0
-    sta .vl
-    lda #0
-    sbc #0
     sta .vh
     lda #<.l5a
     sta .lb+1
-    jsr .xfix  ;C=1
+    lda #>.l5a
+    sta .lb+2
+    jsr .xfix
 
-  assert >.l5a == >.l5b, WRONG_ALIGNMENT
-    ;lda #>.l5a
-    ;sta .lb+2
 .l5a inx
     bne *+6
     inc .cnth
     beq .e1  ;erts
 
-    lda #0
-    cmp .vh
     lda .vl
-    bcs .l6x
-
-    ;lda .vl  ;v < 0
-    ;clc  ;v += dy
-    adc .dy
-    sta .vl
-    bcc *+4
-    inc .vh
     sec
+    sbc .dy
+    bcs .lz1
+
+    dec .vh
+    beq .lz2
+
+    adc .dxl  ;C=0
+    sta .vl
+    lda .vh
+    adc .dxh
+    sta .vh    
+    jmp .lyx  ;bxc?
+.lz2
+    sec
+.lz1
+    sta .vl
     ror .m8
     bcs .lxa
 
@@ -136,36 +163,18 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .lxa lsr .c8
     jmp .ly7
 
-.l6x ;lda .vl  ;v >= 0
-    ;sec   ;v -= xy
-    sbc .xyl
-    sta .vl
-    lda .vh
-.xyh = * + 1
-    sbc #0
-    sta .vh
-    jmp .lyx
-
 .l4  ;lda .dy  ;dy >= dx
     tax
     ;sec  ;xy = dy - dx
+    lda .dy
     sbc .dxl  ;C=1
-    sta .xyl
-
-    lda .dy  ;v = dx - dy/2
     lsr
-    sta .m4
-    lda .dxl
-    sec
-.m4 = * + 1
-    sbc #0
     sta .vl
-    lda #0
-    sbc #0
-    sta .vh
     inx
     lda #<.l5b
     sta .lb+1
+    lda #>.l5b
+    sta .lb+2
   if hrcoorcheck
     lda #199
     cmp .y1
@@ -175,33 +184,18 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc .y0  ;C=0
     tax
   endif
-    ;lda #>.l5b
-    ;sta .lb+2
 .l5b dex
     bne *+3
 .e1  rts
 
-    lda #0
-    cmp .vh
     lda .vl
-    bcs .l6y
-
-    ;lda .vl  ;v < 0
-    ;clc  ;v += dy
-    adc .dxl  ;C=0
+    sec
+    sbc .dxl
     sta .vl
-    bcc .ly3
+    bcs .ly3
 
-    inc .vh
-    jmp .ly3
-
-.l6y ;lda .vl  ;v >= 0
-    ;sec  ;C=1
-    sbc .xyl  ;v -= xy
+    adc .dy  ;C=0
     sta .vl
-    bcs *+5
-    dec .vh
-    ;x++
 .lyx sec
     ror .m8
     bcs .la
@@ -222,7 +216,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .m3 = * + 1
     jmp .l0
 
-   assert >.l0 == >.l5,BAD_ALIGNMENT
 .l0 dey
     bpl .ly7
 
@@ -315,23 +308,17 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda #>319
     sbc .x0h
     sta .cnth
+.l14
+  else
+     sec
   endif
-.l14 
      lda #$ff
-     sbc .cntl  ;C=1
+     sbc .cntl
      tax
      lda #$ff
      sbc .cnth
      sta .cnth
      rts
-
-   if ROM8table = 0
-pow2 byte 128,64,32,16,8,4,2,1
-   endif
-   if ROM8table != 0
-pow2 = ROM8table
-   endif
-pow2i byte 127,191,223,239,247,251,253,254
 
 ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r5
    ;40*(y & $f8) + (y&7) + (x & f8)
@@ -468,4 +455,12 @@ tplot
     sta (r9l),y
     rts
   endif
+
+   if ROM8table = 0
+pow2 byte 128,64,32,16,8,4,2,1
+   endif
+   if ROM8table != 0
+pow2 = ROM8table
+   endif
+pow2i byte 127,191,223,239,247,251,253,254
 

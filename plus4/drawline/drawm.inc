@@ -1,31 +1,43 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r1l,r2h,r4h,r7,rah,rb - free
+;r0h,r1l,r2h,r4,r7,rah,rb - free
 
-;ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes if usemcattr==1
-;usemcattr = 1
-;mccoorcheck = 1
-
-pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
-pow2im byte $3f,$cf,$f3,$fc
-  if usemcattr
-  if ROM4table == 0
-c8st byte 0,255,255,0
-  endif
-  if ROM4table != 0
-c8st = ROM4table
-  endif
-  endif
+;void drawline(unsigned x0, unsigned y0, unsigned x1, unsigned y1, int c) {
+;    unsigned dx, dy, cnt, v;
+;    int sy;
+;    if (x0 > x1) swap(x0, x1), swap(y0, y1);
+;    dx = x1 - x0;
+;    plot(x0, y0, c);
+;   sy = sgn((int)(y1 - y0));  //not true sgn
+;	dy = abs((int)(y1 - y0));
+;	if (dy < dx) {
+;	    if (x1 >= xmax) cnt = xmax - x0 - 1; else cnt = dx;
+;	    v = dx - dy >> 1;
+;		while (cnt-- > 0) {
+;			x0++;
+;			if ((int)(v -= dy) < 0)
+;			    v += dx, y0 += sy;
+;			plot(x0, y0, c);
+;		}
+;	} else {
+;       if (y1 >= ymax) cnt = ymax - y0 - 1; else cnt = dy;
+;	    v = dy - dx >> 1;  //uint8_t
+;		while (cnt-- > 0) {
+;			y0 += sy;
+;			if ((int)(v -= dx) < 0)
+;			    v += dy, x0++;
+;			plot(x0, y0, c);
+;		}
+;  }
+;}
 
 drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r2l, r3*, r4l, r5*, r6, r8 (r8h*), r9*, ra*, rc
+          ;use: r2l, r3*, r5*, r6, r8 (r8h*), r9*, ra*, rc
 .x0 = r8l
 .y0 = r1h
 .x1 = r2l
 .y1 = r6h
-.xy = r4l
 .vl = r0l
-.vh = r0h
 .dy = r6l
 .dx = r8h
 ;.cnt = r1l
@@ -34,6 +46,8 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .c8 = rch
     lda #<.l5
     sta .m3
+    lda #>.l5
+    sta .m3+1
 
     lda .x0
     cmp .x1
@@ -64,30 +78,22 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     adc #1  ;C=0
     ldx #<.l0
     stx .m3
+    ldx #>.l0
+    stx .m3+1
 .l7 sta .dy  ;y1 >= y0
     cmp .dx
     bcs .l4  ;dx <= dy
 
     lda .dx  ;dy < dx
-    sec  ;xy = dx - dy
+    sec  ;v = dx - dy
     sbc .dy
-    sta .xy
-    lda .dx  ;d = dy - dx/2
     lsr
-    sta .m1
-    lda .dy
-    sec
-.m1 = * + 1
-    sbc #0
     sta .vl
-    lda #0
-    sbc #0
-    sta .vh
 
     lda #<.l5a
     sta .lb+1
-    ;lda #>.l5a
-    ;sta .lb+2
+    lda #>.l5a
+    sta .lb+2
 .cnt = * + 1
     ldx #0
     inx
@@ -101,23 +107,19 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     tax
   endif
 
-  assert >.l5a == >.l5b, WRONG_ALIGNMENT
 .l5a dex
     beq .e1  ;erts
 
-    ;x++
-    lda #0
-    cmp .vh
     lda .vl
-    bcs .l6x
-
-    ;lda .vl  ;d < 0
-    ;clc  ;v += dy
-    adc .dy
-    sta .vl
-    bcc *+4
-    inc .vh
     sec
+    sbc .dy
+    bcs .lz1
+
+    adc .dx  ;C=0
+    sta .vl
+    jmp .lyx  ;bxc?
+
+.lz1 sta .vl
     ror .m8
     bcs .lxa
 
@@ -134,37 +136,17 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lsr .c8
     jmp .ly7
 
-.l6x ;lda .vl  ;v >= 0
-    ;sec   ;v -= xy
-    sbc .xy
-    sta .vl
-    bcs .lyx
-
-    dec .vh
-    jmp .lyx
-
 .l4  ;lda .dy  ;dy >= dx
     tax
-    ;sec  ;xy = dy - dx
+    ;sec  ;v = dy - dx
     sbc .dx  ;C=1
-    sta .xy
-
-    lda .dy  ;v = dx - dy/2
     lsr
-    sta .m4
-    lda .dx
-    sec
-.m4 = * + 1
-    sbc #0
     sta .vl
-    lda #0
-    sbc #0
-    sta .vh
 
     lda #<.l5b
     sta .lb+1
-    ;lda #>.l5b
-    ;sta .lb+2
+    lda #>.l5b
+    sta .lb+2
 
     inx
   if mccoorcheck
@@ -180,28 +162,15 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     bne *+3
 .e1  rts
 
-    lda #0
-    cmp .vh
     lda .vl
-    bcs .l6y
-
-    ;lda .vl  ;v < 0
-    ;clc  ;v += dy
-    adc .dx  ;C=0
+    sec
+    sbc .dx
     sta .vl
-    bcc .ly3
+    bcs .ly3
 
-    inc .vh
-    jmp .ly3
-
-.l6y ;lda .vl  ;v >= 0
-    ;sec  ;C=1
-    sbc .xy  ;v -= xy
+    adc .dy  ;C=0
     sta .vl
-    bcs *+5
-    dec .vh
-
-.lyx    sec
+.lyx sec
     ror .m8
     bcs .la
 
@@ -222,7 +191,6 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .m3 = * + 1
     jmp .l0
 
-   assert >.l0 == >.l5,BAD_ALIGNMENT
 .l0 dey
     bpl .ly7
 
@@ -305,6 +273,10 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     inc ral
   endif
     rts
+
+;ROM4table = 0  ;0 - RAM, ROM address ($D202, $D21A, $D221, $D228, $D233, $D294, $D37D, $D602, $D77D, $FD58, $FE98) saves 4 bytes if usemcattr==1
+;usemcattr = 1
+;mccoorcheck = 1
 
 gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
        ;out: YR, r5l;  use: r5
@@ -441,5 +413,16 @@ mtplot
     ora #0
     sta (r9l),y
     rts
+  endif
+
+pow2m byte 0,64,128,192,0,16,32,48,0,4,8,12,0,1,2,3
+pow2im byte $3f,$cf,$f3,$fc
+  if usemcattr
+  if ROM4table == 0
+c8st byte 0,255,255,0
+  endif
+  if ROM4table != 0
+c8st = ROM4table
+  endif
   endif
 

@@ -1,13 +1,13 @@
 # fast routines to draw lines for the C+4
 
-The routines require approximately 75-130 CPU cycles per pixel.  This delivers approximately 8700-15800 pixels per second on the C+4.
+The routines require approximately 55-100 CPU cycles per pixel.  This delivers approximately 11500-21000 pixels per second on the C+4.
 
 The repo contains Basic programs that implement the same algos as the 'test1' tests in assembly.  Let's check the benchmark results in 1/60s on the C+4 PAL.
 
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223/-  |3213/-                       |-/827  |451/362
-Multicolor |1508/-  |1503/-                       |-/-    |193/158
+HiRes      |3223/-  |3213/-                       |-/827  |444/355
+Multicolor |1508/-  |1503/-                       |-/-    |178/145
 
 The timer value before the slash corresponds to cases where attributes are drawn. The timer value after the slash corresponds to cases where attributes are not drawn.
 
@@ -18,9 +18,9 @@ Tool                          |Timings
 Basic                         |4627/-
 Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
-Assembly                      |712/575
+Assembly                      |587/551
 
-The library code size is below 650/470 bytes for HR graphics and below 620/430 bytes for MC graphics.
+The library code size is below 610/440 bytes for HR graphics and below 570/380 bytes for MC graphics.
 
 The library provides functions:
 
@@ -43,6 +43,3 @@ The second function has similar options:
 * *usemcattr* - if you don't use cs = 1 and cs = 2 then 0 doesn't reduce any functionality;
 
 * *mccoorcheck*.
-
-If you get the WRONG ALIGNMENT error during compilation try moving the library code.  You may just shuffle library elements.  Anyway the allocation on the page boundary must work.
-
