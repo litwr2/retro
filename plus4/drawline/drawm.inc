@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r0h,r1l,r2h,r4,r7,rah,rb - free
+;some ideas from BLARG for the C64 were used
 
 ;void drawline(unsigned x0, unsigned y0, unsigned x1, unsigned y1, int c) {
 ;    unsigned dx, dy, cnt, v;
@@ -12,7 +12,7 @@
 ;	dy = abs((int)(y1 - y0));
 ;	if (dy < dx) {
 ;	    if (x1 >= xmax) cnt = xmax - x0 - 1; else cnt = dx;
-;	    v = dx - dy >> 1;
+;	    v = dx >> 1;
 ;		while (cnt-- > 0) {
 ;			x0++;
 ;			if ((int)(v -= dy) < 0)
@@ -21,7 +21,7 @@
 ;		}
 ;	} else {
 ;       if (y1 >= ymax) cnt = ymax - y0 - 1; else cnt = dy;
-;	    v = dy - dx >> 1;  //uint8_t
+;	    v = dy >> 1;  //uint8_t
 ;		while (cnt-- > 0) {
 ;			y0 += sy;
 ;			if ((int)(v -= dx) < 0)
@@ -31,7 +31,16 @@
 ;  }
 ;}
 
-drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
+;r0h,r1l,r2h,r4,r7,rah,rb - free
+
+mcinit  ;this code is identical to hrinit
+    lda #0
+    sta r3l
+    sta r9l
+    sta rah
+    rts
+
+drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r2l, r3*, r5*, r6, r8 (r8h*), r9*, ra*, rc
 .x0 = r8l
 .y0 = r1h
@@ -68,7 +77,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sta .dx  ;x1 - x0
     sta .cnt
 
-    jsr gmplot  ;plot(x, y, c), sets YR
+    jsr mcplot  ;sets YR
     lda .y1
     sec
     sbc .y0
@@ -220,7 +229,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     beq .lb
 
     sty .ys
-    jsr mtplot
+    jsr mcplota0
 .ys = * + 1
     ldy #0
     lda #0
@@ -274,7 +283,7 @@ drawmline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 ;usemcattr = 1
 ;mccoorcheck = 1
 
-gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
+mcplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
        ;out: YR, r5l;  use: r5
        ;40*(y & $f8) + (y&7) + ((x << 1) & $f8)
 .x0 = r8l
@@ -288,9 +297,9 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
   if usemcattr
     ldx .c8
     lda c8st,x
-    sta drawmline.tr1
+    sta drawmcline.tr1
     beq *+5
-    jsr mctplot
+    jsr mcplota
   endif
     lda .y0
     and #7
@@ -336,7 +345,7 @@ gmplot ;in x - r8l, y - r1h, cs - rch (0 - mc1, 1 - fg, 2 - bg, 3 - mc2);
     rts
 
   if usemcattr
-mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
+mcplota  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
 ;5*(y & $f8) + (x >> 2)
 .x0 = r8l
 .y0 = r1h
@@ -369,14 +378,14 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
     and #$55
     beq .bg
 
-    stx mtplot.ma1
-    sty mtplot.ma2
+    stx mcplota0.ma1
+    sty mcplota0.ma2
     lda $86
     lsr
     lsr
     lsr
     lsr
-    sta mtplot.a1
+    sta mcplota0.a1
     lda $86
     asl
     asl
@@ -384,17 +393,17 @@ mctplot  ;in: x - r8l, y - r1h, r5l;  out: r3h, r9h, ral
     asl
     jmp .l1
 .bg
-    stx mtplot.ma2
-    sty mtplot.ma1
+    stx mcplota0.ma2
+    sty mcplota0.ma1
     lda $85
     and #$70
-    sta mtplot.a1
+    sta mcplota0.a1
     lda $85
     and #$f
 .l1
-    sta mtplot.a2
+    sta mcplota0.a2
 
-mtplot
+mcplota0  ;this code is identical to hrplota0
     ldy ral
     lda (r3l),y
 .ma1 = * + 1

@@ -54,10 +54,7 @@ rnd99 lda $ff1c
     rts
 
 start
-    lda #0
-    sta r3l
-    sta r9l
-    sta rah
+    jsr hrinit
 
     jsr rnd99
     adc #110
@@ -89,7 +86,7 @@ start
     sta r6h
     lda #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda xc
     sta r8l
     lda xc+1
@@ -107,7 +104,7 @@ start
     sta r6h
     ;lda #0
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda i
     clc
     adc #2
@@ -140,7 +137,7 @@ p2
     sta r6h
     lda #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda xc
     sta r8l
     lda xc+1
@@ -156,7 +153,7 @@ p2
     stx r6h
     lda #0
     sta rch
-    jsr drawhline
+    jsr drawhrline
 .l1 lda i
     clc
     adc #2
@@ -192,7 +189,7 @@ p3
     sta r6h
     lda #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda xc
     sta r8l
     lda xc+1
@@ -210,7 +207,7 @@ p3
     sta r6h
     lda #0
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda i
     sec
     sbc #2
@@ -246,7 +243,7 @@ p4
     sta r6h
     lda #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda xc
     sta r8l
     lda xc+1
@@ -262,7 +259,7 @@ p4
     stx r6h
     lda #0
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda i
     sec
     sbc #2
@@ -285,11 +282,4 @@ i byte 0,0
 
    * = $1300
   include "drawh.inc"
-
-getk ldx #$ff
-     stx $ff08
-     ldx $ff08
-     inx
-     beq getk
-     rts
 

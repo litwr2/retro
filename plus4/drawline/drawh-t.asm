@@ -47,10 +47,7 @@ init
 
 * = $1080
 start
-    lda #0
-    sta r3l
-    sta r9l
-    sta rah
+    jsr hrinit
     ;lda #$35
     ;sta $86   ;color1
     ;lda #$58
@@ -80,7 +77,7 @@ l2  lda x1
     lsr
     and #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda x1
     clc
     adc #4
@@ -121,7 +118,7 @@ l2  sta y1
     lsr
     and #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
     lda y1
     clc
     adc #4
@@ -156,7 +153,7 @@ gl1 pha
     sta r6h
     lda #cs
     sta rch
-    jsr drawhline
+    jsr drawhrline
     pla
     clc
     adc #1
@@ -187,7 +184,7 @@ gl3 pha
     sta r6h
     lda #1
     sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy--
     sta r8l
@@ -204,7 +201,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy=0
     sta r8l
@@ -220,7 +217,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy++
     sta r8l
@@ -237,7 +234,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx=0, dy++
     sta r8l
@@ -251,7 +248,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy++
     sta r8l
@@ -268,7 +265,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy=0
     sta r8l
@@ -284,7 +281,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy--
     sta r8l
@@ -301,7 +298,7 @@ gl3 pha
     sta r6h
     ;lda #1
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 ;--
     lda x1  ;dx=0, dy--
     sta r8l
@@ -316,7 +313,7 @@ gl3 pha
     sta r6h
     lda #0
     sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy--
     sta r8l
@@ -333,7 +330,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy=0
     sta r8l
@@ -349,7 +346,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx++, dy++
     sta r8l
@@ -366,7 +363,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx=0, dy++
     sta r8l
@@ -380,7 +377,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy++
     sta r8l
@@ -397,7 +394,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy=0
     sta r8l
@@ -413,7 +410,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     lda x1  ;dx--, dy--
     sta r8l
@@ -430,7 +427,7 @@ gl3 pha
     sta r6h
     ;lda #0
     ;sta rch
-    jsr drawhline
+    jsr drawhrline
 
     ldy #0
     lda $ff1e

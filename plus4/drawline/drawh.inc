@@ -1,6 +1,6 @@
 ;vasm6502-oldstyle assembler
 ;thanks to Crown and MMS for hints
-;r4h,rah,rb - free
+;some ideas from BLARG for the C64 were used
 
 ;void drawline(unsigned x0, unsigned y0, unsigned x1, unsigned y1, int c) {
 ;    unsigned dx, dy, cnt, v;
@@ -31,12 +31,16 @@
 ;  }
 ;}
 
-;include "registers.mac"
-;ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
-;usehrattr = 1
-;hrcoorcheck = 1
+;r4h,rah,rb - free
 
-drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
+hrinit  ;this code is identical to mcinit
+    lda #0
+    sta r3l
+    sta r9l
+    sta rah
+    rts
+
+drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
           ;use: r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
 .x0l = r8l
 .x0h = r8h
@@ -91,7 +95,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     sbc .x0h  ;x1 - x0
     sta .dxh
 
-    jsr ghplot  ;plot(x, y, c), sets Y
+    jsr hrplot  ;sets Y
     lda .y1
     sec
     sbc .y0
@@ -241,7 +245,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     beq .lb
 
     sty .ys
-    jsr tplot
+    jsr hrplota0
 .ys = * + 1
     ldy #0
     lda #0
@@ -314,7 +318,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
      sta .cnth
      rts
 
-ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r5
+hrplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use r5
    ;40*(y & $f8) + (y&7) + (x & f8)
 .x0l = r8l
 .x0h = r8h
@@ -323,7 +327,7 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .m8 = rcl
 .c8 = rch
   if usehrattr
-    jsr ctplot
+    jsr hrplota
     lda .p
   else
     lda .y0
@@ -370,7 +374,7 @@ ghplot ;in x - r8, y - r1h, cs = rch (0 - bg, 1 - fg), rcl, r5l;  out: YR;  use 
 .erts rts
 
   if usehrattr
-ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
+hrplota  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
 ;5*(y & $f8) + (x >> 3)
 .x0l = r8l
 .x0h = r8h
@@ -408,14 +412,14 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     ldx .c8
     beq .bg
 
-    sta tplot.ma1
-    sty tplot.ma2
+    sta hrplota0.ma1
+    sty hrplota0.ma2
     lda $86
     lsr
     lsr
     lsr
     lsr
-    sta tplot.a1
+    sta hrplota0.a1
     lda $86
     asl
     asl
@@ -423,17 +427,17 @@ ctplot  ;in: x - r8, y - r1h;  out: r3h, r5l, r9h, ral
     asl
     jmp .l1
 .bg
-    sta tplot.ma2
-    sty tplot.ma1
+    sta hrplota0.ma2
+    sty hrplota0.ma1
     lda $ff15
     and #$70
-    sta tplot.a1
+    sta hrplota0.a1
     lda $ff15
     and #$f
 .l1
-    sta tplot.a2
+    sta hrplota0.a2
 
-tplot
+hrplota0   ;this code is identical to mcplota0
     ldy ral
     lda (r3l),y
 .ma1 = * + 1

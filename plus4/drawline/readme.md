@@ -9,24 +9,24 @@ Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/
 HiRes      |3223/-  |3213/-                       |-/827  |444/355
 Multicolor |1508/-  |1503/-                       |-/-    |179/144
 
-The timer value before the slash corresponds to cases where attributes are drawn.  The timer value after the slash corresponds to cases where attributes are not drawn.
+The timer value before the slash corresponds to cases where color attributes are drawn.  The timer value after the slash corresponds to cases where the attributes are not drawn.
 
 Let's also run the moire pattern benchmark.
 
-Tool                          |Timings
-------------------------------|--------
+Graphic Subsystem             |Timings
+------------------------------|--------:
 Basic                         |4627/-
 Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
 Assembly                      |587/551
 
-The library code size is below 600/430 bytes for HR graphics and below 570/380 bytes for MC graphics.
+The library code size is below 610/430 bytes for HR graphics and below 580/390 bytes for MC graphics.
 
 The library provides functions:
 
-* **drawhline** (hr) with the next parameters located at zero page x0 - 3/4, y0 - $42, x1 - $bc/$bd, y1 - $15, cs - $66;
+* **drawhrline** with the next parameters located at zero page x0 - 3/4, y0 - $42, x1 - $bc/$bd, y1 - $15, cs - $66;
 
-* **drawmline** (mc) with the next parameters x0 - 3, y0 - $42, x1 - $bc, y1 - $15, cs - $66.
+* **drawmcline** with the next parameters x0 - 3, y0 - $42, x1 - $bc, y1 - $15, cs - $66.
 
 For the first function there are three options: 
 
@@ -43,3 +43,8 @@ The second function has similar options:
 * *usemcattr* - if you don't use cs = 1 and cs = 2 then 0 doesn't reduce any functionality;
 
 * *mccoorcheck*.
+
+There are also two identical functions that initialize the graphic subsystem: **hrinit** and **mcinit** &ndash; use the first for HR graphics and the second for MC graphics.
+
+All zero page locations used by the library are listed in sources.
+
