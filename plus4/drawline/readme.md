@@ -7,9 +7,9 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
 HiRes      |3223/-  |3213/-                       |-/827  |444/355
-Multicolor |1508/-  |1503/-                       |-/-    |178/145
+Multicolor |1508/-  |1503/-                       |-/-    |179/144
 
-The timer value before the slash corresponds to cases where attributes are drawn. The timer value after the slash corresponds to cases where attributes are not drawn.
+The timer value before the slash corresponds to cases where attributes are drawn.  The timer value after the slash corresponds to cases where attributes are not drawn.
 
 Let's also run the moire pattern benchmark.
 
@@ -20,7 +20,7 @@ Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
 Assembly                      |587/551
 
-The library code size is below 610/440 bytes for HR graphics and below 570/380 bytes for MC graphics.
+The library code size is below 600/430 bytes for HR graphics and below 570/380 bytes for MC graphics.
 
 The library provides functions:
 

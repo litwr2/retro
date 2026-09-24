@@ -8,11 +8,11 @@
 ;    if (x0 > x1) swap(x0, x1), swap(y0, y1);
 ;    dx = x1 - x0;
 ;    plot(x0, y0, c);
-;   sy = sgn((int)(y1 - y0));  //not true sgn
+;   sy = sgn((int)(y1 - y0));    //-1 or +1
 ;	dy = abs((int)(y1 - y0));
 ;	if (dy < dx) {
 ;	    if (x1 >= xmax) cnt = xmax - x0 - 1; else cnt = dx;
-;	    v = dx - dy >> 1;
+;	    v = dx >> 1;
 ;		while (cnt-- > 0) {
 ;			x0++;
 ;			if ((int)(v -= dy) < 0)
@@ -21,7 +21,7 @@
 ;		}
 ;	} else {
 ;       if (y1 >= ymax) cnt = ymax - y0 - 1; else cnt = dy;
-;	    v = dy - dx >> 1;  //uint8_t
+;	    v = dy >> 1;  //uint8_t
 ;		while (cnt-- > 0) {
 ;			y0 += sy;
 ;			if ((int)(v -= dx) < 0)
@@ -110,16 +110,13 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     cmp .dxl
     bcs .l4  ;dx <= dy
 
-.l3 lda .dxl  ;dy < dx
-    sec
-    sbc .dy
-    sta .vl
-    lda .dxh
+.l3 lda .dxh  ;dy < dx
     sta .cnth
-    sbc #0
-    lsr .vl
-    ror
+    lsr
     sta .vh
+    lda .dxl
+    ror
+    sta .vl
     lda #<.l5a
     sta .lb+1
     lda #>.l5a
@@ -163,11 +160,8 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 .lxa lsr .c8
     jmp .ly7
 
-.l4  ;lda .dy  ;dy >= dx
-    tax
-    ;sec  ;xy = dy - dx
-    lda .dy
-    sbc .dxl  ;C=1
+.l4  tax  ;dy >= dx
+    ;lda .dy
     lsr
     sta .vl
     inx
