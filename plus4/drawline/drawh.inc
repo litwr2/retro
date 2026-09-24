@@ -31,7 +31,7 @@
 ;  }
 ;}
 
-;r4h,rah,rb - free
+;r4,rah,rb - free
 
 hrinit  ;this code is identical to mcinit
     lda #0
@@ -40,16 +40,14 @@ hrinit  ;this code is identical to mcinit
     sta rah
     rts
 
-drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r1, r2, r3*, r4l, r5*, r6, r8, r9*, ra*, rc (rcl*)
+drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg) - all arguments but y0 and cs are preserved
+          ;use: r1, r2, r3*, r5, r6, r8, r9*, ral*, rc
 .x0l = r8l
 .x0h = r8h
 .y0 = r1h
 .x1l = r2l
 .x1h = r2h
 .y1 = r6h
-.xyl = r4l
-;.xyh = m
 .vl = r0l
 .vh = r0h
 .dy = r6l

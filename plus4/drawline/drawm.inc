@@ -40,8 +40,8 @@ mcinit  ;this code is identical to hrinit
     sta rah
     rts
 
-drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg)
-          ;use: r2l, r3*, r5*, r6, r8 (r8h*), r9*, ra*, rc
+drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg) - all arguments but cs are preserved
+          ;use: r2l, r3*, r5*, r6, r8, r9*, ral*, rc
 .x0 = r8l
 .y0 = r1h
 .x1 = r2l
@@ -49,7 +49,6 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 .v = r0l
 .dy = r6l
 .dx = r8h
-;.cnt = r1l
 .p = r5l
 .m8 = rcl
 .c8 = rch
@@ -75,8 +74,7 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
     sec
     sbc .x0
     sta .dx  ;x1 - x0
-    sta .cnt
-
+ 
     jsr mcplot  ;sets YR
     lda .y1
     sec
@@ -101,8 +99,7 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
     sta .lb+1
     lda #>.l5a
     sta .lb+2
-.cnt = * + 1
-    ldx #0
+    ldx .dx  ;cnt
     inx
   if mccoorcheck
     lda #199
@@ -144,7 +141,7 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
     jmp .ly7
 
 .l4  ;lda .dy  ;dy >= dx
-    tax
+    tax  ;cnt
     lsr
     sta .v
 

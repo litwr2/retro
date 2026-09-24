@@ -20,13 +20,13 @@ Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
 Assembly                      |687/551
 
-The library code size is below 610/430 bytes for HR graphics and below 580/390 bytes for MC graphics.
+The library code size is below 610/430 bytes for HR graphics and below 570/380 bytes for MC graphics.
 
 The library provides functions:
 
-* **drawhrline** with the next parameters located at zero page x0 - 3/4, y0 - $42, x1 - $bc/$bd, y1 - $15, cs - $66;
+* **drawhrline** with the next parameters located at zero page x0 - 3/4, y0 - $42, x1 - $bc/$bd, y1 - $15, cs - $66; all arguments but y0 and cs are preserved;
 
-* **drawmcline** with the next parameters x0 - 3, y0 - $42, x1 - $bc, y1 - $15, cs - $66.
+* **drawmcline** with the next parameters x0 - 3, y0 - $42, x1 - $bc, y1 - $15, cs - $66; all arguments but cs are preserved.
 
 For the first function there are three options: 
 
