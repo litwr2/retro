@@ -18,7 +18,7 @@ Graphic Subsystem             |Timings
 Basic                         |4627/-
 Basic compiled by Austrospeed |4610/-
 BLARG+4                       |-/1124
-Assembly                      |587/551
+Assembly                      |687/551
 
 The library code size is below 610/430 bytes for HR graphics and below 580/390 bytes for MC graphics.
 

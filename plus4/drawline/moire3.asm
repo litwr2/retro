@@ -3,7 +3,7 @@
   include "registers.mac"
 
 ROM8table = 0   ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
-usehrattr = 0
+usehrattr = 1
 hrcoorcheck = 1
 gabase = $18   ;attributes
 gbase = $20    ;bitmap
