@@ -6,8 +6,8 @@ The repo contains Basic programs that implement the same algos as the 'test1' te
 
 Mode       |Basic   |Basic compiled by Austrospeed|[BLARG+4](https://github.com/litwr2/retro/tree/main/plus4/blarg)|Assembly
 -----------|-------:|----------------------------:|------:|-------:
-HiRes      |3223/-  |3213/-                       |-/827  |452/361
-Multicolor |1508/-  |1503/-                       |-/-    |194/158
+HiRes      |3223/-  |3213/-                       |-/827  |451/362
+Multicolor |1508/-  |1503/-                       |-/-    |193/158
 
 The timer value before the slash corresponds to cases where attributes are drawn. The timer value after the slash corresponds to cases where attributes are not drawn.
 

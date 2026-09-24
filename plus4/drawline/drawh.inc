@@ -64,8 +64,12 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda .y1
     sec
     sbc .y0
-    bcc .l2  ;y1 < y0
+    bcs .l7  ;y1 < y0
 
+    eor #$ff  ;y1 < y0
+    adc #1  ;C=0
+    ldx #<.l0
+    stx .m3
 .l7 sta .dy  ;y1 >= y0
     ldx .dxh
     bne .l3  ;dx > dy
@@ -111,7 +115,7 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
     lda .vl
     bcs .l6x
 
-    ;lda .vl  ;d < 0
+    ;lda .vl  ;v < 0
     ;clc  ;v += dy
     adc .dy
     sta .vl
@@ -131,12 +135,6 @@ drawhline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg)
 
 .lxa lsr .c8
     jmp .ly7
-
-.l2 eor #$ff  ;y1 < y0
-    adc #1  ;C=0
-    ldx #<.l0
-    stx .m3
-    jmp .l7
 
 .l6x ;lda .vl  ;v >= 0
     ;sec   ;v -= xy
