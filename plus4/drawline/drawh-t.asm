@@ -2,9 +2,11 @@
 
   include "registers.mac"
 
-ROM8table = 0  ;0 - RAM, ROM address ($C289, $DF7A)  saves 8 bytes
+ROM8table = 0  ;0 - RAM, ROM address ($C289, $DF7A) saves 8 bytes
 usehrattr = 1  ;1 - draw colors, 0 - bitmap only
 hrcoorcheck = 1  ;check coordinates for max
+reduce1hr = 1  ;1 shortens the code by 10 bytes
+reduce2hr = 0  ;1 shortens the code by 10 bytes
 gabase = $18   ;attributes
 gbase = $20    ;bitmap
 

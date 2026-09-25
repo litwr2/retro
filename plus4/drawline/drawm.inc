@@ -54,9 +54,12 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 .c8 = rch
     lda #<.l5
     sta .m3
+  if reduce2mc
+    assert >.l0 == >.l5, WRONG_ALLOCATION2
+  else
     lda #>.l5
     sta .m3+1
-
+  endif
     lda .x0
     cmp .x1
     bcc .l1  ;x0 < x1
@@ -85,8 +88,10 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
     adc #1  ;C=0
     ldx #<.l0
     stx .m3
+  if reduce2mc == 0
     ldx #>.l0
     stx .m3+1
+  endif
 .l7 sta .dy  ;y1 >= y0
     cmp .dx
     bcs .l4  ;dx <= dy
@@ -97,8 +102,12 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 
     lda #<.l5a
     sta .lb+1
+  if reduce1mc
+    assert >.l5a == >.l5b, WRONG_ALLOCATION1
+  else
     lda #>.l5a
     sta .lb+2
+  endif
     ldx .dx  ;cnt
     inx
   if mccoorcheck
@@ -147,9 +156,10 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 
     lda #<.l5b
     sta .lb+1
+  if reduce1mc == 0
     lda #>.l5b
     sta .lb+2
-
+  endif
     inx
   if mccoorcheck
     lda #199
