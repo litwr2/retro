@@ -42,7 +42,7 @@ The differences from BLARG for the C64:
 
 * use GRAPHIC and COLOR statements instead of GRON and GROFF.  However there are some specific details.  GRAPHIC activates buffer 0 whereas GRON doesn't change the active buffer.  GRAPHIC with the second parameter equals to 1 can be used instead of CLEAR for buffer 0 but CLEAR is slightly (by about 1%) faster;
 
-* MODE17 and MODE18 set the active buffer to 0 and 1 respectively under the C64.  They also make this buffer visual.  Under the C+4 these commands don't affect these settings.  Use BUFFER and SWAP explicitly;
+* MODE17 and MODE18 set the active buffer to 0 and 1 respectively under the C64.  They also make this buffer visual.  Under the C+4 these commands don't affect these settings.  Use BUFFER, GRAPHIC and SWAP explicitly;
 
 * MODE18 doesn't allocate an additional text buffer under the C+4;
 
