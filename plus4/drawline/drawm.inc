@@ -130,7 +130,7 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 
     adc .dx  ;C=0
     sta .v
-    jmp .lyx  ;bxc?
+    jmp .lyx
 
 .lz1 sta .v
     ror .m8
@@ -138,7 +138,8 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 
     jsr .px
   if usemcattr
-    bne *+6
+    bne .ly7  ;*+6
+
     inc r3h
     inc r9h
   endif

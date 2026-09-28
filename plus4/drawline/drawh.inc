@@ -152,8 +152,8 @@ drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg) 
     sta .vl
     lda .vh
     adc .dxh
-    sta .vh    
-    jmp .lyx  ;bxc?
+    sta .vh
+    bvc .lyx  ;always
 .lz2
     sec
 .lz1
@@ -163,7 +163,8 @@ drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg) 
 
     jsr .px
   if usehrattr
-    bne * + 6  ;.ly7
+    bne .ly7  ;* + 6
+
     inc r3h
     inc r9h
   endif
