@@ -148,7 +148,12 @@ drawmcline ;in: x0 - r8l, y0 - r1h, x1 - r2l, y1 - r6h, cs = rch (0 - bg, 1 - fg
 .lxa ror .m8  ;C=1
     lsr .c8
     lsr .c8
-    jmp .ly7
+    lda (.p),y
+    and .m8
+    ora .c8
+    sta (.p),y
+    jmp .l5a
+    ;jmp .ly7
 
 .l4  ;lda .dy  ;dy >= dx
     tax  ;cnt

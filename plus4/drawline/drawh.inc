@@ -171,7 +171,12 @@ drawhrline ;in: x0 - r8, y0 - r1h, x1 - r2, y1 - r6h, cs = rch (0 - bg, 1 - fg) 
     jmp .ly7
 
 .lxa lsr .c8
-    jmp .ly7
+    lda (.p),y
+    and .m8
+    ora .c8
+    sta (.p),y
+    jmp .l5a
+    ;jmp .ly7
 
 .l4  tax  ;dy >= dx
     ;lda .dy
