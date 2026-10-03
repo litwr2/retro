@@ -50,5 +50,5 @@ The second function has similar options:
 
 There are also two identical functions that initialize the graphic subsystem: **hrinit** and **mcinit** &ndash; use the first for HR graphics and the second for MC graphics.
 
-All zero page locations used by the library are listed in sources.
+All zero page locations used by the library are listed in sources.  They can be redefined in the register definition file.
 
